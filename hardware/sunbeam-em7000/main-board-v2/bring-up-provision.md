@@ -25,7 +25,7 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Rail BREWA_3V3 | BREWA_3V3_SRC, BREWA_3V3 | TP530 | R543 | 3.3 V feed of the brew-path analogue header: +3V3 through the PTC F523 to the test point and link R543, then pin 2 or 1 of J524; the PTC and the link are the only parts on the source side |
 | Rail SPAN2_3V3 | SPAN2_3V3_SRC, SPAN2_3V3 | TP532 | R544 | 3.3 V feed of the second spare analogue header: +3V3 through the PTC F524 to the test point and link R544, then pin 2 or 1 of J525; the PTC and the link are the only parts on the source side |
 | Rail +5V_WB | +5V, +5V_WB | TP761 | JP761 | LED supply of the heater wall board's two opto-triac LEDs, taken from +5V; leaves the board on WB_LV10 pin 1 (power-leaving). Test point TP761 is on the load side: open JP761 and read the resistance from TP761 to GND before power; the source side is read at the +5V test point (owner B) |
-| Rail +5V_GAUGE | +5V, +5V_GAUGE | TP791 | JP791 | supply of the retained gauge assembly through SP2 contact 1 (power-leaving) and the 47 uF latch-up capacitor C792; close JP791 with the +5V rail off (the capacitor charges from the rail). Power the gauge assembly before the control-line buffer U791 drives its lines, or leave JP791 closed: with the gauge assembly unpowered or JP791 open, U791 drives its outputs through R791 to R795 (470 ohm, about 10 mA per line) into the gauge driver's inputs, whose input clamp current the maker does not state |
+| Rail +5V_GAUGE | +5V, +5V_GAUGE | TP791 | JP791 | supply of the retained gauge assembly through SP2 contact 1 (power-leaving) and the 47 uF latch-up capacitor C792; close JP791 with the +5V rail off (the capacitor charges from the rail) |
 | Rail ANODE_RAIL | ANODE_SW, ANODE_RAIL | TP821 | JP821 | gated and modulated anode rail of the panel's eight indicators and the gauge assembly's low-water indicator (CON2 pin 7, SP2 contact 7, power-leaving); produced by Q822 from +5V, held off by R823 and R824, bled by R825; TP821 on the switch drain (source side of JP821) |
 | Rail PT1 excitation return (FORCE-) | PT1_FORCEN_SRC, PT1_FORCEN | TP690 | R690 | The MAX31865 symbol types FORCE- (pin 9) power_out, so by the method's rule the net is a rail. Produced by U620 pin 9 (the sink of the excitation current); the source side carries that pin, the link R690 (0 ohm) and the test point. Load side: the probe header and the 3-wire/4-wire jumper. Opening the link disconnects the probe's return from the converter. Power leaves the board only as the excitation current out of FORCE+. |
 | Rail PT2 excitation return (FORCE-) | PT2_FORCEN_SRC, PT2_FORCEN | TP691 | R691 | The MAX31865 symbol types FORCE- (pin 9) power_out, so by the method's rule the net is a rail. Produced by U621 pin 9 (the sink of the excitation current); the source side carries that pin, the link R691 (0 ohm) and the test point. Load side: the probe header and the 3-wire/4-wire jumper. Opening the link disconnects the probe's return from the converter. Power leaves the board only as the excitation current out of FORCE+. |
@@ -58,7 +58,7 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: Carried: C302 reverse voltage (row M17) | +5V_MOD | TP301 | — | Scope, DC-coupled, minimum held, across C302 through JP301 moves, cable plug-in and removal, and mains on and off: no reverse voltage beyond the 50 mV resolution. Limit and source: open-items.md, Bring-up measurements carried. |
 | Key signal: Carried: ceramics of the controller and logic supply (rows M7 and M10) |  |  | — | Before mains, LCR meter: C414 and C415 19.0 to 21.0 pF and C416 and C417 4.45 to 4.95 pF on spares from the same reel; C303 and C418 by the charge-time method at least 50 percent of nominal. Limit and source: open-items.md, Bring-up measurements carried. |
 | Key signal: reset | NRST | TP404 | — | controller reset: SW401, C418, internal pull-up; also J401.10 and the open-drain output of the supervisor U402 (TLV803S): low while +3V3 is under 2.87 to 2.99 V and for 120 to 280 ms after it recovers |
-| Key signal: HSE clock | HSE_IN | TP406 | — | 8 MHz oscillator Y401. No pin is free for a buffered clock output (MCO1 is PA8, the steam pump gate; MCO2 is PC9, a load-cell clock), so the clock is read at the crystal node with a probe of 10 pF or less; the pad (1.5 mm) and probe load the oscillator and move the frequency by a fraction of the load capacitance, so measure frequency to a few hundred ppm only; remove the probe for any accuracy check. A firmware alternative with no probing: the controller counts HSE against another clock. |
+| Key signal: HSE clock | HSE_IN | TP406 | — | 8 MHz oscillator Y401. No pin is used for a buffered clock output (MCO1 is PA8, the steam pump gate; MCO2 is PC9, unconnected and available for one), so the clock is read at the crystal node with a probe of 10 pF or less; the pad (1.5 mm) and probe load the oscillator and move the frequency by a fraction of the load capacitance, so measure frequency to a few hundred ppm only; remove the probe for any accuracy check. A firmware alternative with no probing: the controller counts HSE against another clock. |
 | Key signal: LSE clock | LSE_IN | none | — | 32.768 kHz oscillator Y402: no test point, a pad on a 12.5 pF crystal node would shift the frequency by a visible fraction; the block is judged by the RTC running in firmware (LSERDY flag). LSE is an anticipated function with no requirement relying on it |
 | Key signal: serial-wire data | SWDIO | TP407 | — | debug and programming: the header pin is the access point; test point pad added so a probe reaches the net without the header |
 | Key signal: serial-wire clock | SWCLK | TP408 | — | debug and programming: the header pin is the access point; test point pad added so a probe reaches the net without the header |
@@ -74,11 +74,11 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: NTC_COF | NTC_COF | TP501 | — | coffee-block thermistor divider and filter (PC0) |
 | Key signal: NTC_STM | NTC_STM | TP502 | — | steam-block thermistor divider and filter (PC1) |
 | Key signal: NTC_WAND | NTC_WAND | TP503 | — | wand thermistor divider and filter (PC4) |
-| Key signal: FLOW_IN | FLOW_IN | R522 | — | flow-meter input after the fitted buffer U520 (PC6); probed at R522 pad 2, the unfitted link position (a bare pad) |
+| Key signal: FLOW_IN | FLOW_IN | R522 | — | flow-meter input after the fitted buffer U520 (PB10); probed at R522 pad 2, the unfitted link position (a bare pad) |
 | Key signal: STM_SCL | STM_SCL | R523 | — | steam-path I2C clock (PB8); probed at R523 pad 2, the controller side of the 100 ohm series resistor |
 | Key signal: STM_SDA | STM_SDA | TP522 | — | steam-path I2C data (PB9) |
-| Key signal: BREW_SCL | BREW_SCL | R527 | — | brew-path I2C clock (PB10); probed at R527 pad 2, the controller side of the 100 ohm series resistor |
-| Key signal: BREW_SDA | BREW_SDA | TP525 | — | brew-path I2C data (PB11) |
+| Key signal: BREW_SCL | BREW_SCL | R527 | — | brew-path I2C clock (PB6); probed at R527 pad 2, the controller side of the 100 ohm series resistor |
+| Key signal: BREW_SDA | BREW_SDA | TP525 | — | brew-path I2C data (PB7) |
 | Key signal: STMP_AN | STMP_AN | TP527 | — | steam-path analogue fallback after scaling and filter (PC5) |
 | Key signal: BREW_AN | BREW_AN | TP529 | — | brew-path analogue fallback after scaling and filter (PA6) |
 | Key signal: SPARE_AN2 | SPARE_AN2 | TP531 | — | second spare analogue after scaling and filter (PA0) |
@@ -94,10 +94,10 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: PUMP_S_GATE | PUMP_S_GATE | R711 | — | steam pump drive stage control input (PA8); probed at R711 pad 1, the controller side of the 100 ohm gate resistor |
 | Key signal: Coffee pump triac MT2 | PUMP_C_MT2 | TP702 | — | mains-referenced: coffee pump triac T701 MT2 against NEUTRAL (TP106). Bring-up step: with the pump running from the controller, scope this node with an isolated or differential probe, never an earthed lead, at the instant the triac turns off (the pump's current zero, and at a stop command); if the voltage across the triac exceeds its 600 V rating (VDRM, WeEn BTA204S-600B Rev.02), fit the snubber R706 (100 ohm, 2512) and C701 (100 nF X2) across MT2 and MT1 and repeat; otherwise leave them unfitted (owner decision of 2026-10-29) |
 | Key signal: Steam pump triac MT2 | PUMP_S_MT2 | TP712 | — | mains-referenced: steam pump triac T711 MT2 against NEUTRAL (TP106). Bring-up step: as TP702 for the steam pump; fit R716 (100 ohm, 2512) and C711 (100 nF X2) only if the turn-off voltage exceeds 600 V |
-| Key signal: VALVE_2W_DRV | VALVE_2W_DRV | TP731 | — | two-way valve relay coil driver control input (PD4) |
-| Key signal: VALVE_3W_DRV | VALVE_3W_DRV | TP741 | — | three-way valve relay coil driver control input (PD5) |
-| Key signal: HEAT_C_DRV | HEAT_C_DRV | TP762 | — | coffee heater LED drive control input (PD2) |
-| Key signal: HEAT_S_DRV | HEAT_S_DRV | TP772 | — | steam heater LED drive control input (PD3) |
+| Key signal: VALVE_2W_DRV | VALVE_2W_DRV | TP731 | — | two-way valve relay coil driver control input (PD13) |
+| Key signal: VALVE_3W_DRV | VALVE_3W_DRV | TP741 | — | three-way valve relay coil driver control input (PB12) |
+| Key signal: HEAT_C_DRV | HEAT_C_DRV | TP762 | — | coffee heater LED drive control input (PD11) |
+| Key signal: HEAT_S_DRV | HEAT_S_DRV | TP772 | — | steam heater LED drive control input (PD12) |
 | Key signal: GAUGE_RST | GAUGE_RST | TP792 | — | gauge buffer input, driver reset |
 | Key signal: GAUGE_STEP1 | GAUGE_STEP1 | TP793 | — | gauge buffer input, gauge A step clock |
 | Key signal: GAUGE_DIR1 | GAUGE_DIR1 | TP794 | — | gauge buffer input, gauge A direction |
@@ -125,7 +125,7 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: converter clock | AMC_CLKIN | TP602 | — | AMC131M02 clock after the 33 ohm termination: 8.000 MHz, 45 to 55 % duty |
 | Key signal: divider tap | VMEAS_DIV | TP603 | — | mains voltage divider: about 0.30 V peak at 253 V rms, in phase with the line; mains-referenced, measure with an isolated instrument |
 | Key signal: shunt channel input | AMC_AIN1P | TP604 | — | supply current channel after its filter: 21 mV peak at 15 A rms; mains-referenced |
-| Key signal: shared SPI2 data out | SPI2_MISO | TP610 | — | replies of the AMC131M02 and both MAX31865 converters |
+| Key signal: shared SPI3 data out | SPI3_MISO | TP610 | — | replies of the AMC131M02 and both MAX31865 converters |
 | Key signal: zero-crossing edge | ZC_IN | TP630 | — | supply-timing front end: two falling edges per cycle (100 a second at 50 Hz); the delay against the line is read live |
 | Key signal: probe 1 sense node | PT1_RTDINP | TP621 | — | converter 1 RTDIN+: about 0.59 V with a 150 degC probe, 0.41 V at 0 degC |
 | Key signal: probe 2 sense node | PT2_RTDINP | TP623 | — | converter 2 RTDIN+ |
@@ -231,7 +231,7 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | J761.3 | HEAT_S_LED_K | signal | steam opto-triac LED return, sunk by Q771 through R773 |
 | J761.4 | GND | ground | return |
 | J761.5 | MAINS_PRES_C_J | signal | mains-presence confirm from the wall board, header side (net MAINS_PRES_C_J): through R764 (27 kohm) to PE15, which R765 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V |
-| J761.6 | MAINS_PRES_S_J | signal | mains-presence confirm from the wall board, header side (net MAINS_PRES_S_J): through R774 (27 kohm) to PD7, which R775 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V |
+| J761.6 | MAINS_PRES_S_J | signal | mains-presence confirm from the wall board, header side (net MAINS_PRES_S_J): through R774 (27 kohm) to PB11, which R775 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V |
 | J761.7 |  | signal | spare, not connected |
 | J761.8 |  | signal | spare, not connected |
 | J761.9 |  | signal | spare, not connected |

@@ -999,15 +999,15 @@
       },
       {
         "netclass": "Fast",
-        "pattern": "/SPI2_SCK"
+        "pattern": "/SPI3_SCK"
       },
       {
         "netclass": "Fast",
-        "pattern": "/SPI2_MOSI"
+        "pattern": "/SPI3_MOSI"
       },
       {
         "netclass": "Fast",
-        "pattern": "/SPI2_MISO"
+        "pattern": "/SPI3_MISO"
       },
       {
         "netclass": "Fast",

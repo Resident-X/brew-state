@@ -95,7 +95,7 @@ parts:
     lcsc: C10425
     class: extended
     hand: false
-    function: "Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PC6 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)"
+    function: "Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PB10 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)"
     mains: false
     sim_exclude: false
     dnp: false

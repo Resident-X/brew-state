@@ -86,7 +86,7 @@ key_signals:
 - name: HSE clock
   net: HSE_IN
   test_point: TP406
-  block: '8 MHz oscillator Y401. No pin is free for a buffered clock output (MCO1 is PA8, the steam pump gate; MCO2 is PC9, a load-cell clock), so the clock is read at the crystal node with a probe of 10
+  block: '8 MHz oscillator Y401. No pin is used for a buffered clock output (MCO1 is PA8, the steam pump gate; MCO2 is PC9, unconnected and available for one), so the clock is read at the crystal node with a probe of 10
     pF or less; the pad (1.5 mm) and probe load the oscillator and move the frequency by a fraction of the load capacitance, so measure frequency to a few hundred ppm only; remove the probe for any accuracy
     check. A firmware alternative with no probing: the controller counts HSE against another clock.'
 - name: LSE clock

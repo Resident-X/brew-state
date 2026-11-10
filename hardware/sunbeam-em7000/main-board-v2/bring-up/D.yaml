@@ -31,10 +31,10 @@ key_signals:
   - {name: "PUMP_S_GATE", net: "PUMP_S_GATE", test_point: "R711", block: "steam pump drive stage control input (PA8); probed at R711 pad 1, the controller side of the 100 ohm gate resistor"}
   - {name: "Coffee pump triac MT2", net: "PUMP_C_MT2", test_point: "TP702", block: "mains-referenced: coffee pump triac T701 MT2 against NEUTRAL (TP106). Bring-up step: with the pump running from the controller, scope this node with an isolated or differential probe, never an earthed lead, at the instant the triac turns off (the pump's current zero, and at a stop command); if the voltage across the triac exceeds its 600 V rating (VDRM, WeEn BTA204S-600B Rev.02), fit the snubber R706 (100 ohm, 2512) and C701 (100 nF X2) across MT2 and MT1 and repeat; otherwise leave them unfitted (owner decision of 2026-10-29)"}
   - {name: "Steam pump triac MT2", net: "PUMP_S_MT2", test_point: "TP712", block: "mains-referenced: steam pump triac T711 MT2 against NEUTRAL (TP106). Bring-up step: as TP702 for the steam pump; fit R716 (100 ohm, 2512) and C711 (100 nF X2) only if the turn-off voltage exceeds 600 V"}
-  - {name: "VALVE_2W_DRV", net: "VALVE_2W_DRV", test_point: "TP731", block: "two-way valve relay coil driver control input (PD4)"}
-  - {name: "VALVE_3W_DRV", net: "VALVE_3W_DRV", test_point: "TP741", block: "three-way valve relay coil driver control input (PD5)"}
-  - {name: "HEAT_C_DRV", net: "HEAT_C_DRV", test_point: "TP762", block: "coffee heater LED drive control input (PD2)"}
-  - {name: "HEAT_S_DRV", net: "HEAT_S_DRV", test_point: "TP772", block: "steam heater LED drive control input (PD3)"}
+  - {name: "VALVE_2W_DRV", net: "VALVE_2W_DRV", test_point: "TP731", block: "two-way valve relay coil driver control input (PD13)"}
+  - {name: "VALVE_3W_DRV", net: "VALVE_3W_DRV", test_point: "TP741", block: "three-way valve relay coil driver control input (PB12)"}
+  - {name: "HEAT_C_DRV", net: "HEAT_C_DRV", test_point: "TP762", block: "coffee heater LED drive control input (PD11)"}
+  - {name: "HEAT_S_DRV", net: "HEAT_S_DRV", test_point: "TP772", block: "steam heater LED drive control input (PD12)"}
   - {name: "GAUGE_RST", net: "GAUGE_RST", test_point: "TP792", block: "gauge buffer input, driver reset"}
   - {name: "GAUGE_STEP1", net: "GAUGE_STEP1", test_point: "TP793", block: "gauge buffer input, gauge A step clock"}
   - {name: "GAUGE_DIR1", net: "GAUGE_DIR1", test_point: "TP794", block: "gauge buffer input, gauge A direction"}
@@ -58,7 +58,7 @@ connector_pins:
   - {pin: "J761.3", net: "HEAT_S_LED_K", class: "signal", why: "steam opto-triac LED return, sunk by Q771 through R773"}
   - {pin: "J761.4", net: "GND", class: "ground", why: "return"}
   - {pin: "J761.5", net: "MAINS_PRES_C_J", class: "signal", why: "mains-presence confirm from the wall board, header side (net MAINS_PRES_C_J): through R764 (27 kohm) to PE15, which R765 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V"}
-  - {pin: "J761.6", net: "MAINS_PRES_S_J", class: "signal", why: "mains-presence confirm from the wall board, header side (net MAINS_PRES_S_J): through R774 (27 kohm) to PD7, which R775 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V"}
+  - {pin: "J761.6", net: "MAINS_PRES_S_J", class: "signal", why: "mains-presence confirm from the wall board, header side (net MAINS_PRES_S_J): through R774 (27 kohm) to PB11, which R775 (82 kohm) holds low with the wall board absent; the wall board must drive at least 3.2 V when on and at most 5.5 V"}
   - {pin: "J761.7", net: "", class: "signal", why: "spare, not connected"}
   - {pin: "J761.8", net: "", class: "signal", why: "spare, not connected"}
   - {pin: "J761.9", net: "", class: "signal", why: "spare, not connected"}

@@ -1253,7 +1253,7 @@ positions:
     class: none
   # TP610: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP610
-    value: TP_SPI2_MISO
+    value: TP_SPI3_MISO
     package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none

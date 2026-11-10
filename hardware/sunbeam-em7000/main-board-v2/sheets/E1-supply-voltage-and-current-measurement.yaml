@@ -1,5 +1,5 @@
 sheet: "Supply voltage and current measurement"
-function: "One isolated two-channel delta-sigma converter reads the mains voltage through a three-resistor divider (channel 0) and the supply current through the neutral shunt (channel 1) and hands both to the controller over the shared SPI2 bus."
+function: "One isolated two-channel delta-sigma converter reads the mains voltage through a three-resistor divider (channel 0) and the supply current through the neutral shunt (channel 1) and hands both to the controller over the shared SPI3 bus."
 parts:
   # ---- the isolating converter and its clock --------------------------------------------------
   - {ref: U601, lib_id: AMC131M02, value: "AMC131M02", rating: "reinforced isolation VIORM 1700 V pk, VIOTM 7070 V pk, creepage and clearance 8.0 mm min (SBASA56 6.5); DVDD 3.0-5.5 V", footprint: AMC131M02_SOIC-20W_DFM0020A, mpn: "AMC131M02DFMR", maker: "Texas Instruments", lcsc: C31423783, class: extended, hand: false, function: "isolated 2-channel 24-bit delta-sigma ADC with integrated isolated supply; pins 1-10 are the mains-referenced side, pins 11-20 the low-voltage side", mains: true, sim_exclude: true}
@@ -47,7 +47,7 @@ parts:
   - {ref: TP607, lib_id: Connector:TestPoint, value: "TP_AMC_HLDO_IN", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "producer-only net: high-side LDO input after the bead, mains-referenced", mains: true, sim_exclude: true}
   - {ref: TP608, lib_id: Connector:TestPoint, value: "TP_AMC_HLDO_OUT", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "producer-only net: high-side LDO output, 2.6-3.2 V, mains-referenced", mains: true, sim_exclude: true}
   - {ref: TP609, lib_id: Connector:TestPoint, value: "TP_AMC_DCDC_CAP", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "producer-only net: DCDC_CAP, the primary-side LDO output, 3.5 V abs max", mains: false, sim_exclude: true}
-  - {ref: TP610, lib_id: Connector:TestPoint, value: "TP_SPI2_MISO", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: shared SPI2 data-out line, carries the converter's and both RTD converters' replies", mains: false, sim_exclude: true}
+  - {ref: TP610, lib_id: Connector:TestPoint, value: "TP_SPI3_MISO", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: shared SPI3 data-out line, carries the converter's and both RTD converters' replies", mains: false, sim_exclude: true}
 nets:
   # mains-referenced side: divider, shunt sense, high-side supplies
   LINE: {scope: global, pins: [R601.1]}
@@ -72,14 +72,14 @@ nets:
   AMC_DCDC_CAP: {scope: local, pins: [U601.14, C612.1, TP609.1]}
   AMC_CLK_OUT: {scope: local, pins: [Y601.3, R609.1]}
   AMC_CLKIN: {scope: local, pins: [R609.2, U601.17, TP602.1]}
-  SPI2_SCK: {scope: global, pins: [R610.1]}
+  SPI3_SCK: {scope: global, pins: [R610.1]}
   AMC_SCLK: {scope: local, pins: [R610.2, U601.18]}
-  SPI2_MOSI: {scope: global, pins: [R611.1]}
+  SPI3_MOSI: {scope: global, pins: [R611.1]}
   AMC_DIN: {scope: local, pins: [R611.2, U601.20]}
   AMC_CS: {scope: global, pins: [R612.1]}
   AMC_CS_PIN: {scope: local, pins: [R612.2, U601.19, R614.2]}
   AMC_DOUT_PIN: {scope: local, pins: [U601.12, R613.1]}
-  SPI2_MISO: {scope: global, pins: [R613.2, TP610.1]}
+  SPI3_MISO: {scope: global, pins: [R613.2, TP610.1]}
   AMC_RESET: {scope: global, pins: [U601.11, R615.2]}
   AMC_DRDY: {scope: global, pins: [U601.16]}
 no_connect:

@@ -2348,16 +2348,6 @@
 		)
 		(uuid "d606fc5d-6b6d-42fc-8223-0badab367be8")
 	)
-	(label "SPI2_MISO"
-		(at 297.18 208.28 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "a66df880-2c47-411b-9aee-98cc3bc7bee2")
-	)
 	(label "AMC_DCDC_CAP"
 		(at 284.48 167.64 0)
 		(effects
@@ -2558,6 +2548,16 @@
 		)
 		(uuid "a1985ecb-0832-46b7-a853-49ce871ad307")
 	)
+	(label "SPI3_MISO"
+		(at 297.18 208.28 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "e1bb3a61-774a-4f56-8477-6688a426d975")
+	)
 	(hierarchical_label "LINE"
 		(shape input)
 		(at 34.29 76.2 180)
@@ -2602,28 +2602,6 @@
 		)
 		(uuid "6047dcfe-f2ab-49ac-8891-69a053dccafa")
 	)
-	(hierarchical_label "SPI2_SCK"
-		(shape input)
-		(at 328.93 121.92 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "e857134d-cfdd-4bcf-978b-3a3d08e03c72")
-	)
-	(hierarchical_label "SPI2_MOSI"
-		(shape input)
-		(at 328.93 106.68 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "fe1f7692-50cd-4cca-b8e9-8e6e986b6fac")
-	)
 	(hierarchical_label "AMC_CS"
 		(shape input)
 		(at 328.93 114.3 0)
@@ -2634,17 +2612,6 @@
 			(justify left)
 		)
 		(uuid "1e30030d-dfe5-41b6-91e5-3472999c1ef4")
-	)
-	(hierarchical_label "SPI2_MISO"
-		(shape output)
-		(at 328.93 129.54 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "cb1cba13-9daa-404a-ba3d-e75efb8a3f6e")
 	)
 	(hierarchical_label "AMC_RESET"
 		(shape input)
@@ -2667,6 +2634,39 @@
 			(justify left)
 		)
 		(uuid "f0d9b697-1669-4774-80e8-bb99037325e9")
+	)
+	(hierarchical_label "SPI3_SCK"
+		(shape input)
+		(at 328.93 121.92 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "2ee36951-1123-47e3-af9b-e36865d0e4cc")
+	)
+	(hierarchical_label "SPI3_MOSI"
+		(shape input)
+		(at 328.93 106.68 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "2705482e-caad-477b-885d-64f857225637")
+	)
+	(hierarchical_label "SPI3_MISO"
+		(shape output)
+		(at 328.93 129.54 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "e1b7d19e-41db-459d-9bc4-33b741694fdd")
 	)
 	(symbol
 		(lib_id "main-board:AMC131M02")
@@ -5967,7 +5967,7 @@
 				)
 			)
 		)
-		(property "Value" "TP_SPI2_MISO"
+		(property "Value" "TP_SPI3_MISO"
 			(at 292.1 208.28 0)
 			(effects
 				(font
@@ -7323,15 +7323,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d82e4ee5-02af-4156-8101-fb52a7f3e96c"
-					(reference "NT601")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "none"
 			(at 71.12 92.71 0)
 			(hide yes)
@@ -7340,5 +7331,14 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/d82e4ee5-02af-4156-8101-fb52a7f3e96c"
+					(reference "NT601")
+					(unit 1)
+				)
+			)
+		)
+	)
 )

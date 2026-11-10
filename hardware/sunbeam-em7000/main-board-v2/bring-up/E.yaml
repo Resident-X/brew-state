@@ -93,8 +93,8 @@ key_signals:
   net: AMC_AIN1P
   test_point: TP604
   block: 'supply current channel after its filter: 21 mV peak at 15 A rms; mains-referenced'
-- name: shared SPI2 data out
-  net: SPI2_MISO
+- name: shared SPI3 data out
+  net: SPI3_MISO
   test_point: TP610
   block: replies of the AMC131M02 and both MAX31865 converters
 - name: zero-crossing edge

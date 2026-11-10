@@ -176,8 +176,8 @@ The controller is the **STM32H743VIT6** from STMicroelectronics: an Arm Cortex-M
 | General-purpose I/O | 82 (Table 2): 80 named port pins (Table 9, LQFP100 column) and the two analogue-only pads PC2_C and PC3_C. 78 usable (76 digital pins and the two analogue-only pads) once PA13 and PA14 (serial-wire debug) and PH0 and PH1 (the crystal oscillator, which the crystal-derived control period spends) are taken | 32 | 32 + 13 digital + 5 conversion = 50 | 26 digital pins (20 rated for 5 V, 6 not) and, apart from them, the two analogue-only pads |
 | 16-bit ADCs / external inputs | 3 converters, resolution configurable to 16, 14, 12, 10 or 8 bits (§ 3.17, Table 2). Table 9 routes 16 conversion inputs to the LQFP100 pins: 14 reach ADC1, 12 reach ADC2, 4 reach ADC3 (PC0, PC1, PC2_C, PC3_C) | 4 inputs | 9 inputs | 7 inputs on pins |
 | Timers | 2 advanced-control (TIM1, TIM8), 10 general-purpose (TIM2–5, TIM12–17), 2 basic, 5 low-power, 1 high-resolution (Table 2, § 3.28). TIM2 and TIM5 are 32-bit, TIM1–5 and TIM8 have four channels, TIM12 and TIM15 two, the rest one | 7 channel uses (2 captures, 5 outputs) | Same | 4 timers used of 12 with I/O channels; the other 8 untouched |
-| I²C | 4 interfaces to 1 Mbit/s on the fast-mode-plus pins (§ 3.30). Table 10 puts them on five LQFP100 pin pairs: I2C1 and I2C4 on PB6/PB7 and on PB8/PB9, I2C4 also on PD12/PD13, I2C2 on PB10/PB11 and I2C3 on PA8/PC9; each pin of the five pairs is a fast-mode-plus *_f* pin (Table 9) | 1 bus | 2 buses | 2 further pairs free (PB6/PB7 and PD12/PD13) |
-| USART / UART / LPUART | 4 / 4 / 1 (Table 2) | 0 required; the I²C pairs also carry a UART | 0 required; a display link optional | Each of the two I²C pairs carries a UART, and PB6/PB7 carries a third |
+| I²C | 4 interfaces to 1 Mbit/s on the fast-mode-plus pins (§ 3.30). Table 10 puts them on five LQFP100 pin pairs: I2C1 and I2C4 on PB6/PB7 and on PB8/PB9, I2C4 also on PD12/PD13, I2C2 on PB10/PB11 and I2C3 on PA8/PC9; each pin of the five pairs is a fast-mode-plus *_f* pin (Table 9) | 1 bus | 2 buses | 2 further pairs free (PB10/PB11 and PD12/PD13) |
+| USART / UART / LPUART | 4 / 4 / 1 (Table 2) | 0 required; the I²C pairs also carry a UART | 0 required; a display link optional | Each of the two I²C pairs carries a UART, and PB10/PB11 carries a third |
 | SPI | Up to six (§ 3.33, Table 2), to 150 Mbit/s, 8-byte FIFOs with DMA | 0 | 1 bus, 2 chip selects | SPI1, SPI3, SPI4 and SPI6 also reach LQFP100 pins (Table 10); every chip select is a free pin |
 | External interrupt lines | The interrupt controller handles 89 event or interrupt lines, 28 configurable and 61 direct (§ 3.13); the I/O ports have interrupt capability (front page) | 1 (zero-cross, both edges) | 1 | The line count does not bind; the pin carrying the zero-cross reaches it |
 | Operating supply | 1.71 to 3.6 V in this package (Table 2, note 5) | 3.3 V | 3.3 V | — |
@@ -212,28 +212,28 @@ Each function is placed on a pin of the LQFP100 package, with the alternate func
 | Steam wand NTC | PC4 (32) | ADC12_INP4 | TT_a |
 | Spare analogue input (the analogue fallback of the steam-path pressure transducer) | PC5 (33) | ADC12_INP8 | TT_a |
 | Steam-path pressure transducer, I²C baseline (SCL, SDA) on a pair that also carries a UART | PB8 (95), PB9 (96) | I2C1_SCL, I2C1_SDA (AF4); also UART4_RX, UART4_TX (AF8) | FT_fh, FT_fh |
-| Flow-meter pulses (input capture) | PC6 (63) | TIM8_CH1 (AF3) | FT_h |
+| Flow-meter pulses (input capture) | PB10 (46) | TIM2_CH3 (AF1), a 32-bit timer; also USART3_TX (AF7) | FT_f |
 | Mains zero-cross, both edges (input capture; interrupt line 10) | PA10 (69) | TIM1_CH3 (AF1) | FT_u |
 | Coffee pump firing gate (compare) | PA9 (68) | TIM1_CH2 (AF1) | FT_u |
 | Steam pump firing gate (compare) | PA8 (67) | TIM1_CH1 (AF1) | FT_fha |
 | Gauge step clocks, two (compare) | PD14 (61), PD15 (62) | TIM4_CH3, TIM4_CH4 (AF2) | FT_h, FT_h |
 | Indicator anode-rail gate (PWM, open-drain; 5 V) | PB5 (91) | TIM3_CH2 (AF2) | FT |
-| Heater gate drive, coffee and steam (set once per half-cycle from the zero-cross interrupt) | PD2 (83), PD3 (84) | none (plain output) | FT_h, FT_h |
-| Valve drive, two-way and three-way | PD4 (85), PD5 (86) | none | FT_h, FT_h |
-| Gauge direction, two, and driver reset | PD0 (81), PD1 (82), PD6 (87) | none | FT_h ×3 |
+| Heater gate drive, coffee and steam (set once per half-cycle from the zero-cross interrupt) | PD11 (58), PD12 (59) | none (plain output) | FT_h, FT_fh |
+| Valve drive, two-way and three-way | PD13 (60), PB12 (51) | none | FT_fh, FT_u |
+| Gauge direction, two, and driver reset | PD8 (55), PD9 (56), PD10 (57) | none | FT_h ×3 |
 | Operator panel, five key and indicator lines (bidirectional; 5 V) | PE2 (1), PE3 (2), PE4 (3), PE5 (4), PE6 (5) | none | FT_h ×5 |
-| Low-water indicator cathode (open-drain; 5 V) | PE0 (97) | none | FT_h |
+| Low-water indicator cathode (open-drain; 5 V) | PE12 (42) | none | FT_h |
 | Buzzer (open-drain; 5 V) | PE1 (98) | none | FT_h |
-| Tank level, hot-water knob microswitch, steam knob microswitch | PE12 (42), PE13 (43), PE14 (44) | none (input) | FT_h ×3 |
-| Mains presence, coffee and steam element | PE15 (45), PD7 (88) | none (input) | FT_h, FT_h |
+| Tank level, hot-water knob microswitch, steam knob microswitch | PE0 (97), PE13 (43), PE14 (44) | none (input) | FT_h ×3 |
+| Mains presence, coffee and steam element | PE15 (45), PB11 (47) | none (input) | FT_h, FT_f |
 | **Anticipated channels** | | | |
-| Brew-path pressure transducer, second I²C bus on a pair that also carries a UART | PB10 (46), PB11 (47) | I2C2_SCL, I2C2_SDA (AF4); also USART3_TX, USART3_RX (AF7) | FT_f, FT_f |
+| Brew-path pressure transducer, second I²C bus on a pair that also carries a UART | PB6 (92), PB7 (93) | I2C4_SCL, I2C4_SDA (AF6); also I2C1_SCL, I2C1_SDA (AF4) and USART1_TX, USART1_RX (AF7) | FT_f, FT_fa |
 | Brew-path pressure, analogue fallback | PA6 (30) | ADC12_INP3 | FT_a |
 | Current sensing, one or two | PA2 (24), PA3 (25) | ADC12_INP14, ADC12_INP15 | FT_a, FT_ha |
 | Direct group-head instrumentation, one or two | PA7 (31), PB0 (34) | ADC12_INP7, ADC12_INP9 | TT_a, FT_a |
-| In-stream temperature converters, two, on one SPI bus: clock, data in, data out | PB13 (52), PB14 (53), PB15 (54) | SPI2_SCK, SPI2_MISO, SPI2_MOSI (AF5) | FT_u ×3 |
-| The two converters' chip selects | PB12 (51), PD8 (55) | PB12 is also SPI2_NSS (AF5); PD8 plain output | FT_u, FT_h |
-| Weight-based endpoint, two load-cell amplifiers, a data and a clock line each | PC8 (65), PC9 (66), PC11 (79), PC12 (80) | none (data in, clock out) | FT_h, FT_fh, FT_h, FT_h |
+| In-stream temperature converters, two, on one SPI bus: clock, data in, data out | PC10 (78), PC11 (79), PC12 (80) | SPI3_SCK, SPI3_MISO, SPI3_MOSI (AF6) | FT_ha, FT_h, FT_h |
+| The two converters' chip selects | PD0 (81), PD1 (82) | plain outputs | FT_h, FT_h |
+| Weight-based endpoint, two load-cell amplifiers, a data and a clock line each | PD3 (84), PD4 (85), PD5 (86), PD6 (87) | none (data in, clock out) | FT_h ×4 |
 | Real-time clock crystal (32.768 kHz) | PC14 (8), PC15 (9) | OSC32_IN, OSC32_OUT | FT, FT |
 | **Taken by the board itself** | | | |
 | Serial-wire debug | PA13 (72), PA14 (76) | JTMS-SWDIO, JTCK-SWCLK (the function after reset, Table 9) | FT, FT |
@@ -241,8 +241,8 @@ Each function is placed on a pin of the LQFP100 package, with the alternate func
 
 That is 32 pins for the current channels, and 18 for the anticipated ones (13 digital and 5 conversion), 50 in all. Against the criteria this section serves:
 
-- **Two I²C-capable pin pairs, one at least also UART-capable.** There are two in use and both also carry a UART: PB8/PB9 (I2C1 with UART4) and PB10/PB11 (I2C2 with USART3). Two further pairs are free, PB6/PB7 (I2C1 or I2C4 with USART1, AF7) and PD12/PD13 (I2C4). The same two signal lines of the steam-path transducer can therefore be a UART without a pin change, as `controller-board-function-forms.md` § Steam-path pressure sensing asks.
-- **An SPI bus with two chip selects.** SPI2 on PB13, PB14 and PB15 (AF5), with PB12 as its hardware chip select and PD8 as the second. A chip select is any free output, so a third converter costs one pin. The *_u* pins (PA9 to PA12 and PB12 to PB15, which this allocation uses for timers and the SPI bus) are supplied by VDD33USB, which Table 9 lists no pin for in this package, and they operate in the VDD range when no USB interface is used (Table 9, note 7; ST AN4938 § 2.1.2); this design uses none.
+- **Two I²C-capable pin pairs, one at least also UART-capable.** There are two in use and both also carry a UART: PB8/PB9 (I2C1 with UART4) and PB6/PB7 (I2C4 with USART1, AF7). Two further pairs are free, PB10/PB11 (I2C2 with USART3, AF7) and PD12/PD13 (I2C4). The same two signal lines of the steam-path transducer can therefore be a UART without a pin change, as `controller-board-function-forms.md` § Steam-path pressure sensing asks.
+- **An SPI bus with two chip selects.** SPI3 on PC10, PC11 and PC12 (AF6), with PD0 and PD1 as the two chip selects. A chip select is any free output, so a third converter costs one pin. The *_u* pins (PA9 to PA12 and PB12 to PB15, of which this allocation uses PA9, PA10 and PB12 for timers and a valve drive) are supplied by VDD33USB, which Table 9 lists no pin for in this package, and they operate in the VDD range when no USB interface is used (Table 9, note 7; ST AN4938 § 2.1.2); this design uses none.
 - **The load-cell amplifier lines.** Four free general-purpose pins, two per amplifier. Both amplifiers are read by driving the clock line and sampling the data line, which needs no peripheral.
 - **Half-cycle and phase-angle actuation.** The heater gates are plain outputs set once per supply half-cycle from the zero-cross interrupt (the layer below the seam, `DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM`). The pump gates are compare outputs on TIM1, on the time base that also timestamps the zero-cross, so a firing delay is a compare value from a captured crossing. TIM1_CH4 (PA11) and the eight untouched general-purpose timers remain.
 
@@ -250,18 +250,18 @@ That is 32 pins for the current channels, and 18 for the anticipated ones (13 di
 
 | Pin | Why it can meet 5 V | Structure (Table 9) |
 |---|---|---|
-| PC6 | The factory board pulls the flow-meter line up to 5 V through 2 kΩ (`controller-io.md`). The meter's output type, open-drain or push-pull, is still unread; PC6 is *FT_h*, so it is safe either way. The new board pulls the line up to 3.3 V (`controller-board-function-forms.md`, *Flow sensing*), which suits an open-drain output and is harmless to a push-pull one | FT_h |
+| PB10 | The factory board pulls the flow-meter line up to 5 V through 2 kΩ (`controller-io.md`). The meter's output type, open-drain or push-pull, is still unread; PB10 is *FT_f*, so it is safe either way. The new board pulls the line up to 3.3 V (`controller-board-function-forms.md`, *Flow sensing*), which suits an open-drain output and is harmless to a push-pull one | FT_f |
 | PE2, PE3, PE4, PE5, PE6 | Each key line is pulled toward the 5 V anode rail through its indicator elements while it is not sinking | FT_h ×5 |
-| PE0 | The low-water indicator's cathode sits near the gated 5 V rail through its elements | FT_h |
+| PE12 | The low-water indicator's cathode sits near the gated 5 V rail through its elements | FT_h |
 | PE1 | The buzzer stage's base network ends on the 5 V rail | FT_h |
 | PB5 | The anode-rail gate stage's base network ends on the 5 V rail | FT |
-| PC8, PC9, PC11, PC12 | Conditional: a load-cell amplifier supplied from 5 V drives its data line to 5 V | FT_h, FT_fh, FT_h, FT_h |
+| PD3, PD4, PD5, PD6 | Conditional: a load-cell amplifier supplied from 5 V drives its data line to 5 V | FT_h ×4 |
 
-All thirteen are rated, and 20 other pins with the rating are free (PA0, PA1, PA11, PA12, PA15, PB2, PB3, PB4, PB6, PB7, PC7, PC10, PC13, PD9, PD10, PD11, PD12, PD13, PE10, PE11). The earlier allocation could not be carried on this point: it put the five key lines on PE4 to PE8, and **PE7 and PE8 are *TT_ha* pins, rated 3.3 V only**; with the anode rail on, those two lines meet the 5 V rail through the indicator elements. The key lines are therefore moved to PE2 to PE6, five contiguous pins that are all *FT_h*. Their pull-ups are the external ones that `controller-board-function-forms.md` § Operator panel: keys, indicators, buzzer gives them, and the part's internal pull-up on them is left off, as note 4 requires. No level conversion is needed on any of the thirteen while the 5 V rail stays within the IRM-10 sheet's published 5 V +2.5 % worst case; the fitted module's own tolerance and over-voltage shutdown are to be re-read from its sheet, and whether a series resistor or a clamp is needed on the exposed inputs to survive a rail-high fault (shutdown at 5.75–6.75 V on the IRM-10 sheet, above the 5.5 V operating limit and possibly above the 6 V stress limit) is left to the board design task. The gauge lines do not need the rating: their buffer's inputs are TTL-level, driven from 3.3 V. PA4, PA5, PA7, PB1, PC4 and PC5, the *TT* pins that carry conversion inputs, take only the divided analogue levels the channel enumeration sets.
+All thirteen are rated, and 20 other pins with the rating are free (PA0, PA1, PA11, PA12, PA15, PB2, PB3, PB4, PB13, PB14, PB15, PC6, PC7, PC8, PC9, PC13, PD2, PD7, PE10, PE11). The earlier allocation could not be carried on this point: it put the five key lines on PE4 to PE8, and **PE7 and PE8 are *TT_ha* pins, rated 3.3 V only**; with the anode rail on, those two lines meet the 5 V rail through the indicator elements. The key lines are therefore moved to PE2 to PE6, five contiguous pins that are all *FT_h*. Their pull-ups are the external ones that `controller-board-function-forms.md` § Operator panel: keys, indicators, buzzer gives them, and the part's internal pull-up on them is left off, as note 4 requires. No level conversion is needed on any of the thirteen while the 5 V rail stays within the IRM-10 sheet's published 5 V +2.5 % worst case; the fitted module's own tolerance and over-voltage shutdown are to be re-read from its sheet, and whether a series resistor or a clamp is needed on the exposed inputs to survive a rail-high fault (shutdown at 5.75–6.75 V on the IRM-10 sheet, above the 5.5 V operating limit and possibly above the 6 V stress limit) is left to the board design task. The gauge lines do not need the rating: their buffer's inputs are TTL-level, driven from 3.3 V. PA4, PA5, PA7, PB1, PC4 and PC5, the *TT* pins that carry conversion inputs, take only the divided analogue levels the channel enumeration sets.
 
 **Spare capacity on the interfaces in use.** Placing a function is not the same as leaving room on its interface, so the room is stated for each.
 
-- **Timers.** Four timers carry the seven channels. TIM1 uses three of four channels, TIM4 two of four, TIM3 and TIM8 one each, so nine channels remain on the four, and TIM2, TIM5 and TIM12–TIM17 are untouched, two of them 32-bit.
+- **Timers.** Four timers carry the seven channels. TIM1 uses three of four channels, TIM4 two of four, TIM3 and TIM2 one each, so nine channels remain on the four, and TIM5 and TIM12–TIM17 are untouched, one of them 32-bit.
 - **Conversion.** Nine of the sixteen conversion pins are placed, all on ADC1 and ADC2, and the seven others remain: PA0, PA1, PA4, PA5, PB1, and PC2_C and PC3_C, the last two reaching ADC3 only. The converters resolve to 16 bits (§ 3.17).
 - **Serial buses.** At the control step of 10 ms (`controller-io.md`), a transfer of the whole of a seven-byte exchange (a one-byte address and six data bytes) on an I²C bus takes 65 bit-times with nine clocks per byte and a start and stop condition: 0.65 ms at 100 kbit/s, which is 6.5 % of the step, and 0.16 ms at 400 kbit/s, 1.6 %. The bus carries one transducer, whose address is fixed (`controller-board-function-forms.md` § Steam-path pressure sensing), so the second bus is where a second one goes rather than a second address. The seven-byte exchange is an assumed bound; the transducer's own protocol is read by the design task for the board that carries it. The SPI bus is shared by two converters on separate chip selects; at a clock of 1 MHz, an exchange of an address byte and two data bytes takes 24 µs, 0.24 % of the step per converter. That clock and size are likewise a stated assumption.
 - **Interrupt lines.** One line is used, and no other channel in the enumeration or among the anticipated asks for one.
@@ -275,22 +275,22 @@ The earlier design allocated pins on a bought module carrying this chip (`contro
 
 | Earlier row (pin it named) | Re-read against DS12110 | Disposition here |
 |---|---|---|
-| Coffee and steam heater gates (PB0, PB1; TIM3_CH3, TIM3_CH4, AF2) | Confirmed. PB0 and PB1 also carry conversion inputs (ADC12_INP9, ADC12_INP5) | Moved to PD2, PD3, plain outputs, to keep conversion pins for conversion |
-| Coffee and steam pump gates (PA9 plain; PD8 plain) | PA9 is TIM1_CH2 (AF1), which the earlier row expected and had not verified: now verified. PD8 carries no timer channel | Pump gates on PA9 (TIM1_CH2) and PA8 (TIM1_CH1), both compare outputs; PD8 becomes a chip select |
+| Coffee and steam heater gates (PB0, PB1; TIM3_CH3, TIM3_CH4, AF2) | Confirmed. PB0 and PB1 also carry conversion inputs (ADC12_INP9, ADC12_INP5) | Moved to PD11, PD12, plain outputs, to keep conversion pins for conversion |
+| Coffee and steam pump gates (PA9 plain; PD8 plain) | PA9 is TIM1_CH2 (AF1), which the earlier row expected and had not verified: now verified. PD8 carries no timer channel | Pump gates on PA9 (TIM1_CH2) and PA8 (TIM1_CH1), both compare outputs; PD8 becomes a gauge-direction output |
 | Heater energy meters (PC7, USART6_RX AF7; PA3, USART2_RX AF7) | Confirmed | Not carried: the meters are not kept (`controller-board-function-forms.md` § Heater mains-presence confirm) |
-| Two pressure sensors on two I²C buses (PB8/PB9 on I2C1, PB10/PB11 on I2C2, AF4) | Confirmed. PB8/PB9 also carry I2C4 (AF6), UART4 (AF8) and PB10/PB11 carry USART3 (AF7) | Carried, with the roles swapped: the steam-path transducer on PB8/PB9, the brew-path one on PB10/PB11. Both pairs also carry a UART |
+| Two pressure sensors on two I²C buses (PB8/PB9 on I2C1, PB10/PB11 on I2C2, AF4) | Confirmed. PB8/PB9 also carry I2C4 (AF6), UART4 (AF8) and PB10/PB11 carry USART3 (AF7) | Carried, with the roles swapped: the steam-path transducer on PB8/PB9, the brew-path one on PB6/PB7 (I2C4, AF6). Both pairs also carry a UART |
 | Three thermistor channels (PC0, PC1, PC4) | Confirmed: ADC123_INP10, ADC123_INP11, ADC12_INP4. The earlier note that PC2 and PC3 do not exist on the 100-lead package is confirmed: only the analogue-only pads PC2_C and PC3_C (pins 17, 18), which reach ADC3 only | Carried |
 | Three PT1000 channels, puck inlet, outlet and steam output (PA1, PA4, PA6), each marked *ADC channel not yet verified* | Verified: PA1 is ADC1_INP17, PA4 is ADC12_INP18 (and DAC1_OUT1), PA6 is ADC12_INP3 | The PT1000 probes are read by dedicated converters (`DEC-IN-STREAM-PROBES-ANTICIPATED`), so these three stay conversion pins; PA6 is placed as the brew-path analogue fallback |
-| Valve relay module inputs (PD7, PD10, PD14, PD15) | All four are FT_h, so the earlier "still to be checked" is answered: rated for 5 V | Not carried: the module is replaced by a designed stage on two pins (PD4, PD5); PD14 and PD15 take the gauge step clocks |
-| Gauge lines through the TTL-input buffer (PD0, PD1, PD4, PD5, PD6) | The earlier note asked for the buffer's 5 V analysis to be redone, since it was made for another part: done, no 5 V reaches these pins | PD0, PD1, PD6 carried as plain outputs; the step clocks move to timer outputs |
+| Valve relay module inputs (PD7, PD10, PD14, PD15) | All four are FT_h, so the earlier "still to be checked" is answered: rated for 5 V | Not carried: the module is replaced by a designed stage on two pins (PD13, PB12); PD14 and PD15 take the gauge step clocks |
+| Gauge lines through the TTL-input buffer (PD0, PD1, PD4, PD5, PD6) | The earlier note asked for the buffer's 5 V analysis to be redone, since it was made for another part: done, no 5 V reaches these pins | PD8, PD9, PD10 carried as plain outputs; the step clocks move to timer outputs |
 | Five key lines (PE4 to PE8) | PE4, PE5, PE6 are FT_h. **PE7 and PE8 are TT_ha: not rated for 5 V** | PE4 to PE6 carried; PE7 and PE8 replaced by PE2, PE3 (FT_h) |
 | Anode-rail gate (PB5; TIM3_CH2 AF2, *AF not yet verified*) | Verified: TIM3_CH2 is AF2; PB5 is FT | Carried |
 | Buzzer (PB4) | PB4 is FT, but it resets as NJTRST (Table 9) | Moved to PE1, which carries no debug function |
-| Low-water indicator cathode (PA0) | PA0 is FT_a | Moved to PE0, to keep PA0 (ADC1_INP16) for conversion |
-| Tank level (PE9), hot-water knob (PE15), steam knob (PC6) | PE9 is TT_ha, fit for a 3.3 V input; PE15 FT_h; PC6 FT_h | Moved to PE12, PE13, PE14, so the inputs sit together; PE15 is taken by a mains-presence input and PC6 by the flow meter |
-| Flow meter (PA8; TIM1_CH1 AF1; *5 V tolerance to be checked*) | TIM1_CH1 on PA8 is AF1, confirmed. PA8 is FT_fha: rated for 5 V | Moved to PC6 (TIM8_CH1, AF3, FT_h) so that the zero-cross and pump gates share TIM1 and the flow capture has a timer of its own |
+| Low-water indicator cathode (PA0) | PA0 is FT_a | Moved to PE12, to keep PA0 (ADC1_INP16) for conversion |
+| Tank level (PE9), hot-water knob (PE15), steam knob (PC6) | PE9 is TT_ha, fit for a 3.3 V input; PE15 FT_h; PC6 FT_h | Tank level on PE0, knobs on PE13, PE14; PE15 is taken by a mains-presence input and PC6 is left free (the flow meter is on PB10) |
+| Flow meter (PA8; TIM1_CH1 AF1; *5 V tolerance to be checked*) | TIM1_CH1 on PA8 is AF1, confirmed. PA8 is FT_fha: rated for 5 V | Moved to PB10 (TIM2_CH3, AF1, FT_f) so that the zero-cross and pump gates share TIM1 and the flow capture has a 32-bit timer of its own |
 | Mains zero-cross (PA10; TIM1_CH3 AF1, *AF not yet verified*) | Verified: TIM1_CH3 is AF1 | Carried |
-| Mains-presence confirm (*unassigned*) | — | PE15, PD7, plain inputs |
+| Mains-presence confirm (*unassigned*) | — | PE15, PB11, plain inputs |
 | Pins the module encumbered (screen, card slot, flash, camera header) | Not a property of the bare chip | Not carried; all of those pins are free on the board |
 
 No row of the earlier allocation is carried on its own authority. Every row reused above was re-read in the datasheet and none is carried as *not verified*. The module's header map (`controller-design/h743-header-pinout.csv`) is not a datasheet matter and is not used.

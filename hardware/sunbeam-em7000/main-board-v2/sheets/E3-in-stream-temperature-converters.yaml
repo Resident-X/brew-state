@@ -1,5 +1,5 @@
 sheet: In-stream temperature converters
-function: Two RTD-to-digital converters on the shared SPI2 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
+function: Two RTD-to-digital converters on the shared SPI3 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
 parts:
 - ref: C640
   lib_id: Device:C
@@ -526,17 +526,17 @@ nets:
     - C647.2
     - R642.2
     - R647.2
-  SPI2_SCK:
+  SPI3_SCK:
     scope: global
     pins:
     - U620.12
     - U621.12
-  SPI2_MOSI:
+  SPI3_MOSI:
     scope: global
     pins:
     - U620.11
     - U621.11
-  SPI2_MISO:
+  SPI3_MISO:
     scope: global
     pins:
     - U620.14
@@ -565,7 +565,7 @@ no_connect:
 custom_symbols: []
 custom_footprints: []
 power_flags: []
-notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI2_SCK, SPI2_MOSI, SPI2_MISO global
+notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI3_SCK, SPI3_MOSI, SPI3_MISO global
   labels shared by both blocks, its own chip-select label). The reference resistor sits above the converter between BIAS/REFIN+ and REFIN-/ISENSOR/FORCE+; the filter capacitor sits across RTDIN+ and RTDIN- beside the header;
   the configuration parts sit between the converter and the probe header with a legend table: 4-wire = R642 fitted (FORCE2 to GND), R643 not fitted, J622 and J623 open; 3-wire = R642 removed, R643 fitted (FORCE2 to FORCE+),
   the FORCE-/RTDIN- link (J623) fitted, the FORCE+/RTDIN+ link (J622) open; 2-wire = R642 fitted, R643 not fitted, both links J622 and J623 fitted. (Probe 2: R647, R648, J627, J628.) R643 and R648 carry the field dnp: true.

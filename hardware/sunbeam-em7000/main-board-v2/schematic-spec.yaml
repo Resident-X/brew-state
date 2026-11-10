@@ -164,7 +164,7 @@ header_to_wall_board:
   - pin: 6
     net: MAINS_PRES_S
     direction: reserved input
-    use: steam mains-presence confirm, not drawn (no parts); PD7 reserved
+    use: steam mains-presence confirm, not drawn (no parts); PB11 reserved
   - pin: 7
     net: null
     direction: spare
@@ -187,22 +187,22 @@ header_to_wall_board:
     note: 'WB_RET: the eighth board-mounted 6.3 mm blade (C20626104, owner decision D8 drawn at the blade), a pad of the tab section in the NEUTRAL pour above the shunt; no retained lead lands on it, the wall board return
       wire ends in a female push-on on it'
   channels_crossing_header_for_the_pin_allocation_record:
-  - HEAT_C_DRV -> HEAT_C_LED_K (controller PD2)
-  - HEAT_S_DRV -> HEAT_S_LED_K (controller PD3)
+  - HEAT_C_DRV -> HEAT_C_LED_K (controller PD11)
+  - HEAT_S_DRV -> HEAT_S_LED_K (controller PD12)
   - +5V_WB (rail)
   - GND (rail)
   - MAINS_PRES_C (controller PE15, reserved)
-  - MAINS_PRES_S (controller PD7, reserved)
+  - MAINS_PRES_S (controller PB11, reserved)
 anticipated_channel_kinds:
 - kind: 1
   name: Supply voltage measurement
   placed: true
-  where: 'sheet "Supply voltage and current measurement": AMC131M02 channel 0 through the LINE to NEUTRAL divider; digital over SPI2 (the division record''s analogue conditioning block VM_C became the converter''s serial link;
+  where: 'sheet "Supply voltage and current measurement": AMC131M02 channel 0 through the LINE to NEUTRAL divider; digital over SPI3 (the division record''s analogue conditioning block VM_C became the converter''s serial link;
     PB1 stays free)'
 - kind: 2
   name: Weight-based endpoint, two load-cell channels
   placed: true
-  where: 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PC8, PC9, PC11, PC12'
+  where: 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PD3 to PD6'
 - kind: 3
   name: Further temperature and pressure inputs of the kinds in use
   placed: false
@@ -240,11 +240,11 @@ anticipated_channel_kinds:
 - kind: 11
   name: In-stream temperature, two PT1000 probes
   placed: true
-  where: 'sheet "In-stream temperature converters": PT1_H, PT2_H and two RTD converters on SPI2 (PB13, PB14, PB15), chip selects PB12 and PD8'
+  where: 'sheet "In-stream temperature converters": PT1_H, PT2_H and two RTD converters on SPI3 (PC10, PC11, PC12), chip selects PD0 and PD1'
 - kind: 12
   name: Brew-path pressure transducer
   placed: true
-  where: 'sheet "Flow, pressure and spare analogue inputs": BREW_D (I2C2 on PB10/PB11) and BREW_A (analogue fallback to PA6)'
+  where: 'sheet "Flow, pressure and spare analogue inputs": BREW_D (I2C4 on PB6/PB7) and BREW_A (analogue fallback to PA6)'
 - kind: 13
   name: Supply frequency measurement
   placed: true
@@ -378,7 +378,7 @@ controller_pin_assignment:
     net: 'NO_CONNECT: PE11 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 42
     port_or_name: PE12
-    net: TANK_LEVEL
+    net: LOWWATER_K
   - pin: 43
     port_or_name: PE13
     net: KNOB_HOT
@@ -390,10 +390,10 @@ controller_pin_assignment:
     net: MAINS_PRES_C
   - pin: 46
     port_or_name: PB10
-    net: BREW_SCL
+    net: FLOW_IN
   - pin: 47
     port_or_name: PB11
-    net: BREW_SDA
+    net: MAINS_PRES_S
   - pin: 48
     port_or_name: VCAP
     net: VCAP
@@ -405,34 +405,34 @@ controller_pin_assignment:
     net: +3V3
   - pin: 51
     port_or_name: PB12
-    net: PT1_CS
+    net: VALVE_3W_DRV
   - pin: 52
     port_or_name: PB13
-    net: SPI2_SCK
+    net: 'NO_CONNECT: PB13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 53
     port_or_name: PB14
-    net: SPI2_MISO
+    net: 'NO_CONNECT: PB14 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 54
     port_or_name: PB15
-    net: SPI2_MOSI
+    net: 'NO_CONNECT: PB15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 55
     port_or_name: PD8
-    net: PT2_CS
+    net: GAUGE_DIR1
   - pin: 56
     port_or_name: PD9
-    net: AMC_CS
+    net: GAUGE_DIR2
   - pin: 57
     port_or_name: PD10
-    net: AMC_DRDY
+    net: GAUGE_RST
   - pin: 58
     port_or_name: PD11
-    net: AMC_RESET
+    net: HEAT_C_DRV
   - pin: 59
     port_or_name: PD12
-    net: 'NO_CONNECT: PD12 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: HEAT_S_DRV
   - pin: 60
     port_or_name: PD13
-    net: 'NO_CONNECT: PD13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: VALVE_2W_DRV
   - pin: 61
     port_or_name: PD14
     net: GAUGE_STEP1
@@ -441,16 +441,16 @@ controller_pin_assignment:
     net: GAUGE_STEP2
   - pin: 63
     port_or_name: PC6
-    net: FLOW_IN
+    net: 'NO_CONNECT: PC6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 64
     port_or_name: PC7
     net: POL_OUT
   - pin: 65
     port_or_name: PC8
-    net: WT1_DATA
+    net: AMC_RESET
   - pin: 66
     port_or_name: PC9
-    net: WT1_CLK
+    net: 'NO_CONNECT: PC9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 67
     port_or_name: PA8
     net: PUMP_S_GATE
@@ -486,37 +486,37 @@ controller_pin_assignment:
     net: 'NO_CONNECT: PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 78
     port_or_name: PC10
-    net: 'NO_CONNECT: PC10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: SPI3_SCK
   - pin: 79
     port_or_name: PC11
-    net: WT2_DATA
+    net: SPI3_MISO
   - pin: 80
     port_or_name: PC12
-    net: WT2_CLK
+    net: SPI3_MOSI
   - pin: 81
     port_or_name: PD0
-    net: GAUGE_DIR1
+    net: PT1_CS
   - pin: 82
     port_or_name: PD1
-    net: GAUGE_DIR2
+    net: PT2_CS
   - pin: 83
     port_or_name: PD2
-    net: HEAT_C_DRV
+    net: AMC_CS
   - pin: 84
     port_or_name: PD3
-    net: HEAT_S_DRV
+    net: WT1_DATA
   - pin: 85
     port_or_name: PD4
-    net: VALVE_2W_DRV
+    net: WT1_CLK
   - pin: 86
     port_or_name: PD5
-    net: VALVE_3W_DRV
+    net: WT2_DATA
   - pin: 87
     port_or_name: PD6
-    net: GAUGE_RST
+    net: WT2_CLK
   - pin: 88
     port_or_name: PD7
-    net: MAINS_PRES_S
+    net: AMC_DRDY
   - pin: 89
     port_or_name: PB3
     net: SWO
@@ -528,10 +528,10 @@ controller_pin_assignment:
     net: ANODE_GATE
   - pin: 92
     port_or_name: PB6
-    net: 'NO_CONNECT: PB6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: BREW_SCL
   - pin: 93
     port_or_name: PB7
-    net: 'NO_CONNECT: PB7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: BREW_SDA
   - pin: 94
     port_or_name: BOOT0
     net: BOOT0
@@ -543,7 +543,7 @@ controller_pin_assignment:
     net: STM_SDA
   - pin: 97
     port_or_name: PE0
-    net: LOWWATER_K
+    net: TANK_LEVEL
   - pin: 98
     port_or_name: PE1
     net: BUZZER
@@ -595,11 +595,11 @@ derating_policy_proposed:
 departures_from_the_division_record:
 - 'Interlock drive has 21 parts, not 19 (counting the buffer as one part): R205 and R206 (100 kohm, each coupling node to ground) are added, because the record''s circuit holds the coil about 1.2 s when the output rests high
   after a rising edge (circuit-proof/A_removal_gate_high_rec.log); the record''s sentence that a level cannot cross the coupling capacitor is to be amended.'
-- The supply voltage and supply current are read digitally by the AMC131M02 over SPI2, so the record's conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.
+- The supply voltage and supply current are read digitally by the AMC131M02 over SPI3, so the record's conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.
 - Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 59 kohm 2512 resistors (each at half the line, 126.5 V rms, against the 300 V working voltage the maker rates; the OEM's single 120 kohm part
   would see 253 V rms against a 200 V working voltage); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.
 - Three Extended machine-placed part types are added to the record's five (PESD5V0F1BL C45961, BAT54SW C78606, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.
-- The debug SWO pin PB3 is wired; the allocation record's free list loses PA0, PB3, PC7, PD9, PD10 and PD11.
+- The debug SWO pin PB3 is wired; the allocation record's free list loses PA0, PB3, PC7, PC8, PD2 and PD7.
 - The 8 MHz converter clock oscillator Y601 is added (the AMC131M02 has no oscillator of its own).
 - The buffer U_PL is two inverting SN74AHCT1G14 gates in series, U201 and U203 (C7486), with R208 (100 kohm) from the net between them to ground and C206 beside U203, not the record's one non-inverting buffer, because the
   non-inverting part has no stock; the polarity, the pull-downs R201 R202 and the pump edge are the record's (circuit-proof.md A, rows "input network" and "supply ramps"; the single-inverter alternative was rejected).
@@ -2938,7 +2938,7 @@ sheets:
     TANK_LEVEL:
       scope: global
       pins:
-      - U401.42
+      - U401.97
     KNOB_HOT:
       scope: global
       pins:
@@ -2954,43 +2954,43 @@ sheets:
     BREW_SCL:
       scope: global
       pins:
-      - U401.46
+      - U401.92
     BREW_SDA:
       scope: global
       pins:
-      - U401.47
+      - U401.93
     PT1_CS:
       scope: global
       pins:
-      - U401.51
-    SPI2_SCK:
+      - U401.81
+    SPI3_SCK:
       scope: global
       pins:
-      - U401.52
-    SPI2_MISO:
+      - U401.78
+    SPI3_MISO:
       scope: global
       pins:
-      - U401.53
-    SPI2_MOSI:
+      - U401.79
+    SPI3_MOSI:
       scope: global
       pins:
-      - U401.54
+      - U401.80
     PT2_CS:
       scope: global
       pins:
-      - U401.55
+      - U401.82
     AMC_CS:
       scope: global
       pins:
-      - U401.56
+      - U401.83
     AMC_DRDY:
       scope: global
       pins:
-      - U401.57
+      - U401.88
     AMC_RESET:
       scope: global
       pins:
-      - U401.58
+      - U401.65
     GAUGE_STEP1:
       scope: global
       pins:
@@ -3002,7 +3002,7 @@ sheets:
     FLOW_IN:
       scope: global
       pins:
-      - U401.63
+      - U401.46
     POL_OUT:
       scope: global
       pins:
@@ -3010,11 +3010,11 @@ sheets:
     WT1_DATA:
       scope: global
       pins:
-      - U401.65
+      - U401.84
     WT1_CLK:
       scope: global
       pins:
-      - U401.66
+      - U401.85
     PUMP_S_GATE:
       scope: global
       pins:
@@ -3030,43 +3030,43 @@ sheets:
     WT2_DATA:
       scope: global
       pins:
-      - U401.79
+      - U401.86
     WT2_CLK:
       scope: global
       pins:
-      - U401.80
+      - U401.87
     GAUGE_DIR1:
       scope: global
       pins:
-      - U401.81
+      - U401.55
     GAUGE_DIR2:
       scope: global
       pins:
-      - U401.82
+      - U401.56
     HEAT_C_DRV:
       scope: global
       pins:
-      - U401.83
+      - U401.58
     HEAT_S_DRV:
       scope: global
       pins:
-      - U401.84
+      - U401.59
     VALVE_2W_DRV:
       scope: global
       pins:
-      - U401.85
+      - U401.60
     VALVE_3W_DRV:
       scope: global
       pins:
-      - U401.86
+      - U401.51
     GAUGE_RST:
       scope: global
       pins:
-      - U401.87
+      - U401.57
     MAINS_PRES_S:
       scope: global
       pins:
-      - U401.88
+      - U401.47
     ANODE_GATE:
       scope: global
       pins:
@@ -3082,7 +3082,7 @@ sheets:
     LOWWATER_K:
       scope: global
       pins:
-      - U401.97
+      - U401.42
     BUZZER:
       scope: global
       pins:
@@ -3118,20 +3118,20 @@ sheets:
     reason: 'PE10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.41
     reason: 'PE11 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.59
-    reason: 'PD12 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.60
-    reason: 'PD13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.52
+    reason: 'PB13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.53
+    reason: 'PB14 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.54
+    reason: 'PB15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.63
+    reason: 'PC6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.66
+    reason: 'PC9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.77
     reason: 'PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.78
-    reason: 'PC10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.90
     reason: 'PB4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.92
-    reason: 'PB6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.93
-    reason: 'PB7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: J401.7
     reason: 'KEY: Cortex Debug 10-pin pin 7 is the key position, no contact'
   - pin: J401.8
@@ -3167,8 +3167,8 @@ sheets:
     U401: draw all 100 pins; pins listed under no_connect carry a no-connect flag. Supply pins: five VDD (11, 27, 50, 75, 100) each with its own 100 nF placed at the pin, five VSS (10, 26, 49, 74, 99), VSSA (19) to GND, VDDA
     (21) on +3V3A, VREF+ (20) on VREF+, VBAT (6) on +3V3, VCAP (48 and 73) joined on net VCAP with one 2.2 uF at each pin.
 
-    Crystals: Y401 with C414 and C415 close to PH0/PH1; Y402 with C416 and C417 close to PC14/PC15. Probe point TP406 is on HSE_IN, a probe point on the crystal''s own node: no pin is free for a buffered clock (PA8 is MCO1
-    and is the steam pump gate; PC9 is MCO2 and is a load-cell clock), so the clock is observed at TP406 with a 10 Mohm 10 pF-class probe and the loading noted in the bring-up record.
+    Crystals: Y401 with C414 and C415 close to PH0/PH1; Y402 with C416 and C417 close to PC14/PC15. Probe point TP406 is on HSE_IN, a probe point on the crystal''s own node: no pin is used for a buffered clock (PA8 is MCO1
+    and is the steam pump gate; PC9 is MCO2, unconnected and available for one, which TP406 does not need today), so the clock is observed at TP406 with a 10 Mohm 10 pF-class probe and the loading noted in the bring-up record.
 
     Reset: SW401 and C418 from NRST to GND; no external pull-up (the part has one, 30 to 50 kohm, inside the 10 kohm to 1 Mohm the supervisor''s sheet asks of its RESET pull-up); J401.10 on NRST. U402 (TLV803S supervisor)
     on +3V3 with C422 at its VDD pin: its open-drain RESET (pin 2) is on NRST, wire-ORed with the button, the probe and the controller''s own reset, and holds the controller in reset while +3V3 is under 2.87 to 2.99 V and
@@ -3195,7 +3195,7 @@ sheets:
 - order: 5
   sheet: Supply voltage and current measurement
   function: One isolated two-channel delta-sigma converter reads the mains voltage through a three-resistor divider (channel 0) and the supply current through the neutral shunt (channel 1) and hands both to the controller
-    over the shared SPI2 bus.
+    over the shared SPI3 bus.
   parts:
   - ref: U601
     lib_id: AMC131M02
@@ -3719,7 +3719,7 @@ sheets:
     sim_exclude: true
   - ref: TP610
     lib_id: Connector:TestPoint
-    value: TP_SPI2_MISO
+    value: TP_SPI3_MISO
     rating: ''
     footprint: main-board:TestPoint_Pad_D1.0mm_Tight
     mpn: ''
@@ -3727,7 +3727,7 @@ sheets:
     lcsc: none
     class: none
     hand: false
-    function: 'key signal: shared SPI2 data-out line, carries the converter''s and both RTD converters'' replies'
+    function: 'key signal: shared SPI3 data-out line, carries the converter''s and both RTD converters'' replies'
     mains: false
     sim_exclude: true
   nets:
@@ -3869,7 +3869,7 @@ sheets:
       - R609.2
       - U601.17
       - TP602.1
-    SPI2_SCK:
+    SPI3_SCK:
       scope: global
       pins:
       - R610.1
@@ -3878,7 +3878,7 @@ sheets:
       pins:
       - R610.2
       - U601.18
-    SPI2_MOSI:
+    SPI3_MOSI:
       scope: global
       pins:
       - R611.1
@@ -3902,7 +3902,7 @@ sheets:
       pins:
       - U601.12
       - R613.1
-    SPI2_MISO:
+    SPI3_MISO:
       scope: global
       pins:
       - R613.2
@@ -4185,8 +4185,8 @@ sheets:
   drawing_notes: 'Drawing: left to right: LINE -> R630 -> R631 -> U602 pin 1; U602 pin 2 -> NEUTRAL (mains side, left). U602 pins 3, 4 on the right (low-voltage side): pin 3 to GND, pin 4 to the node ZC_IN, with R632 up to
     +3V3 and C630 down to GND, and the global label ZC_IN leaving to the right. Mark the barrier between the optocoupler''s two halves with a dashed line and the text "mains | low voltage".
 
-    The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PD7) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764
-    and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PD7).
+    The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PB11) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764
+    and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PB11).
 
     Both crossings: the LEDs are antiparallel, so the output falls once per half-cycle whatever the polarity; the supply''s period is the time between like edges (division record: PA10, capture on both edges).
 
@@ -4661,7 +4661,7 @@ sheets:
     lcsc: C10425
     class: extended
     hand: false
-    function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PC6 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)'
+    function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PB10 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)'
     mains: false
     sim_exclude: false
     dnp: false
@@ -6004,7 +6004,7 @@ sheets:
     records leave to the owner.'
 - order: 10
   sheet: In-stream temperature converters
-  function: Two RTD-to-digital converters on the shared SPI2 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
+  function: Two RTD-to-digital converters on the shared SPI3 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
   parts:
   - ref: C640
     lib_id: Device:C
@@ -6531,17 +6531,17 @@ sheets:
       - C647.2
       - R642.2
       - R647.2
-    SPI2_SCK:
+    SPI3_SCK:
       scope: global
       pins:
       - U620.12
       - U621.12
-    SPI2_MOSI:
+    SPI3_MOSI:
       scope: global
       pins:
       - U620.11
       - U621.11
-    SPI2_MISO:
+    SPI3_MISO:
       scope: global
       pins:
       - U620.14
@@ -6570,7 +6570,7 @@ sheets:
   custom_symbols: []
   custom_footprints: []
   power_flags: []
-  drawing_notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI2_SCK, SPI2_MOSI, SPI2_MISO
+  drawing_notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI3_SCK, SPI3_MOSI, SPI3_MISO
     global labels shared by both blocks, its own chip-select label). The reference resistor sits above the converter between BIAS/REFIN+ and REFIN-/ISENSOR/FORCE+; the filter capacitor sits across RTDIN+ and RTDIN- beside
     the header; the configuration parts sit between the converter and the probe header with a legend table: 4-wire = R642 fitted (FORCE2 to GND), R643 not fitted, J622 and J623 open; 3-wire = R642 removed, R643 fitted (FORCE2
     to FORCE+), the FORCE-/RTDIN- link (J623) fitted, the FORCE+/RTDIN+ link (J622) open; 2-wire = R642 fitted, R643 not fitted, both links J622 and J623 fitted. (Probe 2: R647, R648, J627, J628.) R643 and R648 carry the field
@@ -7776,7 +7776,7 @@ sheets:
       vertical axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
   power_flags: []
   drawing_notes: 'Each relay has its contact between the valve''s tab net and VALVE_COM; VALVE_COM runs to the relay-side clip of the shared valve fuse F731, whose other clip is NEUTRAL: the valve''s live lead arrives on LINE1
-    by the retained harness wire, so the contact opens the return. Coil side: +5V -> coil -> AO3400A drain; 1N4148WS across the coil (cathode on +5V); gate from VALVE_2W_DRV (PD4) / VALVE_3W_DRV (PD5) through 100 ohm, 100
+    by the retained harness wire, so the contact opens the return. Coil side: +5V -> coil -> AO3400A drain; 1N4148WS across the coil (cathode on +5V); gate from VALVE_2W_DRV (PD13) / VALVE_3W_DRV (PB12) through 100 ohm, 100
     k to ground. Draw K731 above K741. Contacts are mains (draw them to the left, with the barrier line between contact and coil sides).'
 - order: 14
   sheet: Heater LED drive and wall board header
@@ -7993,7 +7993,7 @@ sheets:
     class: basic
     hand: false
     function: 'series resistor of the steam mains-presence input: with the pull-down R775 it divides the wall board''s level by 0.752 (82/(27+82)), so the highest level the wall board can drive, +5V_WB at 5.125 V, reaches
-      PD7 at 3.85 V, under the 4.0 V limit while VDD is absent (DS12110 Table 109)'
+      PB11 at 3.85 V, under the 4.0 V limit while VDD is absent (DS12110 Table 109)'
     mains: false
     sim_exclude: false
   - ref: R775
@@ -8006,7 +8006,7 @@ sheets:
     lcsc: C23254
     class: basic
     hand: false
-    function: 'pull-down of the steam mains-presence input at the controller pin: holds PD7 low with the wall board absent or its output off (leakage 250 nA x 82 kohm = 21 mV against VIL 0.99 V)'
+    function: 'pull-down of the steam mains-presence input at the controller pin: holds PB11 low with the wall board absent or its output off (leakage 250 nA x 82 kohm = 21 mV against VIL 0.99 V)'
     mains: false
     sim_exclude: false
   nets:
@@ -8105,9 +8105,9 @@ sheets:
   custom_footprints: []
   power_flags: []
   drawing_notes: 'Header WB_LV10 pinout is fixed in the shared conventions: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K, 4 GND, 5 MAINS_PRES_C, 6 MAINS_PRES_S (each through a 27 kohm series resistor, R764 and R774, to the controller
-    pin PE15 or PD7, where an 82 kohm pull-down, R765 or R775, to ground holds the pin low with the wall board absent; the header-side nets are MAINS_PRES_C_J and MAINS_PRES_S_J), 7-10 spare. Each LED return runs from its
-    header pin through a 180 ohm resistor (R763, R773) to the AO3400A drain; gate from HEAT_C_DRV (PD2) / HEAT_S_DRV (PD3). +5V reaches the header through JP761, with TP761 on +5V_WB. Draw the header at the right edge of the
-    sheet; no mains on this sheet.'
+    pin PE15 or PB11, where an 82 kohm pull-down, R765 or R775, to ground holds the pin low with the wall board absent; the header-side nets are MAINS_PRES_C_J and MAINS_PRES_S_J), 7-10 spare. Each LED return runs from its
+    header pin through a 180 ohm resistor (R763, R773) to the AO3400A drain; gate from HEAT_C_DRV (PD11) / HEAT_S_DRV (PD12). +5V reaches the header through JP761, with TP761 on +5V_WB. Draw the header at the right edge of
+    the sheet; no mains on this sheet.'
 - order: 15
   sheet: Gauge drive
   function: Octal buffer that lifts the five 3.3 V gauge control lines to 5 V logic for the retained stepper driver, and the gauge harness header SP2.
@@ -9142,7 +9142,7 @@ sheets:
   drawing_notes: 'CON2 (J821) pin map from connector-pinouts.md, contact 1 nearest the bottom edge of the board: 1 buzzer drive side (BUZZER_P, +5V through 100 ohm), 2 buzzer return (BUZZER_N, switched to ground), 3 PWR (KEY1),
     4 MAN (KEY2), 5 ONE (KEY3), 6 TWO (KEY4), 7 anode rail (ANODE_RAIL), 8 PRG (KEY5), 9 GND. KEY1..KEY5 follow the record''s table order PWR, MAN, ONE, TWO, PRG. Anode rail: ANODE_GATE (PB5) -> R821 -> Q821 (AO3400A) pulls
     the gate of Q822 (AO3401A, source on +5V) low through two 22 k pull-ups; Q822 drain -> ANODE_SW (TP821) -> JP821 -> ANODE_RAIL, 22 k bleed to ground. Key lines: 10 k to +3V3, read as inputs, sunk by the controller (open-drain)
-    to light an indicator; configure KEY pins with internal pulls off. Low-water: LOWWATER_K (PE0) -> R829 -> Q824, drain = LOWWATER_CATHODE (SP2.6, on the gauge sheet). Buzzer: BUZZER (PE1) -> R826 -> Q823; D821 across the
+    to light an indicator; configure KEY pins with internal pulls off. Low-water: LOWWATER_K (PE12) -> R829 -> Q824, drain = LOWWATER_CATHODE (SP2.6, on the gauge sheet). Buzzer: BUZZER (PE1) -> R826 -> Q823; D821 across the
     buzzer (cathode on BUZZER_P).'
 - order: 17
   sheet: Knob, tank-level and reed inputs
@@ -9942,21 +9942,21 @@ net_index:
     - Controller
     - In-stream temperature converters
     class: low-voltage
-  SPI2_SCK:
+  SPI3_SCK:
     scope: global
     sheets:
     - Controller
     - Supply voltage and current measurement
     - In-stream temperature converters
     class: low-voltage
-  SPI2_MISO:
+  SPI3_MISO:
     scope: global
     sheets:
     - Controller
     - Supply voltage and current measurement
     - In-stream temperature converters
     class: low-voltage
-  SPI2_MOSI:
+  SPI3_MOSI:
     scope: global
     sheets:
     - Controller

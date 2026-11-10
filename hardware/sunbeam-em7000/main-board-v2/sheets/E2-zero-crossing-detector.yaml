@@ -32,5 +32,5 @@ custom_footprints:
 power_flags: []
 notes: |
   Drawing: left to right: LINE -> R630 -> R631 -> U602 pin 1; U602 pin 2 -> NEUTRAL (mains side, left). U602 pins 3, 4 on the right (low-voltage side): pin 3 to GND, pin 4 to the node ZC_IN, with R632 up to +3V3 and C630 down to GND, and the global label ZC_IN leaving to the right. Mark the barrier between the optocoupler's two halves with a dashed line and the text "mains | low voltage".
-  The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PD7) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764 and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PD7).
+  The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PB11) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764 and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PB11).
   Both crossings: the LEDs are antiparallel, so the output falls once per half-cycle whatever the polarity; the supply's period is the time between like edges (division record: PA10, capture on both edges).
