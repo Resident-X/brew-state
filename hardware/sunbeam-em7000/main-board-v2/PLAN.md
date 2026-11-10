@@ -634,3 +634,4 @@ Evidence: `/Users/david/real5/v2go3/HANDOFF.md` (scratch, never committed); same
 - The bootloader also drives other connected pins: SPI4_MISO PE13 (KNOB_HOT), SPI1_MISO PA6 (BREW_AN) and USART2_TX PA2 (an analogue input). No record is known to cover them; check before close-out.
 - The change list's claim that PB7 is unconnected is stale: PB7 is BREW_SDA (I2C4_SDA).
 - The spice export warns "schematic has annotation errors" (exit 0); not yet investigated.
+- Pre-existing record inconsistencies found while adding R545, not caused by it: the stated group B row (39/13/6) and the stated PASS total in circuit-verdicts.md do not match a recount of the committed file (recount after R545: totals 425 PASS / 113 FINDING / 6 N/A, group B 38 PASS / 12 FINDING); `test_board_net_pair_exceptions` fails to import `test_board_spacing_exceptions` under `python3 -m unittest hardware.tools.tests...`. Settle both at close-out.
