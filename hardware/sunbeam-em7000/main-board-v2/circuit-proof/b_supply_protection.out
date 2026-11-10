@@ -34,7 +34,7 @@
     reset timing: asserted while VDD < VIT- and for 120 to 280 ms after VDD >= VIT- + 0.2 V; with the controller's NRST pull-up and C418 the release adds at most 7.6 ms (circuit-proof.md, Reset row)
     NRST level held: VOL 0.4 V at 2 mA; the controller's pull-up is 3.4 V / 30 kohm = 113 uA, so VOL <= 0.2 V (500 uA row) against VIL 0.3 VDD = 0.99 V (3.3 V)
     pull-up limits of the supervisor sheet: 10 kohm to 1 Mohm; the controller's 30 to 50 kohm is inside; leakage IOH 100 nA x 50 kohm = 5.0 mV
-(4) mains-presence inputs PE15 and PD7 (FT_h), series R764/R774 27 kohm and pull-down R765/R775 82 kohm
+(4) mains-presence inputs PE15 (FT_h) and PB11 (FT_f), series R764/R774 27 kohm and pull-down R765/R775 82 kohm
     divider 0.7523 (0.7485 to 0.7560 with 1 % parts)
     wall board high at the top of +5V_WB 5.125 V: pin 3.86 V (3.87 V at the 1 % extreme) against the 4.0 V limit with VDD absent (Table 109: min(VDD+4.0, 6)): margin 0.13 V
     with VDD present the limit is 6 V: a wall board driving up to 6.75 V (module trip) gives 5.10 V; positive injection does not occur below the maximum (Table 110), so no clamp current flows

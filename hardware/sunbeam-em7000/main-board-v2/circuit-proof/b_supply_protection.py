@@ -17,7 +17,7 @@ Sources (each read 2026-10-29; maxima unless the line says typical):
   DS12110    STMicroelectronics DS12110 Rev 11 (January 2026): Table 109 (VIN on FT pins: min(min(VDD, VDDA, VDD33USB, VBAT) + 4.0, 6) V),
              Table 110 (IINJ(PIN) -5 / +0 mA, positive injection "not possible and does not occur below the maximum value"), Table 116 (BOR3
              falling 2.54 / 2.61 / 2.68 V, PVD6 falling 2.69 / 2.76 / 2.83 V), Table 147 (VIL 0.3 VDD, VIH 0.7 VDD, FT leakage +/-250 nA, 1500 nA
-             above VDD up to 5.5 V; PE15 and PD7 are FT_h).
+             above VDD up to 5.5 V; PE15 is FT_h and PB11 is FT_f, both FT_xx).
   DS4260     STMicroelectronics USBLC6-2 DS4260 Rev 7 (December 2021), web.archive.org/web/20251214101807/https://www.st.com/resource/en/datasheet/usblc6-2.pdf:
              IEC 61000-4-2 level 4, 15 kV air and 8 kV contact in the features (Table 1 prints 15 kV for contact: a contradiction; either meets level 4),
              VCL 12 V at 1 A and 17 V at 5 A (8/20 us), 3.5 pF maximum between I/O and GND.
@@ -87,7 +87,7 @@ print("    NRST level held: VOL 0.4 V at 2 mA; the controller's pull-up is 3.4 V
 print("    pull-up limits of the supervisor sheet: 10 kohm to 1 Mohm; the controller's 30 to 50 kohm is inside; leakage IOH 100 nA x 50 kohm = %.1f mV" % (100e-9 * 50e3 * 1e3))
 
 # ---- (4) mains-presence inputs, findings 1.2, 1.4, 1.9 ----------------------------------------
-print("(4) mains-presence inputs PE15 and PD7 (FT_h), series R764/R774 27 kohm and pull-down R765/R775 82 kohm")
+print("(4) mains-presence inputs PE15 (FT_h) and PB11 (FT_f), series R764/R774 27 kohm and pull-down R765/R775 82 kohm")
 rs, rp = 27e3, 82e3
 k = rp / (rs + rp)
 k_hi = rp * 1.01 / (rs * 0.99 + rp * 1.01)

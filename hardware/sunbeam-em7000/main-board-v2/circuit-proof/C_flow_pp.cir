@@ -22,7 +22,7 @@ SSIM_LO PP_OUT 0 CTLL 0 SWM
 RSIM_PP PP_OUT FLOW_RAW 25
 VSIM_CTLH CTLH 0 PULSE(0 1 100u 1n 1n 4.9m 10m)
 ESIM_INV CTLL 0 VALUE={1-v(CTLH)}
-* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD
+* PB10 pad leakage, DS12110 Table 50, 1.5 uA above VDD
 ISIM_PAD FLOW_IN 0 1.5u
 .tran 5u 20m
 .control

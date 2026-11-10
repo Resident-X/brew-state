@@ -1,0 +1,449 @@
+.title KiCad schematic
+U302 __U302
+JP301 __JP301
+TP302 __TP302
+C303 +5V GND 10u
+C304 /Logic_supply/+3V3_REG GND 22u
+C305 /Logic_supply/+3V3_REG GND 22u
+JP302 __JP302
+FB301 __FB301
+C301 /Logic_supply/+5V_MOD GND 100n
+C302 /Logic_supply/+5V_MOD GND 47u
+JP303 __JP303
+RT301 /LINE /Logic_supply/LINE_MOD NTC 10D-9
+TP301 __TP301
+TP303 __TP303
+R301 /Logic_supply/+3V3A_FB +3V3A 0
+U301 __U301
+U401 __U401
+C404 +3V3 GND 100n
+C403 +3V3 GND 100n
+C402 +3V3 GND 100n
+C401 +3V3 GND 100n
+C414 /Controller/HSE_IN GND 20p
+R401 /Controller/BOOT0 GND 10k
+JP401 __JP401
+TP410 __TP410
+C418 NRST GND 100n
+C415 /Controller/HSE_OUT GND 20p
+SW401 __SW401
+TP404 __TP404
+C422 +3V3 GND 100n
+U402 __U402
+C410 /Controller/VREF+ GND 100n
+TP403 __TP403
+R302 +3V3A /Controller/VREF+ 0
+C409 +3V3A GND 1u
+Y401 __Y401
+TP406 __TP406
+C408 +3V3A GND 100n
+TP402 __TP402
+C411 /Controller/VREF+ GND 1u
+C413 /Controller/VCAP GND 2.2u
+TP401 __TP401
+C412 /Controller/VCAP GND 2.2u
+C416 /Controller/LSE_IN GND 4.7p
+C417 /Controller/LSE_OUT GND 4.7p
+J402 __J402
+Y402 __Y402
+D402 __D402
+F401 __F401
+J401 __J401
+TP408 __TP408
+TP409 __TP409
+JP402 __JP402
+TP405 __TP405
+TP412 __TP412
+TP411 __TP411
+D401 __D401
+TP413 __TP413
+R403 /Controller/USB_SHIELD GND 1Meg
+C419 /Controller/USB_SHIELD GND 4.7n
+R402 /Controller/DBG_VTREF /Controller/+3V3_DBG 1k
+TP407 __TP407
+C406 +3V3 GND 100n
+C407 +3V3 GND 4.7u
+C405 +3V3 GND 100n
+TP501 __TP501
+TP502 __TP502
+C501 /NTC_COF GND 47n
+D504 __D504
+D502 __D502
+TP503 __TP503
+C502 /NTC_STM GND 47n
+R505 +3V3A /Thermistor_inputs/NTC_WAND_SENS 10k
+D503 __D503
+D506 __D506
+R506 /Thermistor_inputs/NTC_WAND_SENS /NTC_WAND 1k
+D505 __D505
+J503 __J503
+C503 /NTC_WAND GND 47n
+R501 +3V3A /Thermistor_inputs/NTC_COF_SENS 10k
+J501 __J501
+R503 +3V3A /Thermistor_inputs/NTC_STM_SENS 10k
+R504 /Thermistor_inputs/NTC_STM_SENS /NTC_STM 1k
+D501 __D501
+R502 /Thermistor_inputs/NTC_COF_SENS /NTC_COF 1k
+J502 __J502
+R526 /STM_SDA +3V3 2.2k
+TP526 __TP526
+D528 __D528
+R530 /BREW_SDA +3V3 2.2k
+J524 __J524
+TP522 __TP522
+D527 __D527
+TP525 __TP525
+J525 __J525
+D524 __D524
+R529 /BREW_SCL +3V3 2.2k
+R540 /Flow__pressure_and_spare_analogue_inputs/STMD_3V3_SRC /Flow__pressure_and_spare_analogue_inputs/STMD_3V3 0
+TP523 __TP523
+J520 __J520
+J521 __J521
+C520 /Flow__pressure_and_spare_analogue_inputs/FLOW_F GND 47n
+R521 /Flow__pressure_and_spare_analogue_inputs/FLOW_RAW /Flow__pressure_and_spare_analogue_inputs/FLOW_F 1k
+R525 /STM_SCL +3V3 2.2k
+D521 __D521
+R523 /Flow__pressure_and_spare_analogue_inputs/STM_SCL_X /STM_SCL 100
+R520 /Flow__pressure_and_spare_analogue_inputs/FLOW_RAW +3V3 10k
+F520 __F520
+D520 __D520
+R524 /Flow__pressure_and_spare_analogue_inputs/STM_SDA_X /STM_SDA 100
+F521 __F521
+D522 __D522
+R541 /Flow__pressure_and_spare_analogue_inputs/BRWD_3V3_SRC /Flow__pressure_and_spare_analogue_inputs/BRWD_3V3 0
+R522 /Flow__pressure_and_spare_analogue_inputs/FLOW_F /FLOW_IN 0
+J523 __J523
+D523 __D523
+C521 +3V3 GND 100n
+U520 __U520
+J522 __J522
+D525 __D525
+R527 /Flow__pressure_and_spare_analogue_inputs/BREW_SCL_X /BREW_SCL 100
+R528 /Flow__pressure_and_spare_analogue_inputs/BREW_SDA_X /BREW_SDA 100
+D526 __D526
+R542 /Flow__pressure_and_spare_analogue_inputs/SPAREA_3V3_SRC /Flow__pressure_and_spare_analogue_inputs/SPAREA_3V3 0
+TP528 __TP528
+D529 __D529
+F522 __F522
+R531 /Flow__pressure_and_spare_analogue_inputs/SPAREA_RAW /Flow__pressure_and_spare_analogue_inputs/SPAREA_DIV 10k
+R532 /Flow__pressure_and_spare_analogue_inputs/SPAREA_DIV GND 20k
+R544 /Flow__pressure_and_spare_analogue_inputs/SPAN2_3V3_SRC /Flow__pressure_and_spare_analogue_inputs/SPAN2_3V3 0
+TP532 __TP532
+D531 __D531
+R537 /Flow__pressure_and_spare_analogue_inputs/SPAN2_RAW /Flow__pressure_and_spare_analogue_inputs/SPAN2_DIV 10k
+F524 __F524
+R534 /Flow__pressure_and_spare_analogue_inputs/BREWA_RAW /Flow__pressure_and_spare_analogue_inputs/BREWA_DIV 10k
+D530 __D530
+R543 /Flow__pressure_and_spare_analogue_inputs/BREWA_3V3_SRC /Flow__pressure_and_spare_analogue_inputs/BREWA_3V3 0
+TP530 __TP530
+TP527 __TP527
+C522 /STMP_AN GND 47n
+F523 __F523
+R533 /Flow__pressure_and_spare_analogue_inputs/SPAREA_DIV /STMP_AN 1k
+TP531 __TP531
+C524 /SPARE_AN2 GND 47n
+TP529 __TP529
+C523 /BREW_AN GND 47n
+R538 /Flow__pressure_and_spare_analogue_inputs/SPAN2_DIV GND 20k
+R539 /Flow__pressure_and_spare_analogue_inputs/SPAN2_DIV /SPARE_AN2 1k
+R536 /Flow__pressure_and_spare_analogue_inputs/BREWA_DIV /BREW_AN 1k
+R535 /Flow__pressure_and_spare_analogue_inputs/BREWA_DIV GND 20k
+TP571 __TP571
+C571 /CURR2_AN GND 47n
+R577 /Current_sensing_inputs/CURR2_DIV /CURR2_AN 1k
+R574 /Current_sensing_inputs/CURR2_SIG /Current_sensing_inputs/CURR2_DIV 10k
+D571 __D571
+J571 __J571
+R575 /Current_sensing_inputs/CURR2_DIV GND 20k
+R576 /Current_sensing_inputs/CURR2_DIV GND DNP
+R570 /Current_sensing_inputs/CURR1_SIG /Current_sensing_inputs/CURR1_DIV 10k
+D570 __D570
+R573 /Current_sensing_inputs/CURR1_DIV /CURR1_AN 1k
+TP570 __TP570
+C570 /CURR1_AN GND 47n
+J570 __J570
+R571 /Current_sensing_inputs/CURR1_DIV GND 20k
+R572 /Current_sensing_inputs/CURR1_DIV GND DNP
+F101 __F101
+TP102 __TP102
+J103 __J103
+H1 __H1
+H2 __H2
+H3 __H3
+H4 __H4
+FID1 __FID1
+J102 __J102
+TP101 __TP101
+TP105 __TP105
+TP107 __TP107
+R105 __R105
+J101 __J101
+TP104 __TP104
+R103 /LINE /Mains_entry_and_load_feed/DISCH_B 1Meg
+C101 /LINE /NEUTRAL 100nF_X2
+R104 /Mains_entry_and_load_feed/DISCH_B /NEUTRAL 1Meg
+R101 /LINE /Mains_entry_and_load_feed/DISCH_A 1Meg
+R102 /Mains_entry_and_load_feed/DISCH_A /NEUTRAL 1Meg
+JP101 __JP101
+TP103 __TP103
+TP108 __TP108
+TP106 __TP106
+RV101 /LINE /NEUTRAL 14D471K
+J108 __J108
+J109 __J109
+J106 __J106
+J107 __J107
+FID2 __FID2
+J110 __J110
+FID3 __FID3
+R207 /POL_OUT /Interlock/POL_IN 1k
+C201 +5V GND 100n
+C202 /Interlock/POL_BUF /Interlock/POL_NODE_A 100n
+R208 /Interlock/POL_INV GND 100k
+R201 /Interlock/POL_IN GND 100k
+R202 /Interlock/POL_IN GND 100k
+C206 +5V GND 100n
+U203 __U203
+U201 __U201
+R203 /Interlock/POL_GATE_A GND 5.6Meg
+Q202 __Q202
+Q201 __Q201
+Z202 __Z202
+R204 /Interlock/POL_GATE_B GND 5.6Meg
+C205 /Interlock/POL_GATE_B GND 4.7n
+D202 __D202
+C203 /Interlock/POL_GATE_A GND 4.7n
+TP201 __TP201
+TP204 __TP204
+R205 /Interlock/POL_NODE_A GND 100k
+D201 __D201
+TP202 __TP202
+R206 /Interlock/POL_NODE_B GND 100k
+C204 /Interlock/POL_BUF /Interlock/POL_NODE_B 100n
+D204 __D204
+D203 __D203
+Z201 __Z201
+D205 __D205
+D206 __D206
+K201 __K201
+TP205 __TP205
+TP206 __TP206
+U711 __U711
+F711 __F711
+TP712 __TP712
+T711 __T711
+R716 /Pump_drives/PUMP_S_MT2 /Pump_drives/PUMP_S_SNUB 100
+R715 /Pump_drives/PUMP_S_GATE_R /Pump_drives/PUMP_S_OPTO_MT 200
+R714 /Pump_drives/PUMP_S_MT2 /Pump_drives/PUMP_S_GATE_R 200
+C711 /Pump_drives/PUMP_S_SNUB /NEUTRAL 100nF_X2
+R712 /Pump_drives/PUMP_S_GATE_G GND 100k
+Q711 __Q711
+R702 /Pump_drives/PUMP_C_GATE_G GND 100k
+R711 /PUMP_S_GATE /Pump_drives/PUMP_S_GATE_G 100
+R713 +5V /Pump_drives/PUMP_S_LED_A 180
+T701 __T701
+R706 /Pump_drives/PUMP_C_MT2 /Pump_drives/PUMP_C_SNUB 100
+R704 /Pump_drives/PUMP_C_MT2 /Pump_drives/PUMP_C_GATE_R 200
+F701 __F701
+TP702 __TP702
+R705 /Pump_drives/PUMP_C_GATE_R /Pump_drives/PUMP_C_OPTO_MT 200
+C701 /Pump_drives/PUMP_C_SNUB /NEUTRAL 100nF_X2
+Q701 __Q701
+U701 __U701
+R701 /PUMP_C_GATE /Pump_drives/PUMP_C_GATE_G 100
+R703 +5V /Pump_drives/PUMP_C_LED_A 180
+R731 /VALVE_2W_DRV /Valve_drives/VALVE_2W_G 100
+TP731 __TP731
+Q731 __Q731
+K731 __K731
+D731 __D731
+R732 /Valve_drives/VALVE_2W_G GND 100k
+R742 /Valve_drives/VALVE_3W_G GND 100k
+R741 /VALVE_3W_DRV /Valve_drives/VALVE_3W_G 100
+Q741 __Q741
+TP741 __TP741
+F731 __F731
+D741 __D741
+K741 __K741
+JP761 __JP761
+R761 /HEAT_C_DRV /Heater_LED_drive_and_wall_board_header/HEAT_C_G 100
+R762 /Heater_LED_drive_and_wall_board_header/HEAT_C_G GND 100k
+R772 /Heater_LED_drive_and_wall_board_header/HEAT_S_G GND 100k
+TP762 __TP762
+R763 HEAT_C_LED_K /Heater_LED_drive_and_wall_board_header/HEAT_C_SINK 180
+Q771 __Q771
+R773 HEAT_S_LED_K /Heater_LED_drive_and_wall_board_header/HEAT_S_SINK 180
+R771 /HEAT_S_DRV /Heater_LED_drive_and_wall_board_header/HEAT_S_G 100
+TP772 __TP772
+Q761 __Q761
+R764 /Heater_LED_drive_and_wall_board_header/MAINS_PRES_C_J /MAINS_PRES_C 27k
+R774 /Heater_LED_drive_and_wall_board_header/MAINS_PRES_S_J /MAINS_PRES_S 27k
+R775 /MAINS_PRES_S GND 82k
+TP761 __TP761
+R765 /MAINS_PRES_C GND 82k
+J761 __J761
+R802 /Gauge_drive/GAUGE_STEP1_IN GND 10k
+R801 /Gauge_drive/GAUGE_RST_IN GND 10k
+TP794 __TP794
+R798 /GAUGE_DIR1 /Gauge_drive/GAUGE_DIR1_IN 1k
+TP795 __TP795
+R797 /GAUGE_STEP1 /Gauge_drive/GAUGE_STEP1_IN 1k
+R796 /GAUGE_RST /Gauge_drive/GAUGE_RST_IN 1k
+TP793 __TP793
+TP792 __TP792
+R803 /Gauge_drive/GAUGE_DIR1_IN GND 10k
+U791 __U791
+C791 +5V GND 100n
+R794 /Gauge_drive/GAUGE_STEP2_Y /Gauge_drive/GAUGE_STEP2_B 470
+R795 /Gauge_drive/GAUGE_DIR2_Y /Gauge_drive/GAUGE_DIR2_B 470
+R804 /Gauge_drive/GAUGE_STEP2_IN GND 10k
+JP791 __JP791
+R805 /Gauge_drive/GAUGE_DIR2_IN GND 10k
+TP791 __TP791
+C792 +5V_GAUGE GND 47u
+R799 /GAUGE_STEP2 /Gauge_drive/GAUGE_STEP2_IN 1k
+R800 /GAUGE_DIR2 /Gauge_drive/GAUGE_DIR2_IN 1k
+TP796 __TP796
+R793 /Gauge_drive/GAUGE_DIR1_Y /Gauge_drive/GAUGE_DIR1_B 470
+R792 /Gauge_drive/GAUGE_STEP1_Y /Gauge_drive/GAUGE_STEP1_B 470
+J791 __J791
+R806 /Gauge_drive/GAUGE_RST_B GND 10k
+R791 /Gauge_drive/GAUGE_RST_Y /Gauge_drive/GAUGE_RST_B 470
+R827 /Operator_panel_and_indicators/BUZZER_G GND 100k
+R821 /ANODE_GATE /Operator_panel_and_indicators/ANODE_LS_G 100
+R826 /BUZZER /Operator_panel_and_indicators/BUZZER_G 100
+Q823 __Q823
+R828 +5V /Operator_panel_and_indicators/BUZZER_P 100
+D821 __D821
+R825 /ANODE_RAIL GND 22k
+JP821 __JP821
+R822 /Operator_panel_and_indicators/ANODE_LS_G GND 100k
+R829 /LOWWATER_K /Operator_panel_and_indicators/LOWWATER_G 100
+Q824 __Q824
+R830 /Operator_panel_and_indicators/LOWWATER_G GND 100k
+TP824 __TP824
+TP831 __TP831
+TP832 __TP832
+R831 /KEY1 +3V3 10k
+R832 /KEY2 +3V3 10k
+J821 __J821
+TP833 __TP833
+TP834 __TP834
+TP835 __TP835
+R835 /KEY5 +3V3 10k
+R833 /KEY3 +3V3 10k
+R834 /KEY4 +3V3 10k
+Q822 __Q822
+Q821 __Q821
+TP821 __TP821
+R823 +5V /Operator_panel_and_indicators/ANODE_PG 22k
+R824 +5V /Operator_panel_and_indicators/ANODE_PG 22k
+TP861 __TP861
+J861 __J861
+J862 __J862
+C862 /KNOB_STEAM GND 100n
+R862 /KNOB_STEAM +3V3 10k
+R861 /KNOB_HOT +3V3 10k
+C861 /KNOB_HOT GND 100n
+R863 /TANK_LEVEL +3V3 10k
+C863 /TANK_LEVEL GND 100n
+TP603 __TP603
+R606 /Supply_voltage_and_current_measurement/AMC_AIN0N /Supply_voltage_and_current_measurement/AMC_HGND 49.9
+C601 /Supply_voltage_and_current_measurement/AMC_AIN0P /Supply_voltage_and_current_measurement/AMC_AIN0N 4.7n
+C603 /Supply_voltage_and_current_measurement/AMC_DCDC_OUT /Supply_voltage_and_current_measurement/AMC_DCDC_HGND 1u
+C604 /Supply_voltage_and_current_measurement/AMC_DCDC_OUT /Supply_voltage_and_current_measurement/AMC_DCDC_HGND 1n
+C605 /Supply_voltage_and_current_measurement/AMC_HLDO_IN /Supply_voltage_and_current_measurement/AMC_HGND 100n
+C606 /Supply_voltage_and_current_measurement/AMC_HLDO_IN /Supply_voltage_and_current_measurement/AMC_HGND 1n
+R605 /Supply_voltage_and_current_measurement/VMEAS_DIV /Supply_voltage_and_current_measurement/AMC_AIN0P 49.9
+C607 /Supply_voltage_and_current_measurement/AMC_HLDO_OUT /Supply_voltage_and_current_measurement/AMC_HGND 100n
+C608 /Supply_voltage_and_current_measurement/AMC_HLDO_OUT /Supply_voltage_and_current_measurement/AMC_HGND 1n
+TP605 __TP605
+TP606 __TP606
+TP607 __TP607
+TP608 __TP608
+C609 +3V3 GND 1n
+F601 __F601
+F602 __F602
+C611 +3V3 GND 100n
+C610 +3V3 GND 1u
+U601 __U601
+R609 /Supply_voltage_and_current_measurement/AMC_CLK_OUT /Supply_voltage_and_current_measurement/AMC_CLKIN 33
+R610 /SPI3_SCK /Supply_voltage_and_current_measurement/AMC_SCLK 33
+R613 /Supply_voltage_and_current_measurement/AMC_DOUT_PIN /SPI3_MISO 33
+R615 +3V3 /AMC_RESET 100k
+R611 /SPI3_MOSI /Supply_voltage_and_current_measurement/AMC_DIN 33
+R612 /AMC_CS /Supply_voltage_and_current_measurement/AMC_CS_PIN 33
+Y601 __Y601
+C612 /Supply_voltage_and_current_measurement/AMC_DCDC_CAP GND 100n
+R614 +3V3 /Supply_voltage_and_current_measurement/AMC_CS_PIN 100k
+TP602 __TP602
+TP609 __TP609
+TP610 __TP610
+R601 /LINE /Supply_voltage_and_current_measurement/VMEAS_N1 300k
+R602 /Supply_voltage_and_current_measurement/VMEAS_N1 /Supply_voltage_and_current_measurement/VMEAS_N2 300k
+C602 /Supply_voltage_and_current_measurement/AMC_AIN1P /Supply_voltage_and_current_measurement/AMC_AIN1N 4.7n
+TP604 __TP604
+R603 /Supply_voltage_and_current_measurement/VMEAS_N2 /Supply_voltage_and_current_measurement/VMEAS_DIV 300k
+R607 /SHUNT_SENSE_IN /Supply_voltage_and_current_measurement/AMC_AIN1P 470
+R608 /SHUNT_SENSE_NEUTRAL /Supply_voltage_and_current_measurement/AMC_AIN1N 470
+R604 /Supply_voltage_and_current_measurement/VMEAS_DIV /Supply_voltage_and_current_measurement/AMC_HGND 750
+NT601 __NT601
+U602 __U602
+TP630 __TP630
+C630 /ZC_IN GND 1n
+R630 /LINE /Zero-crossing_detector/ZC_N1 59k
+R631 /Zero-crossing_detector/ZC_N1 /Zero-crossing_detector/ZC_LED_A 59k
+R632 /ZC_IN +3V3 22k
+J620 __J620
+C640 /In-stream_temperature_converters/PT1_RTDINP /In-stream_temperature_converters/PT1_RTDINN 10n
+TP621 __TP621
+J625 __J625
+R691 /In-stream_temperature_converters/PT2_FORCEN_SRC /In-stream_temperature_converters/PT2_FORCEN 0
+TP691 __TP691
+C645 /In-stream_temperature_converters/PT2_RTDINP /In-stream_temperature_converters/PT2_RTDINN 10n
+TP623 __TP623
+J628 __J628
+J627 __J627
+U620 __U620
+TP620 __TP620
+R646 +3V3 /PT2_CS 100k
+TP622 __TP622
+R641 +3V3 /PT1_CS 100k
+R640 /In-stream_temperature_converters/PT1_BIAS /In-stream_temperature_converters/PT1_FORCEP 4.02k
+R642 /In-stream_temperature_converters/PT1_FORCE2 GND 0
+R643 /In-stream_temperature_converters/PT1_FORCE2 /In-stream_temperature_converters/PT1_FORCEP 0
+U621 __U621
+R645 /In-stream_temperature_converters/PT2_BIAS /In-stream_temperature_converters/PT2_FORCEP 4.02k
+R648 /In-stream_temperature_converters/PT2_FORCE2 /In-stream_temperature_converters/PT2_FORCEP 0
+R647 /In-stream_temperature_converters/PT2_FORCE2 GND 0
+C646 +3V3 GND 100n
+C647 +3V3 GND 100n
+J622 __J622
+R690 /In-stream_temperature_converters/PT1_FORCEN_SRC /In-stream_temperature_converters/PT1_FORCEN 0
+TP690 __TP690
+J623 __J623
+C641 +3V3 GND 100n
+C642 +3V3 GND 100n
+C677 /Load-cell_amplifiers/WT2_VBG GND 100n
+C678 +3V3 GND 100n
+U631 __U631
+R677 /WT2_CLK GND 100k
+R670 /Load-cell_amplifiers/WT1_SP_RAW /Load-cell_amplifiers/WT1_INA_P 100
+R671 /Load-cell_amplifiers/WT1_SN_RAW /Load-cell_amplifiers/WT1_INA_N 100
+C671 +5V GND 10u
+C670 /Load-cell_amplifiers/WT1_INA_P /Load-cell_amplifiers/WT1_INA_N 100n
+TP671 __TP671
+J630 __J630
+C675 /Load-cell_amplifiers/WT2_INA_P /Load-cell_amplifiers/WT2_INA_N 100n
+R675 /Load-cell_amplifiers/WT2_SP_RAW /Load-cell_amplifiers/WT2_INA_P 100
+R676 /Load-cell_amplifiers/WT2_SN_RAW /Load-cell_amplifiers/WT2_INA_N 100
+J635 __J635
+TP673 __TP673
+C672 /Load-cell_amplifiers/WT1_VBG GND 100n
+C676 +5V GND 10u
+C673 +3V3 GND 100n
+R672 /WT1_CLK GND 100k
+TP670 __TP670
+U630 __U630
+.end

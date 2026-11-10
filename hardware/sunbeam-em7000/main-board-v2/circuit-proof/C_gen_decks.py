@@ -191,14 +191,14 @@ def u520_lines(leak_amps):
             "SSIM_U520L FLOW_IN 0 U520NEG 0 SWSCHN"] + U520_MODEL
 
 
-t = ["Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PC6 it drives",
+t = ["Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PB10 it drives",
      HEADER.rstrip(), SW_MODEL,
      "VSIM_V3V3 +3V3 0 3.3",
      "R520 FLOW_RAW +3V3 %s" % num(S2, "R520"),
      "R521 FLOW_RAW FLOW_F %s" % num(S2, "R521"),
      "C520 FLOW_F 0 %s" % num(S2, "C520")]
 t += u520_lines("5u")
-t += ["* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
+t += ["* PB10 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
       "ISIM_PAD FLOW_IN 0 1.5u",
       "* meter output stage: open-drain = switch to ground, 100 Hz square wave",
       "SSIM_OD FLOW_RAW 0 CTLA 0 SWM",
@@ -230,7 +230,7 @@ t += ["SSIM_HI SIM_5V PP_OUT CTLH 0 SWM",
       "RSIM_PP PP_OUT FLOW_RAW 25",
       "VSIM_CTLH CTLH 0 PULSE(0 1 100u 1n 1n 4.9m 10m)",
       "ESIM_INV CTLL 0 VALUE={1-v(CTLH)}",
-      "* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
+      "* PB10 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
       "ISIM_PAD FLOW_IN 0 1.5u",
       ".tran 5u 20m",
       ".control",
