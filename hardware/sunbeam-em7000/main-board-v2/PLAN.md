@@ -199,8 +199,8 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 
 **Steps.**
 1. Main session places the fixed parts first, at their v1 coordinates: the connectors, the reed J862, the mounting holes and every mains-region and barrier-column part. A scratch script compares each with the tag and must report zero difference.
-2. Place the low-voltage half from the phase 1 positions table with Konnect's move and rotate tools. That is candidate 1.
-3. Candidate 2 is the strongest alternative phase 1 saw, for example the MCU at (95, 60) or the converter cell turned.
+2. Place the low-voltage half from the phase 1 positions table with Konnect's move and rotate tools. That is candidate 1: the A2 placement of Phase 1c, committed as `a3b135f0` with every footprint and no copper.
+3. Candidate 2 is commit `b69ea664`: candidate 1 with the crystals Y401 and Y402 turned 180 degrees, TP406 moved to (117.8, 77.75) so it is off C414's pad and R545 moved to (88.8, 37.4) turned 180 degrees so it is off J861's courtyard. An annealed variant of candidate 1, found by a metric search over small parts, was evaluated in scratch only and is not a committed candidate; the placement section records it as evidence.
 4. Render with `task hw:placement` from each commit (method, Placement step 4), give the verdicts, choose, and commit the placement section.
 5. Run `task hw:history`.
 
