@@ -1,0 +1,31 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
+type: deliverable
+category: solution
+title: The pre-order check's mounting-hole and sensing passes hold no creepage constraint, so the signed creepage is judged once per design
+status: active
+version: 1
+text: |
+  The pre-order check runs KiCad's rule check on a board with Mains three times: with the design's own rules plus the signed rules, with the mounting-hole rules, and with the sensing rules (the passes in hardware/tools/board_check.py named mounting_holes and sensing_clearance after the first). Each pass is handed the design's rules text as it stood, so each carries KiCad's creepage test against every ground pour: measured about 50 minutes for one full-board pass on the main board as laid out, nearly all of it the creepage test, and the check pays it three times. The mounting-hole pass reads only the findings of its own mounting-hole rules and the sensing pass only the clearance findings of its own sensing rules, and neither reads a creepage finding, so two of the three creepage tests judge nothing.
+
+  Settled for the build:
+  - The first pass is unchanged and is the one place the signed creepage is judged, as the design's own rules and the signed rules, including the creepage ahead of the fuse and between Mains items, hold it today.
+  - A function in hardware/tools/board_check.py takes the whole rules text a pass writes and returns it without any creepage constraint in the one form the check reads and writes, (constraint creepage (min <number>mm)), and without any rule left holding no constraint. The mounting-hole pass and the sensing pass apply it to the whole text they write, so the design's own creepage line is also taken out of their copy. The design's file is never changed.
+  - It is fail-safe: a creepage constraint in a form it does not recognise, and text that does not balance, stay as written, so a pass is then slower and never reads a different answer. A rule that held no constraint before is left as written.
+  - Every other constraint is untouched, the signed clearance and the sensing clearance included, and so is the order of the rules, since the last matching rule decides.
+  - The comparison is evidenced three ways: unit tests of the function; a run of the check on the throwaway proof design carrying a creepage shortfall, a mounting hole inside the signed distance of Mains and a sensing item inside the signed clearance, whose hole and sensing findings are the same with the function and with it replaced by the identity, whose creepage findings still come from the first pass, whose rules text for the two passes holds no creepage while the first pass's does, and which fails when the function is taken out; and the same comparison of the two passes' findings on the main board as it was laid out when this item was built.
+  - hardware/README.md and the hw:verify task's description say the creepage is computed once and the later passes hold none.
+
+  Out of scope: running the passes in parallel, speeding the creepage test, caching a pass's result between runs, and any change to what any pass judges or reports.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks, that every board is judged against every applicable item before it is ordered, within the time the check can be run. The pre-order check on the main board takes about three KiCad passes of about 50 minutes where one creepage test is all that any pass reads, so the check is run less often and the board is judged less often than the requirement wants. The first sibling solution raised the limit and left parallel runs out of scope, so this is a separate item, not an amendment of it; the passes' own judgement is not changed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by
+  - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD
+    type: depends-on
