@@ -73,6 +73,26 @@ class WithoutCreepage(unittest.TestCase):
                 self.assertNotIn("creepage", out.lower())
                 self.assertIn("(constraint clearance (min 1mm))", out)
 
+    def test_a_creepage_constraint_anywhere_among_the_others_leaves_the_rest_of_the_rule_and_its_comments_as_they_were(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C2: The rules the mounting-hole pass and the sensing pass hand the rule engine hold no creepage constraint
+        cases = {
+            "first": '(rule "r"\n\t(constraint creepage (min 4mm))\n\t(constraint clearance (min 1mm)))\n',
+            "middle": '(rule "r"\n\t(constraint clearance (min 1mm))\n\t(constraint creepage (min 4mm))\n\t(constraint track_width (min 2mm)))\n',
+            "after a comment line, with a clearance after it on the line": '(rule "r"\n # note\n (constraint creepage (min 4mm)) (constraint clearance (min 1mm)))\n',
+            "carriage returns": '(rule "r"\r\n\t(constraint clearance (min 1mm))\r\n\t(constraint creepage (min 4mm)))\r\n',
+            "escaped quote in the name": '(rule "r \\" (constraint creepage (min 9mm))"\n\t(constraint clearance (min 1mm))\n\t(constraint creepage (min 4mm)))',
+        }
+        for name, text in cases.items():
+            with self.subTest(case=name):
+                out = board_check.without_creepage(text)
+                self.assertNotIn("(min 4mm)", out.replace("(min 1mm)", ""))
+                self.assertEqual(re.findall(r"\(constraint [a-z_]+ \(min [0-9]+mm\)\)", out),
+                                 [c for c in re.findall(r"\(constraint [a-z_]+ \(min [0-9]+mm\)\)", text) if "creepage (min 4mm)" not in c])
+                self.assertEqual(out.count("#"), text.count("#"))
+                self.assertEqual(board_check._balanced_forms(out) is not None, True)
+        out = board_check.without_creepage(cases["after a comment line, with a clearance after it on the line"])
+        self.assertIn("# note\n", out, "the comment ends at its own line, so the clearance after it is not swallowed by it")
+
     def test_a_creepage_constraint_in_a_form_it_does_not_recognise_stays_in(self):
         # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C2: The rules the mounting-hole pass and the sensing pass hand the rule engine hold no creepage constraint
         for form in ("(constraint creepage (foo 4mm))", "(constraint creepage 4mm)", "(constraint creepage)",

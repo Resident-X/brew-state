@@ -5939,7 +5939,7 @@ def without_creepage(text: str) -> str:
             cuts.append((begin, end + 1 if text[end:end + 1] == "\n" else end))
         else:
             for first, last in creepage:
-                while first > begin and text[first - 1] in " \t\n":
+                while first > begin and text[first - 1] in " \t":
                     first -= 1
                 cuts.append((first, last))
     out, position = [], 0
