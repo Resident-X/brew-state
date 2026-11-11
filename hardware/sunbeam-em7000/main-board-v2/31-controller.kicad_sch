@@ -6055,10 +6055,6 @@
 		(uuid "5c7d9340-4632-489f-9dc1-677bcfd96406")
 	)
 	(no_connect
-		(at 321.31 247.65)
-		(uuid "29845a7b-ddab-45b5-8c5d-5b6c2437e9a6")
-	)
-	(no_connect
 		(at 321.31 255.27)
 		(uuid "c82a5f7b-0d24-49ed-b840-331242cd9e2f")
 	)
@@ -6069,6 +6065,10 @@
 	(no_connect
 		(at 275.59 171.45)
 		(uuid "f5a7466c-9f57-4545-b003-a1e2b05bc0ed")
+	)
+	(no_connect
+		(at 275.59 229.87)
+		(uuid "6454a392-605d-4407-9026-1a88182ceefb")
 	)
 	(wire
 		(pts
@@ -7757,12 +7757,12 @@
 	)
 	(hierarchical_label "AMC_DRDY"
 		(shape bidirectional)
-		(at 275.59 229.87 180)
+		(at 321.31 247.65 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "02da74d3-ec27-4041-a30c-327bf952638e")
 	)
