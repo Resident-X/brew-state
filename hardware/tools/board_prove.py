@@ -1548,8 +1548,8 @@ def supply_a_signal(seed: Seed) -> None:
     """Supply is a signal class held to one signal pin per return, and Sensing to three."""
     seed.replace("board-rules.yaml", NON_SIGNAL, "  non_signal_classes:\n    - Mains\n    - Power\n  signal_classes:\n"
                  "    - class: Supply\n      signal_pins_per_return: 1\n      " + SOURCE)
-    seed.replace("board-rules.yaml", "signal_pins_per_return: 1\n      " + SOURCE + "synthetic",
-                 "signal_pins_per_return: 3\n      " + SOURCE + "synthetic")
+    seed.replace("board-rules.yaml", "signal_pins_per_return: 1\n      " + SOURCE + "fabrication:",
+                 "signal_pins_per_return: 3\n      " + SOURCE + "fabrication:")
 
 
 #: A pin allocation record declaring that its design places no controller, and each entry as given: the two nets of the
