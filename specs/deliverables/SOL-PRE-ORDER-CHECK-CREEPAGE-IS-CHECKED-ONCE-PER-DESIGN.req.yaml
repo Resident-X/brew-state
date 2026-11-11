@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check's mounting-hole and sensing passes hold no creepage constraint, so the signed creepage is judged once per design
 status: active
-version: 1
+version: 2
 text: |
   The pre-order check runs KiCad's rule check on a board with Mains three times: with the design's own rules plus the signed rules, with the mounting-hole rules, and with the sensing rules (the passes in hardware/tools/board_check.py named mounting_holes and sensing_clearance after the first). Each pass is handed the design's rules text as it stood, so each carries KiCad's creepage test against every ground pour: measured about 50 minutes for one full-board pass on the main board as laid out, nearly all of it the creepage test, and the check pays it three times. The mounting-hole pass reads only the findings of its own mounting-hole rules and the sensing pass only the clearance findings of its own sensing rules, and neither reads a creepage finding, so two of the three creepage tests judge nothing.
 
@@ -14,6 +14,7 @@ text: |
   - Every other constraint is untouched, the signed clearance and the sensing clearance included, and so is the order of the rules, since the last matching rule decides.
   - The comparison is evidenced three ways: unit tests of the function; a run of the check on the throwaway proof design carrying a creepage shortfall, a mounting hole inside the signed distance of Mains and a sensing item inside the signed clearance, whose hole and sensing findings are the same with the function and with it replaced by the identity, whose creepage findings still come from the first pass, whose rules text for the two passes holds no creepage while the first pass's does, and which fails when the function is taken out; and the same comparison of the two passes' findings on the main board as it was laid out when this item was built.
   - hardware/README.md and the hw:verify task's description say the creepage is computed once and the later passes hold none.
+  - The seeded-fault proof (task hw:prove) is run once on the change, and a seed of it that no longer finds its place in the proof design's records, which stopped the whole proof before it judged any fault, is corrected so that the run is complete.
 
   Out of scope: running the passes in parallel, speeding the creepage test, caching a pass's result between runs, and any change to what any pass judges or reports.
 rationale: |
