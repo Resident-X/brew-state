@@ -498,6 +498,10 @@
         "pattern": "/Logic supply/+3V3_REG"
       },
       {
+        "netclass": "Supply3V3",
+        "pattern": "/Controller/VCAP"
+      },
+      {
         "netclass": "Ground",
         "pattern": "GND"
       },
@@ -1028,6 +1032,46 @@
       {
         "netclass": "Fast",
         "pattern": "/Supply voltage and current measurement/AMC_DOUT_PIN"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/AMC_CS"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/AMC_DRDY"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/AMC_RESET"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/PT1_CS"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/PT2_CS"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT1_CLK"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT1_DATA"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT2_CLK"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT2_DATA"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Supply voltage and current measurement/AMC_CS_PIN"
       },
       {
         "netclass": "Mains",
