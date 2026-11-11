@@ -6031,14 +6031,6 @@
 		(uuid "ad00858a-a916-45c4-909a-8d55b3044c7b")
 	)
 	(no_connect
-		(at 321.31 194.31)
-		(uuid "137c589f-0633-4237-8196-6bdb1c7fffb3")
-	)
-	(no_connect
-		(at 321.31 184.15)
-		(uuid "97484852-8c5d-4240-a6d8-227f7c5bb0a8")
-	)
-	(no_connect
 		(at 321.31 199.39)
 		(uuid "dd63b9bc-e546-46fa-be40-25f24fd3d3e5")
 	)
@@ -6069,6 +6061,14 @@
 	(no_connect
 		(at 321.31 255.27)
 		(uuid "c82a5f7b-0d24-49ed-b840-331242cd9e2f")
+	)
+	(no_connect
+		(at 275.59 222.25)
+		(uuid "fca477f6-7bbd-4002-b76f-1ca1da45c410")
+	)
+	(no_connect
+		(at 275.59 171.45)
+		(uuid "f5a7466c-9f57-4545-b003-a1e2b05bc0ed")
 	)
 	(wire
 		(pts
@@ -7482,12 +7482,12 @@
 	)
 	(hierarchical_label "BUZZER"
 		(shape bidirectional)
-		(at 275.59 171.45 180)
+		(at 321.31 194.31 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "2905133c-4dfb-4d44-8ebf-96010ffc737a")
 	)
@@ -7702,18 +7702,18 @@
 	)
 	(hierarchical_label "AMC_CS"
 		(shape bidirectional)
-		(at 275.59 217.17 180)
+		(at 321.31 184.15 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "9ad270d4-6ca7-487b-9433-78a95ec8b2ca")
 	)
 	(hierarchical_label "WT1_DATA"
 		(shape bidirectional)
-		(at 275.59 219.71 180)
+		(at 275.59 224.79 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7724,7 +7724,7 @@
 	)
 	(hierarchical_label "WT1_CLK"
 		(shape bidirectional)
-		(at 275.59 222.25 180)
+		(at 275.59 227.33 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7735,7 +7735,7 @@
 	)
 	(hierarchical_label "WT2_DATA"
 		(shape bidirectional)
-		(at 275.59 224.79 180)
+		(at 275.59 217.17 180)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -7746,7 +7746,7 @@
 	)
 	(hierarchical_label "WT2_CLK"
 		(shape bidirectional)
-		(at 275.59 227.33 180)
+		(at 275.59 219.71 180)
 		(effects
 			(font
 				(size 1.27 1.27)
