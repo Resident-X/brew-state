@@ -469,7 +469,7 @@ tasks:
       - python3 {{.FW_DIR}}/tools/daily_status.py --workflow "Nightly verification" --branch main
 
   hw:verify:
-    desc: The pre-order check — every board design in the repository through KiCad's own electrical, layout, schematic-parity and separation checks. Needs KiCad 10.0 or newer (set KICAD_CLI=/path/to/kicad-cli when kicad-cli is not on PATH), Python 3.9 or newer with PyYAML 5.1 or newer, and git 2.11 or newer
+    desc: The pre-order check — every board design in the repository through KiCad's own electrical, layout, schematic-parity and separation checks. KiCad's creepage test, the slowest of them on a board with poured planes, runs once per design, in the pass that holds the design's own rules; the mounting-hole and sensing passes hold no creepage constraint. Needs KiCad 10.0 or newer (set KICAD_CLI=/path/to/kicad-cli when kicad-cli is not on PATH), Python 3.9 or newer with PyYAML 5.1 or newer, and git 2.11 or newer
     dir: "{{.ROOT_DIR}}"
     cmds:
       # The designs are found from what git tracks, so a board joins the check

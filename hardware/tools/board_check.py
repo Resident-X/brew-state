@@ -1648,7 +1648,10 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
     hole_rules writes after them, with a probe for each kind of pad the layout
     has, which must fire for the rules' pad-type conditions to be known to
     match; only the rules' own findings are read. A design with no hole is held
-    to nothing for that: its rules fire on nothing.
+    to nothing for that: its rules fire on nothing. The rules text is handed to
+    KiCad without its creepage constraints, which this pass never reads and
+    which are the slow part of a KiCad run on a poured board; the first pass
+    judges the creepage.
 
     A plated hole of a part, a fixing's left out, is not held by the straight
     distance KiCad reports: plated_hole_gaps measures it from the layout, the
@@ -1669,7 +1672,7 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
                           f"the layout's copper cannot be read for the distance of its mounting holes from Mains ({unread})")]
     probes, expected = hole_probes(nonce, tree)
     with open(rules_copy, "w", encoding="utf-8") as handle:
-        handle.write(existing + appended_rules(signed, nonce, net) + hole_rules(distance) + probes)
+        handle.write(without_creepage(existing + appended_rules(signed, nonce, net) + hole_rules(distance) + probes))
     report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
     if report is None:
         return measured + [Violation(design.project, "mounting_hole", design.layout,
@@ -3561,14 +3564,15 @@ def sensing_clearance(kicad_cli: str, design: Design, copy: str, layout: str, ru
     finding is reported under the sensing rule's own name; only those rules'
     findings are read. The design's own rules stay as it wrote them in the first
     run, so a pair the design holds more strictly is still held to its own figure
-    there.
+    there. As in the mounting-hole pass, the rules text is handed to KiCad
+    without its creepage constraints, which this pass never reads.
     """
     problems = sensing_classes(design, record, sensing, project_classes, members)
     if problems:
         return problems
     ahead, after, named = sensing_rules(sensing, signed)
     with open(rules_copy, "w", encoding="utf-8") as handle:
-        handle.write(existing + ahead + appended_rules(signed, nonce, net) + after)
+        handle.write(without_creepage(existing + ahead + appended_rules(signed, nonce, net) + after))
     report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
 
     def fail(message: str) -> List[Violation]:
@@ -5865,6 +5869,85 @@ def appended_rules(signed: Optional[Tuple[float, float]], nonce: str, net: Optio
                  f'\t(constraint clearance (min {signed[0]:g}mm))\n\t(constraint creepage (min {signed[1]:g}mm)))\n')
         text += mains_to_mains_rules(signed)
     return text
+
+
+#: A creepage constraint in the one form the check recognises: its minimum, maximum or optimum figures in parentheses and nothing else.
+CREEPAGE_CONSTRAINT = re.compile(r"\(\s*constraint\s+creepage\s+(?:\(\s*(?:min|max|opt)\s+[^()\s\"]+\s*\)\s*)+\)", re.IGNORECASE)
+
+
+def _balanced_forms(text: str, start: int = 0, stop: Optional[int] = None) -> Optional[List[Tuple[int, int]]]:
+    """The spans of the parenthesised forms written directly between `start` and `stop`, or None where the text is not balanced.
+
+    Quoted strings, with their backslash escapes, and comments from a # to the
+    end of the line are skipped, so a bracket inside either counts for nothing.
+    """
+    stop = len(text) if stop is None else stop
+    spans: List[Tuple[int, int]] = []
+    depth, begin, index = 0, 0, start
+    while index < stop:
+        char = text[index]
+        if char == '"':
+            index += 1
+            while index < stop and text[index] != '"':
+                index += 2 if text[index] == "\\" else 1
+            if index >= stop:
+                return None
+        elif char == "#":
+            while index < stop and text[index] != "\n":
+                index += 1
+        elif char == "(":
+            if depth == 0:
+                begin = index
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth < 0:
+                return None
+            if depth == 0:
+                spans.append((begin, index + 1))
+        index += 1
+    return spans if depth == 0 else None
+
+
+def without_creepage(text: str) -> str:
+    """The rules text with every creepage constraint taken out, and every rule left holding no constraint with it.
+
+    KiCad's creepage test is the slowest of its tests on a board with poured
+    planes, and a pass of the check that reads no creepage finding gains
+    nothing from it. A constraint is taken out only in the form
+    (constraint creepage (min <figure>) ...), the form the check writes and
+    reads; one in any other form stays, as does text that does not balance, so
+    the pass is then slower and never hides a finding. A rule that held no
+    constraint before is left as written. Constraints of any other kind, the
+    clearance included, and the order of the rules are untouched.
+    """
+    forms = _balanced_forms(text)
+    if forms is None:
+        return text
+    cuts: List[Tuple[int, int]] = []
+    for begin, end in forms:
+        if not re.match(r"\(\s*rule\b", text[begin:end], re.IGNORECASE):
+            continue
+        inside = _balanced_forms(text, begin + 1, end - 1)
+        if inside is None:
+            continue
+        constraints = [span for span in inside if re.match(r"\(\s*constraint\b", text[span[0]:span[1]], re.IGNORECASE)]
+        creepage = [span for span in constraints if CREEPAGE_CONSTRAINT.fullmatch(text[span[0]:span[1]])]
+        if not creepage:
+            continue
+        if len(creepage) == len(constraints):
+            cuts.append((begin, end + 1 if text[end:end + 1] == "\n" else end))
+        else:
+            for first, last in creepage:
+                while first > begin and text[first - 1] in " \t\n":
+                    first -= 1
+                cuts.append((first, last))
+    out, position = [], 0
+    for first, last in cuts:
+        out.append(text[position:first])
+        position = last
+    out.append(text[position:])
+    return "".join(out)
 
 
 #: The names of the rules written after the signed one for the spacing between conductors at different mains potentials.
