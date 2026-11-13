@@ -12,4 +12,9 @@
   (fp_circle (center 0.0000 -1.5500) (end 0.1500 -1.5500) (stroke (width 0.1) (type solid)) (fill solid) (layer "F.SilkS"))
   (fp_text reference "REF**" (at 0.0000 -2.5000 0) (layer "F.SilkS") (effects (font (size 1 1) (thickness 0.15))))
   (fp_text value "REED_PADS_P20.00mm" (at 0.0000 22.5000 0) (layer "F.Fab") (effects (font (size 1 1) (thickness 0.15))))
+  (model "${KIPRJMOD}/main-board.3dshapes/REED_PADS_P20.00mm.step"
+    (offset (xyz 0 0 0))
+    (scale (xyz 1 1 1))
+    (rotate (xyz 0 0 0))
+  )
 )
