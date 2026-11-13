@@ -2385,7 +2385,7 @@ positions:
   - reference: T701
     value: T835-800B
     package: TO-252-2_TabPin2_Triac
-    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
     lcsc: C2971290
     class: semiconductor
   # U701: maker onsemi; MPN MOC3052SVM; catalogue class extended
@@ -2448,7 +2448,7 @@ positions:
   - reference: T711
     value: T835-800B
     package: TO-252-2_TabPin2_Triac
-    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
     lcsc: C2971290
     class: semiconductor
   # U711: maker onsemi; MPN MOC3052SVM; catalogue class extended

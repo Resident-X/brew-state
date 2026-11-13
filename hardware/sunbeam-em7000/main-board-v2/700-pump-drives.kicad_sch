@@ -3275,7 +3275,7 @@
 			)
 		)
 	
-		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
+		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -4145,7 +4145,7 @@
 			)
 		)
 	
-		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
+		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
