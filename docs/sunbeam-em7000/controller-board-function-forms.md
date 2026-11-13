@@ -83,7 +83,7 @@ Source numbers (S1…) are in § Sources read. Prices and stock are in § Availa
 | | |
 |---|---|
 | Rows | *Coffee pump switching*, *Steam pump switching* |
-| Form | **Designed**, on the mains board (the board carrying the pumps' and valves' mains circuits): a random-phase opto-triac driving a snubberless triac (§ Terms), one pair per pump. The RBdimmer modules (the earlier design's bought pump dimmers) are **not kept**. Proving candidates: onsemi MOC3052M (S5) and WeEn BTA204S-600B (S7) |
+| Form | **Designed**, on the mains board (the board carrying the pumps' and valves' mains circuits): a random-phase opto-triac driving a snubberless triac (§ Terms), one pair per pump. The RBdimmer modules (the earlier design's bought pump dimmers) are **not kept**. Proving candidates: onsemi MOC3052M (S5) and ST T835-800B (S7; the WeEn BTA204S-600B until 2026-11-13) |
 | Reason | The pump keeps the phase-capable arrangement the original controller gave it, commandable both each half-cycle and by phase angle within a half-cycle (`DEC-MAINS-PHASED-ACTUATION-BELOW-SEAM`; the row's floor, the original machine's `MOC3021` opto-triac into a triac; phase angle means the instant within the half-cycle at which the triac is fired, so a later instant delivers less power). A random-phase opto-triac can fire at any point in the half-cycle, which a zero-cross part cannot, so the form serves whichever modulation the ripple simulation selects. The RBdimmer is not in the catalogue (`controller-board-design-constraints.md`, *Phase-control dimmer module*: no stocked candidate), publishes no isolation voltage and no pulled-down input, and the triac it fits is not established (§ Carried-forward module properties, *Pump drive modules*); the discrete pair costs 0.59 USD + 0.85 USD per pump from the catalogue and every figure of it is in a datasheet. The triac is a snubberless part, so a pump's inductive turn-off needs no snubber across the triac, which would be a path around it |
 | Hardware already bought | None |
 | Reference | onsemi AN-3003 (R1, Rev. 4.07, 10/6/06), whose *Logic to Inductive Load Interface* figure is this circuit |
@@ -394,7 +394,7 @@ JLCPCB's public parts library, read through the search service its library page 
 |---|---|---|---|---|---|
 | IRM-20-5 logic supply, count 1 | C6280121 | Extended | 2 607 | 6.3797 (1–9) | https://jlcpcb.com/partdetail/MW_MEAN_WELL_Enterprises-IRM_205/C6280121 |
 | MOC3052M opto-triac, count 2 | C8965 | Extended | 5 359 | 0.5888 (1–9) | https://jlcpcb.com/partdetail/onsemi-MOC3052M/C8965 |
-| BTA204S-600B triac, count 2 | C256462 | Extended | 4 745 | 0.8537 (1–49) | https://jlcpcb.com/partdetail/WeEnSemiconductors-BTA204S_600B118/C256462 |
+| BTA204S-600B triac, count 2 (replaced on 2026-11-13 by the T835-800B, C2971290, Extended, 68 in stock, 1.2303 USD at 1 piece; this row is the 2026-10-23 reading) | C256462 | Extended | 4 745 | 0.8537 (1–49) | https://jlcpcb.com/partdetail/WeEnSemiconductors-BTA204S_600B118/C256462 |
 | HF115F-Q/012-1H relay, count 2 | C5318991 | Extended | 18 | 3.2119 (1–9) | https://jlcpcb.com/partdetail/6075917-HF115F_Q_0121H/C5318991 |
 | HF32FA-G/012-HSL1 relay, for comparison | C183617 | Extended | 1 597 | 1.6698 (1–9) | https://jlcpcb.com/partdetail/195021-HF32FA_G_012HSL1/C183617 |
 | LTV-814S-TA1-A optocoupler, count 3 (one front end, two confirm) | C108051 | Extended | 14 500 | 0.1361 (1–49) | https://jlcpcb.com/partdetail/LiteOn-LTV_814S_TA1A/C108051 |
@@ -426,7 +426,7 @@ Every address was opened on **2026-10-23** and the figures read from its text, e
 | S3 | Carlo Gavazzi RA 24..06, RA 48..12 datasheet (read as the comparison the heater switch's reason rests on, not as a candidate) | "Specifications are subject to change without notice (06.10.2025)" | https://www.gavazziautomation.com/fileadmin/images/PIM/DATASHEET/ENG/SSR_RA.pdf |
 | S5 | onsemi MOC3052M, 6-pin DIP random-phase triac driver (also MOC3051M) | MOC3052M/D, Rev. 4, September 2022 | https://www.onsemi.com/download/data-sheet/pdf/moc3052m-d.pdf |
 | S6 | onsemi MOC3023M, covering the MOC3021M | MOC3023M/D, Rev. 3, June 2023 | https://www.onsemi.com/download/data-sheet/pdf/moc3023m-d.pdf |
-| S7 | WeEn BTA204S-600B, 3Q Hi-Com triac | Rev. 02, 19 March 2025 | https://www.ween-semi.com/datasheet/BTA204S-600B.pdf |
+| S7 | ST T835-800B, snubberless triac (DS2114 covers BTA08, BTB08, T810, T835, T850); it replaced the WeEn BTA204S-600B, 3Q Hi-Com triac (Rev. 02, 19 March 2025, ween-semi.com), on 2026-11-13 | DS2114 Rev 15, August 2018, the copy hosted by catalogue entry C2971290 |
 | S8 | Hongfa HF115F-Q | 2024 Rev. 1.00 | https://source.hongfa.com/Uploads/Product/PDF/HF115F-Q_en.pdf |
 | S9 | Hongfa HF32FA-G | 2026 Rev. 1.00 | https://source.hongfa.com/Uploads/Product/PDF/HF32FA-G_en.pdf |
 | S10 | Lite-On LTV-814, 824, 844 | Revision K, effective date 01/05/2019 | https://optoelectronics.liteon.com/upload/download/DS-70-96-0013/LTV-8X4%20series%20RevK.PDF |
