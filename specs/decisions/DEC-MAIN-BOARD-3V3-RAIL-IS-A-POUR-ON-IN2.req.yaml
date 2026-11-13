@@ -1,0 +1,30 @@
+id: DEC-MAIN-BOARD-3V3-RAIL-IS-A-POUR-ON-IN2
+type: decision
+category: tactical
+title: The main board's +3V3 rail is a pour on In2 over the low-voltage digital area, with In1 and In4 solid ground
+status: active
+version: 1
+decided_by: owner (signed on behalf, session 2026-11-12)
+text: |
+  The routed v2 main board's In2.Cu carries one supply pour, +3V3, over the low-voltage digital area, and In1.Cu and In4.Cu stay solid ground. The pour sits inside the In2.Cu ground fill's outline at a higher priority, with 0.3 mm clearance and 0.25 mm minimum width, island removal on, and ties to its loads by a via and a straight stub at each +3V3 pad (a controller or integrated-circuit supply pin goes through its decoupling capacitor's pad to a via at the capacitor). +5V and +3V3A stay tracks. The pour does not extend over the analogue front end or the two crystals: the block at the east side of the board, from x 113.0 to the edge and y 44.0 to 92.0 in board millimetres, keeps ground on In2.Cu, so the thermistor, current and pressure filters, the analogue supply and reference parts and both crystals stand over ground as before. The pour's outline stops 10.30 mm from the nearest mains copper on every layer (the signed mains-to-low-voltage clearance is 3.0 mm, the creepage 10.0 mm), is clear of the milled isolation slot and the isolated converter's isolation area, and carries a notch that keeps it, and every low-voltage track and fill, out of the strip under the logic supply module's barrier. No mains copper, clearance or net changes. F.Cu still stands over In1.Cu ground and B.Cu over In4.Cu ground; In3.Cu runs inside the pour lie between +3V3 on In2.Cu and ground on In4.Cu, and the runs over 20 mm there are slow nets. The board has no radio-frequency or fast-edge signal that the change touches: the crystals, the USB pair and the SPI3 bus are routed as before.
+rationale: |
+  Context: the first routing of the v2 main board carried +3V3, +5V and +3V3A as tracks and kept In2.Cu a ground fill. The +3V3 net served 66 pads through 618.6 mm of 0.2 mm thread in 281 pieces, with rings round placement, long diagonals across other nets and no free straight strip for a wide trunk. A trunk study found that a few long trunks do not fit, and that the best track tree costs five to seven more build hours for about 555 mm that still leaves a thread feeding the east half. An independent blind review of the routed board scored the supply zone 6 of 10, with the +3V3 distribution and its feed the weakest parts, and an overall 6.5 of 10 on the board with the pour.
+
+  Trade-offs: the pour serves the same 66 pads with 102 pieces and 145.9 mm, ratio 0.39 against 1.66, no hook and a negligible drop for a rail under 0.5 A, and it frees about 23 vias' worth of lane space on the signal layers. The cost is that In2.Cu loses about 761 mm2 of ground fill west and south-west of the pour, which held no ground via or pad and would otherwise float, and that three ground through-hole pads inside the pour show one thermal spoke on In2.Cu (their other layers keep four); In1.Cu and In4.Cu are the solid planes, so the return reference of F.Cu and B.Cu is unchanged. About 100 mm of kept 0.2 mm thread still feeds the pads in the analogue notch and west of the pour. A pour on In4.Cu was rejected because B.Cu stands directly over it and the ground plane there is the second solid plane the design records rely on. Extending the pour into the analogue notch was rejected because the notch holds both crystals and the sense and reference parts, which are held to ground beneath them. No eight-layer or dedicated supply plane was considered further, since the board is quoted at six layers and the rail is under 0.5 A.
+
+  Reversibility: moderate. The pour is one zone, but the +3V3 stubs and vias rest on it and the thread it replaced was deleted, so reverting means re-routing the rail; it is a board change before the boards are ordered and a revision after.
+
+  Consequences: the stack is described in the board's design records, which are amended in the same change (the stackup and ground-neighbour rows, the plan's supply rows and the fabrication notes). The pre-order checks judge the pour: the distance from its stored fill to mains copper on every layer, the plated-hole spacing figure (taken from gaps in a ground plane, so the 0.3 mm pour clearance does not enter it), and a zone-filled design rule check. The signal study of the board predates the pour and the new routing, so it is stale until re-run. The pour is a critical-class zone and is locked with the other critical copper. This decision adds no residual safety risk and the mains separation basis is untouched.
+options_considered:
+  - option: In2.Cu carries a +3V3 pour over the low-voltage digital area, In1.Cu and In4.Cu stay solid ground, and +5V and +3V3A stay tracks
+    reason_rejected: ""
+  - option: Keep the supply rails as tracks only
+    reason_rejected: 66 +3V3 pads needed 618.6 mm of 0.2 mm thread in 281 pieces with rings and long diagonals, and a trunk study found no free strip for wide trunks; the best track tree costs five to seven more build hours and still leaves about 555 mm, against 145.9 mm in 102 pieces with the pour
+  - option: A +3V3 pour on In4.Cu
+    reason_rejected: B.Cu stands directly over In4.Cu, so a supply pour there would take the ground neighbour from the back layer and one of the two solid ground planes the design records hold
+  - option: A +3V3 pour extended into the analogue notch
+    reason_rejected: the notch holds both crystals, the thermistor, current and pressure filters and the analogue supply and reference parts, which are kept over ground on In2.Cu
+chosen: In2.Cu carries a +3V3 pour over the low-voltage digital area, In1.Cu and In4.Cu stay solid ground, and +5V and +3V3A stay tracks
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: addresses
