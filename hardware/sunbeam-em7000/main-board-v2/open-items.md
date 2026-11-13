@@ -244,6 +244,22 @@ Instruments are those of a home bench: multimeter, bench supply with current lim
 
 Figures for which no home-achievable measurement or limit can be given from the records: the Y402 drive level (M5: the limit is stated and unprovable), the secant-versus-differential bias difference (M8: unbounded), and the HX711 supply above 5.5 V in the module trip and the cable position (M1: worst case assumed above the published range); and, with no reading possible on a home bench, the pump triac surge withstand (M26: the stated limit is not met on the records and is owner-accepted residual risk (g)) and the SETfuse let-through at 6 kA (M29: asked of the maker, no numeric limit until it answers). M27 states only a necessary limit, and M28's inductance, creepage and clearance are read on a spare relay.
 
+## Pin audit of the routed board (2026-11-13): firmware rules and one open bring-up item
+
+The audit read every U401 pad of the routed board against the datasheet's pin and alternate-function tables and `controller-pin-table.md`: 91 of 100 pins pass, 9 carry a firmware rule or an open record, none fails. It read DS12110 Rev 7 (April 2019); the records quote Rev 11. Pin numbers, port names, I/O classes and alternate-function numbers agree where both were read. **To confirm against Rev 11, RM0433, AN2606 and AN4938 before the firmware relies on a rule below.**
+
+| Item | Rule or state | Why |
+|---|---|---|
+| Keys and load-cell data are polled, not interrupts (EXTI lines 6, 5 and 2) | AMC_DRDY (PC6) takes EXTI line 6 and ZC_IN (PA10) line 10; no other signal is an interrupt source. KEY5 (PE6) shares line 6 with AMC_DRDY, KEY4 (PE5) and WT1_DATA (PD5) share line 5, KEY1 (PE2) and WT2_DATA (PD2) share line 2 | A line takes one port at a time (RM0433 SYSCFG_EXTICR, source not read here). A key or HX711 ready line read as an interrupt would take the line from the signal that needs it. If a key interrupt is wanted, AMC_DRDY moves back to the free PD7 (EXTI line 7) or the free PE1 (line 1) |
+| VREF+ buffer off (pin 20) | Keep the internal reference buffer disabled in firmware; R302 ties VREF+ to VDDA | Whether the buffer's reset state loads the pin is in RM0433, not read here: confirm before the first conversion, and set its high-impedance bit if the reset state pulls the pin |
+| Bootloader with BOOT0 high drives PA2, PA6 and PE13 (pins 24, 30, 43) as outputs | **Open bring-up item.** With JP401 fitted the ST bootloader configures USART2_TX on PA2, SPI1_MISO on PA6 and SPI4_MISO on PE13. The nets are CURR1_AN and BREW_AN (analogue dividers) and KNOB_HOT (a switch to ground); no proof row reads them yet | Author the proof row from AN2606 Table 135 beside the rows for the other bootloader pins in `circuit-proof.md`, or accept that BOOT0 is high on the bench only. No pin change is needed |
+| PA9 and PA10 (pins 68, 69) are OTG_FS_VBUS and OTG_FS_ID | PUMP_C_GATE and ZC_IN sit on them: USB runs device-only, forced device mode, VBUS sensing off | The settled PA9 and VBUS reading in the USB section above already assumes VBUS off; PA10 as the ID pin needs forced device mode |
+| PA15 (AMC_CS) resets with a pull-up | Write the output data register high first, then switch the mode register to output. SPI3 uses software NSS (SSM = 1, SSI = 1) so the NSS function of PA15 is never read | PA15 resets as JTDI with an internal pull-up and is SPI3_NSS (AF6); the pull-up and R614 hold the select high until firmware drives it |
+| I2C1 stays on PB8 and PB9 | Never map I2C1 to PB6 and PB7: those carry I2C4 (BREW_SCL, BREW_SDA, AF6) | I2C1 can be mapped to either pair (AF4) |
+| PC4 and PC5 are 3.3 V-only pins | NTC_WAND and STMP_AN are on TT_a pins rated VDD + 0.3 V: the worst normal level is 3.15 V (STMP_AN), the fault level 3.5 V, a margin of 0.1 V in fault only | If more margin is wanted, NTC_WAND can move to the spare PB0 (FT_a, ADC12_INP9) |
+| Pad 88 (PD7) has no net on the routed board | The schematic gives it an unconnected net like every other spare; the board pad has none. Harmless | No electrical effect; the next board update from the schematic sets the net |
+| BUZZER on PB2 has no timer output | A tone is a software or DMA toggle, as it would have been on PE1 | No loss from the move |
+
 ## Carried to the layout leaf
 
 Requirements the layout must meet because of schematic decisions, each as the records state it (cited, none added). A figure the record does not give says so.
