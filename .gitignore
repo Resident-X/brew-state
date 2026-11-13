@@ -41,3 +41,4 @@ __pycache__/
 .stage0/
 /.staircase/stage0-metrics.jsonl
 hardware/tools/tests/fixtures/review_baselines/*.lock
+hardware/**/3d-cache/
