@@ -78036,6 +78036,7 @@
 			(size 0.3 1.6)
 			(layers "F.Cu" "F.Mask" "F.Paste")
 			(roundrect_rratio 0.25)
+			(net "unconnected-(U401-PD7-Pad88)")
 			(uuid "9576865d-9351-45e5-8b2f-7440fdc8c57e")
 		)
 		(pad "89" smd roundrect
