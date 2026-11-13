@@ -34,6 +34,7 @@
 #     (April 2011, revised September 2015), datasheet.lcsc.com 3ffb790481a745eda29097d3bda5ef61.pdf
 #   SN74AHCT1G14 SCLS322P (June 2013), U201 and U203: datasheet.lcsc.com lcsc_datasheet_1809251424_Texas-Instruments-SN74AHCT1G14DCKR_C7486.pdf (read 2026-11-09)
 #   MAX31865 19-6478 Rev 3 (7/15): web.archive.org copy of analog.com MAX31865.pdf
+#   T835-800B DS2114 Rev 15 (August 2018), T701 and T711: datasheet.lcsc.com copy for C2971290; Tables 1 and 2 pp.2, Tables 4 and 5 p.3
 #   MOC3052M/D Rev. 4 (September 2022): web.archive.org copy of onsemi.com moc3052m-d.pdf
 #   MOC3052M/D Rev. 3 (May 2019), the family sheet of the MOC3052SVM (U701, U711): datasheet.lcsc.com 307107d0e3e11abb98837978cd2dba04.pdf
 #   LTV-814/824/844 (13 pages, no revision printed): datasheet.lcsc.com bc51d065248a46be93525386c92657f3.pdf
@@ -58,8 +59,6 @@
 # routes tried (maker address with a browser User-Agent, then web.archive.org, then the LCSC
 # product page links), and none is guessed here. A second search is running separately and its
 # result is to be folded in.
-#   BTA204S-600B (WeEn) T701 T711 ...: no datasheet opened (the BTA204S-600D and BTA208S-800B sheets
-#     were reached but are other type numbers and are not used)
 #   1N4148WS (vishay.com 85751, doc?85751, the archive copy: no PDF; the LCSC page links only RoHS reports)
 #   Crystals Y401 (YXC X50328MSB2GI: a RoHS report and an image-only sheet) and Y402
 #     (Seiko Epson Q13FC13500004: not found)
@@ -2382,12 +2381,12 @@ positions:
     rating: 5x20 mm (5.2 x 20) slow-blow 250 VAC cartridge in a 5x20 holder (listed 250 V, 6.3 A); branch fuse of the coffee pump
     lcsc: C3131
     class: fuse
-  # T701: maker WeEn Semiconductors; MPN BTA204S-600B,118; catalogue class extended
+  # T701: maker STMicroelectronics; MPN T835-800B; catalogue class extended
   - reference: T701
-    value: BTA204S-600B
+    value: T835-800B
     package: TO-252-2_TabPin2_Triac
-    rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
-    lcsc: C256462
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
+    lcsc: C2971290
     class: semiconductor
   # U701: maker onsemi; MPN MOC3052SVM; catalogue class extended
   - reference: U701
@@ -2445,12 +2444,12 @@ positions:
     rating: 5x20 mm (5.2 x 20) slow-blow 250 VAC cartridge in a 5x20 holder (listed 250 V, 6.3 A); branch fuse of the steam pump
     lcsc: C3131
     class: fuse
-  # T711: maker WeEn Semiconductors; MPN BTA204S-600B,118; catalogue class extended
+  # T711: maker STMicroelectronics; MPN T835-800B; catalogue class extended
   - reference: T711
-    value: BTA204S-600B
+    value: T835-800B
     package: TO-252-2_TabPin2_Triac
-    rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
-    lcsc: C256462
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
+    lcsc: C2971290
     class: semiconductor
   # U711: maker onsemi; MPN MOC3052SVM; catalogue class extended
   - reference: U711

@@ -34,6 +34,9 @@
 # C22962 (UNI-ROYAL 0603WAF2200T5E, 220 ohm, position R545) was read on 2026-11-10 from the same local copy of JLCPCB's parts library (library_class, stock and unit_price are that copy's figures:
 #   Basic, 2016616, one price field). It is the series resistor R545 added at FLOW_IN, so the extract now holds 97 numbers.
 #   Each of the four entries carries its own lifecycle read_on; the extract's own read_on is unchanged.
+# C2971290 (STMicroelectronics T835-800B, positions T701 and T711) was read on 2026-11-13 through JLCPCB's parts search (class expand, so extended; stock 68; 1.2303 USD, the price its first
+#   tier lists), for the pump triac change from WeEn BTA204S-600B (C256462, 4745 in stock on 2026-10-29), whose entry is removed since no position uses it now, so the extract still holds 97 numbers.
+#   Its entry carries its own lifecycle read_on; the extract's own read_on is unchanged.
 # lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
 #   page was read, so every entry states no source publishes one, with the source naming
 #   what was looked at. It is not a finding that the part is active.
@@ -606,14 +609,6 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
-  - lcsc: C256462
-    library_class: extended
-    stock: 4745
-    unit_price: 0.8549
-    lifecycle:
-      status: no source publishes one
-      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
   - lcsc: C318884
     library_class: basic
     stock: 1127410
@@ -727,6 +722,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
+  - lcsc: C2971290
+    library_class: extended
+    stock: 68
+    unit_price: 1.2303
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-13
   - lcsc: C4248455
     library_class: extended
     stock: 2000

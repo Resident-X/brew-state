@@ -3203,7 +3203,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BTA204S-600B"
+		(property "Value" "T835-800B"
 			(at 219.71 69.85 0)
 			(effects
 				(font
@@ -3239,7 +3239,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C256462"
+		(property "LCSC" "C2971290"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -3248,7 +3248,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTA204S-600B,118"
+		(property "MPN" "T835-800B"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -3257,7 +3257,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "WeEn Semiconductors"
+		(property "Manufacturer" "STMicroelectronics"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -3275,7 +3275,7 @@
 			)
 		)
 	
-		(property "Rating" "600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02"
+		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -4073,7 +4073,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BTA204S-600B"
+		(property "Value" "T835-800B"
 			(at 219.71 160.02 0)
 			(effects
 				(font
@@ -4109,7 +4109,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C256462"
+		(property "LCSC" "C2971290"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
@@ -4118,7 +4118,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTA204S-600B,118"
+		(property "MPN" "T835-800B"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
@@ -4127,7 +4127,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "WeEn Semiconductors"
+		(property "Manufacturer" "STMicroelectronics"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
@@ -4145,7 +4145,7 @@
 			)
 		)
 	
-		(property "Rating" "600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02"
+		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V, IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
