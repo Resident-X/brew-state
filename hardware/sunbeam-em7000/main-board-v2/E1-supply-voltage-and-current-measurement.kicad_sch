@@ -7276,7 +7276,7 @@
 		(lib_id "Device:NetTie_2")
 		(at 71.12 92.71 0)
 		(unit 1)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "9ef7d1a8-fa76-425e-978c-5e9e5e34326c")
