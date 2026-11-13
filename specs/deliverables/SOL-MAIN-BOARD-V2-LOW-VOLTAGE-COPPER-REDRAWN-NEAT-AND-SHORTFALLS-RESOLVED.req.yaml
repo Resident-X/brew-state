@@ -22,3 +22,5 @@ links:
     type: targets
   - target: DEC-MAIN-BOARD-3V3-RAIL-IS-A-POUR-ON-IN2
     type: justified-by
+  - target: DEC-MAIN-BOARD-ROUTING-RELAXATIONS-SIGNED-FOR-SLOW-NETS-AND-BRING-UP-AIDS
+    type: justified-by

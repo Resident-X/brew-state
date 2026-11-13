@@ -1,0 +1,41 @@
+id: DEC-MAIN-BOARD-ROUTING-RELAXATIONS-SIGNED-FOR-SLOW-NETS-AND-BRING-UP-AIDS
+type: decision
+category: tactical
+title: The v2 main board's routing relaxations are signed for slow nets, supplies and bring-up aids, each with the reason the rule is not needed there
+status: active
+version: 1
+decided_by: owner (signed on behalf, session 2026-11-12)
+text: |
+  The owner accepts, for the routed v2 main board, the relaxations of layout practice listed below, signed on the owner's behalf in the session of 2026-11-12 under the owner's standing instruction to sign on his behalf and list the signed items for him at the end. Each is a recorded finding that the rule's purpose is not at stake on this board for the net or part named, not a finding that the rule is unimportant. The board has no radio-frequency signal, its fastest edge-rate nets are the 8 MHz crystal, the full-speed USB pair and the SPI3 bus at 4 MHz or lower, and every net below is a slow level, a supply or a bring-up aid.
+
+  Routing relaxations, each for slow nets:
+  - The five panel-key lines KEY1 to KEY5 have their lanes on B.Cu under the controller's east pin column, and KEY1, KEY2, KEY4 and KEY5 carry up to three vias each. A key line is a DC level read by polling, and B.Cu stands directly over the solid ground on In4.Cu.
+  - The USB pair's lengths differ by 1.4 mm and its D- line runs 3.8 mm on In3.Cu. The link is full speed at 12 Mbit/s, where 1.4 mm is about 9 ps; the pair stays tight, parallel and behind its ESD part.
+  - The +3V3 feeds kept as 0.2 mm thread, about 100 mm in all, to the pads in the analogue notch and west of the pour (C405 pad 1 on a 15.3 mm thread, and controller pins 6 and 11 with no via site). A supply feed carries milliamps and a thread of that length drops millivolts.
+  - The +3V3A rail's 0.2 mm spurs, 84 mm of the net, each under 1 mA, with the trunk at 0.4 mm; its vias north of y 74 rise from 3 to 6 and its total to about 12, one per surface-mount load; and it runs 0.2 mm from VREF+ and NTC_COF in places. All three are DC or slow nets with no switching edge, so a via or a neighbour adds no measurable error.
+  - Via and length cases on slow or static lines: CURR1_AN one via and 2.2 mm more, SPARE_AN2 one via, NTC_COF one via and 0.2 mm, PT2_FORCE2 up to 0.5 mm (the resistor R647 ground fix), the MAINS_PRES_C copper re-laid at R765 pad 1, NRST at 45 mm and three vias (its pin is fenced on all sides, and a reset line is a level not a clock), PUMP_C_GATE 21 mm on In3.Cu, and BUZZER three vias at a copper-to-distance ratio of 1.55 (a tone at audio rate through a transistor gate).
+  - The test point TP406 stays on HSE_IN as the bring-up clock probe, on a 1 mm stub at the crystal's via, because the layout plan's clock row names it the only part on that node.
+  - The HSE crystal Y401 stands about 10 mm from its pins with the longest pad-to-pin path 14.37 mm, inside the 15 mm working limit of the clock row; the load capacitors stand at the input pins. The limit is kept, not relaxed.
+
+  Region-rule exceptions: the 32 parts-in-region lines the check reported (a part whose courtyard crosses the edge of a region that does not list it, of 36 parts in 37 entries as listed) are carried by listing each part in the region it reaches into, in the three places that hold the list. Each part stands at the pin, connector or lane it serves, and the region rectangles are the floorplan's own drawing, so moving the parts would undo the routing the moves were made for.
+
+  Kept strictly, not relaxed: mains clearance and creepage, and Mains-class copper identical to the baseline; the crystal limits; sense and reference integrity; the USB pair's basics and its ESD part; digital decoupling closeness; SPI3 as written; test-point reachability; the pin order of J791 and J821; the reed J862 and the mains tabs. The relaxations are signed by: owner (signed on behalf, session 2026-11-12).
+rationale: |
+  Context: the layout practice asks that a failing item be resolved by a change to the board or by a recorded finding that the item is met, does not apply, or is overridden by a named requirement or item. The neat redraw of the main board's low-voltage copper left items the rules would flag that no change to the board resolves without making the routing worse: lanes that need the back layer, an extra via where a wrong-layer run was the alternative, a feed that must stay a thread because the pin has no via site, and parts that stand across a region edge at the pin they serve. Each needed a record naming the net, the rule and why this board does not need it.
+
+  Trade-offs: moving parts and re-routing to meet each rule literally was rejected because it brings back the rings, diagonals and via thickets the redraw removed, and neatness leads on this board. Leaving the items as open findings was rejected because a board with an item failing is not ordered. Judging an item unimportant was never an option: each relaxation names the signal it concerns and shows that the rule's purpose, which is a high-frequency or sense-integrity property, does not apply to a slow level, a supply or a bring-up aid. The cost is a longer list for a reviewer to read and a signature the owner confirms afterwards.
+
+  Reversibility: cheap before the boards are ordered, since an entry is withdrawn by a re-route or a part move; after ordering, a board revision.
+
+  Consequences: the lines the pre-order check can take on a signed entry are carried in the board's workmanship acceptance record with these reasons; the relaxations the check cannot take, being lines it does not print, are recorded in the board's design records beside the rules they relax. The standing rules listed as kept strictly are not touched, and the owner is given the list of every relaxation signed on his behalf for confirmation or withdrawal.
+options_considered:
+  - option: Record each relaxation as an owner-signed finding that names the net, the rule and the reason this board does not need it
+    reason_rejected: ""
+  - option: Move parts and re-route until every rule is met literally
+    reason_rejected: it brings back the rings, diagonals and via thickets the redraw removed, and neatness leads on this board
+  - option: Leave the items as open review findings
+    reason_rejected: a board with an item failing is not ordered, so the finding would hold the order for lines that carry no risk
+chosen: Record each relaxation as an owner-signed finding that names the net, the rule and the reason this board does not need it
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: addresses
