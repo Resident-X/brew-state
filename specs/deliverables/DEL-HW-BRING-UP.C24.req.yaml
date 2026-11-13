@@ -1,0 +1,13 @@
+id: DEL-HW-BRING-UP.C24
+type: criterion
+title: The three analogue and switch pins the bootloader drives as outputs are measured with the boot pin high against their limits and recorded
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+closes_by: cascade
+text: |
+  With the controller's boot pin held high so that its system bootloader runs, the bootloader drives three pins of the main board as outputs: PA2 as the serial transmit of USART2, PA6 as the SPI1 data output and PE13 as the SPI4 data output (the bootloader's pin states are those of the controller maker's bootloader application note). Those pins carry CURR1_AN and BREW_AN, which are analogue dividers, and KNOB_HOT, a switch to ground with a pull-up. The board's records cover the bootloader's drive on the load pins and the USB pins and none covers these three. Each of the three nets is measured on the built board with the boot pin high and the bootloader running, and the level at the pin and at the net's source or switch is compared with the limit of the pin and of the circuit it feeds; a level outside either limit fails, and a net with a reading inside both is recorded in the board's circuit proof beside the load pins' bootloader rows. The boot pin is held high only on the bench for loading firmware. Out of scope: the pins the bootloader drives that are already covered, and any change of pin assignment.
+links:
+  - target: DEL-HW-BRING-UP
+    type: criterion-of
