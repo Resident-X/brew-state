@@ -333,6 +333,27 @@ class AWayRoundASlotIsExact(unittest.TestCase):
         _, rounds = board_geometry.route_length(wide[0], wide[1], [self.SLOT, second], 30)
         self.assertGreaterEqual(rounds, 1)
 
+    POCKET = board_geometry.Loop([(0, 0), (12, 0), (12, 12), (0, 12), (0, 10), (10, 10), (10, 2), (0, 2)], False)
+
+    def test_a_line_through_two_corners_of_a_slot_is_not_a_way(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C3: On a synthetic board with a C-shaped slot open to one side, an item inside the C and an item outside it whose straight line passes through the slot's inner corner and leaves by its opposite outer corner and touches no wall anywhere else, the creepage route length is the length of the shortest path round the slot's open end, not the straight line through the slot, and the same pair with the outside item moved off that line is unchanged.
+        inside = board_geometry.Shape([square(7, 7, 8, 8)])
+        outside = board_geometry.Shape([[(20, 20), (21, 20), (21, 21)]])
+        straight = math.hypot(12, 12)
+        for slots in ([self.POCKET], board_geometry.Detours([self.POCKET])):
+            length, rounds = board_geometry.route_length(inside, outside, slots, 40, straight)
+            self.assertAlmostEqual(length, math.hypot(7, 2) + 2.0 + math.hypot(20, 8), places=9)
+            self.assertEqual(rounds, 1)
+        off = board_geometry.Shape([[(20, 21), (21, 21), (21, 22)]])
+        length, _ = board_geometry.route_length(inside, off, [self.POCKET], 40)
+        self.assertAlmostEqual(length, math.hypot(7, 2) + 2.0 + math.hypot(20, 9), places=9)
+
+    def test_a_line_that_only_touches_a_slot_corner_from_outside_is_a_way(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C3: On a synthetic board with a C-shaped slot open to one side, an item inside the C and an item outside it whose straight line passes through the slot's inner corner and leaves by its opposite outer corner and touches no wall anywhere else, the creepage route length is the length of the shortest path round the slot's open end, not the straight line through the slot, and the same pair with the outside item moved off that line is unchanged.
+        one, other = board_geometry.Shape([[(14, 10), (15, 10), (15, 9)]]), board_geometry.Shape([[(10, 14), (9, 14), (9, 15)]])
+        for slots in ([self.POCKET], board_geometry.Detours([self.POCKET])):
+            self.assertEqual(board_geometry.route_length(one, other, slots, 40), (math.hypot(4, 4), 0))
+
     def test_a_way_not_under_the_reach_is_not_worked_out(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2: On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.
         one, other = board_geometry.Shape([square(0, 0, 1, 1)]), board_geometry.Shape([square(30, 0, 31, 1)])
