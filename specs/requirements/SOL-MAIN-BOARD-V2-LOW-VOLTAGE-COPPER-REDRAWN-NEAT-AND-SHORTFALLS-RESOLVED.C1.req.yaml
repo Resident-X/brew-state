@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED.C1
+type: criterion
+title: The final routing's low-voltage copper, via, hook and badly-routed-net totals stand at the figures the redraw delivers
+status: active
+version: 1
+measurement_type: threshold
+verification: analysis
+text: |-
+  On the final board, measured from its layout file, the low-voltage copper totals 5400 mm or less, the vias 470 or fewer, the hooks (two tracks meeting at a pad) 2 or fewer and the nets whose copper exceeds 1.5 times the distance between their pads 10 or fewer, against 10310 mm, 1045, 30 and 49 on the first routing. A figure above its bound fails. Out of scope: mains-class copper.
+links:
+  - target: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED
+    type: criterion-of

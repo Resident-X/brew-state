@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED.C2
+type: criterion
+title: Mains-class copper is identical to the baseline and nothing low-voltage lies within 3 mm of it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  Every one of the 417 Mains-class items of the baseline board is present and identical on the final board in net, layer, position, width and shape, and no low-voltage copper item, on any layer, lies within 3 mm of a Mains-class item or inside the barrier strip of the logic supply module. A missing or changed item, or a low-voltage item in either place, fails. Out of scope: the figures of the signed separation basis.
+links:
+  - target: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED
+    type: criterion-of
