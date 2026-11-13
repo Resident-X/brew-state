@@ -20,6 +20,7 @@ import board_models_3d as bm  # noqa: E402
 import fetch_3d_models as fm  # noqa: E402
 import render_board_3d as rb  # noqa: E402
 import render_fallback_models as ff  # noqa: E402
+import board_collisions_3d as bc  # noqa: E402
 
 BOARD = '''(kicad_pcb
 \t(version 20240108)
@@ -319,6 +320,113 @@ class ClosePictures(unittest.TestCase):
         self.assertEqual((float(bx), by), (-float(tx), ty))
         self.assertIn("angled_opposite", rb.ANGLES)
         self.assertIn("low_side", rb.ANGLES)
+
+
+class UsableModels(unittest.TestCase):
+    def test_a_model_line_naming_a_missing_file_is_no_model(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, "L.3dshapes"))
+            open(os.path.join(tmp, "L.3dshapes", "there.step"), "w").close()
+            board = (BOARD.replace('"${KICAD10_3DMODEL_DIR}/x.step"', '"${KICAD10_3DMODEL_DIR}/L.3dshapes/gone.step"'))
+            fp = bm.read_footprints(board)[1]
+            self.assertTrue(fp.has_model)
+            self.assertFalse(fp.has_usable_model(tmp))
+            self.assertTrue(bm.read_footprints(board.replace("gone", "there"))[1].has_usable_model(tmp))
+            # a path with a variable this cannot resolve is taken as usable
+            self.assertTrue(bm.read_footprints(board.replace("${KICAD10_3DMODEL_DIR}/L.3dshapes/gone.step", "${KIPRJMOD}/m.wrl"))[1]
+                            .has_usable_model(tmp))
+
+    def test_the_picture_gives_such_a_footprint_its_manifest_model(self):
+        board = BOARD.replace('"${KICAD10_3DMODEL_DIR}/x.step"', '"${KICAD10_3DMODEL_DIR}/gone.step"')
+        manifest = {"lib:Stock|": {"source": "fallback", "file": "fallback/s.wrl", "offset": [0, 0, 0], "rotate": [0, 0, 0]},
+                    "lib:Part_A|C12345": {"source": "none"}, "lib:TestPoint_Pad|": {"source": "none"}}
+        with tempfile.TemporaryDirectory() as tmp:
+            blocks, report = rb.model_blocks(board, manifest, "/cache", tmp)
+        self.assertEqual(sorted(blocks), [1])
+        self.assertIn("/cache/fallback/s.wrl", blocks[1])
+
+    def test_f101s_clip_pair_has_a_body_of_its_own_and_no_vendor_lookup(self):
+        name = "Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal"
+        self.assertIn(name, ff.PARTS)
+        self.assertIn(name, fm.OWN_ONLY)
+        solids = ff.PARTS[name]()
+        xs = [x for pts, _, _ in solids for x, _, _ in pts]
+        self.assertGreater(max(xs) - min(xs), 20.0)  # the 20 mm cartridge lies seated in the clips
+        self.assertEqual({m for _, _, m in solids} >= {"brass", "ceramic", "tin"}, True)
+
+    def test_k201s_body_is_the_drawings_41_by_12_7(self):
+        pts = [p for part, _, _ in ff.PARTS["Relay_HF115F-Q_1H_Vertical"]() for p in part]
+        self.assertAlmostEqual(max(p[0] for p in pts) - min(p[0] for p in pts), 41.0, delta=0.5)
+        body = [p for part, _, m in ff.PARTS["Relay_HF115F-Q_1H_Vertical"]() if m == "body" for p in part]
+        self.assertAlmostEqual(max(p[1] for p in body) - min(p[1] for p in body), 12.7, delta=0.1)
+
+
+class VendorAcceptance(unittest.TestCase):
+    def test_fit_error_is_the_worst_pin_to_pad_distance_and_the_overshoot_is_reported(self):
+        pads = [bm.Pad("1", "thru_hole", -11.0, 0.0, 1.2, 2.4, 0, 0.6), bm.Pad("2", "thru_hole", 11.0, 0.0, 1.2, 2.4, 0, 0.6)]
+        verts = [(x, y, z) for x in (-10.95, 11.9) for y in (-0.6, 0.6) for z in (-4.0, 0.5)]
+        placement, note = fm.align_model(pads, verts, (-11.5, -3.0, 11.0, 3.0))
+        self.assertIsNotNone(placement, note)
+        self.assertAlmostEqual(placement["fit_error_mm"], 0.425, places=2)
+        self.assertLessEqual(placement["fit_error_mm"], fm.PIN_TOLERANCE)
+        self.assertGreater(placement["overshoot_mm"], 0.0)
+        self.assertEqual(fm.OVERSHOOT_LIMIT, 1.0)
+
+    def test_run_refuses_a_vendor_model_whose_body_stands_far_outside_the_courtyard(self):
+        board = BOARD.replace('(pad "1" smd rect (at -1 0)', '(fp_rect (start -2 -1) (end 2 1) (layer "F.CrtYd"))\n\t\t(pad "1" smd rect (at -1 0)', 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, "b.kicad_pcb")
+            open(path, "w").write(board)
+            cache = os.path.join(tmp, "cache")
+            os.makedirs(os.path.join(cache, "vendor"))
+            # a 30 mm wide model for a 4 mm courtyard, with leads on both pads
+            obj = "".join(f"v {x} {y} {z}\n" for x in (-15, -1, 1, 15) for y in (-0.3, 0.3) for z in (0, 1))
+            step = "ISO-10303-21;\n" + "".join(f"#1=CARTESIAN_POINT('',({x},{y},{z}));\n" for x in (-16, 16) for y in (-2, 2) for z in (-1, 2))
+            open(os.path.join(cache, "vendor", "C12345.obj"), "w").write(obj)
+            open(os.path.join(cache, "vendor", "C12345.step"), "w").write(step)
+            json.dump({"status": "ok"}, open(os.path.join(cache, "vendor", "C12345.json"), "w"))
+            import io
+            manifest = fm.run(path, cache, 0, True, out=io.StringIO())
+        entry = manifest["lib:Part_A|C12345"]
+        self.assertEqual(entry["source"], "fallback")
+        self.assertIn("outside the courtyard", entry["note"])
+
+
+class Collisions(unittest.TestCase):
+    def square(self, x, y, size=2.0):
+        return [(x, y, 0.5), (x + size, y, 0.5), (x + size, y + size, 0.5), (x, y + size, 0.5),
+                (x, y, 3.0), (x + size, y, 3.0), (x + size, y + size, 3.0), (x, y + size, 3.0)]
+
+    def test_hull_and_separation_of_convex_outlines(self):
+        a = bc.hull([(0, 0), (2, 0), (2, 2), (0, 2), (1, 1)])
+        self.assertEqual(len(a), 4)
+        self.assertAlmostEqual(bc.plan_gap(a, bc.hull([(5, 0), (7, 0), (7, 2), (5, 2)])), 3.0)
+        self.assertAlmostEqual(bc.plan_gap(a, bc.hull([(1.5, 0), (3.5, 0), (3.5, 2), (1.5, 2)])), -0.5)
+
+    def test_pairs_that_overlap_or_come_within_the_gap_are_listed_with_their_flags(self):
+        parts = {"A1": {"top": self.square(0, 0), "bottom": []},
+                 "B1": {"top": self.square(1.5, 0), "bottom": []},      # overlaps A1 by 0.5
+                 "C1": {"top": self.square(2.2, 5), "bottom": []},      # clear
+                 "D1": {"top": self.square(0, 2.1), "bottom": []},      # 0.1 from A1: inside the 0.3 gap
+                 "E1": {"top": [], "bottom": self.square(0, 0)}}        # other side of the board
+        found = bc.find_collisions(parts, 0.3)
+        pairs = {(a, b) for a, b, *_ in found}
+        self.assertEqual(pairs, {("A1", "B1"), ("A1", "D1"), ("B1", "D1")})
+        self.assertLess(found[0][3], 0)  # the worst first
+        lines = bc.report(found, {"B1": "relay"})
+        self.assertTrue(any("HAND-FITTED B1 relay" in line for line in lines))
+        self.assertIn("3 pairs closer than the gap, 1 with outlines overlapping in plan, 2 involving a hand-fitted part", lines[-1])
+
+    def test_a_pair_separated_in_height_or_a_pin_end_is_not_a_collision(self):
+        low = {"top": [(x, y, h * 0.4) for x, y, h in self.square(0, 0)], "bottom": []}   # 0.2 .. 1.2 mm
+        high = {"top": [(x, y, 2.0 + h * 0.4) for x, y, h in self.square(0, 0)], "bottom": []}
+        self.assertEqual(bc.find_collisions({"A": low, "B": high}, 0.3), [])
+        pin = {"top": [], "bottom": [(x, y, 1.6 + h * 0.01) for x, y, h in self.square(0, 0)]}  # a 0.03 mm tip
+        self.assertEqual(bc.find_collisions({"A": pin, "B": {"top": [], "bottom": self.square(0, 0)}}, 0.3), [])
+
+    def test_hand_fitted_parts_are_picked_from_the_footprints(self):
+        text = BOARD.replace("lib:Part_A", "main-board:RELAY_X").replace("lib:Stock", "Fuse:Fuse_1206")
+        self.assertEqual(rb.hand_fitted(bm.read_footprints(text)), {"U1": "relay"})
 
 
 if __name__ == "__main__":

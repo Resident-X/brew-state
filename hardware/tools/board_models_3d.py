@@ -49,6 +49,17 @@ class Footprint:
     x: float = 0.0
     y: float = 0.0
     rot: float = 0.0
+    model_paths: List[str] = field(default_factory=list)
+
+    def has_usable_model(self, model_dir: str) -> bool:
+        """The footprint names a model KiCad can find: a model line whose `${KICAD10_3DMODEL_DIR}` (or absolute)
+        file exists under `model_dir`, or one with a path variable this cannot resolve. A stock footprint whose
+        library names a model file the install lacks has a model line and no usable model."""
+        for path in self.model_paths:
+            resolved = path.replace("${KICAD10_3DMODEL_DIR}", model_dir) if model_dir else path
+            if "${" in resolved or os.path.isfile(resolved):
+                return True
+        return False
 
     @property
     def short_name(self) -> str:
@@ -100,6 +111,7 @@ def read_footprints(text: str) -> List[Footprint]:
         lcsc = ""
         reference = ""
         has_model = False
+        model_paths: List[str] = []
         pads: List[Pad] = []
         crt: List[float] = []
         x = y = rot = 0.0
@@ -112,6 +124,7 @@ def read_footprints(text: str) -> List[Footprint]:
                 rot = _num(item[3]) if len(item) > 3 else 0.0
             elif key == "model":
                 has_model = True
+                model_paths.append(str(item[1]))
             elif key == "property":
                 if str(item[1]) == "LCSC":
                     lcsc = str(item[2]).strip()
@@ -129,7 +142,7 @@ def read_footprints(text: str) -> List[Footprint]:
         if crt:
             xs, ys = crt[0::2], crt[1::2]
             courtyard = (min(xs), min(ys), max(xs), max(ys))
-        result.append(Footprint(lib_id, reference, layer, lcsc, has_model, start, end, pads, courtyard, x, y, rot))
+        result.append(Footprint(lib_id, reference, layer, lcsc, has_model, start, end, pads, courtyard, x, y, rot, model_paths))
     return result
 
 

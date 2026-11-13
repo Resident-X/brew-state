@@ -29,6 +29,7 @@ MATERIALS = {
     "dot": ((0.30, 0.29, 0.28), (0.05, 0.05, 0.05), 0.1, 0.0),
     "tin": ((0.58, 0.57, 0.55), (0.25, 0.25, 0.24), 0.3, 0.0),
     "brass": ((0.60, 0.49, 0.28), (0.22, 0.20, 0.14), 0.25, 0.0),
+    "ceramic": ((0.66, 0.62, 0.55), (0.08, 0.08, 0.08), 0.1, 0.0),
     "tab": ((0.62, 0.57, 0.45), (0.22, 0.21, 0.18), 0.3, 0.0),
     "coating": ((0.12, 0.12, 0.12), (0.05, 0.05, 0.05), 0.1, 0.0),
     "glass": ((0.60, 0.64, 0.63), (0.20, 0.20, 0.20), 0.3, 0.35),
@@ -238,17 +239,22 @@ def relay_hf32fa_g():
 
 
 def relay_hf115f_q():
-    # body 29 long from 2.5 before the coil pins; quick-connect blade 6.3 long beyond the contact end
+    # Hongfa drawing: body 29 x 12.7 x 15.7 on 0.5 standoffs, coil pins 3.8 below the body, and the contact
+    # terminals' carrier out to 41 mm overall (the contact pins at 32.5 and 37.5 from the coil pin, 2.5 inside
+    # the body's end plus 12 beyond it) with vertical quick-connect blades 6.3 long and 13.2 high; the carrier's
+    # shape between the body and the pins is assumed, the overall length and the pin positions are the drawing's
     cy = 3.78
-    s = _relay_body(-2.5, 26.5, cy - 6.35, cy + 6.35, 0.3, 15.7, 2.2)
+    s = _relay_body(-2.5, 26.5, cy - 6.35, cy + 6.35, 0.5, 15.7, 2.2)
     for x, y in ((-2.0, cy - 5.85), (-2.0, cy + 5.85), (26.0, cy - 5.85), (26.0, cy + 5.85)):
-        s.append(body(x - 0.5, x + 0.5, y - 0.5, y + 0.5, 0.0, 0.35, "base"))
+        s.append(body(x - 0.5, x + 0.5, y - 0.5, y + 0.5, 0.0, 0.55, "base"))
+    s.append(body(26.5, 38.5, cy - 4.2, cy + 4.2, 0.5, 9.0, "body", chamfer=0.5, radius=0.6))
     for y in (0, 7.56):
-        s.append(rod("z", -3.3, 0.35, 0.0, y, 0.3, "tin", sides=10, chamfer=0.12))
-    s.append(flat("x", 26.4, 32.8, cy, 6.75, 0.8, 12.9, "brass", ends=1.2, tip=1.4))
+        s.append(flat("x", 29.5, 35.8, y, 11.1, 0.8, 4.2, "brass", ends=0.8, tip=1.0))
+    for y in (0, 7.56):
+        s.append(rod("z", -3.3, 0.5, 0.0, y, 0.3, "tin", sides=10, chamfer=0.12))
     for x in (32.5, 37.5):
         for y in (0, 7.56):
-            s.append(flat("z", -3.3, 0.35, x, y, 0.8, 0.8, "tin", ends=0.2, tip=0.6))
+            s.append(flat("z", -3.3, 0.5, x, y, 0.8, 0.8, "tin", ends=0.2, tip=0.6))
     return s
 
 
@@ -347,6 +353,27 @@ def fuseholder_5x20():
     return s
 
 
+def fuse_clip_pair_5x20():
+    # two spring-brass 5 x 20 clips on a 17.8 mm pitch (a pair of legs each, 5 mm apart) and the ceramic
+    # cartridge seated in them, its metal end caps in the clips; origin at the first clip's first leg
+    s = []
+    cy, cz = 2.5, 3.7
+    for x in (0.0, 17.8):
+        n = 10
+        for k in range(n):  # the C of the clip, open at the top (angles in the y-z plane from +y toward +z)
+            a0 = math.radians(150 + 240.0 * k / n)
+            a1 = math.radians(150 + 240.0 * (k + 1) / n)
+            s.append(loft([[(xx, cy + r * math.cos(a), cz + r * math.sin(a)) for a, r in
+                            ((a0, 2.55), (a0, 3.05), (a1, 3.05), (a1, 2.55))] for xx in (x - 1.25, x + 1.25)], "brass"))
+        s.append(body(x - 1.25, x + 1.25, -0.6, 5.6, 0.5, 0.9, "brass"))
+        for y in (0.0, 5.0):
+            s.append(rod("z", -3.2, 0.6, x, y, 0.4, "tin", sides=10, chamfer=0.15))
+    s.append(rod("x", 3.9, 13.9, cy, cz, 2.5, "ceramic", sides=20))
+    for xa, xb in ((-1.1, 3.9), (13.9, 18.9)):
+        s.append(rod("x", xa, xb, cy, cz, 2.55, "tin", sides=20, chamfer=0.25))
+    return s
+
+
 def jp101_wire_link():
     # 1.5 mm2 wire bent into a slightly arched link, 10 mm between its legs
     path = [(0, 0, -1.6), (0, 0, 2.4), (1.5, 0, 3.1), (5, 0, 3.4), (8.5, 0, 3.1), (10, 0, 2.4), (10, 0, -1.6)]
@@ -358,6 +385,7 @@ PARTS = {
     "Relay_HF115F-Q_1H_Vertical": relay_hf115f_q,
     "AMC131M02_SOIC-20W_DFM0020A": amc131m02,
     "FUSEHOLDER_5x20_XC_BLX-A": fuseholder_5x20,
+    "Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal": fuse_clip_pair_5x20,
     "JP101_WireLink_P10mm": jp101_wire_link,
     "LTV-814S_SMD-4": ltv_814s,
     "MOC3052SVM_SMD-6": moc3052svm,

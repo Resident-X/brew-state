@@ -199,7 +199,11 @@ def _cluster(points: List[Tuple[float, float]], radius: float) -> List[Tuple[flo
 
 
 BOARD_THICKNESS = 1.6
-PIN_TOLERANCE = 0.5  # how far a pin may stand from its pad's centre, mm
+PIN_TOLERANCE = 0.5  # how far a pin may stand from its pad's centre, mm (the most a vendor model's fit error may be)
+OVERSHOOT_LIMIT = 1.0  # how far a vendor model's body may stand outside the footprint's courtyard, mm
+# Footprints whose part number is not the body the footprint stands for (F101's number is the cartridge, the
+# clips are the footprint): drawn from our own body, whatever the service holds under that number.
+OWN_ONLY = {"Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal"}
 
 
 def align_model(pads: List[bm.Pad], vertices, courtyard=None) -> Tuple[Optional[dict], str]:
@@ -260,15 +264,19 @@ def _align(pads, vertices, tht: bool, mode: str, z_move: float, zmin: float, cou
             missed, total = _score(targets, sources, dx, dy, tht)
             score = (missed, _overshoot(rotated, dx, dy, courtyard) + total)
             if best is None or score < best[0]:
-                best = (score, quarter, dx, dy)
-    score, quarter, dx, dy = best
+                best = (score, quarter, dx, dy, sources)
+    score, quarter, dx, dy, sources = best
     missed, total = score[0], score[1]
     if missed > 0:
         return None, f"{mode} fit leaves {missed} of {len(pads)} pads without a pin or lead on them"
     # KiCad turns the model about its own origin and then offsets it; the offset is in the model's frame (y up).
     z_offset = z_move if tht else (0.0 if abs(zmin) < 0.05 else -zmin)
+    rotated = _rotate(vertices, quarter)
+    fit = max((min(math.hypot(sx + dx - tx, sy + dy - ty) for sx, sy in sources) for tx, ty, _ in targets), default=0.0) \
+        if tht else 0.0
     return {"offset": [round(dx, 4), round(dy, 4), round(z_offset, 4)], "rotate_z": ROT_SIGN * 90.0 * quarter,
-            "quarter": quarter, "fit_error_mm": round(total, 3)}, "aligned"
+            "quarter": quarter, "fit_error_mm": round(fit, 3),
+            "overshoot_mm": round(_overshoot(rotated, dx, dy, courtyard), 3)}, "aligned"
 
 
 def _overshoot(rotated, dx: float, dy: float, courtyard) -> float:
@@ -325,8 +333,9 @@ def fallback_model(fp: bm.Footprint, folder: str) -> Tuple[Optional[str], str]:
         xs = [p.x for p in fp.pads]
         ys = [p.y for p in fp.pads]
         box = (min(xs) - 1, min(ys) - 1, max(xs) + 1, max(ys) + 1)
-    fallback.write_wrl(path, name, [fallback.body(box[0], box[2], box[1], box[3], 0.3, 2.0, "body", chamfer=0.2)])
-    return os.path.join("fallback", safe + ".wrl"), "generic block over the courtyard, 2 mm high"
+    height = 5.0 if any(p.kind == "thru_hole" for p in fp.pads) else 2.0
+    fallback.write_wrl(path, name, [fallback.body(box[0], box[2], box[1], box[3], 0.3, height, "body", chamfer=0.2)])
+    return os.path.join("fallback", safe + ".wrl"), f"generic block over the courtyard, {height:g} mm high"
 
 
 # ---------------------------------------------------------------- main
@@ -341,12 +350,12 @@ def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout, ret
     footprint_dir = bm.find_dir("KICAD10_FOOTPRINT_DIR", bm.DEFAULT_FOOTPRINT_DIRS)
     model_dir = bm.find_dir("KICAD10_3DMODEL_DIR", bm.DEFAULT_MODEL_DIRS)
     for fp in footprints:
-        if fp.has_model:
+        if fp.has_usable_model(model_dir):
             continue
         seen.setdefault(fp.lib_id + "|" + fp.lcsc, fp)
     for key, fp in sorted(seen.items()):
         entry: dict = {"lib_id": fp.lib_id, "lcsc": fp.lcsc}
-        users = sorted(f.reference for f in footprints if f.lib_id == fp.lib_id and f.lcsc == fp.lcsc and not f.has_model)
+        users = sorted(f.reference for f in footprints if f.lib_id == fp.lib_id and f.lcsc == fp.lcsc and not f.has_usable_model(model_dir))
         entry["references"] = users
         if not fp.has_body:
             entry.update(source="none", note="no physical body")
@@ -358,7 +367,7 @@ def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout, ret
             manifest[key] = entry
             continue
         reason = "own body asked for" if ("all" in own or fp.short_name in own) else "no LCSC part number"
-        part = "" if ("all" in own or fp.short_name in own) else fp.lcsc if re.fullmatch(r"C\d+", fp.lcsc) else DONOR_PARTS.get(fp.short_name, "")
+        part = "" if ("all" in own or fp.short_name in own or fp.short_name in OWN_ONLY) else fp.lcsc if re.fullmatch(r"C\d+", fp.lcsc) else DONOR_PARTS.get(fp.short_name, "")
         if part:
             status, detail = fetch_vendor(part, vendor_dir, delay, offline, retry_none)
             reason = detail or status
@@ -370,10 +379,15 @@ def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout, ret
                     reason = "the STEP and the OBJ the service gave do not share a frame"
                 else:
                     placement, note = align_model(fp.pads, vertices, fp.courtyard)
+                    if placement is not None and placement["fit_error_mm"] > PIN_TOLERANCE:
+                        placement, note = None, f"fit error {placement['fit_error_mm']} mm is over {PIN_TOLERANCE} mm"
+                    if placement is not None and placement["overshoot_mm"] > OVERSHOOT_LIMIT:
+                        placement, note = None, (f"the body stands {placement['overshoot_mm']} mm outside the courtyard, "
+                                                 f"over {OVERSHOOT_LIMIT} mm")
                     if placement is not None:
                         entry.update(source="vendor", file=os.path.join("vendor", part + ".step"),
                                      offset=placement["offset"], rotate=[0.0, 0.0, placement["rotate_z"]],
-                                     fit_error_mm=placement["fit_error_mm"], note=f"vendor model {part} ({status})")
+                                     fit_error_mm=placement["fit_error_mm"], overshoot_mm=placement["overshoot_mm"], note=f"vendor model {part} ({status})")
                         manifest[key] = entry
                         continue
                     reason = "vendor model does not align to the pads: " + note
@@ -391,8 +405,11 @@ def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout, ret
     counts = {"stock": 0, "vendor": 0, "fallback": 0, "none": 0}
     for key, entry in sorted(manifest.items(), key=lambda kv: (kv[1]["source"], kv[0])):
         counts[entry["source"]] += 1
-        print(f"{entry['source']:8s} {entry['lib_id']} {entry['lcsc'] or '-'} "
-              f"[{', '.join(entry['references'][:6])}{'...' if len(entry['references']) > 6 else ''}] {entry['note']}", file=out)
+        fit = (f" fit error {entry['fit_error_mm']} mm, {entry['overshoot_mm']} mm outside the courtyard"
+               if entry["source"] == "vendor" else "")
+        flag = "GENERIC BLOCK, no maker model and no body of our own: " if "generic block" in entry.get("note", "") else ""
+        print(f"{entry['source']:8s} {flag}{entry['lib_id']} {entry['lcsc'] or '-'} "
+              f"[{', '.join(entry['references'][:6])}{'...' if len(entry['references']) > 6 else ''}] {entry['note']}{fit}", file=out)
     print(f"footprint kinds without a model in the board: {len(manifest)}; KiCad stock {counts['stock']}, vendor {counts['vendor']}, "
           f"own simplified body {counts['fallback']}, no body needed {counts['none']}", file=out)
     return manifest
