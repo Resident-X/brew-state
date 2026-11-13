@@ -3,7 +3,9 @@
 
 usage: fetch_3d_models.py BOARD.kicad_pcb [--cache DIR] [--delay SECONDS] [--offline]
 
-For every footprint of the board that the board gives no model, this reads the footprint's `LCSC`
+For every footprint of the board that the board gives no model, this first looks for the model KiCad's own
+footprint library gives that footprint (a board written without its stock models still draws them), and for
+the rest reads the footprint's `LCSC`
 property and asks the public LCSC / EasyEDA component service, over HTTPS on this machine, for the part's
 3D model. A model found is kept in the cache folder (default `3d-cache/` beside the board) by part number,
 so a second run downloads nothing. The models are the vendor's: they stay on this machine, are not part of
@@ -46,16 +48,33 @@ STEP_URL = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/{uuid}"
 # The service refuses a browser's User-Agent and answers a plain client's.
 USER_AGENT = "curl/8.7.1"
 UNIT_MM = 0.254  # the service draws in 10 mil units
+NONE_TTL_SECONDS = 24 * 3600  # how long "the service has no model" is believed
+
+# A footprint whose part has no catalogue number of its own is drawn from another coil variant's model of the
+# same relay (same outline): the HF115F-Q/005-1H is not in the JLCPCB catalogue, its /012-1H is.
+DONOR_PARTS = {"Relay_HF115F-Q_1H_Vertical": "C5318991"}
 
 # The sign KiCad's (rotate (xyz 0 0 z)) turns a model by, against the counter-clockwise turn seen from above.
 ROT_SIGN = -1.0
 
 
 # ---------------------------------------------------------------- network
-def http_get(url: str, timeout: float = 60.0) -> bytes:
-    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        return response.read()
+def http_get(url: str, timeout: float = 60.0, attempts: int = 3) -> bytes:
+    """The body of `url`; a timeout, a dropped connection or a 5xx/429 answer is tried again, with a pause that
+    doubles, before the error is raised. Any other HTTP error (a 404 says the service has no such file) is raised at once."""
+    for attempt in range(attempts):
+        request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                return response.read()
+        except urllib.error.HTTPError as error:
+            if error.code not in (429, 500, 502, 503, 504) or attempt == attempts - 1:
+                raise
+        except (urllib.error.URLError, OSError):
+            if attempt == attempts - 1:
+                raise
+        time.sleep(2.0 * 2**attempt)
+    raise OSError("unreachable")
 
 
 def extract_model_ref(component: dict) -> Optional[Tuple[str, float]]:
@@ -75,15 +94,16 @@ def extract_model_ref(component: dict) -> Optional[Tuple[str, float]]:
     return None
 
 
-def fetch_vendor(lcsc: str, folder: str, delay: float, offline: bool) -> Tuple[str, str]:
+def fetch_vendor(lcsc: str, folder: str, delay: float, offline: bool, retry_none: bool = False) -> Tuple[str, str]:
     """Make sure `folder` holds the part's model. Returns (status, detail): status is `cached`, `fetched`,
-    `none` (the service has no model for it, kept so it is not asked again) or `error` (not kept)."""
+    `none` (the service has no model for it, kept for a day so it is not asked again, or asked again at once with
+    `retry_none`) or `error` (not kept)."""
     meta_path = os.path.join(folder, lcsc + ".json")
     step_path = os.path.join(folder, lcsc + ".step")
     obj_path = os.path.join(folder, lcsc + ".obj")
     if os.path.isfile(meta_path):
         meta = json.load(open(meta_path))
-        if meta.get("status") == "none":
+        if meta.get("status") == "none" and not retry_none and time.time() - meta.get("at", 0) < NONE_TTL_SECONDS:
             return "none", meta.get("detail", "")
         if os.path.isfile(step_path) and os.path.isfile(obj_path):
             return "cached", ""
@@ -122,7 +142,7 @@ def fetch_vendor(lcsc: str, folder: str, delay: float, offline: bool) -> Tuple[s
 
 def _remember_none(meta_path: str, detail: str) -> Tuple[str, str]:
     with open(meta_path, "w") as handle:
-        json.dump({"status": "none", "detail": detail}, handle)
+        json.dump({"status": "none", "detail": detail, "at": time.time()}, handle)
     return "none", detail
 
 
@@ -164,42 +184,68 @@ def _rotate(points, quarter: int):
 
 
 def _cluster(points: List[Tuple[float, float]], radius: float) -> List[Tuple[float, float]]:
-    clusters: List[List[Tuple[float, float]]] = []
+    """Centres of the groups of points joined by steps of at most `radius` (single linkage), each group's
+    bounding-box centre, so a pin drawn as two prongs or a wide blade is one pin."""
+    groups: List[List[Tuple[float, float]]] = []
     for p in points:
-        for c in clusters:
-            cx = sum(q[0] for q in c) / len(c)
-            cy = sum(q[1] for q in c) / len(c)
-            if math.hypot(p[0] - cx, p[1] - cy) <= radius:
-                c.append(p)
-                break
-        else:
-            clusters.append([p])
-    return [(sum(q[0] for q in c) / len(c), sum(q[1] for q in c) / len(c)) for c in clusters]
+        joined = [g for g in groups if any(math.hypot(p[0] - q[0], p[1] - q[1]) <= radius for q in g)]
+        merged = [p]
+        for g in joined:
+            merged.extend(g)
+            groups.remove(g)
+        groups.append(merged)
+    return [((min(q[0] for q in g) + max(q[0] for q in g)) / 2, (min(q[1] for q in g) + max(q[1] for q in g)) / 2)
+            for g in groups]
 
 
-def align_model(pads: List[bm.Pad], vertices) -> Tuple[Optional[dict], str]:
+BOARD_THICKNESS = 1.6
+PIN_TOLERANCE = 0.5  # how far a pin may stand from its pad's centre, mm
+
+
+def align_model(pads: List[bm.Pad], vertices, courtyard=None) -> Tuple[Optional[dict], str]:
     """Find the offset and turn that put the model's pins on the footprint's pads.
 
     Footprint coordinates have y down; a model's frame has y up, so a pad (x, y) is compared with a model
-    point at (x, -y). Returns (placement, note); placement is None when no turn and offset match every pad.
+    point at (x, -y). A through-hole part is tried with the model's origin on the board surface (its pins
+    the points below z = -0.2) and, for a model drawn about its own middle (one reaching more than 4.6 mm below
+    its origin, tried first), with its lowest 1.9 mm taken as the pin and the whole model moved so that pin ends
+    at the board's underside. Returns (placement, note);
+    placement is None when no turn and offset match every pad.
     """
     if not pads or not vertices:
         return None, "no pads or no vertices"
-    targets = [(p.x, -p.y, p) for p in pads]
     tht = [p for p in pads if p.kind == "thru_hole"]
     zmin = min(v[2] for v in vertices)
+    modes = [("surface", 0.0)] if not tht else [("surface", 0.0), ("tail", -BOARD_THICKNESS - zmin)]
+    if tht and zmin < -(BOARD_THICKNESS + 3.0):  # pins far longer than a board is thick: drawn about the middle
+        modes.reverse()
+    notes = []
+    for mode, z_move in modes:
+        if mode == "tail" and zmin > -2.0:
+            continue
+        placement, note = _align(pads, vertices, bool(tht), mode, z_move, zmin, courtyard)
+        if placement is not None:
+            return placement, note
+        notes.append(note)
+    return None, "; ".join(notes)
+
+
+def _align(pads, vertices, tht: bool, mode: str, z_move: float, zmin: float, courtyard=None):
+    targets = [(p.x, -p.y, p) for p in pads]
     best = None
     for quarter in range(4):
         rotated = _rotate(vertices, quarter)
         if tht:
-            low = [(x, y) for x, y, z in rotated if z < -0.2]
+            low = [(x, y) for x, y, z in rotated if (z < -0.2 if mode == "surface" else z < zmin + 1.9)]
             if not low:
                 return None, "the model has no pin below the board surface"
-            pins = _cluster(low, 0.8)
-            if len(pins) > 40:
+            sources = _cluster(low, 1.4 if len(pads) > 1 else 10.0)
+            if len(sources) > 40:
                 return None, "too many pin clusters"
-            sources = pins
-            candidates = [(tx - px, ty - py) for (px, py) in pins for (tx, ty, _) in targets]
+            candidates = [(tx - px, ty - py) for (px, py) in sources for (tx, ty, _) in targets]
+            if len(sources) == len(targets):  # a maker's pin pitch a little off the footprint's: centre the one on the other
+                candidates.append((sum(t[0] for t in targets) / len(targets) - sum(q[0] for q in sources) / len(sources),
+                                   sum(t[1] for t in targets) / len(targets) - sum(q[1] for q in sources) / len(sources)))
         else:
             low = [(x, y) for x, y, z in rotated if z <= zmin + 0.15]
             if not low:
@@ -211,17 +257,29 @@ def align_model(pads: List[bm.Pad], vertices) -> Tuple[Optional[dict], str]:
             mcy = (min(p[1] for p in low) + max(p[1] for p in low)) / 2
             candidates = [(pcx - mcx, pcy - mcy)]
         for dx, dy in candidates:
-            score = _score(targets, sources, dx, dy, bool(tht))
-            if best is None or score[0] < best[0][0] or (score[0] == best[0][0] and score[1] < best[0][1]):
+            missed, total = _score(targets, sources, dx, dy, tht)
+            score = (missed, _overshoot(rotated, dx, dy, courtyard) + total)
+            if best is None or score < best[0]:
                 best = (score, quarter, dx, dy)
     score, quarter, dx, dy = best
     missed, total = score[0], score[1]
     if missed > 0:
-        return None, f"best fit leaves {missed} of {len(pads)} pads without a pin or lead on them"
+        return None, f"{mode} fit leaves {missed} of {len(pads)} pads without a pin or lead on them"
     # KiCad turns the model about its own origin and then offsets it; the offset is in the model's frame (y up).
-    z_offset = 0.0 if tht or abs(zmin) < 0.05 else -zmin
+    z_offset = z_move if tht else (0.0 if abs(zmin) < 0.05 else -zmin)
     return {"offset": [round(dx, 4), round(dy, 4), round(z_offset, 4)], "rotate_z": ROT_SIGN * 90.0 * quarter,
             "quarter": quarter, "fit_error_mm": round(total, 3)}, "aligned"
+
+
+def _overshoot(rotated, dx: float, dy: float, courtyard) -> float:
+    """How far the model's outline, moved by (dx, dy), stands outside the footprint's courtyard (zero without
+    one); among turns that put the pins on the pads it picks the one that keeps the body inside."""
+    if courtyard is None:
+        return 0.0
+    xs = [x + dx for x, _, _ in rotated]
+    ys = [-(y + dy) for _, y, _ in rotated]
+    x0, y0, x1, y1 = courtyard
+    return max(0.0, x0 - min(xs)) + max(0.0, max(xs) - x1) + max(0.0, y0 - min(ys)) + max(0.0, max(ys) - y1)
 
 
 def _score(targets, sources, dx: float, dy: float, tht: bool) -> Tuple[int, float]:
@@ -231,9 +289,11 @@ def _score(targets, sources, dx: float, dy: float, tht: bool) -> Tuple[int, floa
     for tx, ty, pad in targets:
         if tht:
             d = min(math.hypot(sx + dx - tx, sy + dy - ty) for sx, sy in sources)
-            if d > 0.4:
+            if d > PIN_TOLERANCE:
                 missed += 1
             total += d
+        elif pad.w < 1.0 and pad.h < 1.0 and any(t[2].w >= 1.0 or t[2].h >= 1.0 for t in targets):
+            continue  # a sense pad beside the terminals: the maker's model has no lead on it
         else:
             hx, hy = pad.w / 2 + 0.15, pad.h / 2 + 0.15
             inside = [s for s in sources if abs(s[0] + dx - tx) <= hx and abs(s[1] + dy - ty) <= hy]
@@ -256,30 +316,30 @@ def fallback_model(fp: bm.Footprint, folder: str) -> Tuple[Optional[str], str]:
     os.makedirs(folder, exist_ok=True)
     name = fp.short_name
     safe = re.sub(r"[^A-Za-z0-9_.+-]", "_", name)
+    path = os.path.join(folder, safe + ".wrl")
     if name in fallback.PARTS:
-        path = os.path.join(folder, safe + ".step")
-        fallback.write_step(path, name, fallback.PARTS[name]())
-        return os.path.join("fallback", safe + ".step"), "simplified body from render_fallback_models.py"
+        fallback.write_wrl(path, name, fallback.PARTS[name]())
+        return os.path.join("fallback", safe + ".wrl"), "simplified body from render_fallback_models.py"
     box = fp.courtyard
     if box is None:
         xs = [p.x for p in fp.pads]
         ys = [p.y for p in fp.pads]
         box = (min(xs) - 1, min(ys) - 1, max(xs) + 1, max(ys) + 1)
-    path = os.path.join(folder, safe + ".step")
-    fallback.write_step(
-        path, name, [fallback.box(box[0], box[2], box[1], box[3], 0.3, 2.0, fallback.BLACK)]
-    )
-    return os.path.join("fallback", safe + ".step"), "generic block over the courtyard, 2 mm high"
+    fallback.write_wrl(path, name, [fallback.body(box[0], box[2], box[1], box[3], 0.3, 2.0, "body", chamfer=0.2)])
+    return os.path.join("fallback", safe + ".wrl"), "generic block over the courtyard, 2 mm high"
 
 
 # ---------------------------------------------------------------- main
-def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout) -> dict:
+def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout, retry_none: bool = False,
+        own: Tuple[str, ...] = ()) -> dict:
     text = open(board, encoding="utf-8").read()
     footprints = bm.read_footprints(text)
     manifest: Dict[str, dict] = {}
     vendor_dir = os.path.join(cache, "vendor")
     fallback_dir = os.path.join(cache, "fallback")
     seen: Dict[str, bm.Footprint] = {}
+    footprint_dir = bm.find_dir("KICAD10_FOOTPRINT_DIR", bm.DEFAULT_FOOTPRINT_DIRS)
+    model_dir = bm.find_dir("KICAD10_3DMODEL_DIR", bm.DEFAULT_MODEL_DIRS)
     for fp in footprints:
         if fp.has_model:
             continue
@@ -292,22 +352,28 @@ def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout) -> 
             entry.update(source="none", note="no physical body")
             manifest[key] = entry
             continue
-        reason = "no LCSC part number"
-        if re.fullmatch(r"C\d+", fp.lcsc):
-            status, detail = fetch_vendor(fp.lcsc, vendor_dir, delay, offline)
+        stock = bm.stock_model_block(fp.lib_id, footprint_dir, model_dir)
+        if stock is not None:
+            entry.update(source="stock", block=stock, note="KiCad's own library model")
+            manifest[key] = entry
+            continue
+        reason = "own body asked for" if ("all" in own or fp.short_name in own) else "no LCSC part number"
+        part = "" if ("all" in own or fp.short_name in own) else fp.lcsc if re.fullmatch(r"C\d+", fp.lcsc) else DONOR_PARTS.get(fp.short_name, "")
+        if part:
+            status, detail = fetch_vendor(part, vendor_dir, delay, offline, retry_none)
             reason = detail or status
             if status in ("cached", "fetched"):
-                vertices = read_obj_vertices(os.path.join(vendor_dir, fp.lcsc + ".obj"))
-                bounds = step_bounds(os.path.join(vendor_dir, fp.lcsc + ".step"))
+                vertices = read_obj_vertices(os.path.join(vendor_dir, part + ".obj"))
+                bounds = step_bounds(os.path.join(vendor_dir, part + ".step"))
                 zs = [v[2] for v in vertices]
                 if bounds is None or not vertices or not _contained(vertices, bounds):
                     reason = "the STEP and the OBJ the service gave do not share a frame"
                 else:
-                    placement, note = align_model(fp.pads, vertices)
+                    placement, note = align_model(fp.pads, vertices, fp.courtyard)
                     if placement is not None:
-                        entry.update(source="vendor", file=os.path.join("vendor", fp.lcsc + ".step"),
+                        entry.update(source="vendor", file=os.path.join("vendor", part + ".step"),
                                      offset=placement["offset"], rotate=[0.0, 0.0, placement["rotate_z"]],
-                                     fit_error_mm=placement["fit_error_mm"], note=f"vendor model ({status})")
+                                     fit_error_mm=placement["fit_error_mm"], note=f"vendor model {part} ({status})")
                         manifest[key] = entry
                         continue
                     reason = "vendor model does not align to the pads: " + note
@@ -322,12 +388,12 @@ def run(board: str, cache: str, delay: float, offline: bool, out=sys.stdout) -> 
     os.makedirs(cache, exist_ok=True)
     with open(os.path.join(cache, "manifest.json"), "w") as handle:
         json.dump(manifest, handle, indent=1, sort_keys=True)
-    counts = {"vendor": 0, "fallback": 0, "none": 0}
+    counts = {"stock": 0, "vendor": 0, "fallback": 0, "none": 0}
     for key, entry in sorted(manifest.items(), key=lambda kv: (kv[1]["source"], kv[0])):
         counts[entry["source"]] += 1
         print(f"{entry['source']:8s} {entry['lib_id']} {entry['lcsc'] or '-'} "
               f"[{', '.join(entry['references'][:6])}{'...' if len(entry['references']) > 6 else ''}] {entry['note']}", file=out)
-    print(f"footprint kinds without a model in the board: {len(manifest)}; vendor {counts['vendor']}, "
+    print(f"footprint kinds without a model in the board: {len(manifest)}; KiCad stock {counts['stock']}, vendor {counts['vendor']}, "
           f"own simplified body {counts['fallback']}, no body needed {counts['none']}", file=out)
     return manifest
 
@@ -337,13 +403,19 @@ def main(argv=None) -> int:
     parser.add_argument("board")
     parser.add_argument("--cache", help="cache folder (default: 3d-cache beside the board)")
     parser.add_argument("--delay", type=float, default=0.6, help="seconds before each request (default 0.6)")
+    parser.add_argument("--retry-none", action="store_true",
+                        help="ask the service again for parts it earlier said it holds no model for")
+    parser.add_argument("--own", default="",
+                        help="footprint names (or `all`) to draw with the repository's own simplified body "
+                             "even where a vendor model aligns, comma separated")
     parser.add_argument("--offline", action="store_true", help="use only what the cache holds")
     args = parser.parse_args(argv)
     if not os.path.isfile(args.board):
         print(f"no such board file: {args.board}", file=sys.stderr)
         return 2
     cache = args.cache or os.path.join(os.path.dirname(os.path.abspath(args.board)), "3d-cache")
-    run(args.board, cache, args.delay, args.offline)
+    run(args.board, cache, args.delay, args.offline, retry_none=args.retry_none,
+        own=tuple(n for n in args.own.split(",") if n))
     return 0
 
 

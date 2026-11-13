@@ -195,3 +195,81 @@ def inject_models(text: str, lines_by_index: dict) -> str:
         cursor = end - 1
     out.append(text[cursor:])
     return "".join(out)
+
+
+DEFAULT_FOOTPRINT_DIRS = (
+    "/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints",
+    "/usr/share/kicad/footprints",
+    "/usr/local/share/kicad/footprints",
+)
+DEFAULT_MODEL_DIRS = (
+    "/Applications/KiCad/KiCad.app/Contents/SharedSupport/3dmodels",
+    "/usr/share/kicad/3dmodels",
+    "/usr/local/share/kicad/3dmodels",
+)
+
+
+def find_dir(env_name: str, defaults) -> str:
+    """The folder `env_name` names, else the first of `defaults` that exists, else an empty string."""
+    given = os.environ.get(env_name)
+    if given and os.path.isdir(given):
+        return given
+    for path in defaults:
+        if os.path.isdir(path):
+            return path
+    return ""
+
+
+def stock_model_block(lib_id: str, footprint_dir: str, model_dir: str) -> Optional[str]:
+    """The `(model ...)` blocks KiCad's own library gives the footprint `lib_id` ("Library:Name"), indented to
+    sit in a board's footprint block, or None when the library is not KiCad's, names no model, or a model
+    file it names is missing under `model_dir`. The paths keep their `${KICAD10_3DMODEL_DIR}` form."""
+    if ":" not in lib_id or not footprint_dir:
+        return None
+    library, name = lib_id.split(":", 1)
+    path = os.path.join(footprint_dir, library + ".pretty", name + ".kicad_mod")
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8") as handle:
+        text = handle.read()
+    blocks = []
+    for match in re.finditer(r"\n\s*\(model ", text):
+        start = match.start() + 1
+        depth, i, in_string = 0, start, False
+        while i < len(text):
+            c = text[i]
+            if in_string:
+                if c == "\\":
+                    i += 1
+                elif c == '"':
+                    in_string = False
+            elif c == '"':
+                in_string = True
+            elif c == "(":
+                depth += 1
+            elif c == ")":
+                depth -= 1
+                if depth == 0:
+                    break
+            i += 1
+        block = text[start : i + 1]
+        model_path = re.match(r'\s*\(model\s+"([^"]+)"', block)
+        if model_path is None:
+            continue
+        resolved = model_path.group(1).replace("${KICAD10_3DMODEL_DIR}", model_dir)
+        if model_dir and not os.path.isfile(resolved):
+            return None
+        lines = [line.strip() for line in block.splitlines()]
+        blocks.append(_indent(lines))
+    return "".join(blocks) if blocks else None
+
+
+def _indent(lines) -> str:
+    """Lines of one s-expression block, set at two tabs plus one tab per open parenthesis."""
+    out, depth = [], 2
+    for line in lines:
+        closes = len(line) - len(line.lstrip(")"))
+        depth -= min(closes, depth - 2) if line.startswith(")") else 0
+        out.append("\t" * depth + line + "\n")
+        depth += line.count("(") - line.count(")") + (closes if line.startswith(")") else 0)
+    return "".join(out)

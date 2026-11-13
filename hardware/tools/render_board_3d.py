@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Draw 3D pictures of a board, with a model on every part that has a body, without changing the board.
 
-usage: render_board_3d.py BOARD.kicad_pcb OUT_DIR [--cache DIR] [--size WxH] [--views angled,top,bottom]
+usage: render_board_3d.py BOARD.kicad_pcb OUT_DIR [--cache DIR] [--size WxH] [--views top,bottom,angled,angled_opposite,low_side,side]
                           [--close-up REF[,REF...]] [--quality basic|high] [--kicad-cli PATH]
 
 Makes a scratch copy of the board in OUT_DIR, adds a `(model ...)` block to each footprint that has none
@@ -40,6 +40,8 @@ GLB_DETAIL = {
 }
 ANGLES = {
     "angled": ["--rotate", "-45,0,45", "--perspective"],
+    "angled_opposite": ["--rotate", "-45,0,225", "--perspective"],
+    "low_side": ["--rotate", "-78,0,20", "--perspective"],
     "top": ["--side", "top"],
     "bottom": ["--side", "bottom"],
     "side": ["--side", "front"],
@@ -59,6 +61,9 @@ def model_blocks(text: str, manifest: dict, cache: str):
             report["unlisted"].append(fp.reference)
         elif entry["source"] == "none":
             report["none"] += 1
+        elif entry["source"] == "stock":
+            report["stock"] += 1
+            blocks[index] = entry["block"]
         else:
             report[entry["source"]] += 1
             blocks[index] = bm.model_line(
@@ -119,8 +124,10 @@ def main(argv=None) -> int:
     parser.add_argument("out")
     parser.add_argument("--cache")
     parser.add_argument("--size", default="1800x1100")
-    parser.add_argument("--views", default="angled,top,bottom")
+    parser.add_argument("--views", default="top,bottom,angled,angled_opposite,low_side")
     parser.add_argument("--close-up", default="")
+    parser.add_argument("--close-up-bottom", default="",
+                        help="parts to draw close from below (a part soldered on the back, like the tank reed)")
     parser.add_argument("--glb", default="", help="also write the scratch board as a GLB file for an interactive viewer")
     parser.add_argument("--simplify", action="store_true",
                         help="with --glb: merge by colour, quantise, draw the mask opaque (glb_simplify.py); writes "
@@ -177,6 +184,14 @@ def main(argv=None) -> int:
             render(kicad_cli, scratch, os.path.join(args.out, f"closeup-{ref}-{name}.png"), width, height,
                    args.quality, extra + close_up_args(text, fp, tilt=tilt), env)
             print("wrote", os.path.join(args.out, f"closeup-{ref}-{name}.png"))
+    for ref in [r for r in args.close_up_bottom.split(",") if r]:
+        fp = footprints.get(ref)
+        if fp is None:
+            print(f"no footprint {ref}", file=sys.stderr)
+            continue
+        name = os.path.join(args.out, f"closeup-{ref}-bottom.png")
+        render(kicad_cli, scratch, name, width, height, args.quality, ANGLES["bottom"] + close_up_args(text, fp, mirror=True), env)
+        print("wrote", name)
     print(f"models: stock {report['stock']}, vendor {report['vendor']}, own simplified {report['fallback']}, "
           f"no body {report['none']}, unlisted {len(report['unlisted'])} {report['unlisted']}")
     return 0
@@ -195,12 +210,13 @@ def board_centre(text: str):
     return (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2, max(max(xs) - min(xs), max(ys) - min(ys))
 
 
-def close_up_args(text: str, fp: bm.Footprint, zoom: float = 4.0, tilt: float = 0.0):
+def close_up_args(text: str, fp: bm.Footprint, zoom: float = 4.0, tilt: float = 0.0, mirror: bool = False):
     """kicad-cli's --pan is in centimetres of the board, positive x moving the board right and positive y up
     (measured by shifting a render), from a view centred on the board's edge cuts; `tilt` is the camera's
-    tilt from straight above in degrees, which foreshortens the y shift by its cosine."""
+    tilt from straight above in degrees (`mirror` for a view from below), which foreshortens the y shift by its cosine."""
     cx, cy, _ = board_centre(text)
-    return ["--zoom", f"{zoom:.2f}", "--pan", f"{(cx - fp.x) / 10:.3f},{(fp.y - cy) / 10 * math.cos(math.radians(tilt)):.3f},0"]
+    sign = -1.0 if mirror else 1.0  # seen from below the board's x runs the other way
+    return ["--zoom", f"{zoom:.2f}", "--pan", f"{sign * (cx - fp.x) / 10:.3f},{(fp.y - cy) / 10 * math.cos(math.radians(tilt)):.3f},0"]
 
 
 if __name__ == "__main__":
