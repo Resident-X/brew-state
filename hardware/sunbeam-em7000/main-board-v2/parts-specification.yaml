@@ -309,14 +309,14 @@ positions:
   - reference: U201
     value: SN74AHCT1G14
     package: SOT-353_SC-70-5
-    rating: 7 V absolute maximum VCC, inverting Schmitt gate, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
+    rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; first of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
     lcsc: C7486
     class: integrated circuit
   # U203: maker Texas Instruments; MPN SN74AHCT1G14DCKR; catalogue class extended
   - reference: U203
     value: SN74AHCT1G14
     package: SOT-353_SC-70-5
-    rating: 7 V absolute maximum VCC, inverting Schmitt gate, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
+    rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; second of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
     lcsc: C7486
     class: integrated circuit
   # C201: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
@@ -616,7 +616,7 @@ positions:
   - reference: FB301
     value: 600R@100MHz
     package: L_0603_1608Metric
-    rating: 0603, 0.50 ohm DC max, 350 mA, 25 %
+    rating: 0603, 0.50 ohm DC max, 500 mA, 25 %
     lcsc: C133937
     class: none
   # TP303: maker -; MPN -; catalogue class none
@@ -1082,14 +1082,14 @@ positions:
   - reference: F601
     value: 600R@100MHz
     package: L_0603_1608Metric
-    rating: 0603 350mA 0.5ohm
+    rating: 0603 500mA 0.5ohm
     lcsc: C133937
     class: none
   # F602: maker TAI-TECH; MPN FCM1608KF-601T05; catalogue class extended
   - reference: F602
     value: 600R@100MHz
     package: L_0603_1608Metric
-    rating: 0603 350mA 0.5ohm
+    rating: 0603 500mA 0.5ohm
     lcsc: C133937
     class: none
   # C605: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
@@ -1263,14 +1263,14 @@ positions:
   - reference: R630
     value: 59k
     package: R_2512_6332Metric
-    rating: 1% 75ppm 2512 2W 300V
+    rating: 1% 100ppm 2512 2W 300V
     lcsc: C2775980
     class: resistor
   # R631: maker UNI-ROYAL; MPN HP122WF5902T4E; catalogue class extended
   - reference: R631
     value: 59k
     package: R_2512_6332Metric
-    rating: 1% 75ppm 2512 2W 300V
+    rating: 1% 100ppm 2512 2W 300V
     lcsc: C2775980
     class: resistor
   # U602: maker Lite-On; MPN LTV-814S-TA1-A; catalogue class extended

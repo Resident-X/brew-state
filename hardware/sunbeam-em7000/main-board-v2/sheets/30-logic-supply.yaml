@@ -174,7 +174,7 @@ parts:
   - ref: FB301
     lib_id: Device:FerriteBead
     value: "600R@100MHz"
-    rating: "0603, 0.50 ohm DC max, 350 mA, 25 %"
+    rating: "0603, 0.50 ohm DC max, 500 mA, 25 %"
     footprint: Inductor_SMD:L_0603_1608Metric
     mpn: "FCM1608KF-601T05"
     maker: "TAI-TECH"
