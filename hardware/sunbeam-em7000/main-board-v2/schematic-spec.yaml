@@ -202,7 +202,7 @@ anticipated_channel_kinds:
 - kind: 2
   name: Weight-based endpoint, two load-cell channels
   placed: true
-  where: 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PD3 to PD6'
+  where: 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PD2, PD3, PD5 and PD6'
 - kind: 3
   name: Further temperature and pressure inputs of the kinds in use
   placed: false
@@ -360,7 +360,7 @@ controller_pin_assignment:
     net: 'NO_CONNECT: PB1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 36
     port_or_name: PB2
-    net: 'NO_CONNECT: PB2 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: BUZZER
   - pin: 37
     port_or_name: PE7
     net: 'NO_CONNECT: PE7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
@@ -441,7 +441,7 @@ controller_pin_assignment:
     net: GAUGE_STEP2
   - pin: 63
     port_or_name: PC6
-    net: 'NO_CONNECT: PC6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: AMC_DRDY
   - pin: 64
     port_or_name: PC7
     net: POL_OUT
@@ -483,7 +483,7 @@ controller_pin_assignment:
     net: SWCLK
   - pin: 77
     port_or_name: PA15
-    net: 'NO_CONNECT: PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: AMC_CS
   - pin: 78
     port_or_name: PC10
     net: SPI3_SCK
@@ -501,22 +501,22 @@ controller_pin_assignment:
     net: PT2_CS
   - pin: 83
     port_or_name: PD2
-    net: AMC_CS
+    net: WT2_DATA
   - pin: 84
     port_or_name: PD3
-    net: WT1_DATA
+    net: WT2_CLK
   - pin: 85
     port_or_name: PD4
-    net: WT1_CLK
+    net: 'NO_CONNECT: PD4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 86
     port_or_name: PD5
-    net: WT2_DATA
+    net: WT1_DATA
   - pin: 87
     port_or_name: PD6
-    net: WT2_CLK
+    net: WT1_CLK
   - pin: 88
     port_or_name: PD7
-    net: AMC_DRDY
+    net: 'NO_CONNECT: PD7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 89
     port_or_name: PB3
     net: SWO
@@ -546,7 +546,7 @@ controller_pin_assignment:
     net: TANK_LEVEL
   - pin: 98
     port_or_name: PE1
-    net: BUZZER
+    net: 'NO_CONNECT: PE1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 99
     port_or_name: VSS
     net: GND
@@ -2982,11 +2982,11 @@ sheets:
     AMC_CS:
       scope: global
       pins:
-      - U401.83
+      - U401.77
     AMC_DRDY:
       scope: global
       pins:
-      - U401.88
+      - U401.63
     AMC_RESET:
       scope: global
       pins:
@@ -3010,11 +3010,11 @@ sheets:
     WT1_DATA:
       scope: global
       pins:
-      - U401.84
+      - U401.86
     WT1_CLK:
       scope: global
       pins:
-      - U401.85
+      - U401.87
     PUMP_S_GATE:
       scope: global
       pins:
@@ -3030,11 +3030,11 @@ sheets:
     WT2_DATA:
       scope: global
       pins:
-      - U401.86
+      - U401.83
     WT2_CLK:
       scope: global
       pins:
-      - U401.87
+      - U401.84
     GAUGE_DIR1:
       scope: global
       pins:
@@ -3086,7 +3086,7 @@ sheets:
     BUZZER:
       scope: global
       pins:
-      - U401.98
+      - U401.36
   no_connect:
   - pin: U401.7
     reason: 'PC13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
@@ -3106,8 +3106,6 @@ sheets:
     reason: 'PB0 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.35
     reason: 'PB1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.36
-    reason: 'PB2 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.37
     reason: 'PE7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.38
@@ -3124,14 +3122,16 @@ sheets:
     reason: 'PB14 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.54
     reason: 'PB15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.63
-    reason: 'PC6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.66
     reason: 'PC9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.77
-    reason: 'PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.85
+    reason: 'PD4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.88
+    reason: 'PD7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.90
     reason: 'PB4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.98
+    reason: 'PE1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: J401.7
     reason: 'KEY: Cortex Debug 10-pin pin 7 is the key position, no contact'
   - pin: J401.8
@@ -9162,7 +9162,7 @@ sheets:
   drawing_notes: 'CON2 (J821) pin map from connector-pinouts.md, contact 1 nearest the bottom edge of the board: 1 buzzer drive side (BUZZER_P, +5V through 100 ohm), 2 buzzer return (BUZZER_N, switched to ground), 3 PWR (KEY1),
     4 MAN (KEY2), 5 ONE (KEY3), 6 TWO (KEY4), 7 anode rail (ANODE_RAIL), 8 PRG (KEY5), 9 GND. KEY1..KEY5 follow the record''s table order PWR, MAN, ONE, TWO, PRG. Anode rail: ANODE_GATE (PB5) -> R821 -> Q821 (AO3400A) pulls
     the gate of Q822 (AO3401A, source on +5V) low through two 22 k pull-ups; Q822 drain -> ANODE_SW (TP821) -> JP821 -> ANODE_RAIL, 22 k bleed to ground. Key lines: 10 k to +3V3, read as inputs, sunk by the controller (open-drain)
-    to light an indicator; configure KEY pins with internal pulls off. Low-water: LOWWATER_K (PE12) -> R829 -> Q824, drain = LOWWATER_CATHODE (SP2.6, on the gauge sheet). Buzzer: BUZZER (PE1) -> R826 -> Q823; D821 across the
+    to light an indicator; configure KEY pins with internal pulls off. Low-water: LOWWATER_K (PE12) -> R829 -> Q824, drain = LOWWATER_CATHODE (SP2.6, on the gauge sheet). Buzzer: BUZZER (PB2) -> R826 -> Q823; D821 across the
     buzzer (cathode on BUZZER_P).'
 - order: 17
   sheet: Knob, tank-level and reed inputs

@@ -43,7 +43,7 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 33 | PC5 | STMP_AN | ADC12_INP8 | TT_a | floating input (analog mode per RM0433) |  |
 | 34 | PB0 | no connect | unused (ADC12_INP9) | FT_a | floating input (analog mode per RM0433) |  |
 | 35 | PB1 | no connect | unused (ADC12_INP5) | TT_a | floating input (analog mode per RM0433) |  |
-| 36 | PB2 | no connect | unused | FT_ha | floating input (analog mode per RM0433) |  |
+| 36 | PB2 | BUZZER | GPIO output | FT_ha | floating input (analog mode per RM0433) |  |
 | 37 | PE7 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
 | 38 | PE8 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
 | 39 | PE9 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
@@ -70,7 +70,7 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 60 | PD13 | VALVE_2W_DRV | GPIO output (I2C4_SDA not used) | FT_fh | floating input (analog mode per RM0433) |  |
 | 61 | PD14 | GAUGE_STEP1 | TIM4_CH3 AF2 | FT_h | floating input (analog mode per RM0433) |  |
 | 62 | PD15 | GAUGE_STEP2 | TIM4_CH4 AF2 | FT_h | floating input (analog mode per RM0433) |  |
-| 63 | PC6 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
+| 63 | PC6 | AMC_DRDY | GPIO input (EXTI line 6) | FT_h | floating input (analog mode per RM0433) |  |
 | 64 | PC7 | POL_OUT | GPIO output, push-pull (proof of life) | FT_h | floating input (analog mode per RM0433) |  |
 | 65 | PC8 | AMC_RESET | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
 | 66 | PC9 | no connect | unused (MCO2) | FT_fh | floating input (analog mode per RM0433) |  |
@@ -84,18 +84,18 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 74 | VSS | GND | supply | S | - |  |
 | 75 | VDD | +3V3 | supply | S | - |  |
 | 76 | PA14 | SWCLK | JTCK/SWCLK AF0 | FT | AF0 debug, internal pull-down |  |
-| 77 | PA15 | no connect | unused (JTDI) | FT | AF0 JTDI, internal pull-up, until firmware releases it |  |
+| 77 | PA15 | AMC_CS | GPIO output (JTDI AF0 at reset, internal pull-up, until firmware releases it) | FT | AF0 JTDI, internal pull-up, until firmware releases it |  |
 | 78 | PC10 | SPI3_SCK | SPI3_SCK AF6 | FT_ha | floating input (analog mode per RM0433) |  |
 | 79 | PC11 | SPI3_MISO | SPI3_MISO AF6 | FT_h | floating input (analog mode per RM0433) |  |
 | 80 | PC12 | SPI3_MOSI | SPI3_MOSI AF6 | FT_h | floating input (analog mode per RM0433) |  |
 | 81 | PD0 | PT1_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
 | 82 | PD1 | PT2_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 83 | PD2 | AMC_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 84 | PD3 | WT1_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
-| 85 | PD4 | WT1_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 86 | PD5 | WT2_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
-| 87 | PD6 | WT2_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 88 | PD7 | AMC_DRDY | GPIO input (EXTI line 7) | FT_h | floating input (analog mode per RM0433) |  |
+| 83 | PD2 | WT2_DATA | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 84 | PD3 | WT2_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 85 | PD4 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
+| 86 | PD5 | WT1_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
+| 87 | PD6 | WT1_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 88 | PD7 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
 | 89 | PB3 | SWO | JTDO/TRACESWO AF0 (serial-wire output, optional) | FT | AF0 debug, floating (no pull) per RM0433 11.3.1 |  |
 | 90 | PB4 | no connect | unused (NJTRST) | FT | AF0 NJTRST, internal pull-up, until firmware releases it |  |
 | 91 | PB5 | ANODE_GATE | TIM3_CH2 AF2 | FT | floating input (analog mode per RM0433) |  |
@@ -105,7 +105,7 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 95 | PB8 | STM_SCL | I2C1_SCL AF4 (also UART4_RX AF8) | FT_fh | floating input (analog mode per RM0433) |  |
 | 96 | PB9 | STM_SDA | I2C1_SDA AF4 (also UART4_TX AF8) | FT_fh | floating input (analog mode per RM0433) |  |
 | 97 | PE0 | TANK_LEVEL | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
-| 98 | PE1 | BUZZER | GPIO output (open-drain use, owner D) | FT_h | floating input (analog mode per RM0433) |  |
+| 98 | PE1 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
 | 99 | VSS | GND | supply | S | - |  |
 | 100 | VDD | +3V3 | supply | S | - |  |
 
@@ -113,9 +113,10 @@ Class key (Table 8): FT is 5 V tolerant, TT is 3.3 V tolerant only, B is the ded
 
 ## Differences from the record's allocation
 
-- Every function the allocation table (`component-specification.md`, Where each function lands) and the net dictionary place is on the pin they give. The dictionary adds POL_OUT on PC7, the AMC131M02's AMC_CS, AMC_DRDY and AMC_RESET on PD2, PD7 and PC8, SPARE_AN2 on PA0, CURR1_AN and CURR2_AN on PA2 and PA3, BREW_AN on PA6, and the two reserved mains-presence inputs on PE15 and PB11; each of those pins is FT_h, FT_f or FT_a in Table 9.
+- Every function the allocation table (`component-specification.md`, Where each function lands) and the net dictionary place is on the pin they give. The dictionary adds POL_OUT on PC7, the AMC131M02's AMC_CS, AMC_DRDY and AMC_RESET on PA15, PC6 and PC8, SPARE_AN2 on PA0, CURR1_AN and CURR2_AN on PA2 and PA3, BREW_AN on PA6, and the two reserved mains-presence inputs on PE15 and PB11; each of those pins is FT, FT_h, FT_f or FT_a in Table 9. Seven signals sit on a different pin from the allocation table's first assignment, moved during routing and carried by this table, the net dictionary and the schematic alike: AMC_CS (PD2 to PA15), AMC_DRDY (PD7 to PC6, EXTI line 7 to line 6), WT2_DATA and WT2_CLK (to PD2 and PD3), WT1_DATA and WT1_CLK (to PD5 and PD6), BUZZER (PE1 to PB2). The load-cell signals no longer follow the channel order along the pins.
 - PB3 is wired to the debug header's SWO pin (JTDO/TRACESWO, AF0). The allocation record lists PB3 among the 20 free 5 V-rated pins; it is no longer free. PB3 has no pull in reset (RM0433 11.3.1).
-- The pins the dictionary does not use stay unconnected: PA1, PA4, PA5, PA7, PB0, PB1, PB2 (conversion or general), PB4, PA15, PC13, PB13 to PB15, PC6, PC9, PE7 to PE11, PC2_C, PC3_C. Of the record's 20 free pins rated for 5 V (PA0, PA1, PA11, PA12, PA15, PB2, PB3, PB4, PB13, PB14, PB15, PC6, PC7, PC8, PC9, PC13, PD2, PD7, PE10, PE11), PA0, PA11, PA12, PB3, PC7, PC8, PD2 and PD7 are now placed, which leaves 12. The lead restates the free list.
+- The pins the dictionary does not use stay unconnected: PA1, PA4, PA5, PA7, PB0, PB1 (conversion or general), PB4, PC13, PB13 to PB15, PC9, PD4, PD7, PE1, PE7 to PE11, PC2_C, PC3_C. Of the record's 20 free pins rated for 5 V (PA0, PA1, PA11, PA12, PA15, PB2, PB3, PB4, PB13, PB14, PB15, PC6, PC7, PC8, PC9, PC13, PD2, PD7, PE10, PE11), PA0, PA11, PA12, PA15, PB2, PB3, PC6, PC7, PC8 and PD2 are now placed, which leaves 10. The lead restates the free list.
+- The firmware rules from the pin audit of the routed board (polled keys, EXTI lines 6, 5 and 2 shared, VREF+ buffer, PA15 reset state, I2C1 mapping, USB device-only) are in `open-items.md`, section "Pin audit of the routed board".
 - PB12 is a *_u* pin and carries VALVE_3W_DRV (PB13 to PB15 are unconnected): no USB is used, so it runs from VDD (Table 9 note 7; AN4938 2.1.2). Its FT_u leakage limit is 5 000 nA above Max(VDDXXX) (Table 147) and it takes no 5 V, so the valve stage must see no 5 V pull-up on it.
 - MCO1 is PA8 (the steam pump gate); MCO2 is PC9, unconnected, and could carry a clock observation point, which TP406 does not need today.
 

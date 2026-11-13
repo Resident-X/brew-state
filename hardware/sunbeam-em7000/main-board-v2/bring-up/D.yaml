@@ -41,8 +41,8 @@ key_signals:
   - {name: "GAUGE_STEP2", net: "GAUGE_STEP2", test_point: "TP795", block: "gauge buffer input, gauge B step clock"}
   - {name: "GAUGE_DIR2", net: "GAUGE_DIR2", test_point: "TP796", block: "gauge buffer input, gauge B direction"}
   - {name: "ANODE_GATE", net: "ANODE_GATE", test_point: "R821", block: "anode rail gate control input (PB5); probed at R821 pad 1, the controller side of the 100 ohm gate resistor"}
-  - {name: "BUZZER", net: "BUZZER", test_point: "R826", block: "buzzer stage control input (PE1); probed at R826 pad 1, the controller side of the 100 ohm gate resistor"}
-  - {name: "LOWWATER_K", net: "LOWWATER_K", test_point: "TP824", block: "low-water indicator sink control input (PE0)"}
+  - {name: "BUZZER", net: "BUZZER", test_point: "R826", block: "buzzer stage control input (PB2); probed at R826 pad 1, the controller side of the 100 ohm gate resistor"}
+  - {name: "LOWWATER_K", net: "LOWWATER_K", test_point: "TP824", block: "low-water indicator sink control input (PE12)"}
   - {name: "KEY1", net: "KEY1", test_point: "TP831", block: "panel key line PWR (PE2): key level and indicator sink"}
   - {name: "KEY2", net: "KEY2", test_point: "TP832", block: "panel key line MAN (PE3)"}
   - {name: "KEY3", net: "KEY3", test_point: "TP833", block: "panel key line ONE (PE4)"}
@@ -50,7 +50,7 @@ key_signals:
   - {name: "KEY5", net: "KEY5", test_point: "TP835", block: "panel key line PRG (PE6)"}
   - {name: "KNOB_HOT", net: "KNOB_HOT", test_point: "TP861", block: "hot-water knob microswitch input (PE13)"}
   - {name: "KNOB_STEAM", net: "KNOB_STEAM", test_point: "J861", block: "steam knob microswitch input (PE14); probed at J861 pin 3 (the knob connector pin, which carries the same net as R862 pad 1)"}
-  - {name: "TANK_LEVEL", net: "TANK_LEVEL", test_point: "J862", block: "tank reed input (PE12); probed at J862 pin 2 (the reed pad, which carries the same net as R863 pad 1)"}
+  - {name: "TANK_LEVEL", net: "TANK_LEVEL", test_point: "J862", block: "tank reed input (PE0); probed at J862 pin 2 (the reed pad, which carries the same net as R863 pad 1)"}
 connector_pins:
   # WB_LV10 (J761), 10 ways, pinout fixed in the shared conventions
   - {pin: "J761.1", net: "+5V_WB", class: "power_leaving", why: "LED supply of the wall board's two opto-triac LEDs, through JP761 from +5V; nothing can power the board through it"}

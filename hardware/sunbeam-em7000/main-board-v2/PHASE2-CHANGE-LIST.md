@@ -1,6 +1,6 @@
 # Phase 2 change list: pin map A on the main board
 
-Written 2026-11-10 for `PLAN.md` phase 2. Read-only survey of the worktree at its current commit; nothing here has been applied. Pin map A with two changes: AMC_RESET on PC8 (pin 65) and ANODE_GATE stays on PB5 (pin 91). The S-side swap of pins 81 to 88 is not adopted, so the order below is the one pin map A gives. Source of the map: `/Users/david/real5/layoutopinion/pinmap_a.json` and OPINION2 section 2, with the two changes applied (checked against the scratch model `/Users/david/real5/v2go/place2.py`).
+Written 2026-11-10 for `PLAN.md` phase 2; the pins of seven nets (AMC_CS, AMC_DRDY, WT1_DATA, WT1_CLK, WT2_DATA, WT2_CLK, BUZZER) were moved again during v2 routing and the rows below state those final pins (the pin each had in pin map A is given beside it); the final assignment is `controller-pin-table.md`. Read-only survey of the worktree at its current commit; nothing here has been applied. Pin map A with two changes: AMC_RESET on PC8 (pin 65) and ANODE_GATE stays on PB5 (pin 91). The S-side swap of pins 81 to 88 is not adopted, so the order below is the one pin map A gives. Source of the map: `/Users/david/real5/layoutopinion/pinmap_a.json` and OPINION2 section 2, with the two changes applied (checked against the scratch model `/Users/david/real5/v2go/place2.py`).
 
 ## 1. Decisions that fix the shape of the change
 
@@ -22,12 +22,12 @@ Pin number is the LQFP100 pin. Evidence: DS12110 Rev 11 Table 9 (LQFP100 column)
 | SPI3_MOSI (was SPI2_MOSI) | 54 PB15 | 80 PC12 | SPI3_MOSI AF6 | Table 9 pin 80 lists SPI3_MOSI/I2S3_SDO; Table 10 text line 6557. FT_h |
 | PT1_CS | 51 PB12 | 81 PD0 | GPIO output | Table 9 pin 81: FDCAN1_RX, ..., EVENTOUT; GPIO is free. FT_h |
 | PT2_CS | 55 PD8 | 82 PD1 | GPIO output | Table 9 pin 82. FT_h |
-| AMC_CS | 56 PD9 | 83 PD2 | GPIO output | Table 9 pin 83. FT_h |
-| WT1_DATA | 65 PC8 | 84 PD3 | GPIO input | Table 9 pin 84. FT_h |
-| WT1_CLK | 66 PC9 | 85 PD4 | GPIO output | Table 9 pin 85. FT_h |
-| WT2_DATA | 79 PC11 | 86 PD5 | GPIO input | Table 9 pin 86. FT_h |
-| WT2_CLK | 80 PC12 | 87 PD6 | GPIO output | Table 9 pin 87. FT_h |
-| AMC_DRDY | 57 PD10 | 88 PD7 | GPIO input, EXTI line 7 | Table 9 pin 88. FT_h. No other EXTI line 7 user: PA7, PB7, PE7 are unconnected and PC7 (POL_OUT) is a plain output |
+| AMC_CS | 56 PD9 | 77 PA15 | GPIO output | Table 9 pin 77 (JTDI AF0 at reset with an internal pull-up; SPI3_NSS AF6 unused). FT. Pin map A gave 83 PD2 |
+| WT1_DATA | 65 PC8 | 86 PD5 | GPIO input | Table 9 pin 86. FT_h. Pin map A gave 84 PD3 |
+| WT1_CLK | 66 PC9 | 87 PD6 | GPIO output | Table 9 pin 87. FT_h. Pin map A gave 85 PD4 |
+| WT2_DATA | 79 PC11 | 83 PD2 | GPIO input | Table 9 pin 83. FT_h. Pin map A gave 86 PD5 |
+| WT2_CLK | 80 PC12 | 84 PD3 | GPIO output | Table 9 pin 84. FT_h. Pin map A gave 87 PD6 |
+| AMC_DRDY | 57 PD10 | 63 PC6 | GPIO input, EXTI line 6 | Table 9 pin 63. FT_h. Pin map A gave 88 PD7 (EXTI line 7). EXTI line 6 is shared by port pins PA6 (BREW_AN), PB6 (BREW_SCL), PD6 (WT1_CLK) and PE6 (KEY5); none is an interrupt input while the keys are polled |
 | AMC_RESET | 58 PD11 | 65 PC8 | GPIO output | Table 9 pin 65 (TRACED1, HRTIM_CHB1, TIM3_CH3, ..., EVENTOUT). FT_h. Not a bootloader pin; powers up a floating input like the pin it leaves. Chosen over PB4 (NJTRST pull-up) |
 | BREW_SCL | 46 PB10 | 92 PB6 | I2C4_SCL AF6 | Table 10 Port B row PB6 (text line 6391): I2C4_SCL at AF6. FT_f |
 | BREW_SDA | 47 PB11 | 93 PB7 | I2C4_SDA AF6 | Table 10 Port B row PB7 (text line 6394). FT_fa |
@@ -46,7 +46,7 @@ Pin number is the LQFP100 pin. Evidence: DS12110 Rev 11 Table 9 (LQFP100 column)
 Stay where they are (not touched): PA8, PA9, PA10, PA11, PA12, PA13, PA14, PB3, PB5 (ANODE_GATE), PC14, PC15, PH0, PH1, every ADC pin, KEY1 to KEY5 (PE2 to PE6), GAUGE_STEP1 and GAUGE_STEP2 (PD14, PD15), POL_OUT (PC7), STM_SCL and STM_SDA (PB8, PB9), KNOB_HOT, KNOB_STEAM, MAINS_PRES_C, BUZZER, USB, supplies.
 
 **No-connect set after the change** (22 pins before and after):
-- Newly unconnected: 52 PB13, 53 PB14, 54 PB15, 63 PC6, 66 PC9.
+- Newly unconnected: 52 PB13, 53 PB14, 54 PB15, 66 PC9 (and, after the routing moves below the table, 85 PD4, 88 PD7, 98 PE1).
 - Newly connected, so their no-connect goes: 78 PC10, 92 PB6, 93 PB7, 59 PD12, 60 PD13.
 - PB4 (pin 90) stays unconnected.
 - PC9 is MCO2, so the statement "no MCO pin is free" becomes false (section 6, item MCO).
@@ -152,7 +152,7 @@ All paths are under `hardware/sunbeam-em7000/main-board-v2/` unless a full path 
 
 **5.3 Proofs and verdicts**
 - `circuit-proof.md`: lines 58, 232, 303, 306, 329, 345, 370, 397, 399, 405, 411 to 422, 427, 435, 442. Edits: the pin rows of the drive-state table (411 to 414 become PD11, PD12, PD13, PB12; 418 to 420 become PD8, PD9, PD10; 422 becomes PE12); the bootloader pin list at 405 (PB14/PB15 USART1 and PC9 I2C3 no longer carry a signal; PB10/PB11 USART3, PB6 I2C1 and PC10 to PC12 SPI3 now do); the FT_u list at 427 (`PA9, PB12 to PB15` becomes `PA9, PB12`); the owners list at 442; PD7 rows at 329; flow rows at 58, 303 (PC6 becomes PB10); I2C rows at 306; row 370 `E1.8 Shared SPI2 bus`; 232's PC9 clause.
-- New rows (each with its own source read, not asserted from memory): (a) SPI3 is a bootloader slave port, so the converters' outputs on PC11 cannot fight the bootloader; each select (now PD0 to PD2) is held high by its pull-up, and PA15 (SPI3_NSS in the bootloader) is unconnected with a JTDI pull-up; (b) PB12 is `FT_u`, so VALVE_3W_DRV sees no 5 V pull-up and the 5 000 nA leakage limit gives at most 50 mV across the stage's 10 kohm pull-down in reset; (c) FLOW_IN sits on PB10, which the bootloader lists as USART3_TX (RM0433 2.6, AN2606 Rev 70 Table 135): the buffer U520's push-pull output meets a pin the bootloader may drive, so the row must read the pin's bootloader drive state and the U520 output; (d) MAINS_PRES_S on PB11 (`FT_f`, USART3_RX in the bootloader), where the reset-state note on the Table 109 row for PD7 ("analog mode at reset, firmware sets a plain floating input") must be re-read for PB11; (e) AMC_RESET on PC8: floating input at reset like PD11, with the AMC's own reset level unchanged; (f) BREW_SCL on PB6 is also the bootloader's I2C1_SCL (open-drain, no pull), with the I2C pull-ups on the net unchanged; (g) AMC_DRDY on PD7: EXTI line 7 has no other user.
+- New rows (each with its own source read, not asserted from memory): (a) SPI3 is a bootloader slave port, so the converters' outputs on PC11 cannot fight the bootloader; each select (now PD0, PD1 and PA15) is held high by its pull-up, and PA15 (SPI3_NSS in the bootloader) carries AMC_CS with its JTDI reset pull-up and R614; (b) PB12 is `FT_u`, so VALVE_3W_DRV sees no 5 V pull-up and the 5 000 nA leakage limit gives at most 50 mV across the stage's 10 kohm pull-down in reset; (c) FLOW_IN sits on PB10, which the bootloader lists as USART3_TX (RM0433 2.6, AN2606 Rev 70 Table 135): the buffer U520's push-pull output meets a pin the bootloader may drive, so the row must read the pin's bootloader drive state and the U520 output; (d) MAINS_PRES_S on PB11 (`FT_f`, USART3_RX in the bootloader), where the reset-state note on the Table 109 row for PD7 ("analog mode at reset, firmware sets a plain floating input") must be re-read for PB11; (e) AMC_RESET on PC8: floating input at reset like PD11, with the AMC's own reset level unchanged; (f) BREW_SCL on PB6 is also the bootloader's I2C1_SCL (open-drain, no pull), with the I2C pull-ups on the net unchanged; (g) AMC_DRDY on PC6: EXTI line 6 has no other interrupt user.
 - `circuit-verdicts.md`: lines 192 to 195, 244, 247, 310, 315, 316, 321, 322, 417, 418, 491 to 494, 532, 556, 563, 570 to 572, 615, 616, 632, 649, 666. Same changes as the proof rows they restate, including the verdict for each new row above. `PB4` at 195 is unchanged.
 - Scripts: `circuit-proof/E_spi_bus.py:2, 46` (SPI2 wording, `H743 SPI2 master`), `circuit-proof/E_spi_bus.log` (re-run), `circuit-proof/C_front_ends.py:196, 201, 203, 204` and `circuit-proof/C_gen_decks.py:201, 233` (PC6 pad leakage becomes PB10, still `FT_f`: the leakage figure is Table 50 for the FT class, so check it applies to `FT_f`), `circuit-proof/b_supply_protection.py:20, 90` and `b_supply_protection.out:37` (PD7 becomes PB11; re-run to refresh the .out), `circuit-proof/C_gen_sheets.py:168` (PC6 text). No deck's net voltages change.
 - `circuit-proof/main-board.cir` does not exist in the tree yet; phase 2 step 4 of the plan creates it from the finished schematic.

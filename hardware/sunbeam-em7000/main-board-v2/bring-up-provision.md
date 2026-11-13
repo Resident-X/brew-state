@@ -104,8 +104,8 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: GAUGE_STEP2 | GAUGE_STEP2 | TP795 | — | gauge buffer input, gauge B step clock |
 | Key signal: GAUGE_DIR2 | GAUGE_DIR2 | TP796 | — | gauge buffer input, gauge B direction |
 | Key signal: ANODE_GATE | ANODE_GATE | R821 | — | anode rail gate control input (PB5); probed at R821 pad 1, the controller side of the 100 ohm gate resistor |
-| Key signal: BUZZER | BUZZER | R826 | — | buzzer stage control input (PE1); probed at R826 pad 1, the controller side of the 100 ohm gate resistor |
-| Key signal: LOWWATER_K | LOWWATER_K | TP824 | — | low-water indicator sink control input (PE0) |
+| Key signal: BUZZER | BUZZER | R826 | — | buzzer stage control input (PB2); probed at R826 pad 1, the controller side of the 100 ohm gate resistor |
+| Key signal: LOWWATER_K | LOWWATER_K | TP824 | — | low-water indicator sink control input (PE12) |
 | Key signal: KEY1 | KEY1 | TP831 | — | panel key line PWR (PE2): key level and indicator sink |
 | Key signal: KEY2 | KEY2 | TP832 | — | panel key line MAN (PE3) |
 | Key signal: KEY3 | KEY3 | TP833 | — | panel key line ONE (PE4) |
@@ -113,7 +113,7 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: KEY5 | KEY5 | TP835 | — | panel key line PRG (PE6) |
 | Key signal: KNOB_HOT | KNOB_HOT | TP861 | — | hot-water knob microswitch input (PE13) |
 | Key signal: KNOB_STEAM | KNOB_STEAM | J861 | — | steam knob microswitch input (PE14); probed at J861 pin 3 (the knob connector pin, which carries the same net as R862 pad 1) |
-| Key signal: TANK_LEVEL | TANK_LEVEL | J862 | — | tank reed input (PE12); probed at J862 pin 2 (the reed pad, which carries the same net as R863 pad 1) |
+| Key signal: TANK_LEVEL | TANK_LEVEL | J862 | — | tank reed input (PE0); probed at J862 pin 2 (the reed pad, which carries the same net as R863 pad 1) |
 | Key signal: Carried: HX711 supply at the pin (row M1) | +5V |  | — | Module position: multimeter on VSUP of U630 and U631 at the first current-limited connection and at full load, scope held for the first second after mains on; at most 5.5 V (module 5.125 V at most). Worst case assumed above 5.5 V: module trip 6.75 V, D402 clamp 10.3 V. Limit and source: open-items.md, Bring-up measurements carried. |
 | Key signal: Carried: HX711 input source resistance and sampling draw (row M2) | WT1_INA_P | TP671 | — | Before mains: legs R670 R671 R675 R676 100 ohm +/-1 percent, C670 and C675 0.1 uF +/-10 percent. Bench supply, mains off, bridge simulator: 100 conversions as built and with 1 kohm legs, mean shift at most one standard deviation. Limit and source: open-items.md, Bring-up measurements carried. |
 | Key signal: Carried: load-cell and probe input capacitance (row M12) | WT2_INA_P | TP673 | — | LCR meter at the connector with the sensor and cable connected, unpowered: load cell at most 3.75 uF across the inputs; probe sensor at most 0.50 uF (from 10.5 R C + 1 ms within the 10 ms control step). Limit and source: open-items.md, Bring-up measurements carried. |

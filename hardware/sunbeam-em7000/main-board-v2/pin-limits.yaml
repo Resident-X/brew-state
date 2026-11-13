@@ -446,7 +446,7 @@ parts:
         absolute_max_v: 4
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PB2 (no connect), Table 9 class FT_ha; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PB2 (BUZZER), Table 9 class FT_ha; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "36"
         domain: logic
         absolute_max_v: 6
@@ -608,7 +608,7 @@ parts:
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PC6 (no connect), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PC6 (AMC_DRDY), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "63"
         domain: logic
         absolute_max_v: 6
@@ -692,7 +692,7 @@ parts:
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PA15 (no connect), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PA15 (AMC_CS), Table 9 class FT; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "77"
         domain: logic
         absolute_max_v: 6
@@ -728,37 +728,37 @@ parts:
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PD2 (AMC_CS), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PD2 (WT2_DATA), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "83"
         domain: logic
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PD3 (WT1_DATA), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PD3 (WT2_CLK), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "84"
         domain: logic
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PD4 (WT1_CLK), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PD4 (no connect), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "85"
         domain: logic
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PD5 (WT2_DATA), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PD5 (WT1_DATA), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "86"
         domain: logic
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PD6 (WT2_CLK), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PD6 (WT1_CLK), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "87"
         domain: logic
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PD7 (AMC_DRDY), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PD7 (no connect), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "88"
         domain: logic
         absolute_max_v: 6
@@ -818,7 +818,7 @@ parts:
         absolute_max_v: 6
         absolute_min_v: -0.3
         tolerates_driven_unpowered: false
-      # PE1 (BUZZER), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
+      # PE1 (no connect), Table 9 class FT_h; FT_xxx row of Table 109: VSS-0.3 to Min(Min(VDD,VDDA,VDD33USB,VBAT)+4.0, 6) V, which is 6.0 V for every supply of 2.0 V and above (formula applies to the supplies of the pin's I/O structure; the internal pull resistors must be off above 4 V); recommended maximum Min(VDD,VDDA,VDD33USB)+3.6 V and below 5.5 V (Table 112 note 2), -0.3 V minimum
       - pin: "98"
         domain: logic
         absolute_max_v: 6

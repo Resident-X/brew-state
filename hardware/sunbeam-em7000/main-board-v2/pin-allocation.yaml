@@ -124,10 +124,10 @@ channels:
     controller_pin: PD1
   - channel: amc_cs
     net: AMC_CS
-    controller_pin: PD2
+    controller_pin: PA15
   - channel: amc_drdy
     net: AMC_DRDY
-    controller_pin: PD7
+    controller_pin: PC6
   - channel: amc_reset
     net: AMC_RESET
     controller_pin: PC8
@@ -145,10 +145,10 @@ channels:
     controller_pin: PC7
   - channel: wt1_data
     net: WT1_DATA
-    controller_pin: PD3
+    controller_pin: PD5
   - channel: wt1_clk
     net: WT1_CLK
-    controller_pin: PD4
+    controller_pin: PD6
   - channel: pump_s_gate
     net: PUMP_S_GATE
     controller_pin: PA8
@@ -180,10 +180,10 @@ channels:
     connector_pin: '4'
   - channel: wt2_data
     net: WT2_DATA
-    controller_pin: PD5
+    controller_pin: PD2
   - channel: wt2_clk
     net: WT2_CLK
-    controller_pin: PD6
+    controller_pin: PD3
   - channel: gauge_dir1
     net: GAUGE_DIR1
     controller_pin: PD8
@@ -227,7 +227,7 @@ channels:
     controller_pin: PE12
   - channel: buzzer
     net: BUZZER
-    controller_pin: PE1
+    controller_pin: PB2
   - channel: j401_1_dbg_vtref
     net: '/Controller/DBG_VTREF'
     rail: DBG_VTREF

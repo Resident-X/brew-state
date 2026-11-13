@@ -223,7 +223,7 @@ Each function is placed on a pin of the LQFP100 package, with the alternate func
 | Gauge direction, two, and driver reset | PD8 (55), PD9 (56), PD10 (57) | none | FT_h ×3 |
 | Operator panel, five key and indicator lines (bidirectional; 5 V) | PE2 (1), PE3 (2), PE4 (3), PE5 (4), PE6 (5) | none | FT_h ×5 |
 | Low-water indicator cathode (open-drain; 5 V) | PE12 (42) | none | FT_h |
-| Buzzer (open-drain; 5 V) | PE1 (98) | none | FT_h |
+| Buzzer (open-drain; 5 V) | PB2 (36) | none | FT_ha |
 | Tank level, hot-water knob microswitch, steam knob microswitch | PE0 (97), PE13 (43), PE14 (44) | none (input) | FT_h ×3 |
 | Mains presence, coffee and steam element | PE15 (45), PB11 (47) | none (input) | FT_h, FT_f |
 | **Anticipated channels** | | | |
@@ -233,7 +233,7 @@ Each function is placed on a pin of the LQFP100 package, with the alternate func
 | Direct group-head instrumentation, one or two | PA7 (31), PB0 (34) | ADC12_INP7, ADC12_INP9 | TT_a, FT_a |
 | In-stream temperature converters, two, on one SPI bus: clock, data in, data out | PC10 (78), PC11 (79), PC12 (80) | SPI3_SCK, SPI3_MISO, SPI3_MOSI (AF6) | FT_ha, FT_h, FT_h |
 | The two converters' chip selects | PD0 (81), PD1 (82) | plain outputs | FT_h, FT_h |
-| Weight-based endpoint, two load-cell amplifiers, a data and a clock line each | PD3 (84), PD4 (85), PD5 (86), PD6 (87) | none (data in, clock out) | FT_h ×4 |
+| Weight-based endpoint, two load-cell amplifiers, a data and a clock line each | PD2 (83), PD3 (84), PD5 (86), PD6 (87) | none (data in, clock out) | FT_h ×4 |
 | Real-time clock crystal (32.768 kHz) | PC14 (8), PC15 (9) | OSC32_IN, OSC32_OUT | FT, FT |
 | **Taken by the board itself** | | | |
 | Serial-wire debug | PA13 (72), PA14 (76) | JTMS-SWDIO, JTCK-SWCLK (the function after reset, Table 9) | FT, FT |
@@ -253,11 +253,11 @@ That is 32 pins for the current channels, and 18 for the anticipated ones (13 di
 | PB10 | The factory board pulls the flow-meter line up to 5 V through 2 kΩ (`controller-io.md`). The meter's output type, open-drain or push-pull, is still unread; PB10 is *FT_f*, so it is safe either way. The new board pulls the line up to 3.3 V (`controller-board-function-forms.md`, *Flow sensing*), which suits an open-drain output and is harmless to a push-pull one | FT_f |
 | PE2, PE3, PE4, PE5, PE6 | Each key line is pulled toward the 5 V anode rail through its indicator elements while it is not sinking | FT_h ×5 |
 | PE12 | The low-water indicator's cathode sits near the gated 5 V rail through its elements | FT_h |
-| PE1 | The buzzer stage's base network ends on the 5 V rail | FT_h |
+| PB2 | The buzzer stage's base network ends on the 5 V rail | FT_ha |
 | PB5 | The anode-rail gate stage's base network ends on the 5 V rail | FT |
-| PD3, PD4, PD5, PD6 | Conditional: a load-cell amplifier supplied from 5 V drives its data line to 5 V | FT_h ×4 |
+| PD2, PD3, PD5, PD6 | Conditional: a load-cell amplifier supplied from 5 V drives its data line to 5 V | FT_h ×4 |
 
-All thirteen are rated, and 20 other pins with the rating are free (PA0, PA1, PA11, PA12, PA15, PB2, PB3, PB4, PB13, PB14, PB15, PC6, PC7, PC8, PC9, PC13, PD2, PD7, PE10, PE11). The earlier allocation could not be carried on this point: it put the five key lines on PE4 to PE8, and **PE7 and PE8 are *TT_ha* pins, rated 3.3 V only**; with the anode rail on, those two lines meet the 5 V rail through the indicator elements. The key lines are therefore moved to PE2 to PE6, five contiguous pins that are all *FT_h*. Their pull-ups are the external ones that `controller-board-function-forms.md` § Operator panel: keys, indicators, buzzer gives them, and the part's internal pull-up on them is left off, as note 4 requires. No level conversion is needed on any of the thirteen while the 5 V rail stays within the IRM-10 sheet's published 5 V +2.5 % worst case; the fitted module's own tolerance and over-voltage shutdown are to be re-read from its sheet, and whether a series resistor or a clamp is needed on the exposed inputs to survive a rail-high fault (shutdown at 5.75–6.75 V on the IRM-10 sheet, above the 5.5 V operating limit and possibly above the 6 V stress limit) is left to the board design task. The gauge lines do not need the rating: their buffer's inputs are TTL-level, driven from 3.3 V. PA4, PA5, PA7, PB1, PC4 and PC5, the *TT* pins that carry conversion inputs, take only the divided analogue levels the channel enumeration sets.
+All thirteen are rated, and 20 other pins with the rating are free (PA0, PA1, PA11, PA12, PA15, PB3, PB4, PB13, PB14, PB15, PC6, PC7, PC8, PC9, PC13, PD4, PD7, PE1, PE10, PE11). The earlier allocation could not be carried on this point: it put the five key lines on PE4 to PE8, and **PE7 and PE8 are *TT_ha* pins, rated 3.3 V only**; with the anode rail on, those two lines meet the 5 V rail through the indicator elements. The key lines are therefore moved to PE2 to PE6, five contiguous pins that are all *FT_h*. Their pull-ups are the external ones that `controller-board-function-forms.md` § Operator panel: keys, indicators, buzzer gives them, and the part's internal pull-up on them is left off, as note 4 requires. No level conversion is needed on any of the thirteen while the 5 V rail stays within the IRM-10 sheet's published 5 V +2.5 % worst case; the fitted module's own tolerance and over-voltage shutdown are to be re-read from its sheet, and whether a series resistor or a clamp is needed on the exposed inputs to survive a rail-high fault (shutdown at 5.75–6.75 V on the IRM-10 sheet, above the 5.5 V operating limit and possibly above the 6 V stress limit) is left to the board design task. The gauge lines do not need the rating: their buffer's inputs are TTL-level, driven from 3.3 V. PA4, PA5, PA7, PB1, PC4 and PC5, the *TT* pins that carry conversion inputs, take only the divided analogue levels the channel enumeration sets.
 
 **Spare capacity on the interfaces in use.** Placing a function is not the same as leaving room on its interface, so the room is stated for each.
 
@@ -285,7 +285,7 @@ The earlier design allocated pins on a bought module carrying this chip (`contro
 | Gauge lines through the TTL-input buffer (PD0, PD1, PD4, PD5, PD6) | The earlier note asked for the buffer's 5 V analysis to be redone, since it was made for another part: done, no 5 V reaches these pins | PD8, PD9, PD10 carried as plain outputs; the step clocks move to timer outputs |
 | Five key lines (PE4 to PE8) | PE4, PE5, PE6 are FT_h. **PE7 and PE8 are TT_ha: not rated for 5 V** | PE4 to PE6 carried; PE7 and PE8 replaced by PE2, PE3 (FT_h) |
 | Anode-rail gate (PB5; TIM3_CH2 AF2, *AF not yet verified*) | Verified: TIM3_CH2 is AF2; PB5 is FT | Carried |
-| Buzzer (PB4) | PB4 is FT, but it resets as NJTRST (Table 9) | Moved to PE1, which carries no debug function |
+| Buzzer (PB4) | PB4 is FT, but it resets as NJTRST (Table 9) | Moved to PB2, which carries no debug function (first placed on PE1; the board's routing moved it) |
 | Low-water indicator cathode (PA0) | PA0 is FT_a | Moved to PE12, to keep PA0 (ADC1_INP16) for conversion |
 | Tank level (PE9), hot-water knob (PE15), steam knob (PC6) | PE9 is TT_ha, fit for a 3.3 V input; PE15 FT_h; PC6 FT_h | Tank level on PE0, knobs on PE13, PE14; PE15 is taken by a mains-presence input and PC6 is left free (the flow meter is on PB10) |
 | Flow meter (PA8; TIM1_CH1 AF1; *5 V tolerance to be checked*) | TIM1_CH1 on PA8 is AF1, confirmed. PA8 is FT_fha: rated for 5 V | Moved to PB10 (TIM2_CH3, AF1, FT_f) so that the zero-cross and pump gates share TIM1 and the flow capture has a 32-bit timer of its own |

@@ -925,11 +925,11 @@ nets:
   AMC_CS:
     scope: global
     pins:
-    - U401.83
+    - U401.77
   AMC_DRDY:
     scope: global
     pins:
-    - U401.88
+    - U401.63
   AMC_RESET:
     scope: global
     pins:
@@ -953,11 +953,11 @@ nets:
   WT1_DATA:
     scope: global
     pins:
-    - U401.84
+    - U401.86
   WT1_CLK:
     scope: global
     pins:
-    - U401.85
+    - U401.87
   PUMP_S_GATE:
     scope: global
     pins:
@@ -973,11 +973,11 @@ nets:
   WT2_DATA:
     scope: global
     pins:
-    - U401.86
+    - U401.83
   WT2_CLK:
     scope: global
     pins:
-    - U401.87
+    - U401.84
   GAUGE_DIR1:
     scope: global
     pins:
@@ -1029,7 +1029,7 @@ nets:
   BUZZER:
     scope: global
     pins:
-    - U401.98
+    - U401.36
 no_connect:
 - pin: U401.7
   reason: 'PC13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
@@ -1049,8 +1049,6 @@ no_connect:
   reason: 'PB0 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.35
   reason: 'PB1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.36
-  reason: 'PB2 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.37
   reason: 'PE7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.38
@@ -1067,14 +1065,16 @@ no_connect:
   reason: 'PB14 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.54
   reason: 'PB15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.63
-  reason: 'PC6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.66
   reason: 'PC9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.77
-  reason: 'PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.85
+  reason: 'PD4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.88
+  reason: 'PD7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.90
   reason: 'PB4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.98
+  reason: 'PE1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: J401.7
   reason: 'KEY: Cortex Debug 10-pin pin 7 is the key position, no contact'
 - pin: J401.8
