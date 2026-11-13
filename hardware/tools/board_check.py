@@ -1650,8 +1650,8 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
     match; only the rules' own findings are read. A design with no hole is held
     to nothing for that: its rules fire on nothing. The rules text is handed to
     KiCad without its creepage constraints, which this pass never reads and
-    which are the slow part of a KiCad run on a poured board; the first pass
-    judges the creepage.
+    which are the slow part of a KiCad run on a poured board; the creepage
+    pass judges the creepage.
 
     A plated hole of a part, a fixing's left out, is not held by the straight
     distance KiCad reports: plated_hole_gaps measures it from the layout, the
@@ -5950,6 +5950,290 @@ def without_creepage(text: str) -> str:
     return "".join(out)
 
 
+#: A constraint of the creepage kind in any form, however its figures are written.
+ANY_CREEPAGE = re.compile(r"\(\s*constraint\s+creepage\b", re.IGNORECASE)
+#: A figure of a creepage constraint, in millimetres.
+CREEPAGE_FIGURE = re.compile(r"\(\s*(?:min|max|opt)\s+([0-9]*\.?[0-9]+)\s*mm\s*\)", re.IGNORECASE)
+RULE_CONDITION = re.compile(r'\(\s*condition\s+"((?:[^"\\]|\\.)*)"', re.IGNORECASE)
+NET_NAME_TERM = re.compile(r"""NetName\s*==\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")""")
+
+
+def only_creepage(text: str) -> str:
+    """The rules text with every rule that holds a creepage constraint cut down to those constraints, and every other rule taken out.
+
+    It is the inverse of without_creepage: KiCad's creepage test is run on its
+    own from it. A constraint of the creepage kind in any form stays, so a form
+    without_creepage leaves in the first pass is also judged here; the conditions
+    and the order of the rules are untouched, since the last matching rule
+    decides. Anything that is not a rule, the version line included, stays.
+    Text that does not balance is returned unchanged, so no constraint is ever
+    lost from it.
+    """
+    forms = _balanced_forms(text)
+    if forms is None:
+        return text
+    cuts: List[Tuple[int, int]] = []
+    for begin, end in forms:
+        if not re.match(r"\(\s*rule\b", text[begin:end], re.IGNORECASE):
+            continue
+        inside = _balanced_forms(text, begin + 1, end - 1)
+        if inside is None:
+            continue
+        constraints = [span for span in inside if re.match(r"\(\s*constraint\b", text[span[0]:span[1]], re.IGNORECASE)]
+        creepage = [span for span in constraints if ANY_CREEPAGE.match(text[span[0]:span[1]])]
+        if not creepage:
+            cuts.append((begin, end + 1 if text[end:end + 1] == "\n" else end))
+            continue
+        for first, last in constraints:
+            if (first, last) not in creepage:
+                while first > begin and text[first - 1] in " \t":
+                    first -= 1
+                if first > begin and text[first - 1] == "\n" and text[last:last + 1] == "\n":
+                    last += 1
+                cuts.append((first, last))
+    out, position = [], 0
+    for first, last in sorted(cuts):
+        out.append(text[position:first])
+        position = last
+    out.append(text[position:])
+    return "".join(out)
+
+
+class CreepageRule:
+    """A rule of a rules text that holds a creepage constraint: its condition, its figures in millimetres, and whether they were all read."""
+
+    def __init__(self, condition: str, figures: Sequence[float], readable: bool):
+        self.condition, self.figures, self.readable = condition, tuple(figures), readable
+
+    def nets(self) -> Set[str]:
+        """The nets the condition names outright."""
+        return {first or second for first, second in NET_NAME_TERM.findall(self.condition)}
+
+    def about_mains(self) -> bool:
+        """Whether the condition holds one side to a Mains class or to a named net, so a conductor a creepage figure reaches from is known."""
+        return "hasNetclass('Mains" in self.condition or bool(self.nets())
+
+
+def creepage_rules(text: str) -> Optional[List[CreepageRule]]:
+    """Every rule of the text holding a creepage constraint, or None where the text does not balance."""
+    forms = _balanced_forms(text)
+    if forms is None:
+        return None
+    found = []
+    for begin, end in forms:
+        if not re.match(r"\(\s*rule\b", text[begin:end], re.IGNORECASE):
+            continue
+        inside = _balanced_forms(text, begin + 1, end - 1)
+        if inside is None:
+            return None
+        spans = [text[first:last] for first, last in inside if ANY_CREEPAGE.match(text[first:last])]
+        if not spans:
+            continue
+        figures, readable = [], True
+        for span in spans:
+            read = [float(number) for number in CREEPAGE_FIGURE.findall(span)]
+            figures += read
+            readable = readable and bool(read) and CREEPAGE_CONSTRAINT.fullmatch(span) is not None
+        condition = RULE_CONDITION.search(text[begin:end])
+        found.append(CreepageRule(condition.group(1) if condition else "", figures, readable))
+    return found
+
+
+#: How much farther than the creepage limit the guard measures a ground pour from Mains, so it can say how near the pour came.
+GUARD_REPORT_MARGIN_MM = 5.0
+
+
+class PourGuard:
+    """What stands between the creepage test and a ground pour left out of it.
+
+    `limit` is the largest creepage figure the rules hold, in mm, or None where
+    the rules are not all of a form the guard can read, in which case no pour
+    is left out and `why` says so. `removable` holds the indices of the layout's
+    zones, in file order, that are ground pours left out of the creepage test:
+    those standing at least `limit` from every conductor a creepage rule reaches
+    from, and those `judged` here instead. A ground pour standing nearer than
+    `limit` to Mains-class copper only is judged by the check's own geometry,
+    on the layers it shares with that copper, the shortest way round the barrier
+    slots held to `limit`; its shortfalls are `findings`. One standing nearer to
+    a conductor of a net a rule names is `kept` in the layout the creepage test
+    reads. `nearest` is, for each ground pour, its label, the least straight
+    distance found, which is the margin's end where it stands farther, and the
+    conductor it is from.
+    """
+
+    def __init__(self):
+        self.limit: Optional[float] = None
+        self.why = ""
+        self.removable: List[int] = []
+        self.judged: List[Tuple[str, float, str]] = []
+        self.findings: List["LayerFinding"] = []
+        self.kept: List[Tuple[str, float, str]] = []
+        self.nearest: List[Tuple[str, float, str]] = []
+
+
+def zone_label(zone: list, table: Dict[str, str]) -> str:
+    """A zone as a person finds it: its net, its layers and its name or identifier."""
+    net = board_geometry.item_net(zone, table, "a zone of the layout")
+    layers = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
+    name = sexpr.child(zone, "name")
+    ident = sexpr.child(zone, "uuid")
+    tag = f" {name[1]}" if name is not None and len(name) > 1 else f" {ident[1]}" if ident is not None and len(ident) > 1 else ""
+    return f"Zone [{net or NO_NET}] on {', '.join(str(layer) for layer in layers[1:])}{tag}"
+
+
+def ground_pour_guard(tree: list, rules_text: str, mains: Set[str], grounds: Set[str]) -> PourGuard:
+    """Which ground pours of a refilled layout can be left out of the creepage test without hiding a finding.
+
+    The shortest way along a surface between two conductors is never shorter
+    than the straight line between them, so a pour standing at least the
+    creepage limit in a straight line from every conductor a creepage rule
+    reaches from cannot lie on a path shorter than that limit, nor be one end
+    of a pair under it. The conductors are the Mains-class copper and the
+    nets a creepage rule's condition names. The line is measured here by the
+    check's own geometry on every copper layer. A pour nearer than that to
+    Mains-class copper alone is no hidden finding either, for a path between
+    two conductors that passes along the pour begins with a path from the one
+    to the pour, which is judged here, on the layers they share, over the
+    shortest way round the barrier slots; layers the two do not share are
+    the cross-layer rule's. A creepage rule whose figures
+    or condition are not of a form read here, so no conductor it reaches from
+    is known, leaves every pour in.
+    """
+    guard = PourGuard()
+    rules = creepage_rules(rules_text)
+    if rules is None:
+        guard.why = "the rules text does not balance"
+        return guard
+    unread = [rule for rule in rules if not rule.readable or not rule.about_mains()]
+    if unread:
+        guard.why = "a creepage rule holds a figure or a condition the guard cannot read, so no conductor it reaches from is known"
+        return guard
+    figures = [figure for rule in rules for figure in rule.figures]
+    if not figures:
+        guard.why = "the rules hold no creepage figure"
+        return guard
+    guard.limit = max(figures)
+    named = set().union(set(), *(rule.nets() for rule in rules))
+    reached = set(mains) | named
+    stack = copper_layers(tree)
+    items, _ = layer_items(tree, stack, hole_footprints(tree), mains)
+    conductors = [item for item in items if item.net in reached]
+    table = board_geometry.net_table(tree)
+    heads = [node for node in tree[1:] if isinstance(node, list) and sexpr.head(node) == "net"]
+    reach = guard.limit + GUARD_REPORT_MARGIN_MM
+    ways = board_geometry.Detours(board_geometry.barrier_slots(tree))
+    for index, zone in enumerate(sexpr.children(tree, "zone")):
+        net = board_geometry.item_net(zone, table, "a zone of the layout")
+        if sexpr.child(zone, "keepout") is not None or net not in grounds or net in reached:
+            continue
+        label = zone_label(zone, table)
+        least, near = reach, ""
+        inside: List[Tuple[LayerItem, LayerItem, float]] = []
+        for pour in pour_items([tree[0]] + heads + [zone], stack):
+            for conductor in conductors:
+                if board_geometry.apart(pour.shape, conductor.shape, reach):
+                    continue
+                distance = board_geometry.shape_distance(pour.shape, conductor.shape, reach)
+                if distance < least:
+                    least, near = distance, conductor.name
+                if distance < guard.limit - ROUNDING:
+                    inside.append((pour, conductor, distance))
+        guard.nearest.append((label, least, near))
+        if not inside:
+            guard.removable.append(index)
+        elif all(conductor.net in mains for _, conductor, _ in inside):
+            guard.removable.append(index)
+            guard.judged.append((label, least, near))
+            for pour, conductor, distance in inside:
+                if not set(pour.stored) & set(conductor.stored):
+                    continue
+                length, rounds = board_geometry.route_length(conductor.shape, pour.shape, ways, guard.limit, distance)
+                if length < guard.limit - ROUNDING:
+                    guard.findings.append(LayerFinding("creepage", conductor, pour, length, guard.limit, rounds))
+        else:
+            guard.kept.append((label, least, near))
+    return guard
+
+
+def without_zones(text: str, indices: Sequence[int], count: int) -> Optional[str]:
+    """The layout text with the zones at the given positions, in file order, taken out; None where the text does not hold `count` zones.
+
+    A zone is cut from its opening bracket to its closing one with the line
+    that ends it, everything else, the fills of the other zones included, left
+    byte for byte as it was.
+    """
+    forms = _balanced_forms(text)
+    if forms is None or len(forms) != 1:
+        return None
+    begin, end = forms[0]
+    inside = _balanced_forms(text, begin + 1, end - 1)
+    if inside is None:
+        return None
+    zones = [span for span in inside if re.match(r"\(\s*zone\b", text[span[0]:span[1]])]
+    if len(zones) != count:
+        return None
+    out, position = [], 0
+    for index in sorted(set(indices)):
+        first, last = zones[index]
+        while first > begin and text[first - 1] in " \t":
+            first -= 1
+        out.append(text[position:first])
+        position = last + 1 if text[last:last + 1] == "\n" else last
+    out.append(text[position:])
+    return "".join(out)
+
+
+def creepage_pass(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, rules_text: str, nonce: str,
+                  net: Optional[str], refilled: list, mains: Set[str], grounds: Set[str]) -> Tuple[List[dict], List[Violation], PourGuard]:
+    """KiCad's creepage test, run on its own over the refilled layout, with the ground pours that cannot matter left out.
+
+    The first pass holds no creepage constraint, since KiCad's creepage search
+    does not finish on a board with many pours. This pass hands KiCad only the
+    creepage constraints of the same rules text, in the same order and under
+    the same rule names, and the layout the first pass saved after it refilled
+    its zones, less the ground pours ground_pour_guard clears: those standing at
+    least the creepage limit from every conductor a creepage rule reaches from,
+    and those standing nearer to Mains-class copper alone, which the guard
+    judges itself. A ground pour that stands nearer to a conductor of a net a
+    rule names stays in, and the pass is then the slow one. The
+    layout file is put back as it was after the run. Returns KiCad's creepage
+    findings, the violations that stop the pass from being a judgement, and the
+    guard.
+    """
+    guard = PourGuard()
+    rules = creepage_rules(rules_text)
+    if rules is None or not rules:
+        guard.why = "the rules hold no creepage constraint" if rules is not None else "the rules text does not balance"
+        return [], [], guard
+    guard = ground_pour_guard(refilled, rules_text, mains, grounds)
+    path = os.path.join(copy, layout)
+    with open(path, encoding="utf-8") as handle:
+        original = handle.read()
+    text = without_zones(original, guard.removable, len(sexpr.children(refilled, "zone"))) if guard.removable else original
+    if text is None:
+        text, guard.removable = original, []
+        guard.why = "the layout's zones cannot be told apart in its text, so every pour stays in"
+    with open(rules_copy, "w", encoding="utf-8") as handle:
+        handle.write(only_creepage(rules_text) + "\n" + marker(nonce, EVERY_ITEM if net is None else f"A.NetName == '{net}'"))
+    kept = "; ".join(f"{label} stands {distance:.3f} mm from {near}" for label, distance, near in guard.kept)
+    slow = (f" the ground pours kept in the creepage test because they stand inside the {guard.limit:g} mm creepage limit of "
+            f"such copper make it the slow one ({kept})" if guard.kept else "")
+    try:
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
+    finally:
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(original)
+    if report is None:
+        return [], [Violation(design.project, "design_unreadable", design.layout,
+                              f"the creepage cannot be checked: {why};{slow or ' every ground pour was left in or out by the guard'}")], guard
+    if not fired(report, marker_rule(nonce)):
+        return [], [Violation(design.project, "custom_rules", design.rules,
+                              "KiCad did not load the creepage rules the check hands its creepage pass, so no creepage was checked")], guard
+    return [entry for entry in report.get("violations") or [] if entry.get("type") == "creepage"], [], guard
+
+
 #: The names of the rules written after the signed one for the spacing between conductors at different mains potentials.
 MAINS_TO_MAINS_RULE = f"{RESERVED}: signed mains-to-mains spacing"
 TERMINAL_RULE = f"{RESERVED}: signed terminal clearance"
@@ -8180,8 +8464,9 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
         if rules is not None and os.path.exists(rules_copy):
             with open(rules_copy, encoding="utf-8", errors="replace") as handle:
                 existing = handle.read()
+        first_rules = existing + appended_rules(signed, nonce, marker_net(items))
         with open(rules_copy, "w", encoding="utf-8") as handle:
-            handle.write(existing + appended_rules(signed, nonce, marker_net(items)))
+            handle.write(without_creepage(first_rules))
 
         erc, why = run_report([kicad_cli, "sch", "erc", "--format", "json", "--severity-all", "--units", "mm", schematic], copy)
         netlist: Optional[Dict[str, Tuple[List[str], List[str]]]] = None
@@ -8259,6 +8544,20 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
                 classes_read.append((names, project_classes, members, why))
             return classes_read[0]
 
+        poured: List[LayerFinding] = []
+        if refilled is not None and markers and not cut_short(drc):
+            members_now = layout_classes()[2]
+            if members_now is not None:
+                try:
+                    creepage, stopped, guard = creepage_pass(kicad_cli, design, copy, layout, rules_copy, first_rules, nonce,
+                                                             marker_net(items), refilled, members_now["Mains"], ground_nets(members_now))
+                except (OSError, board_geometry.Unreadable) as unread:
+                    creepage, stopped, guard = [], [Violation(design.project, "design_unreadable", design.layout,
+                                                              f"the layout cannot be read for the creepage pass ({unread})")], PourGuard()
+                reported += creepage
+                found += stopped
+                poured = guard.findings
+
         layered = LayerResult()
         if (signed is not None and tree is not None and refilled is not None and netlist is not None and markers
                 and not cut_short(drc)):
@@ -8269,6 +8568,7 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
                 except board_geometry.Unreadable as unread:
                     found.append(Violation(design.project, "design_unreadable", design.layout,
                                            f"the layout KiCad refilled cannot be read for the copper on every layer ({unread})"))
+        layered.findings = layered.findings + poured
         if signed is not None and signed.exceptions and tree is not None and markers and not cut_short(drc):
             mains_class = None
             if any(NET_PAIR_FORM_KEY in entry for entry in signed.exceptions):

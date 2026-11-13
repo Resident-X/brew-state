@@ -124,15 +124,17 @@ class CreepageIsComputedOnce(SensingCopy):
             with self.subTest(rule=rule):
                 self.assertTrue(stripped.violations(rule), stripped.lines)
                 self.assertEqual(stripped.violations(rule), kept.violations(rule))
-        # a finding carrying creepage: the one the first pass reports, under the signed rule, with the items it is between
+        # a finding carrying creepage: the one the creepage pass reports, under the signed rule, with the items it is between;
+        # with the strip taken out the first pass holds the creepage as well and reports the same findings a second time
         shortfalls = stripped.violations("creepage")
         self.assertTrue(shortfalls, stripped.lines)
-        self.assertEqual(shortfalls, kept.violations("creepage"))
+        self.assertEqual(len(shortfalls), len({tuple(line) for line in shortfalls}), "each creepage finding is reported once")
+        self.assertEqual(shortfalls, [list(line) for line in sorted({tuple(line) for line in kept.violations("creepage")})])
         self.assertEqual(stripped.status, kept.status)
 
-    def test_the_rules_of_the_hole_and_sensing_passes_hold_no_creepage_and_those_of_the_first_pass_do(self):
-        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C2: The rules the mounting-hole pass and the sensing pass hand the rule engine hold no creepage constraint
-        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C1: The signed creepage is computed once per design check, by the first pass that holds the design's own rules
+    def test_the_rules_of_the_hole_and_sensing_passes_and_of_the_first_pass_hold_no_creepage_and_those_of_the_creepage_pass_hold_only_it(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C2: The rules the first pass, the mounting-hole pass and the sensing pass hand the rule engine hold no creepage constraint
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C1: The signed creepage is computed once per design check, by a pass of its own that holds only the creepage constraints
         run = Run(self.seed)
         holes = run.pass_rules(board_check.HOLE_RULE)
         sensing = run.pass_rules(board_check.SENSING_RULE)
@@ -144,16 +146,21 @@ class CreepageIsComputedOnce(SensingCopy):
                 self.assertIn("(constraint clearance (min 3mm))", text, "the signed clearance is still held")
                 self.assertIn(f'(rule "{board_check.SIGNED_RULE}"', text)
                 self.assertIn('(rule "Mains separation"', text, "the design's own rules are still there, less their creepage")
-        first = [text for text in run.rules if f'"{board_check.SIGNED_RULE}"' in text
-                 and text not in holes and text not in sensing]
-        self.assertTrue(first)
-        for text in first:
-            self.assertIn(f"(constraint creepage (min 4mm))", text)
+        others = [text for text in run.rules if f'"{board_check.SIGNED_RULE}"' in text and text not in holes and text not in sensing]
+        first = [text for text in others if "creepage" not in text]
+        creepage = [text for text in others if "creepage" in text]
+        self.assertTrue(first, "the first pass holds no creepage constraint")
+        self.assertEqual(len(creepage), 1, "one pass holds the creepage constraints")
+        self.assertIn("(constraint creepage (min 4mm))", creepage[0])
+        self.assertNotIn("(constraint clearance", creepage[0], "the creepage pass holds nothing but the creepage")
+        self.assertNotIn("track_width", creepage[0])
+        self.assertIn(f'(rule "{board_check.SIGNED_RULE}"', creepage[0], "the rule names are kept, so a finding is worded as it was")
+        self.assertIn('(rule "Mains separation"', creepage[0])
         # the design's own file, which the strip never writes back
         self.assertIn("(constraint creepage (min 4mm))", self.seed.read(".kicad_dru"))
 
     def test_the_creepage_stays_in_the_hole_and_sensing_rules_when_the_strip_is_taken_out_so_the_test_above_would_notice_it_missing(self):
-        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C2: The rules the mounting-hole pass and the sensing pass hand the rule engine hold no creepage constraint
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C2: The rules the first pass, the mounting-hole pass and the sensing pass hand the rule engine hold no creepage constraint
         run = Run(self.seed, strip=False)
         for rule in (board_check.HOLE_RULE, board_check.SENSING_RULE):
             with self.subTest(rule=rule):
@@ -172,12 +179,13 @@ class CreepageIsComputedOnce(SensingCopy):
         self.assertEqual(about_reports, [])
 
 
-class TheCreepageFindingStaysWithTheFirstPass(SensingCopy):
-    def test_a_creepage_shortfall_alone_is_still_reported_by_the_first_pass(self):
-        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C1: The signed creepage is computed once per design check, by the first pass that holds the design's own rules
+class TheCreepageShortfallIsReportedByTheCreepagePass(SensingCopy):
+    def test_a_creepage_shortfall_alone_is_still_reported_by_the_creepage_pass_under_the_signed_rule(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C1: The signed creepage is computed once per design check, by a pass of its own that holds only the creepage constraints
         self.seed.layout(lambda tree: tree.insert(len(tree) - 1, board_prove.segment("/AMP_OUT", SENSING_X, 19, SENSING_X, 25, SENSING_UUID)))
         run = Run(self.seed)
         self.assertTrue(run.violations("creepage"), run.lines)
+        self.assertTrue(all(f"rule '{board_check.SIGNED_RULE}' creepage 4.0000 mm" in fields[4] for fields in run.violations("creepage")))
         self.assertEqual(run.status, 1)
 
 

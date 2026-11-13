@@ -1,12 +1,12 @@
 id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C1
 type: criterion
-title: The signed creepage is computed once per design check, by the first pass that holds the design's own rules
+title: The signed creepage is computed once per design check, by a pass of its own that holds only the creepage constraints
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A run of the check on a design with Mains reports every creepage finding from the one the rule engine pass that is given the design's own rules and the signed rules, unchanged by this item, and a creepage shortfall seeded into a throwaway proof design is still reported by that pass. The mounting-hole pass and the sensing pass report no creepage finding. What any pass judges, apart from its creepage, is out of scope.
+  A run of the check on a design with Mains reports every creepage finding from one rule engine pass, run after the first pass and given only the creepage constraints of the design's own rules and the signed rules, under the rule names they carry, over the layout the first pass refilled and saved, less the ground pours the guard clears; and a creepage shortfall seeded into a throwaway proof design is still reported by that pass, under the signed rule, with the items it is between. The first pass, the mounting-hole pass and the sensing pass report no creepage finding. What any pass judges, apart from its creepage, is out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
     type: criterion-of
