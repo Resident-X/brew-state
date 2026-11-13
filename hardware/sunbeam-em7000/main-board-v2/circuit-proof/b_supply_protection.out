@@ -50,7 +50,10 @@
     8 kV contact through 330 ohm is 24 A: DS4260 2.1 gives 31.2 V with pin 5 open, about 23.0 V with D402 on the VBUS node (b_usb_power.py (e)); the 8/20 us table figure does not cover 24 A at 1 ns
 (6) pump snubber (R706 C701, R716 C711) and module inrush thermistor RT301, both not fitted
     snubber 100 ohm + 100 nF X2 (C101's part, 310 VAC): leakage with the triac off 7.95 mA at 50 Hz, 9.54 mA at 60 Hz; R dissipates 9.1 mW; at turn-on from 358 V crest: 3.6 A peak, 6.4 mJ
-    the triac's VDRM is 600 V against the 358 V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up)
+    the triac's VDRM is 800 V and the opto-triac driver's (U701, U711) is 600 V, on the same MT2 node through 400 ohm, against the 358 V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up), the pair's lower rating
+    turn-off case 716 V (M16, calculated, undamped): triac 800 V is 84 V under (10.5 %); opto-triac 600 V is 116 V over
+    1 kV, clamp 800 to 805 V: triac 800 V over by 0 to 5 V; opto-triac 600 V over by 200 to 205 V
+    2 kV, clamp 867 to 887 V: triac 800 V over by 67 to 87 V; opto-triac 600 V over by 267 to 287 V
     thermistor NTC10D-9: module 40 A typical at 230 Vac implies 8.1 ohm; at 358 V crest 44.0 A bare, 19.7 A with 10 ohm added (-55 %)
     steady state: 0.46 ohm residual at 0.4 A (typical, 230 Vac) is 0.18 V and 0.07 W; the sheet's 2 A maximum steady current is 5x the module's 0.4 A; its 150 uF limit at 240 V against the module's input capacitance, which the module sheet does not state
     link position: 1206 0 ohm chip rated 2 A with 10 A overload (UNI-ROYAL sheet, duration not stated) against 40 A typical inrush: a wire link is drawn instead

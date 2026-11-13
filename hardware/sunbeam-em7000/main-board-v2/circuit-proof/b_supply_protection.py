@@ -22,7 +22,8 @@ Sources (each read 2026-10-29; maxima unless the line says typical):
              IEC 61000-4-2 level 4, 15 kV air and 8 kV contact in the features (Table 1 prints 15 kV for contact: a contradiction; either meets level 4),
              VCL 12 V at 1 A and 17 V at 5 A (8/20 us), 3.5 pF maximum between I/O and GND.
   Ruilon     NTC series sheet, version A6, revised 2023-10-16 (LCSC C3790): NTC10D-9 10 ohm at 25 degC, 2 A, 0.46 ohm residual, 150 uF at 240 V.
-  WeEn       BTA204S-600B Rev.02: VDRM 600 V (the record's sheet; sheets/700-pump-drives.yaml).
+  ST         T835-800B DS2114 Rev 15 (August 2018), T701 and T711: VDRM 800 V (features p.1, 600 V to 800 V by type; ordering table p.19 gives T835-800B; sheets/700-pump-drives.yaml).
+  onsemi     MOC3052M/D Rev. 4 (September 2022), U701 and U711 (MOC3052SVM): detector off-state output terminal voltage VDRM 600 V, absolute maximum (Maximum Ratings table, p.3).
 Run: python3 -I b_supply_protection.py
 """
 
@@ -120,7 +121,11 @@ i_50 = v_rms * 2 * math.pi * f_lo * c_sn
 i_60 = v_rms * 2 * math.pi * f_hi * c_sn
 print("    snubber 100 ohm + 100 nF X2 (C101's part, 310 VAC): leakage with the triac off %.2f mA at 50 Hz, %.2f mA at 60 Hz; R dissipates %.1f mW; at turn-on from %.0f V crest: %.1f A peak, %.1f mJ"
       % (i_50 * 1e3, i_60 * 1e3, i_60 ** 2 * r_sn * 1e3, v_pk, v_pk / r_sn, 0.5 * c_sn * v_pk ** 2 * 1e3))
-print("    the triac's VDRM is 600 V against the %.0f V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up)" % v_pk)
+print("    the triac's VDRM is 800 V and the opto-triac driver's (U701, U711) is 600 V, on the same MT2 node through 400 ohm, against the %.0f V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up), the pair's lower rating" % v_pk)
+v_off = 716.0   # the undamped turn-off case in open-items M16 (calculated)
+print("    turn-off case %.0f V (M16, calculated, undamped): triac 800 V is %.0f V under (%.1f %%); opto-triac 600 V is %.0f V over" % (v_off, 800 - v_off, 100 * (800 - v_off) / 800, v_off - 600))
+for lab, lo, hi in (("1 kV, clamp 800 to 805 V", 800, 805), ("2 kV, clamp 867 to 887 V", 867, 887)):
+    print("    %s: triac 800 V over by %d to %d V; opto-triac 600 V over by %d to %d V" % (lab, max(lo - 800, 0), max(hi - 800, 0), lo - 600, hi - 600))
 r_src = 230 * 2 ** 0.5 / 40.0
 print("    thermistor NTC10D-9: module 40 A typical at 230 Vac implies %.1f ohm; at %.0f V crest %.1f A bare, %.1f A with 10 ohm added (-%.0f %%)"
       % (r_src, v_pk, v_pk / r_src, v_pk / (r_src + 10), 100 * (1 - (r_src) / (r_src + 10))))

@@ -90,23 +90,23 @@ R_G = 400.0                          # two 200 ohm 1206 resistors in series; eac
 ipk = VPK / (R_G * (1 - TOL))
 check("R704+R705 opto-triac surge limit", ipk <= ITSM_OPTO,
       "R = VPAC / ITSM (sheet Fig. 7): VPK %.1f V / %.1f ohm (R-1%%) = %.3f A <= 1 A; minimum R = %.1f ohm" % (VPK, R_G * 0.99, ipk, VPK / ITSM_OPTO))
-VTM_OPTO_MAX, IGT_MAX, VGT_MAX, IGM = 2.5, 50e-3, 1.0, 2.0   # MOC3052M VTM max 2.5 V (100 mA peak); BTA204S-600B Rev.02: IGT 50 mA, VGT max 1 V (Tj 25), IGM 2 A
+VTM_OPTO_MAX, IGT_MAX, VGT_MAX, IGM = 2.5, 35e-3, 1.2, 4.0   # MOC3052M VTM max 2.5 V (100 mA peak); ST T835-800B DS2114 Rev 15 (Aug 2018): IGT 35 mA, VGT max 1.2 V (Tj 25, Table 2 p.2), IGM 4 A (Table 1 p.2)
 v_fire = VTM_OPTO_MAX + IGT_MAX * R_G * (1 + TOL) + VGT_MAX
 v_lo = 216 * math.sqrt(2)
 ang = math.degrees(math.asin(v_fire / v_lo))
 check("gate drive reaches IGT", v_fire < v_lo and ipk <= IGM,
-      "line voltage needed to push IGT max (50 mA) = %.1f V (%.1f deg after the zero crossing at 216 V); peak gate current %.2f A <= IGM 2 A" % (v_fire, ang, ipk))
-IL = 30e-3
-print("   BTA204S latching current max 30 mA; IH max 30 mA: the pump current at the firing instant must reach IL: pump sizing 0.46 A / 0.19 A are rms; see open item on pulse timing")
+      "line voltage needed to push IGT max (35 mA) = %.1f V (%.1f deg after the zero crossing at 216 V); peak gate current %.2f A <= IGM 4 A" % (v_fire, ang, ipk))
+IL = 50e-3
+print("   T835-800B latching current max 50 mA (quadrants I and III; 60 mA in quadrant II, not used); IH max 35 mA (DS2114 Table 2 p.2): the pump current at the firing instant must reach IL: pump sizing 0.46 A / 0.19 A are rms; see open item on pulse timing")
 
 # ---------------------------------------------------------------- 3. pump triac current and junction temperature
-print("\n== 3. pump triac T701/T711 BTA204S-600B (WeEn Rev.02, 19 Mar 2025)")
+print("\n== 3. pump triac T701/T711 T835-800B (ST DS2114 Rev 15, Aug 2018)")
 for nm, irms in (("coffee", 0.46), ("steam", 0.19)):
     for shape, iav in (("full sine", irms * 2 * math.sqrt(2) / math.pi), ("half wave (series diode)", irms * 2 / math.pi)):
-        p = 1.7 * iav                       # VT max 1.7 V at 5 A, applied to the average current: an upper bound
-        tj = TEMP_AIR + p * 75              # Rth(j-a) 75 K/W is the sheet's TYPICAL on an FR4 board: not a bound
+        p = 1.55 * iav                      # VTM max 1.55 V at 11 A (Table 4 p.3), applied to the average current: an upper bound
+        tj = TEMP_AIR + p * 70              # Rth(j-a) 70 K/W is the sheet's TYPICAL for DPAK on 1 cm2 of copper under the tab (Table 5 p.3): not a bound
         print("   %-6s %-24s I_rms %.2f A  I_av %.3f A  P <= %.2f W  Tj = %.1f degC (typical Rth(j-a); limit 125)" % (nm, shape, irms, iav, p, tj))
-print("   IT(RMS) 4 A at Tmb <= 107 degC: %.1fx and %.1fx the sizing currents" % (4 / 0.46, 4 / 0.19))
+print("   IT(RMS) 8 A at Tc <= 110 degC: %.1fx and %.1fx the sizing currents" % (8 / 0.46, 8 / 0.19))
 
 # ---------------------------------------------------------------- 4. valve coil stages
 print("\n== 4. valve coil drivers Q731/Q741 AO3400A, K731/K741 HF32FA-G/005-HSL1 (Hongfa 2026 Rev.1.00)")
