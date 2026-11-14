@@ -735,6 +735,21 @@ def emptied_mains_zone(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
 
 
+def mains_run_over_the_cap(seed: Seed) -> None:
+    """A grid of 256 short tracks, alternating /MAINS_L and /MAINS_N, 0.4 mm apart in a square of about 6 mm, so that most pairs
+    of tracks on the two nets stand inside the signed clearance: more clearance lines than KiCad's report holds in the one run,
+    which KiCad cuts at its cap."""
+    side = 16
+
+    def edit(tree: list) -> None:
+        for row in range(side):
+            for column in range(side):
+                net = "/MAINS_L" if (row + column) % 2 == 0 else "/MAINS_N"
+                x, y = 20 + 0.4 * column, 25 + 0.4 * row
+                tree.insert(len(tree) - 1, segment(net, x, y, x + 0.1, y, f"0b0e5c1a-0000-4000-8000-{0x500 + row * side + column:012d}"))
+    seed.layout(edit)
+
+
 def netclass_below(seed: Seed) -> None:
     def edit(data: dict) -> None:
         for netclass in data["net_settings"]["classes"]:
@@ -1144,6 +1159,17 @@ def custom_pad(seed: Seed) -> None:
     """R2's pad 1, which /LV_A runs into, made a custom-shaped pad whose copper the check does not size."""
     def edit(tree: list) -> None:
         item = pad(tree, "R2", "1")
+        item[3] = "custom"
+        item.append(["options", ["clearance", "outline"], ["anchor", "circle"]])
+        item.append(["primitives", ["gr_poly", ["pts", ["xy", "0", "-0.8"], ["xy", "1.2", "0"], ["xy", "0", "0.8"]],
+                                    ["width", "0"], ["fill", "yes"]]])
+    seed.layout(edit)
+
+
+def custom_mains_pad(seed: Seed) -> None:
+    """J1's pad 1, on /MAINS_L beside pad 2 on /MAINS_N, made a custom-shaped pad whose copper the check does not size."""
+    def edit(tree: list) -> None:
+        item = pad(tree, "J1", "1")
         item[3] = "custom"
         item.append(["options", ["clearance", "outline"], ["anchor", "circle"]])
         item.append(["primitives", ["gr_poly", ["pts", ["xy", "0", "-0.8"], ["xy", "1.2", "0"], ["xy", "0", "0.8"]],
@@ -1578,9 +1604,7 @@ MACHINE_TARGET = (DESIGN, NAME, "hardware/seeded-machine/gate-proof")
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
 
-REVIEW_DESIGN = "hardware/proof/review-proof"
-REVIEW_NAME = "review-proof"
-REVIEW_TARGET = (REVIEW_DESIGN, REVIEW_NAME)
+REVIEW_TARGET = SENSING_TARGET
 
 
 def acceptance_entry(rule: str, scope: str, count: int = 1, accepted_by: str = "proof-owner", accepted_on: str = "2026-10-01") -> str:
@@ -1807,6 +1831,8 @@ FAULTS: List[tuple] = [
     ("a local clearance override on a low-voltage pad", "separation: no override outranks the signed figure", "local_clearance_override", "pad 1 of R2", local_override(lambda tree: pad(tree, "R2", "1"))),
     ("a clearance below the signed figure on a mains zone", "separation: no override outranks the signed figure", "local_clearance_override", "zone on Mains-class net /MAINS_L", mains_zone),
     ("a mains pour the fill leaves empty", "separation: a Mains-class pour the fill leaves under 90 percent of its outline fails by name", "mains_zone_fill", "zone [/MAINS_L] on F.Cu", emptied_mains_zone),
+    ("a mains run whose clearance list reaches KiCad's cap", "separation: a KiCad list cut at its cap on a design that declares mains fails the design", "report_cut_short", "the list was cut and a cut list is not a verdict", mains_run_over_the_cap),
+    ("a mains pad whose copper the check does not size", "separation: a Mains pad beside a Mains pad of its part is measured from sized copper or fails by name", "mains_pad_pair", "pad 1 [/MAINS_L] of J1 stands on a Mains-class net beside a Mains-class pad of another net in its own part", custom_mains_pad),
     ("a net class setting below the signed figure", "separation: the signed rule prevails over net class settings", "clearance", SIGNED, netclass_below),
     ("a Mains rule narrowed by layer", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by layer", mains_rule("(condition", "(layer outer)\n\t(condition")),
     ("a Mains rule narrowed by area", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by its condition", mains_rule(CONDITION, CONDITION + " && A.intersectsArea('mains')")),
