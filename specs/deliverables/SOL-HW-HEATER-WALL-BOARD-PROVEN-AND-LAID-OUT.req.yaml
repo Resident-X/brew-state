@@ -72,3 +72,5 @@ links:
     type: depends-on
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C21
     type: derives-from
+  - target: DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK
+    type: justified-by
