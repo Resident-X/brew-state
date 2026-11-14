@@ -1491,7 +1491,7 @@ positions:
     lcsc: C1622
     class: capacitor
   # R522: maker UNI-ROYAL; MPN 0603WAF0000T5E; catalogue class basic
-  # R522 is NOT fitted (do not populate): U520 carries FLOW_F to FLOW_BUF and R545 carries that to FLOW_IN. R572 and R576 are not fitted either (burden positions). U520 and C521 are fitted. The schematic symbols of R522, R572 and R576 still say dnp no (the schematic tools cannot set the flag); the board footprints carry dnp.
+  # R522 is NOT fitted (do not populate): U520 carries FLOW_F to FLOW_BUF and R545 carries that to FLOW_IN. R572 and R576 are not fitted either (burden positions). U520 and C521 are fitted. The schematic symbols carry the do-not-populate attribute, the board footprints carry dnp and the positions below carry fitted: "no"; the pre-order check holds the three to one answer.
   - reference: R522
     value: '0'
     package: R_0603_1608Metric
