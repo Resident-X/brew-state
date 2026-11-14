@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-RESULT-IS-THE-SAME-ON-EVERY-RUN.C3
+type: criterion
+title: The hardware notes state the cause of the missed creepage line and how the check makes its creepage result repeatable
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  hardware/README.md states what made one run of the check miss a creepage shortfall that every other run reported, and how the check now makes its creepage result the same on every run. Out of scope: the history of the runs, which this solution's text holds.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-RESULT-IS-THE-SAME-ON-EVERY-RUN
+    type: criterion-of
