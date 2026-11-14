@@ -39,12 +39,12 @@ K201 A2: 1.4 mm drill, 2.2 mm pad. K741 A1 and K731 A2: 1.0 mm drill, 2.0 mm pad
 | 6 | K201 A2 (POL_COIL_LO) | track, 1.445 mm long | AMC_AIN0P | F.Cu | 9.7862 | 9.387 | 13.847 | +3.847 |
 | 7 | K201 A2 (POL_COIL_LO) | track, 2.85 mm long | AMC_AIN0P | F.Cu | 9.8883 | 9.488 | 11.762 | +1.762 |
 | 8 | K201 A2 (POL_COIL_LO) | track, 0.3536 mm long | AMC_AIN0P | F.Cu | 9.8883 | 9.488 | 13.491 | +3.491 |
-| 9 | K741 A1 (+5V) | pad 4 of U711 | PUMP_S_TRIAC_G | F.Cu | 9.8543 | 9.354 | 27.563 | +17.563 |
+| 9 | K741 A1 (+5V) | pad 6 of U711 | PUMP_S_TRIAC_G | F.Cu | 9.8543 | 9.354 | 27.563 | +17.563 |
 | 10 | K741 A1 (+5V) | pad 5 of U711 | unconnected (NC) | F.Cu | 8.0156 | 7.516 | 25.024 | +15.024 |
-| 11 | K741 A1 (+5V) | pad 6 of U711 | PUMP_S_OPTO_MT | F.Cu | 6.6220 | 6.122 | 22.488 | +12.488 |
+| 11 | K741 A1 (+5V) | pad 4 of U711 | PUMP_S_OPTO_MT | F.Cu | 6.6220 | 6.122 | 22.488 | +12.488 |
 | 12 | K201 A2 (POL_COIL_LO) | pad 10 of U601 | AMC_AIN0N | F.Cu | 8.2600 | 7.860 | 13.655 | +3.655 |
 | 13 | K731 A2 (VALVE_2W_COIL_K) | NEUTRAL pour fill | NEUTRAL | In2.Cu | 7.3703 | 6.870 | 23.959 | +13.959 |
-| 14 | K731 A2 (VALVE_2W_COIL_K) | pad 4 of U701 | PUMP_C_TRIAC_G | F.Cu | 7.1268 | 6.627 | 26.689 | +16.689 |
+| 14 | K731 A2 (VALVE_2W_COIL_K) | pad 6 of U701 | PUMP_C_TRIAC_G | F.Cu | 7.1268 | 6.627 | 26.689 | +16.689 |
 | 15 | K731 A2 (VALVE_2W_COIL_K) | pad 5 of U701 | unconnected (NC) | F.Cu | 8.7355 | 8.236 | 29.218 | +19.218 |
 | 16 | K201 A2 (POL_COIL_LO) | pad 9 of U601 | AMC_AIN0P | F.Cu | 9.5294 | 9.130 | 14.142 | +4.142 |
 
