@@ -213,13 +213,16 @@ class TheExceptionsKeepTheTrackedDesignsPassing(unittest.TestCase):
                 seed = board_prove.prepare(scratch, design, name)
                 record, own = basis_record(seed, design)
                 if own:
-                    # a machine design's own record, held above its folder, carries the exceptions of its own leaf
+                    # a record held in the design's own folder is a proof design's, which carries none; a machine record above the folder carries its own leaf's exceptions
                     with open(record, encoding="utf-8") as handle:
                         self.assertFalse(yaml.safe_load(handle).get("accepted_exceptions"))
                 status, lines, stderr = board_prove.check(seed, KICAD_CLI)
                 self.assertNotEqual(status, 2, stderr)
                 self.assertEqual(status, 0, lines)
-                self.assertEqual([line for line in lines if line.startswith(("VIOLATION", "ACCEPTED"))], [])
+                self.assertEqual([line for line in lines if line.startswith("VIOLATION")], [])
+                if own:
+                    # a proof design accepts nothing; the signed acceptances of a machine design are its own leaf's to test
+                    self.assertEqual([line for line in lines if line.startswith("ACCEPTED")], [])
 
 
 connector = board_prove.connector_entry

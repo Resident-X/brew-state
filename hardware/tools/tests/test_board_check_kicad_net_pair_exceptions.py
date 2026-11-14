@@ -219,13 +219,16 @@ class TheExceptionsKeepTheTrackedDesignsPassing(unittest.TestCase):
                 with open(record, encoding="utf-8") as handle:
                     text = handle.read()
                 if own:
-                    # a machine design's own record, held above its folder, carries the entries of its own leaf
+                    # a record held in the design's own folder is a proof design's, which carries none; a machine record above the folder carries its own leaf's entries
                     self.assertNotIn(board_check.NET_PAIR_FORM_KEY, text)
                     self.assertNotIn("synthetic band table", text)
                 status, lines, stderr = board_prove.check(seed, KICAD_CLI)
                 self.assertNotEqual(status, 2, stderr)
                 self.assertEqual(status, 0, lines)
-                self.assertEqual([line for line in lines if line.startswith(("VIOLATION", "ACCEPTED"))], [])
+                self.assertEqual([line for line in lines if line.startswith("VIOLATION")], [])
+                if own:
+                    # a proof design accepts nothing; the signed acceptances of a machine design are its own leaf's to test
+                    self.assertEqual([line for line in lines if line.startswith("ACCEPTED")], [])
 
 
 class TheNetPairExceptionRules(Proved):
