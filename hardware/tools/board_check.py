@@ -4177,7 +4177,9 @@ def overrides(design: Design, layout: list, signed_clearance: float, mains_nets:
     signed figure on either side of a Mains/low-voltage pair would win over the
     appended signed rule; any such override fails, whatever net it is on. A
     zone's clearance does not outrank custom rules, and a Mains-class zone may
-    still not declare one below the signed figure.
+    still not declare one below the signed figure. A zone clearance written as 0
+    is none: KiCad writes 0 where no local clearance is set, and the zone then
+    takes the rules' figure.
     """
     found = []
     why = (f"below the signed {signed_clearance:g} mm; KiCad ranks a pad or footprint clearance override above "
@@ -4209,7 +4211,7 @@ def overrides(design: Design, layout: list, signed_clearance: float, mains_nets:
         connect = sexpr.child(zone, "connect_pads")
         for node in (connect or []):
             value = numeric_clearance(node)
-            if value is not None and value < signed_clearance - 1e-9:
+            if value is not None and value != 0 and value < signed_clearance - 1e-9:
                 corner = ""
                 points = next(walk(zone, "xy"), None)
                 if points is not None and len(points) > 2:
@@ -5426,6 +5428,17 @@ def graphic_polygons(node: list, place, what: str) -> Tuple[List[board_geometry.
     return board_geometry.swept(line, width), 0.0
 
 
+def zone_copper_layers(zone: list, stack: Sequence[str]) -> List[str]:
+    """The copper layers of `stack` a zone is on, its F&B.Cu and *.Cu wildcards written out."""
+    named = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
+    layers = [str(name) for name in named[1:] if str(name) in stack]
+    if "F&B.Cu" in [str(name) for name in named[1:]]:
+        layers += [name for name in (stack[0], stack[-1]) if name not in layers]
+    if "*.Cu" in [str(name) for name in named[1:]]:
+        layers = list(stack)
+    return layers
+
+
 def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
     """Every copper pour of a layout on each of its layers: the fill as the layout stores it, or its outline where it stores none there.
 
@@ -5439,12 +5452,7 @@ def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
             continue
         what = "a zone of the layout"
         net = board_geometry.item_net(zone, table, what)
-        named = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
-        layers = [str(name) for name in named[1:] if str(name) in stack]
-        if "F&B.Cu" in [str(name) for name in named[1:]]:
-            layers += [name for name in (stack[0], stack[-1]) if name not in layers]
-        if "*.Cu" in [str(name) for name in named[1:]]:
-            layers = list(stack)
+        layers = zone_copper_layers(zone, stack)
         outlines = []
         for polygon in sexpr.children(zone, "polygon"):
             points = sexpr.child(polygon, "pts")
@@ -5678,6 +5686,175 @@ def layer_violations(design: Design, findings: Sequence[LayerFinding], unmeasure
             f"{name} cannot be held to the Mains-class copper it may stand near on another layer: {why}; draw it as copper the "
             "layout file sizes, or take it off the copper layers"))
     return violations
+
+
+#: What a Mains pad whose gap to a Mains neighbour of its own part cannot be measured is reported under.
+PAD_PAIR_RULE = "mains_pad_pair"
+#: The least share of its outline a Mains-class zone's fill may cover on a layer, and what a zone short of it is reported under.
+MINIMUM_ZONE_FILL = 0.97
+ZONE_FILL_RULE = "mains_zone_fill"
+
+
+def kicad_pad_name(node: list, pad: board_geometry.Pad, layer: str) -> str:
+    """A pad as KiCad's report words it: a through-hole pad as "PTH pad 2 [/net] of J1", a surface-mount one as "Pad 2 [/net] of T1 on F.Cu"."""
+    kind = str(node[2]) if len(node) > 2 else ""
+    base = f"pad {pad.number} [{pad.net or NO_NET}] of {pad.reference}"
+    if kind == "thru_hole":
+        return f"PTH {base}"
+    if kind == "np_thru_hole":
+        return f"NPTH {base}"
+    return f"Pad {pad.number} [{pad.net or NO_NET}] of {pad.reference} on {layer}"
+
+
+def same_part_pad_pairs(design: Design, tree: list, mains: Set[str], signed: Signed) -> Tuple[List[dict], List[Violation]]:
+    """Every pair of pads of one footprint on two different Mains-class nets that stand nearer than the signed pad-to-pad clearance, as KiCad's report would list it.
+
+    The edge-to-edge gap of each pair is measured here, from the pads' own
+    copper (circle, oval, rectangle and rounded rectangle, turned as placed), on
+    the copper layers the two share. A pair nearer than the signed
+    terminal_clearance_mm, or than the larger of the mains_to_low_voltage and
+    mains_to_mains clearances where its two nets are a pair held at reinforced,
+    is returned as a clearance entry of KiCad's wording, naming the rule KiCad
+    holds that pair to, so the exception judgement reads it as it reads KiCad's
+    own line for the same pair. The second result holds a violation for each Mains-class
+    pad that has a Mains-class neighbour on another net in its footprint and whose copper the
+    layout file does not size, since its gap cannot be measured.
+    """
+    held = signed.mains_to_mains
+    stack = copper_layers(tree)
+    table = board_geometry.net_table(tree)
+    reinforced = [(index + 1, set(pair)) for index, pair in enumerate(held["held_at_reinforced"])]
+    entries: List[dict] = []
+    problems: List[Violation] = []
+    unsized: Dict[str, str] = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        nodes = sexpr.children(footprint, "pad")
+        live = [(node, pad) for node, pad in zip(nodes, board_geometry.footprint_pads(footprint, table)) if pad.net in mains]
+        shapes: Dict[int, board_geometry.Shape] = {}
+        for position, (node_a, one) in enumerate(live):
+            for node_b, other in live[position + 1:]:
+                if one.net == other.net:
+                    continue
+                shared = [layer for layer in stack if one.on(layer) and other.on(layer)]
+                if not shared:
+                    continue
+                if one.unsized or other.unsized:
+                    for node, pad in ((node_a, one), (node_b, other)):
+                        if pad.unsized:
+                            unsized[kicad_pad_name(node, pad, shared[0])] = (
+                                f"its copper is {pad.unsized}, which the layout file does not give")
+                    continue
+                rule, figure = TERMINAL_RULE, held["terminal_clearance_mm"]
+                for index, nets in reinforced:
+                    if nets == {one.net, other.net}:
+                        rule, figure = f"{REINFORCED_RULE} {index}", max(signed[0], held["clearance_mm"])
+                for pad in (one, other):
+                    shapes.setdefault(id(pad), board_geometry.Shape([pad.outline(64)]))
+                first, second = shapes[id(one)], shapes[id(other)]
+                if board_geometry.apart(first, second, figure):
+                    continue
+                gap = board_geometry.shape_distance(first, second, figure)
+                if gap >= figure - ROUNDING:
+                    continue
+                entries.append({
+                    "type": "clearance", "severity": "error",
+                    "description": f"Clearance violation (rule '{rule}' clearance {figure:.4f} mm; actual {gap:.4f} mm)",
+                    "items": [{"description": kicad_pad_name(node, pad, shared[0]), "pos": {"x": pad.centre[0], "y": pad.centre[1]}}
+                              for node, pad in ((node_a, one), (node_b, other))]})
+    for name, why in sorted(unsized.items()):
+        problems.append(Violation(design.project, PAD_PAIR_RULE, f"{design.layout} {name}",
+                                  f"{name} stands on a Mains-class net beside a Mains-class pad of another net in its own part, and "
+                                  f"{why}, so the gap between them cannot be measured; draw its copper as a circle, oval, rectangle or "
+                                  "rounded rectangle"))
+    return entries, problems
+
+
+def pad_pair_key(entry: dict) -> Optional[Tuple[str, Tuple[str, str]]]:
+    """The footprint and the two pad names of a clearance line between two pads of one footprint, or None where it is of anything else."""
+    items = entry.get("items") or []
+    if entry.get("type") != "clearance" or len(items) != 2:
+        return None
+    found = [REPORTED_PAD.search(item.get("description", "")) for item in items]
+    if any(pad is None for pad in found) or found[0].group(2) != found[1].group(2):
+        return None
+    return found[0].group(2), tuple(sorted(pad.group(1) or "" for pad in found))
+
+
+def with_measured_pad_pairs(reported: Sequence[dict], measured: Sequence[dict]) -> List[dict]:
+    """KiCad's lines less those for a pair of pads the check measured itself, and the check's own lines in their place.
+
+    A pair is the same finding whichever of the two found it, so it is
+    reported once, in the check's measure, and what KiCad's list holds or
+    cuts changes nothing about it.
+    """
+    pairs = {pad_pair_key(entry) for entry in measured}
+    return [entry for entry in reported if pad_pair_key(entry) not in pairs] + list(measured)
+
+
+def zone_outline_area(zone: list, what: str) -> float:
+    """The area of a zone's outline in mm2: its polygons, arcs sampled, one lying inside another taken as a hole of it."""
+    rings: List[List[board_geometry.Point]] = []
+    for polygon in sexpr.children(zone, "polygon"):
+        points = sexpr.child(polygon, "pts")
+        if points is None:
+            raise board_geometry.Unreadable(f"{what} has an outline with no corners")
+        ring: List[board_geometry.Point] = []
+        for corner in points[1:]:
+            if sexpr.head(corner) == "arc":
+                ring += board_geometry.arc_points(*(board_geometry.xy(sexpr.child(corner, key), what) for key in ("start", "mid", "end")))
+            else:
+                ring.append(board_geometry.xy(corner, what))
+        if len(ring) < 3:
+            raise board_geometry.Unreadable(f"{what} has an outline of fewer than three corners")
+        rings.append(ring)
+    if not rings:
+        raise board_geometry.Unreadable(f"{what} has no outline")
+    total = 0.0
+    for ring in rings:
+        depth = sum(1 for other in rings if other is not ring and board_geometry.within(ring[0], other))
+        total += board_geometry.polygon_area(ring) * (1 if depth % 2 == 0 else -1)
+    return total
+
+
+def mains_zone_fill(design: Design, tree: list, mains: Set[str]) -> List[Violation]:
+    """Each Mains-class zone whose fill, as KiCad has just stored it, covers less of its outline than MINIMUM_ZONE_FILL on a layer it is on.
+
+    A rule area is not judged. A zone's layers are judged one by one, the
+    outline's area against the area of its filled polygons on that layer (each
+    polygon carries its holes joined in by a bridge of no width, so its area
+    is the copper's). A clearance that trims a pour to nothing, or to a sliver,
+    leaves the nets still looking connected through the pads the pour overlaps;
+    this is where that is seen.
+    """
+    stack = copper_layers(tree)
+    table = board_geometry.net_table(tree)
+    found = []
+    for zone in sexpr.children(tree, "zone"):
+        net = board_geometry.item_net(zone, table, "a zone of the layout")
+        if sexpr.child(zone, "keepout") is not None or net not in mains:
+            continue
+        name = sexpr.child(zone, "name")
+        label = f"zone {name[1]} [{net}]" if name is not None and len(name) > 1 else f"zone [{net}]"
+        what = f"the {label}"
+        outline = zone_outline_area(zone, what)
+        filled: Dict[str, float] = {}
+        for fill in sexpr.children(zone, "filled_polygon"):
+            layer, points = sexpr.child(fill, "layer"), sexpr.child(fill, "pts")
+            if layer is None or len(layer) < 2 or points is None or len(points) < 4:
+                raise board_geometry.Unreadable(f"a fill of the {label} has no layer or no corners where KiCad writes them")
+            if any(sexpr.head(corner) != "xy" for corner in points[1:]):
+                raise board_geometry.Unreadable(f"a fill of the {label} is not a run of (xy ...) corners")
+            filled[str(layer[1])] = filled.get(str(layer[1]), 0.0) + board_geometry.polygon_area(
+                [board_geometry.xy(corner, what) for corner in points[1:]])
+        for layer in zone_copper_layers(zone, stack):
+            share = filled.get(layer, 0.0) / outline if outline > 0 else 0.0
+            if share < MINIMUM_ZONE_FILL:
+                found.append(Violation(
+                    design.project, ZONE_FILL_RULE, f"{design.layout} {label} on {layer}",
+                    f"the {label} on Mains-class net {net} fills {share:.3f} of its {outline:.2f} mm2 outline on {layer}, below the "
+                    f"{MINIMUM_ZONE_FILL:g} the pour must keep: a clearance or another zone has trimmed it, so the net is joined "
+                    "only where its pads and tracks overlap; correct the zone's clearance, outline or priority until it fills"))
+    return found
 
 
 def first_written(*values: Optional[float]) -> float:
@@ -8569,6 +8746,16 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
                     found.append(Violation(design.project, "design_unreadable", design.layout,
                                            f"the layout KiCad refilled cannot be read for the copper on every layer ({unread})"))
         layered.findings = layered.findings + poured
+        if signed is not None and signed.mains_to_mains is not None and refilled is not None and markers:
+            resolved = layout_classes()[2]
+            if resolved is not None and resolved["Mains"]:
+                try:
+                    measured_pairs, unmeasured_pairs = same_part_pad_pairs(design, refilled, resolved["Mains"], signed)
+                    reported = with_measured_pad_pairs(reported, measured_pairs)
+                    found += unmeasured_pairs
+                except board_geometry.Unreadable as unread:
+                    found.append(Violation(design.project, "design_unreadable", design.layout,
+                                           f"the layout KiCad refilled cannot be read for the pads of one part ({unread})"))
         if signed is not None and signed.exceptions and tree is not None and markers and not cut_short(drc):
             mains_class = None
             if any(NET_PAIR_FORM_KEY in entry for entry in signed.exceptions):
@@ -8708,6 +8895,12 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
     except board_geometry.Unreadable as unread:
         found.append(Violation(design.project, "design_unreadable", design.layout,
                                f"the layout KiCad refilled cannot be read for the barrier under a part ({unread})"))
+    try:
+        if refilled is not None:
+            found += mains_zone_fill(design, refilled, on_layout)
+    except board_geometry.Unreadable as unread:
+        found.append(Violation(design.project, "design_unreadable", design.layout,
+                               f"the layout KiCad refilled cannot be read for the fill of its Mains-class zones ({unread})"))
     return found
 
 

@@ -37,10 +37,10 @@ def brief(lines: list) -> list:
 
 
 def pour(net: str, layer: str, box: tuple, uuid: str, clearance: float = 0.2) -> list:
-    """A pour of `net` on `layer` over a box, as (left, top, right, bottom), whose own clearance is `clearance`."""
+    """A pour of `net` on `layer` over a box, as (left, top, right, bottom), whose own clearance is `clearance`, joined solid to the pads it overlaps so no thermal relief takes a share of a small pour."""
     left, top, right, bottom = box
     return ["zone", ["net", Q(net)], ["layer", Q(layer)], ["uuid", Q(uuid)], ["hatch", "edge", "0.5"],
-            ["connect_pads", ["clearance", f"{clearance:g}"]], ["min_thickness", "0.25"],
+            ["connect_pads", "yes", ["clearance", f"{clearance:g}"]], ["min_thickness", "0.25"],
             ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
             ["polygon", ["pts", ["xy", f"{left}", f"{top}"], ["xy", f"{right}", f"{top}"], ["xy", f"{right}", f"{bottom}"],
                          ["xy", f"{left}", f"{bottom}"]]]]

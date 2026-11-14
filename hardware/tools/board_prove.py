@@ -725,6 +725,16 @@ def mains_zone(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
 
 
+def emptied_mains_zone(seed: Seed) -> None:
+    """A Mains-class pour whose minimum copper width is wider than the pour is, so KiCad's fill leaves none of it."""
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/MAINS_L")], ["layer", Q("F.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000004")],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "3.5"]], ["min_thickness", "5"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
+            ["polygon", ["pts", ["xy", "2", "15"], ["xy", "20", "15"], ["xy", "20", "19"], ["xy", "2", "19"]]]]
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
+
+
 def netclass_below(seed: Seed) -> None:
     def edit(data: dict) -> None:
         for netclass in data["net_settings"]["classes"]:
@@ -1796,6 +1806,7 @@ FAULTS: List[tuple] = [
     ("a local clearance override on a mains footprint", "separation: no override outranks the signed figure", "local_clearance_override", "footprint R1", local_override(lambda tree: footprint(tree, "R1"))),
     ("a local clearance override on a low-voltage pad", "separation: no override outranks the signed figure", "local_clearance_override", "pad 1 of R2", local_override(lambda tree: pad(tree, "R2", "1"))),
     ("a clearance below the signed figure on a mains zone", "separation: no override outranks the signed figure", "local_clearance_override", "zone on Mains-class net /MAINS_L", mains_zone),
+    ("a mains pour the fill leaves empty", "separation: a Mains-class pour the fill leaves under 97 percent of its outline fails by name", "mains_zone_fill", "zone [/MAINS_L] on F.Cu", emptied_mains_zone),
     ("a net class setting below the signed figure", "separation: the signed rule prevails over net class settings", "clearance", SIGNED, netclass_below),
     ("a Mains rule narrowed by layer", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by layer", mains_rule("(condition", "(layer outer)\n\t(condition")),
     ("a Mains rule narrowed by area", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by its condition", mains_rule(CONDITION, CONDITION + " && A.intersectsArea('mains')")),
