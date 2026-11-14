@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -31,10 +32,33 @@ import unittest
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
+import board_check  # noqa: E402
 import board_fixtures  # noqa: E402
 import board_prove  # noqa: E402
 
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
+
+
+def basis_record(seed, design):
+    """The separation basis record the check holds `design` to, as (path in the seed's copy, whether it sits in the design's own folder).
+
+    The record is found as the check finds it, the nearest at or above the design's folder, and a record that sits above
+    the folder is placed in the copy at the same place from the repository's root, where the check finds it, since the
+    copy holds the design's folder alone.
+    """
+    found = board_check.find_record(board_prove.REPO, design)
+    if found is None:
+        raise AssertionError(f"no separation basis record at or above {design}")
+    target = os.path.join(seed.root, found)
+    if not os.path.isfile(target):
+        held = board_prove.committed(found)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        if held is not None:
+            with open(target, "wb") as handle:
+                handle.write(held[found])
+        else:
+            shutil.copyfile(os.path.join(board_prove.REPO, found), target)
+    return target, os.path.dirname(found) == design
 
 #: The environment variable that, set to anything, leaves out every test that needs the seeded-fault proof.
 WITHOUT_PROOF = "BOARD_TESTS_WITHOUT_PROOF"

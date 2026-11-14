@@ -21,7 +21,7 @@ sys.path.insert(0, TOOLS)
 
 import board_prove  # noqa: E402
 from board_kicad_fixtures import load_tests, setUpModule  # noqa: E402,F401
-from board_kicad_fixtures import Copy, Proved, outcomes, KICAD_CLI  # noqa: E402
+from board_kicad_fixtures import Copy, Proved, basis_record, outcomes, KICAD_CLI  # noqa: E402
 
 entry = board_prove.exception_entry
 #: The three shortfalls the seeded layouts leave: the mains-to-mains clearance between the two pads of J1, and the
@@ -211,8 +211,11 @@ class TheExceptionsKeepTheTrackedDesignsPassing(unittest.TestCase):
             name = os.path.basename(design)
             with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
                 seed = board_prove.prepare(scratch, design, name)
-                with open(seed.path("separation-basis.yaml"), encoding="utf-8") as handle:
-                    self.assertFalse(yaml.safe_load(handle).get("accepted_exceptions"))
+                record, own = basis_record(seed, design)
+                if own:
+                    # a machine design's own record, held above its folder, carries the exceptions of its own leaf
+                    with open(record, encoding="utf-8") as handle:
+                        self.assertFalse(yaml.safe_load(handle).get("accepted_exceptions"))
                 status, lines, stderr = board_prove.check(seed, KICAD_CLI)
                 self.assertNotEqual(status, 2, stderr)
                 self.assertEqual(status, 0, lines)
