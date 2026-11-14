@@ -345,20 +345,39 @@ class UsableModels(unittest.TestCase):
         self.assertEqual(sorted(blocks), [1])
         self.assertIn("/cache/fallback/s.wrl", blocks[1])
 
-    def test_f101s_clip_pair_has_a_body_of_its_own_and_no_vendor_lookup(self):
-        name = "Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal"
+    def test_f101s_pigtail_fuse_has_a_body_of_its_own_and_no_vendor_lookup(self):
+        name = "Fuse_SETfuse_SCT520PT_Axial_P28.0mm"
         self.assertIn(name, ff.PARTS)
         self.assertIn(name, fm.OWN_ONLY)
         solids = ff.PARTS[name]()
         xs = [x for pts, _, _ in solids for x, _, _ in pts]
-        self.assertGreater(max(xs) - min(xs), 20.0)  # the 20 mm cartridge lies seated in the clips
-        self.assertEqual({m for _, _, m in solids} >= {"brass", "ceramic", "tin"}, True)
+        self.assertAlmostEqual(max(xs) - min(xs), 28.0, delta=1.0)  # the leads reach both holes, 28.0 mm apart
+        self.assertEqual({m for _, _, m in solids} >= {"ceramic", "tin"}, True)
+        body = [x for pts, _, m in solids if m == "ceramic" for x, _, _ in pts]
+        self.assertAlmostEqual(max(body) - min(body), 20.0, delta=0.5)  # the 20 mm cartridge between the leads
 
-    def test_k201s_body_is_the_drawings_41_by_12_7(self):
-        pts = [p for part, _, _ in ff.PARTS["Relay_HF115F-Q_1H_Vertical"]() for p in part]
-        self.assertAlmostEqual(max(p[0] for p in pts) - min(p[0] for p in pts), 41.0, delta=0.5)
-        body = [p for part, _, m in ff.PARTS["Relay_HF115F-Q_1H_Vertical"]() if m == "body" for p in part]
+    def test_k201s_body_is_the_drawings_29_by_12_7_on_its_pin_columns(self):
+        solids = ff.PARTS["Relay_HF115F-I_1HS3A"]()
+        pts = [p for part, _, _ in solids for p in part]
+        self.assertAlmostEqual(max(p[0] for p in pts) - min(p[0] for p in pts), 29.0, delta=0.5)
+        body = [p for part, _, m in solids if m == "body" for p in part]
         self.assertAlmostEqual(max(p[1] for p in body) - min(p[1] for p in body), 12.7, delta=0.1)
+        self.assertAlmostEqual(max(p[2] for p in body) - min(p[2] for p in body), 15.4, delta=0.5)  # 15.7 less its standoff
+        for x in (0.0, 20.16, 25.2):  # a pin stands under each column of the footprint
+            self.assertTrue(any(abs(px - x) < 0.6 and pz < -3.0 for px, _, pz in pts), x)
+
+    def test_the_te_tab_is_the_drawings_6_35_blade_14_02_overall_on_two_legs(self):
+        solids = ff.PARTS["Tab_TE_63849-1"]()
+        pts = [p for part, _, _ in solids for p in part]
+        self.assertAlmostEqual(max(p[2] for p in pts) - min(p[2] for p in pts), 14.02, delta=0.05)
+        blade = [p for part, _, m in solids if m == "tab" for p in part if p[2] > 1.5]
+        self.assertAlmostEqual(max(p[0] for p in blade) - min(p[0] for p in blade), 6.35, delta=0.05)
+        for x in (-2.54, 2.54):  # one leg through each of the footprint's two holes
+            self.assertTrue(any(abs(px - x) < 0.6 and pz < -3.0 for px, _, pz in pts), x)
+
+    def test_the_fallback_names_are_the_footprints_the_board_carries(self):
+        self.assertEqual({"Relay_HF115F-I_1HS3A", "Fuse_SETfuse_SCT520PT_Axial_P28.0mm", "Tab_TE_63849-1"} - set(ff.PARTS), set())
+        self.assertEqual({n for n in ff.PARTS if "HF115F-Q" in n or "BZXC" in n or n.startswith("Fuseholder_Clip")}, set())
 
 
 class VendorAcceptance(unittest.TestCase):

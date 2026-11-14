@@ -50,9 +50,10 @@ USER_AGENT = "curl/8.7.1"
 UNIT_MM = 0.254  # the service draws in 10 mil units
 NONE_TTL_SECONDS = 24 * 3600  # how long "the service has no model" is believed
 
-# A footprint whose part has no catalogue number of its own is drawn from another coil variant's model of the
-# same relay (same outline): the HF115F-Q/005-1H is not in the JLCPCB catalogue, its /012-1H is.
-DONOR_PARTS = {"Relay_HF115F-Q_1H_Vertical": "C5318991"}
+# A footprint whose part has no catalogue number of its own is drawn from the model of the catalogue part it
+# stands for: the HF115F-I/005-1HS3A is in the catalogue (C2976795), so a board that gives the footprint no
+# number still gets the part's own model.
+DONOR_PARTS = {"Relay_HF115F-I_1HS3A": "C2976795"}
 
 # The sign KiCad's (rotate (xyz 0 0 z)) turns a model by, against the counter-clockwise turn seen from above.
 ROT_SIGN = -1.0
@@ -201,9 +202,10 @@ def _cluster(points: List[Tuple[float, float]], radius: float) -> List[Tuple[flo
 BOARD_THICKNESS = 1.6
 PIN_TOLERANCE = 0.5  # how far a pin may stand from its pad's centre, mm (the most a vendor model's fit error may be)
 OVERSHOOT_LIMIT = 1.0  # how far a vendor model's body may stand outside the footprint's courtyard, mm
-# Footprints whose part number is not the body the footprint stands for (F101's number is the cartridge, the
-# clips are the footprint): drawn from our own body, whatever the service holds under that number.
-OWN_ONLY = {"Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal"}
+# Footprints whose part number is a body the footprint does not draw as the vendor does (F101's leads are formed
+# to the footprint's 28.0 mm pitch where the vendor model's are straight): drawn from our own body, whatever the
+# service holds under that number.
+OWN_ONLY = {"Fuse_SETfuse_SCT520PT_Axial_P28.0mm"}
 
 
 def align_model(pads: List[bm.Pad], vertices, courtyard=None) -> Tuple[Optional[dict], str]:
