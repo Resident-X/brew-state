@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C6
+type: criterion
+title: The seeded-fault proof holds a design whose schematic and layout disagree on do-not-populate, and the check catches it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault proof makes a throwaway copy of a proof design in which one part is marked do-not-populate in the layout only, and requires the check to fail it as dnp_agreement, naming that part. The unseeded proof design passes the rule. Out of scope: the proof's seeds for other rules.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+    type: criterion-of

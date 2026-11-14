@@ -4,7 +4,7 @@ category: functional
 title: Every output that acts on the process is confirmed against an independent observation
 status: active
 priority: must
-version: 3
+version: 4
 text: |
   The controller commands heaters, pumps and valves, and can observe what followed through sensing that does not depend on the command having been believed. Confirmation is the comparison between the two.
 
@@ -17,6 +17,8 @@ rationale: |
   The ambiguity criterion is deliberate and is the opposite of what a diagnostic system is usually asked for. Effect-based confirmation genuinely cannot separate a failed switch from a failed load from a failed sensor, and reporting a specific cause the observation does not support sends the builder to the wrong place with confidence.
 
   Scoped to outputs acting on the process rather than to every commanded output. An output that only informs a person cannot be observed independently at all, and a failure to drive one costs the operator information rather than releasing energy. Those outputs are governed where the interface surface is defined, and requiring confirmation of them here would demand something unbuildable while escalating a cosmetic fault to the response reserved for a hazard.
+
+  Covers the case where power to the loads is made available through an element that can be slow to close when the machine is warm. A failure to close is then a known state of the machine and not a surprise: it is retried for a bounded time and reported, it is arranged to be met at rest and not in the middle of work, and a pump is not run into a valve that is not confirmed driven. The figures are the design's to state, since requirements name no mechanism.
 links:
   - target: OBL-CONTROLLER-FAULT-RESPONSE-001.C1
     type: derives-from

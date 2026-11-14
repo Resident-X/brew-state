@@ -1,0 +1,28 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+type: deliverable
+category: solution
+title: The pre-order check fails a part that the layout, the schematic and the parts record do not mark alike as do-not-populate, so the parts list and the placement file leave out the same parts
+status: active
+version: 1
+text: |
+  The ordering step builds the placement file from the layout and the parts list from the schematic, and each reads its own do-not-populate mark: the placement file the footprint attribute of the layout, the parts list the attribute of the schematic symbol, and neither reads a text field. Nothing held the two together. Five parts of the v2 main board, R522, R572, R576, R643 and R648, were marked do-not-populate on the layout only, with a text field named dnp on the schematic symbols that the parts list does not read, so the parts list carried them as fitted while the placement file left them out. Fitted, R522 would bring back the flow-input contention that R545 closes, R643 and R648 would short the temperature converters' force line to ground, and R572 and R576 would load the current-sense resistors. A review of the committed board found it by reading the symbol attributes against the layout. No rule of the check compared the sources.
+
+  Settled for the build:
+  - The rule dnp_agreement reads three sources: the layout's footprint attribute, the schematic's symbol attribute on every sheet the design reaches, and the parts specification record's fitted key. A reference the three do not mark alike fails the design under that name, naming the reference and saying which source marks it not populated and which marks it fitted. A part is marked in the schematic when any unit of its symbol is, and a reference whose units differ fails. A reference a source does not list is not judged by that source, and a design with no usable parts record is judged on the layout and the schematic alone, the record's own failure being reported as parts_record.
+  - A schematic symbol with a text field named dnp, in any case, whose truth differs from its attribute fails too, naming the symbol and its unit, since a part marked only in a field is how the parts list came to carry five parts the board does not populate.
+  - The parts specification record takes a new optional position key, fitted, whose one value is the string no and which states that the position is not fitted. A position without it is fitted, and any other value, a bare YAML no included, fails the record read. The main board's record states it for the five parts and for the inrush thermistor RT301, which the layout and the schematic already marked.
+  - The symbols of the five parts now carry the do-not-populate attribute. The parts list built from the schematic with the do-not-populate exclusion leaves them out and still lists R545.
+  - No acceptance record waives a do-not-populate disagreement. The rule is in neither the workmanship rules an acceptance record may cover nor the classes the owner may mark as warnings.
+  - The seeded-fault proof (task hw:prove) holds a seed that marks one part of a throwaway proof design do-not-populate in the layout only, and the check catches it.
+  - hardware/README.md states the rule, the three sources, what each ordering file reads and the fitted key, and has a row for it in the table of the check's rule names.
+
+  Out of scope: every other rule of the check, and the other marks of the ordering files, such as the exclusion of a part from the bill of materials or from the placement file for another reason.
+rationale: |
+  Restores REQ-BOARD-LAYOUT-PRACTICE-001.C1: a board is judged against every applicable item before it is ordered, and a part that the two ordering files treat differently is a fault of that kind that no existing item could see. The same class had recurred, a do-not-populate flag lost between the layout and the schematic, and a defect that recurs and can be checked belongs in the tool. The rule compares three marks that are each machine readable, so it has no false failure: an absent mark in the parts record means fitted, and a source that does not list a reference says nothing about it. It cannot be waived, because a part fitted that the board does not populate can short a signal or defeat a protection, and no owner acceptance changes what the assembler is sent. The pad numbering rule is a different item because it reads the order of the pad numbers within one footprint, where this one reads one attribute across three sources.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by

@@ -1,0 +1,14 @@
+id: REQ-ELECTRICAL-INSTALL-001.C17
+type: criterion
+title: Each valve's switch closes on command at the warmest enclosure air the parts are graded to, after the valve has been held and released
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Switching parts that need more drive to operate when warm close reliably on a cold bench and can fail to close in service, where the air is the enclosure's and a part just released from being held energised is warmer than that air.
+
+  Each valve's switch closes on command at the warmest enclosure air the parts are graded to, after the valve has been held energised for as long as normal use holds it and then released, with the drive the board provides at the lowest supply it is held to. Out of scope: the switch that makes power available to the loads, whose failure to close is governed by the actuation confirmation requirement.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of
