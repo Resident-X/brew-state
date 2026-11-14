@@ -1,0 +1,43 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+type: deliverable
+category: solution
+title: The v2 main board's mains side is re-laid for the new parts and the board is finished to a passing pre-order check
+status: active
+version: 1
+text: |
+  Remediates the v2 main board's parts and mains side after the parts chosen earlier proved unsuitable. Several mains-side parts could not be bought or did not match their makers' drawings, and a board that is built once and not hand-fitted at bring-up needs footprints that are true to those drawings. The interlock relay, the entry fuse, the receptacle tabs and the entry varistor are therefore replaced by parts that can be bought and are drawn from the makers' own drawings, the mains side is placed again for them and its copper laid again, the pump-triac snubbers give way to clamps as the residual-risks decision records, and the board is then finished to a passing pre-order check. The mains copper the first routing carried, which the low-voltage redraw solution leaves untouched and names as its baseline, was replaced by this work on 2026-11-14, and this solution carries its own proof of the re-laid mains side.
+
+  Settled for the build:
+  - The mains parts. The interlock relay K201 is the Hongfa HF115F-I/005-1HS3A, the entry fuse F101 is a soldered SCT520PT pigtail fuse with 3.0 mm round pads, the receptacle tabs are TE 63849-1, and the varistor RV101 is drawn to the maker's disc drawing. The pump-triac snubber positions R706, C701, R716 and C711 and their nets are deleted, and the bidirectional TVS clamps D701 and D711 stand from each pump triac's main terminal 2 to neutral. The snubber replacement is the owner's decision of 2026-11-14, recorded as an amendment to the residual-risks decision. The clamps are the Littelfuse SMCJ400CA, and the copper from each clamp to its triac tab is 27.5 mm for the coffee channel and 18.6 mm for the steam channel.
+  - The low-voltage parts changed with it. C606 is a 0402 part, U520 is the UMW 74LVC1G17, the four 1x2 headers J622, J623, J627 and J628 carry a 1x2 part number, and the reed J862 is out of the placement file and the parts list with a fitting note for its lead and pitch. The catalogue extract was read again on 2026-11-14.
+  - The mains copper. The mains side is placed again for the new relay, fuse and tabs and its copper is laid again by a re-runnable chain of scripts that reproduces the whole pipeline. As measured by a second tool on the re-laid mains side on all six layers, before the finishing changes to low-voltage copper, which left the mains copper identical item for item and no low-voltage copper within 3.0 mm of it, the least straight distance from mains copper to low-voltage copper is 3.704 mm against 3.0 mm and the least path round the slots is 10.669 mm against 10.0 mm. At the relay K201 the contact-to-contact distance LINE to LINE1 is 3.02 mm straight and 10.79 mm by path, and the relay's barrier strip holds no copper on any layer. HOTVALVE and ZC_LED_A are routed on In3.Cu as the In3 decision records, with HOTVALVE under 3.952 mm2 and ZC_LED_A under 13.142 mm2 of neutral copper. The low-voltage copper is reconnected after the re-lay, six sensing gaps are opened to the 0.3 mm figure, three pour necks under the 0.09 mm minimum are removed and two ground pads join the front pour solidly.
+  - The separation basis record is re-signed on the re-laid board with 42 entries.
+  - The outline is one straight south edge, 131.0 by 125.6 mm. The mounting holes H1 to H4 are 3.4 mm. The J630 and J635 holes are 0.85 mm with a signed hole spacing of 1.15 mm.
+  - The silkscreen is rebuilt last, by one script that refuses to write a board that differs from its input in anything but silkscreen. Text is 1.0 mm by default and 0.8 mm where 1.0 mm does not fit. Each branch fuse's designator and rating stand inside its own holder.
+  - Critical-class copper is locked and the locked-copper record compares at 1664 items.
+  - Neatness lines the finished board keeps are accepted by class and by per-net entries as the neatness decision records, so the full pre-order check passes on every design in the repository, the main board with no violation and 265 warning lines.
+
+  Out of scope: the layout review rounds from rendered views, including the closing full round by a reviewer that did not draw the board, which belong to SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7 and are not delivered here; the owner's confirmation of the entries signed on his behalf; and bench measurement at bring-up.
+rationale: |
+  Restores REQ-BOARD-LAYOUT-PRACTICE-001.C1 for the v2 main board: every applicable item judged on the board as it stands after the parts changed, and a failing item resolved by a change to the board or a recorded finding, never by judging it unimportant. The earlier parts could not be bought or did not match their makers' drawings, so the board that was laid out first could not be built as drawn. The board is placed, drawn by script and proved by the repository's own check, as the method decision fixes, and each figure above is carried by a criterion that names how it is verified.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK
+    type: justified-by
+  - target: DEC-MAIN-BOARD-TWO-MAINS-NETS-ARE-ROUTED-ON-IN3
+    type: justified-by
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: justified-by
+  - target: DEC-MAIN-BOARD-NEATNESS-LINES-ARE-ACCEPTED-BY-CLASS-AND-PER-NET-ENTRIES-SIGNED-ON-BEHALF
+    type: justified-by
+  - target: DEC-MAIN-BOARD-SOUTH-EDGE-IS-ONE-STRAIGHT-LINE-AND-THE-OUTLINE-IS-131-BY-125-6-MM
+    type: justified-by
+  - target: DEC-MAIN-BOARD-SILK-TEXT-IS-1-0-MM-OR-0-8-MM-WHERE-1-0-DOES-NOT-FIT
+    type: justified-by
+  - target: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED
+    type: depends-on
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF
+    type: depends-on

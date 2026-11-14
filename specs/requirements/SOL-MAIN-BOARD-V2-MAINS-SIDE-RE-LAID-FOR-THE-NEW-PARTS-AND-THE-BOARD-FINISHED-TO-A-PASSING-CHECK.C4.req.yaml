@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C4
+type: criterion
+title: The interlock relay's contacts stand 3.0 mm and 10.0 mm by path apart and its barrier strip holds no copper
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Measured on the re-laid copper, which compares identical item for item on the finished board, the distance from the relay K201 contact pad LINE to the ENTRY LINE1 copper is 3.02 mm straight and 10.79 mm by path round the slot end on the front layer, no less than 3.0 mm straight and 10.0 mm by path on any layer, and the barrier strip under the relay body holds no copper of any kind on any of the six layers. On the finished board the pre-order check reports no barrier, clearance or creepage line at the relay. A shorter distance on any layer, or any copper in the strip, fails. Out of scope: the relay's own creepage, which the maker's drawing carries.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C8
+type: criterion
+title: Critical-class copper is locked and the locked-copper record compares
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The critical-class copper of the finished board, 1664 items, is locked, and comparing the board against the locked-copper record reports no difference. A critical-class item that is unlocked or that differs from the record fails. Out of scope: the low-voltage copper outside the critical classes.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

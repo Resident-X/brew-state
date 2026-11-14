@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C6
+type: criterion
+title: The separation basis record stands signed on the re-laid board with every exception entry used
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The signed separation basis record holds 42 entries on the re-laid board, each entry covers a shortfall the layout shows and the record is signed on 2026-11-14. An entry that covers no shortfall, or a shortfall on the board with no entry, fails. Out of scope: the owner's confirmation of the entries signed on his behalf.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

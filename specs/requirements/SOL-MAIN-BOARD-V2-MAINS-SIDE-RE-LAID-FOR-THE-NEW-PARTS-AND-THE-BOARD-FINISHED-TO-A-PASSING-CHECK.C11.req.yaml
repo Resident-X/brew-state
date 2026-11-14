@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C11
+type: criterion
+title: The silkscreen was rebuilt last by a script that can change nothing but silkscreen
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The silkscreen of the finished board was written by one script run after the last copper change on the board's final copper, and that script refuses to write a board that differs from its input in anything other than silkscreen. A silkscreen written by another route, or before a later copper change, fails. Out of scope: the legibility of the printed text.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C13
+type: criterion
+title: The outline is one straight south edge 131.0 by 125.6 mm and the mounting holes are 3.4 mm
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The board outline is a rectangle of 131.0 by 125.6 mm with the south edge one straight line at y 127.6 mm and the four mounting holes H1 to H4 are 3.4 mm in diameter, with the pours refilled round them. A stepped south edge, a different outline size or a different mounting hole size fails. Out of scope: the enclosure's own tolerances.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

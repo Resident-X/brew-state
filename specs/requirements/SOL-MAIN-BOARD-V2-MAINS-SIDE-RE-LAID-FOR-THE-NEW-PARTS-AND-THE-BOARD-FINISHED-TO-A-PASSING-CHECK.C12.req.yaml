@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C12
+type: criterion
+title: Each branch fuse's designator and rating stand inside its own holder
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  On the finished board the silkscreen of each branch fuse holder carries that fuse's designator and its rating inside the holder's own outline, so that no designator or rating reads as belonging to the neighbouring holder. A holder whose designator or rating stands outside its outline, or is missing, fails. Out of scope: the designators that stay on the fabrication layer only, which the severity policy counts.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

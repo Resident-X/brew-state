@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C5
+type: criterion
+title: HOTVALVE and ZC_LED_A are the only mains nets on In3 and lie under neutral copper within the recorded areas
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Inside the mains rule areas only the nets HOTVALVE and ZC_LED_A are routed on In3.Cu. Measured on the re-laid copper, which compares identical item for item on the finished board, HOTVALVE lies under 3.952 mm2 of neutral copper on In2.Cu against the 5 mm2 the In3 decision allows and crosses one other In2.Cu mains net once at a right angle, and ZC_LED_A lies under 13.142 mm2 of neutral copper. A third net on In3.Cu inside the mains rule areas, or a HOTVALVE overlap above 5 mm2, fails. Out of scope: the figures of the signed separation basis.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

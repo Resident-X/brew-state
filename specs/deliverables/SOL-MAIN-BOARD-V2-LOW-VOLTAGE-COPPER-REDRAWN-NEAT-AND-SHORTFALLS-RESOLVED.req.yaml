@@ -3,12 +3,12 @@ type: deliverable
 category: solution
 title: The v2 main board's low-voltage copper is redrawn neatly and each shortfall the redraw leaves is put right or signed
 status: active
-version: 1
+version: 2
 text: |
   Remediates the first routing of the v2 main board's low-voltage copper, which fell short of the workmanship items the layout practice asks of it: wandering supply threads, rings round placement, hooks, via thickets and long diagonals across other nets. The low-voltage copper is redrawn neatly on the unlocked layers with the critical classes locked, 114 low-voltage parts are moved so the routing can be short and straight, and the +3V3 rail becomes a pour on In2.Cu as the decision on that pour records. Each shortfall the redraw leaves is put right, or recorded as a relaxation the owner signed with the reason this board does not need the rule.
 
   Settled for the build:
-  - Mains copper is not touched. Every Mains-class item is identical to the baseline, and no low-voltage copper stands within 3 mm of it on any layer.
+  - Mains copper is not touched. Every Mains-class item is identical to the baseline, and no low-voltage copper stands within 3 mm of it on any layer. The baseline is the mains copper as it stood when this redraw was made. That mains copper was replaced on 2026-11-14 by SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK, which carries its own proof of the re-laid mains side, so the identity named here describes the mains copper of the redraw and not the board as it stands now.
   - The final board's measured figures against the first routing: low-voltage copper 5370.8 mm against 10310 mm, vias 462 against 1045, hooks (two tracks meeting at a pad) 2 against 30, nets whose copper exceeds 1.5 times the distance between their pads 10 against 49, and nets of more than 15 pieces 25 against 80.
   - The two remaining hooks (the 32.768 kHz crystal input at its load capacitor, and the second platinum-sensor force net at its resistor) are accepted with the relaxations decision.
   - The part moves are recorded with the layout plan's placement section kept as signed; a move longer than 20 mm is named for the owner.
