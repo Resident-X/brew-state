@@ -5498,7 +5498,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "HF115F-Q/005-1H"
+		(property "Value" "HF115F-I/005-1HS3A"
 			(at 392.43 100.33 0)
 			(effects
 				(font
@@ -5507,7 +5507,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "main-board:Relay_HF115F-Q_1H_Vertical"
+		(property "Footprint" "main-board:Relay_HF115F-I_1HS3A"
 			(at 381 101.6 0)
 			(hide yes)
 			(effects
@@ -5534,7 +5534,7 @@
 				)
 			)
 		)
-		(property "LCSC" "none"
+		(property "LCSC" "C2976795"
 			(at 381 101.6 0)
 			(hide yes)
 			(effects
@@ -5543,7 +5543,7 @@
 				)
 			)
 		)
-		(property "MPN" "HF115F-Q/005-1H"
+		(property "MPN" "HF115F-I/005-1HS3A"
 			(at 381 101.6 0)
 			(hide yes)
 			(effects
@@ -5561,7 +5561,7 @@
 				)
 			)
 		)
-		(property "Rating" "440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max"
+		(property "Rating" "440 VAC max, 1 Form A AgSnO2, coil 5 V 62 ohm +-10 %, 16 A 250 VAC resistive (VDE 16 A at 85 C), pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max"
 			(at 381 101.6 0)
 			(hide yes)
 			(effects

@@ -2092,7 +2092,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 30.48 40.64 0)
 			(hide yes)
 			(effects
@@ -2119,7 +2119,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 30.48 40.64 0)
 			(hide yes)
 			(effects
@@ -2128,7 +2128,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 30.48 40.64 0)
 			(hide yes)
 			(effects
@@ -2137,7 +2137,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 30.48 40.64 0)
 			(hide yes)
 			(effects
@@ -2266,7 +2266,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Fuse:Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal"
+		(property "Footprint" "main-board:Fuse_SETfuse_SCT520PT_Axial_P28.0mm"
 			(at 88.9 40.64 0)
 			(hide yes)
 			(effects
@@ -2293,7 +2293,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C22447847"
+		(property "LCSC" "C22447834"
 			(at 88.9 40.64 0)
 			(hide yes)
 			(effects
@@ -2302,7 +2302,7 @@
 				)
 			)
 		)
-		(property "MPN" "SCT520T10A250V"
+		(property "MPN" "SCT520PT10A250V"
 			(at 88.9 40.64 0)
 			(hide yes)
 			(effects
@@ -2320,7 +2320,7 @@
 				)
 			)
 		)
-		(property "Rating" "SETfuse SCT520 plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5 x 20 mm leadless ceramic; fitted in two Littelfuse 0111 0501 (111 501) clips"
+		(property "Rating" "SETfuse SCT520PT plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5.2 x 20 mm ceramic cartridge with 0.8 mm soldered pigtail leads, soldered in, no clips"
 			(at 88.9 40.64 0)
 			(hide yes)
 			(effects
@@ -2614,7 +2614,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Varistor:RV_Disc_D15.5mm_W5mm_P7.5mm"
+		(property "Footprint" "main-board:RV_Disc_14D471K_P7.5mm"
 			(at 210.82 50.8 0)
 			(hide yes)
 			(effects
@@ -3192,7 +3192,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 30.48 99.06 0)
 			(hide yes)
 			(effects
@@ -3219,7 +3219,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 30.48 99.06 0)
 			(hide yes)
 			(effects
@@ -3228,7 +3228,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 30.48 99.06 0)
 			(hide yes)
 			(effects
@@ -3237,7 +3237,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 30.48 99.06 0)
 			(hide yes)
 			(effects
@@ -3366,7 +3366,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 30.48 139.7 0)
 			(hide yes)
 			(effects
@@ -3393,7 +3393,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 30.48 139.7 0)
 			(hide yes)
 			(effects
@@ -3402,7 +3402,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 30.48 139.7 0)
 			(hide yes)
 			(effects
@@ -3411,7 +3411,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 30.48 139.7 0)
 			(hide yes)
 			(effects
@@ -3636,7 +3636,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 139.7 139.7 0)
 			(hide yes)
 			(effects
@@ -3663,7 +3663,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 139.7 139.7 0)
 			(hide yes)
 			(effects
@@ -3672,7 +3672,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 139.7 139.7 0)
 			(hide yes)
 			(effects
@@ -3681,7 +3681,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 139.7 139.7 0)
 			(hide yes)
 			(effects
@@ -3810,7 +3810,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 220.98 119.38 0)
 			(hide yes)
 			(effects
@@ -3837,7 +3837,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 220.98 119.38 0)
 			(hide yes)
 			(effects
@@ -3846,7 +3846,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 220.98 119.38 0)
 			(hide yes)
 			(effects
@@ -3855,7 +3855,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 220.98 119.38 0)
 			(hide yes)
 			(effects
@@ -3906,7 +3906,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 220.98 139.7 0)
 			(hide yes)
 			(effects
@@ -3933,7 +3933,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 220.98 139.7 0)
 			(hide yes)
 			(effects
@@ -3942,7 +3942,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 220.98 139.7 0)
 			(hide yes)
 			(effects
@@ -3951,7 +3951,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 220.98 139.7 0)
 			(hide yes)
 			(effects
@@ -4002,7 +4002,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 220.98 160.02 0)
 			(hide yes)
 			(effects
@@ -4029,7 +4029,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 220.98 160.02 0)
 			(hide yes)
 			(effects
@@ -4038,7 +4038,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 220.98 160.02 0)
 			(hide yes)
 			(effects
@@ -4047,7 +4047,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 220.98 160.02 0)
 			(hide yes)
 			(effects
@@ -4098,7 +4098,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:Tab_BZXC_BTC-3-PCB634908T"
+		(property "Footprint" "main-board:Tab_TE_63849-1"
 			(at 220.98 180.34 0)
 			(hide yes)
 			(effects
@@ -4125,7 +4125,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C20626104"
+		(property "LCSC" "C86469"
 			(at 220.98 180.34 0)
 			(hide yes)
 			(effects
@@ -4134,7 +4134,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTC-3-PCB634908T"
+		(property "MPN" "63849-1"
 			(at 220.98 180.34 0)
 			(hide yes)
 			(effects
@@ -4143,7 +4143,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Dongguan Bozhong (BZXC)"
+		(property "Manufacturer" "TE Connectivity"
 			(at 220.98 180.34 0)
 			(hide yes)
 			(effects

@@ -1,5 +1,5 @@
 # The catalogue extract of the Sunbeam EM7000 main board: one entry for each distinct LCSC
-# catalogue number parts-specification.yaml gives a position, 97 numbers, read from JLCPCB's
+# catalogue number parts-specification.yaml gives a position, 98 numbers, read from JLCPCB's
 # parts library on 2026-10-29 (about 14:00 to 14:55 local time) through the search service the
 # library's own page uses, https://jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/
 # selectSmtComponentList/v2, one keyword search for each number, every number matched exactly.
@@ -37,6 +37,12 @@
 # C2971290 (STMicroelectronics T835-800B, positions T701 and T711) was read on 2026-11-13 through JLCPCB's parts search (class expand, so extended; stock 68; 1.2303 USD, the price its first
 #   tier lists), for the pump triac change from WeEn BTA204S-600B (C256462, 4745 in stock on 2026-10-29), whose entry is removed since no position uses it now, so the extract still holds 97 numbers.
 #   Its entry carries its own lifecycle read_on; the extract's own read_on is unchanged.
+# C2976795 (Hongfa HF115F-I/005-1HS3A, K201), C22447834 (SETfuse SCT520PT10A250V, F101) and C86469 (TE Connectivity
+#   63849-1, J101, J102, J103, J106 to J110) were read on 2026-11-13 through the same search service and exact match
+#   (library class expand, so extended; stock 20, 767 and 204475; the price its first tier lists, 1 to 9 pieces for
+#   C2976795, 1 to 49 for C22447834, 1 to 99 for C86469), for the part swaps of that day. They replace C20626104 (tabs)
+#   and C22447847 (F101 cartridge for clips), whose entries are removed since no position uses them now, so the
+#   extract holds 98 numbers. Each of the three entries carries its own lifecycle read_on; the extract's own read_on is unchanged.
 # lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
 #   page was read, so every entry states no source publishes one, with the source naming
 #   what was looked at. It is not a finding that the part is active.
@@ -456,6 +462,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
+  - lcsc: C86469
+    library_class: extended
+    stock: 204475
+    unit_price: 0.0678
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-13
   - lcsc: C91370
     library_class: extended
     stock: 3825
@@ -730,6 +744,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-13
+  - lcsc: C2976795
+    library_class: extended
+    stock: 20
+    unit_price: 2.7911
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-13
   - lcsc: C4248455
     library_class: extended
     stock: 2000
@@ -770,22 +792,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
-  - lcsc: C20626104
+  - lcsc: C22447834
     library_class: extended
-    stock: 14379
-    unit_price: 0.0374
+    stock: 767
+    unit_price: 0.1716
     lifecycle:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
-  - lcsc: C22447847
-    library_class: extended
-    stock: 183
-    unit_price: 0.136
-    lifecycle:
-      status: no source publishes one
-      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
+      read_on: 2026-11-13
   - lcsc: C31423783
     library_class: extended
     stock: 82

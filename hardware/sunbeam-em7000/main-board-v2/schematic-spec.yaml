@@ -81,8 +81,8 @@ totals:
   parts: 448
   nets: 232
   parts_by_catalogue_class:
-    extended: 143
-    none: 96
+    extended: 144
+    none: 95
     basic: 202
     preferred: 7
   hand_fitted_refs:
@@ -617,10 +617,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB1_LINE1
     rating: 6.3 x 0.8 mm blade, retained red lead (live out to the loads)
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 1: live out to every load through the retained daisy-chain wire; fed only from the interlock contact'
@@ -630,10 +630,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB2_LINE_IN
     rating: 6.3 x 0.8 mm blade, retained brown lead (live in from the plug)
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 2: live in from the plug, before the entry fuse'
@@ -643,10 +643,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB3_NEUTRAL_IN
     rating: 6.3 x 0.8 mm blade, retained blue lead (neutral from the plug)
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 3: neutral in from the plug, plug side of the shunt'
@@ -656,10 +656,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB6_COFVALVE
     rating: 6.3 x 0.8 mm blade, retained brown lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 6: two-way coffee valve coil, switched side, to the valve relay K_V1 (owner D)'
@@ -669,10 +669,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB7_COFFPUMP
     rating: 6.3 x 0.8 mm blade, retained white lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 7: coffee pump, switched side (owner D''s pump drive)'
@@ -682,10 +682,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB8_STEAMPUMP
     rating: 6.3 x 0.8 mm blade, retained black lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 8: steam pump, switched side (owner D''s pump drive)'
@@ -695,10 +695,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB9_HOTVALVE
     rating: 6.3 x 0.8 mm blade, retained blue lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 9: three-way valve coil, switched side, to the valve relay K_V2 (owner D)'
@@ -708,10 +708,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: WB_RET
     rating: 6.3 x 0.8 mm blade, same part as the tabs; the wall board's return wire ends here
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Return landing for the heater wall board: a blade on the NEUTRAL pour (not a harness tab), above the shunt'
@@ -720,15 +720,15 @@ sheets:
   - ref: F101
     lib_id: Device:Fuse
     value: 10A_T_250V
-    rating: SETfuse SCT520 plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5 x 20 mm leadless ceramic; fitted in two Littelfuse 0111 0501 (111 501) clips
-    footprint: Fuse:Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal
-    mpn: SCT520T10A250V
+    rating: SETfuse SCT520PT plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5.2 x 20 mm ceramic cartridge with 0.8 mm soldered pigtail leads, soldered in, no clips
+    footprint: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+    mpn: SCT520PT10A250V
     maker: SETfuse (Xiamen SET Electronics)
-    lcsc: C22447847
+    lcsc: C22447834
     class: extended
     hand: true
-    function: 'Entry fuse on the live; protects the trunk and both heaters. Two clips C151075 (Littelfuse 01110501Z, 111 501, spring brass, up to 10 A) are bought with it: the footprint holds the clips'' 4 holes (17.8 x 5.0
-      mm, 1.17 mm), pin 1 = line-side clip, pin 2 = load-side clip'
+    function: Entry fuse on the live; protects the trunk and both heaters. A pigtail fuse soldered through two plated holes 28.0 mm apart (the leads formed to that pitch before the bend rule of the maker's sheet, page 5),
+      no clips; pin 1 = line-side lead, pin 2 = load-side lead
     mains: true
     sim_exclude: true
   - ref: JP101
@@ -754,7 +754,7 @@ sheets:
     lcsc: C8852
     class: extended
     hand: true
-    function: 'Surge clamp across LINE and NEUTRAL, hard against the fuse''s load-side clip (the disc outline and pitch are placeholders: the sheet read gives neither)'
+    function: Surge clamp across LINE and NEUTRAL, hard against the fuse's load-side clip (the disc outline and 7.5 mm pitch are the maker's 14D series drawing)
     mains: true
     sim_exclude: true
   - ref: C101
@@ -1112,13 +1112,22 @@ sheets:
   no_connect: []
   custom_symbols: []
   custom_footprints:
-  - name: Tab_BZXC_BTC-3-PCB634908T
-    from: 'Dongguan Bozhong Electrical Co., Ltd drawing of BTC-3-PCB634908T (LCSC C20626104), Rev. A1, 2021-10-12, read 2026-10-29 from the datasheet linked on the part''s jlcpcb.com page. The record''s own figures: blade
-      B 6.3 +-0.2 mm wide, T 0.8 mm thick (+0/-0.03), blade length A 14.3 +-0.2 mm, mating terminal 250 female T=0.8 (controller-board-division.md, Sources read P15). The drawing also prints D 1.8 +-0.1, E 7.9 +-0.2, F 3.8
-      +-0.2, G 1.2 +-0.1, C 3.8 +-0.2, W 8.1 +-0.1, J 2.4 +-0.1, H 2.6 +-0.2.'
-    detail: 'One plated pad, number 1. Copper at least 7.0 mm (along the blade''s width) by 1.45 mm: the blade''s section from connector-pinouts.md (division record assumption A2; the pad is at least the part''s own footprint).
-      Hole: one oval plated slot, 4.2 x 1.0 mm provisional = the drawing''s leg width C 3.8 +-0.2 and thickness T 0.8 plus 0.2 mm clearance each way; the drawing does not dimension the leg''s barbs separately, so confirm the
-      slot against a received part before ordering (open item). The blade stands 9.9 mm clear of the board by the harness record; the drawing gives blade length 14.3 mm, not the stand-off.'
+  - name: Tab_TE_63849-1
+    from: TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469), https://datasheet.lcsc.com/datasheet/pdf/d78aaa5668ef44d19432bad6ab97dbf2.pdf; read 2026-11-13. Blade 6.35 +-0.08 wide, 0.76 to 0.84 thick, overall 14.02,
+      shoulders 7.92 wide, legs 3.81 long, 1.14 to 1.27 wide, 5.08 +-0.08 apart; PC board hole pattern 2 x diameter 1.40 +-0.05 at 5.08 +-0.08.
+    detail: 'Two plated pads, both number 1 (one terminal), round 3.0 mm, drill 1.4 mm, at x = -2.54 and +2.54 (pitch 5.08 mm). The legs are a barbed press fit in the 1.40 mm holes (the maker''s own pattern). Courtyard the
+      pads plus 0.25 mm; the blade is drawn on the fabrication layer with its wide face along X. Not verified: the plated-hole tolerance the board house holds against the maker''s 1.40 +-0.05, and the part''s current rating
+      (the maker''s specification 114-2115 was not read); a trial fit of one tab in a scrap board is the check.'
+  - name: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+    from: SETfuse SCT520(P) datasheet, https://datasheet.lcsc.com/datasheet/pdf/c399a71412fc2cbf24b5ddba60b5c909.pdf, page 1 (dimensions) and page 5 (lead bending); read 2026-11-13. Body diameter 5.2 x length 20.0 +-0.5, lead
+      diameter 0.80 +-0.05 for above 6.3 A to 10 A.
+    detail: Two plated holes, drill 1.10 mm, pads round 4.2 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 23.8 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
+      2 x 4.2 mm for the straight run and bend the maker's sheet asks for at the 0.8 mm lead; the leads are formed to that pitch. Courtyard the body plus 0.25 mm.
+  - name: RV_Disc_14D471K_P7.5mm
+    from: 'Ruilon 14D series datasheet version A3, https://datasheet.lcsc.com/datasheet/pdf/305ba13b482fd415d345c9b9446eb189.pdf, page 4 (14D471K: D max 17.0, T max 6.2, lead pitch 7.5 +-1.0, lead diameter 0.8 +-0.1); read
+      2026-11-13.'
+    detail: Two plated holes, drill 1.1 mm, pads round 2.1 mm, pitch 7.5 mm along X, both pads on one line; body 17.0 x 6.2 mm drawn on the fabrication and silkscreen layers, centred between the leads; courtyard the body plus
+      0.25 mm.
   - name: JP101_WireLink_P10mm
     from: 'Own design for the first-power link of the board method (bring-up step 3): a pair of through-hole pads taking a wire link in service or a lamp / resistor on first power. Hole 1.7 mm is KiCad''s stock SolderWire-1.5sqmm
       pattern (1.5 mm2 wire); pad gap set to the division record''s basic creepage 5.0 mm or more.'
@@ -1138,12 +1147,12 @@ sheets:
     -> TP101 -> F101 -> TP102 -> JP101 -> LINE bus; the LINE bus carries RV101, C101, the R101-R102 / R103-R104 discharge strings (drawn as two parallel strings across C101, each of two resistors in series, DISCH_A and DISCH_B
     between the pair) and goes off-sheet to the interlock sheet (K201 pin 14); LINE1 returns from the interlock sheet to J101 and TP104. Neutral at the bottom: J103 -> TP105 -> R105 (pin 1) -> R105 pin 4 -> NEUTRAL bus (RV101,
     C101, R102/R104, J110, TP106). R105''s sense pins 2 and 3 leave as global labels SHUNT_SENSE_IN and SHUNT_SENSE_NEUTRAL (owner E filters them). (2) J106 to J109 each show the net on the pin (COFVALVE, COFFPUMP, STEAMPUMP,
-    HOTVALVE); no other part of this sheet touches them. (3) Suppression placement: RV101 hard against F101''s load-side clip on the LINE copper (the varistor is downstream of the fuse and JP101); C101 beside RV101; the discharge
+    HOTVALVE); no other part of this sheet touches them. (3) Suppression placement: RV101 hard against F101''s load-side lead on the LINE copper (the varistor is downstream of the fuse and JP101); C101 beside RV101; the discharge
     strings R101..R104 directly across C101''s two leads, so that the discharge path exists whenever the capacitor is on the board; keep the 4 resistors off the shunt copper. (4) Values are written for SPICE: the resistor
-    value 1Meg is mega (an M alone is milli in SPICE and KiCad''s simulator). (5) Tabs 4 and 5 are not fitted on this board (heater leads go to the wall-board joiners). (6) The 6.3 mm blade tab, F101''s clips, RV101, C101
-    and JP101 are through-hole parts the owner hand-fits and leaves off the manufacturer''s order (hand: true); the clips are two of C151075 for F101. (7) No choke and no Y capacitor, by the record''s decision. (8) TP107 and
-    TP108 are the second pad on NEUTRAL_IN and on NEUTRAL beside R105, so the voltage across the shunt is read apart from the pads TP105 and TP106 that carry the current; drawn under TP105 and TP106 on the same nets. (9) H1
-    to H4 (lid-screw holes) and FID1 to FID3 (fiducials) are mechanical symbols with in_bom no and on_board yes, drawn in a row at the foot of the sheet; they are on no net and carry the LCSC field none.
+    value 1Meg is mega (an M alone is milli in SPICE and KiCad''s simulator). (5) Tabs 4 and 5 are not fitted on this board (heater leads go to the wall-board joiners). (6) The 6.3 mm blade tab, F101, RV101, C101 and JP101
+    are through-hole parts the owner hand-fits and leaves off the manufacturer''s order (hand: true). (7) No choke and no Y capacitor, by the record''s decision. (8) TP107 and TP108 are the second pad on NEUTRAL_IN and on
+    NEUTRAL beside R105, so the voltage across the shunt is read apart from the pads TP105 and TP106 that carry the current; drawn under TP105 and TP106 on the same nets. (9) H1 to H4 (lid-screw holes) and FID1 to FID3 (fiducials)
+    are mechanical symbols with in_bom no and on_board yes, drawn in a row at the foot of the sheet; they are on no net and carry the LCSC field none.
 
     '
 - order: 2
@@ -1152,16 +1161,16 @@ sheets:
   parts:
   - ref: K201
     lib_id: Relay:Relay_SPST-NO
-    value: HF115F-Q/005-1H
-    rating: 440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
-    footprint: Relay_HF115F-Q_1H_Vertical
-    mpn: HF115F-Q/005-1H
+    value: HF115F-I/005-1HS3A
+    rating: 440 VAC max, 1 Form A AgSnO2, coil 5 V 62 ohm +-10 %, 16 A 250 VAC resistive (VDE 16 A at 85 C), pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
+    footprint: Relay_HF115F-I_1HS3A
+    mpn: HF115F-I/005-1HS3A
     maker: Hongfa (Xiamen Hongfa Electroacoustic)
-    lcsc: none
-    class: none
+    lcsc: C2976795
+    class: extended
     hand: true
-    function: 'Interlock relay: contact in series in the live feed (pin 13 = LINE1, pin 14 = LINE), coil A1 = +5V, A2 = POL_COIL_LO. The 5 V code was not found in the JLCPCB/LCSC catalogue on 2026-10-29 (only HF115F-Q/012-1H,
-      C5318991, 12 V coil, and /024-1HT, C400142); it is bought outside the catalogue and hand-fitted'
+    function: 'Interlock relay: contact in series in the live feed (pin 13 = LINE1, pin 14 = LINE), coil A1 = +5V, A2 = POL_COIL_LO. Hongfa HF115F-I, 5 V coil, catalogue number C2976795 (JLCPCB extended, checked 2026-11-13);
+      hand-fitted'
     mains: true
     sim_exclude: true
   - ref: U201
@@ -1707,14 +1716,12 @@ sheets:
     reason: n.c. on the BZX84 SOT-23
   custom_symbols: []
   custom_footprints:
-  - name: Relay_HF115F-Q_1H_Vertical
-    from: Hongfa HF115F-Q datasheet, 2024 Rev. 1.00, pages 205-206 (https://source.hongfa.com/Uploads/Product/PDF/HF115F-Q_en.pdf), 'PCB Layout (bottom view)' for the 1 Form A, vertical quick-connect type, read 2026-10-29
-    detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) plated holes drill 1.4 mm (the drawing gives 2 x diameter 1.3 +0.1/0; the drill is the upper tolerance end, 1.3 plus 0.1) pad 2.2 mm round;
-      contact pole a = pad number 13 at (32.5, 0) and (37.5, 0); pole b = pad number 14 at (32.5, 7.56) and (37.5, 7.56): four holes drill 1.6 mm (drawing 4 x diameter 1.5 +0.1/0, so 1.6 is the upper end) pad 2.5 mm round;
-      the two pads of one number are one pin (duplicate pad numbers). Pole a (pin 13) is on LINE1 and pole b (pin 14) on LINE, the order that puts LINE and LINE1 in the same order as the mains tabs J102 and J101 when the contacts
-      face the tabs, so the two feeds do not cross at the relay; the pad gap between the poles is 7.56 - 2.5 = 5.06 mm at least the basic 5.0 mm. The drawing''s tolerances for the layout are +-0.1 mm. Body outline 29 +-0.3
-      x 12.7 +-0.3 mm with the quick-connect tabs reaching 41 mm overall (vertical type), 15.7 mm high, 3.6 mm stand-off pins; body starts 2.5 mm before the coil holes (drawing dimension 2.5). The coil has no marked polarity
-      in the sheet (A1 and A2 are interchangeable).'
+  - name: Relay_HF115F-I_1HS3A
+    from: Hongfa HF115F-I datasheet, page 202 (PCB layout, bottom view), https://datasheet.lcsc.com/datasheet/pdf/0ebe0ad433a21202e9ed2b99eb26b6ee.pdf; HF115F-S sheet page 214 gives the same pattern; read 2026-11-13
+    detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) round 2.2 mm, drill 1.4 mm (drawing 6 x diameter 1.3 +0.1/0, tolerance +-0.1); contact pins 13 at (20.16, 0) and (20.16, 7.56) and 14 at (25.20,
+      0) and (25.20, 7.56), round 2.0 mm, drill 1.4 mm; the two pads of one number are one pin (duplicate pad numbers; the maker joins the two pins of a contact column inside). Pin 13 is on LINE1 and pin 14 on LINE. Body 29
+      +-0.3 x 12.7 +-0.3 x 15.7 +-0.3 mm, stand-off 0.3 mm, pins 3.6 mm long; the coil column is 2.6 mm in from the body end. Coil pad to nearest contact pad 20.16 mm along the body; contact column to column pad edge gap 3.04
+      mm. The coil has no marked polarity (A1 and A2 are interchangeable).'
   power_flags: []
   drawing_notes: 'Drawing notes. (1) One function: the interlock. Draw left to right: POL_OUT enters at the left and goes through R207 to U201''s input net POL_IN, which carries R201 and R202 to ground; U201 (inverting) drives
     POL_INV, which carries R208 to ground and U203''s input; U203 (inverting) drives POL_BUF, which feeds two identical rows, channel A above and channel B below (coupling capacitor, then the pump node with D201 to ground
@@ -1723,7 +1730,7 @@ sheets:
     zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and values; the second channel must not share any part with the first except U201 and U203 (the common elements, by the record''s design), the
     coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart from the coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier was unlisted in the separation
     basis when this was written (the draft, unsigned at this commit, lists it); its distances are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s coil is low voltage and its contact mains: keep
-    >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting between them as the division record does; the footprint''s own coil-to-contact pad distance is 32.5 mm along the body. (6) Values
+    >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting between them as the division record does; the footprint''s own coil-to-contact pad distance is 20.16 mm along the body. (6) Values
     in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
 
     '
@@ -9458,13 +9465,23 @@ custom_symbols:
     unit: 1
   sheet: Zero-crossing detector
 custom_footprints:
-- name: Tab_BZXC_BTC-3-PCB634908T
-  from: 'Dongguan Bozhong Electrical Co., Ltd drawing of BTC-3-PCB634908T (LCSC C20626104), Rev. A1, 2021-10-12, read 2026-10-29 from the datasheet linked on the part''s jlcpcb.com page. The record''s own figures: blade B
-    6.3 +-0.2 mm wide, T 0.8 mm thick (+0/-0.03), blade length A 14.3 +-0.2 mm, mating terminal 250 female T=0.8 (controller-board-division.md, Sources read P15). The drawing also prints D 1.8 +-0.1, E 7.9 +-0.2, F 3.8 +-0.2,
-    G 1.2 +-0.1, C 3.8 +-0.2, W 8.1 +-0.1, J 2.4 +-0.1, H 2.6 +-0.2.'
-  detail: 'One plated pad, number 1. Copper at least 7.0 mm (along the blade''s width) by 1.45 mm: the blade''s section from connector-pinouts.md (division record assumption A2; the pad is at least the part''s own footprint).
-    Hole: one oval plated slot, 4.2 x 1.0 mm provisional = the drawing''s leg width C 3.8 +-0.2 and thickness T 0.8 plus 0.2 mm clearance each way; the drawing does not dimension the leg''s barbs separately, so confirm the
-    slot against a received part before ordering (open item). The blade stands 9.9 mm clear of the board by the harness record; the drawing gives blade length 14.3 mm, not the stand-off.'
+- name: Tab_TE_63849-1
+  from: TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469), https://datasheet.lcsc.com/datasheet/pdf/d78aaa5668ef44d19432bad6ab97dbf2.pdf; read 2026-11-13. Blade 6.35 +-0.08 wide, 0.76 to 0.84 thick, overall 14.02,
+    shoulders 7.92 wide, legs 3.81 long, 1.14 to 1.27 wide, 5.08 +-0.08 apart; PC board hole pattern 2 x diameter 1.40 +-0.05 at 5.08 +-0.08.
+  detail: 'Two plated pads, both number 1 (one terminal), round 3.0 mm, drill 1.4 mm, at x = -2.54 and +2.54 (pitch 5.08 mm). The legs are a barbed press fit in the 1.40 mm holes (the maker''s own pattern). Courtyard the pads
+    plus 0.25 mm; the blade is drawn on the fabrication layer with its wide face along X. Not verified: the plated-hole tolerance the board house holds against the maker''s 1.40 +-0.05, and the part''s current rating (the
+    maker''s specification 114-2115 was not read); a trial fit of one tab in a scrap board is the check.'
+  sheet: Mains entry and load feed
+- name: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+  from: SETfuse SCT520(P) datasheet, https://datasheet.lcsc.com/datasheet/pdf/c399a71412fc2cbf24b5ddba60b5c909.pdf, page 1 (dimensions) and page 5 (lead bending); read 2026-11-13. Body diameter 5.2 x length 20.0 +-0.5, lead
+    diameter 0.80 +-0.05 for above 6.3 A to 10 A.
+  detail: Two plated holes, drill 1.10 mm, pads round 4.2 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 23.8 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
+    2 x 4.2 mm for the straight run and bend the maker's sheet asks for at the 0.8 mm lead; the leads are formed to that pitch. Courtyard the body plus 0.25 mm.
+  sheet: Mains entry and load feed
+- name: RV_Disc_14D471K_P7.5mm
+  from: 'Ruilon 14D series datasheet version A3, https://datasheet.lcsc.com/datasheet/pdf/305ba13b482fd415d345c9b9446eb189.pdf, page 4 (14D471K: D max 17.0, T max 6.2, lead pitch 7.5 +-1.0, lead diameter 0.8 +-0.1); read 2026-11-13.'
+  detail: Two plated holes, drill 1.1 mm, pads round 2.1 mm, pitch 7.5 mm along X, both pads on one line; body 17.0 x 6.2 mm drawn on the fabrication and silkscreen layers, centred between the leads; courtyard the body plus
+    0.25 mm.
   sheet: Mains entry and load feed
 - name: JP101_WireLink_P10mm
   from: 'Own design for the first-power link of the board method (bring-up step 3): a pair of through-hole pads taking a wire link in service or a lamp / resistor on first power. Hole 1.7 mm is KiCad''s stock SolderWire-1.5sqmm
@@ -9483,14 +9500,12 @@ custom_footprints:
   from: 'Own design for the machine''s four lid-screw points (layout-plan.md BOARD-7: four holes of 3.1 mm, a part-free circle of 3.5 mm radius).'
   detail: One non-plated hole, drill 3.1 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
   sheet: Mains entry and load feed
-- name: Relay_HF115F-Q_1H_Vertical
-  from: Hongfa HF115F-Q datasheet, 2024 Rev. 1.00, pages 205-206 (https://source.hongfa.com/Uploads/Product/PDF/HF115F-Q_en.pdf), 'PCB Layout (bottom view)' for the 1 Form A, vertical quick-connect type, read 2026-10-29
-  detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) plated holes drill 1.4 mm (the drawing gives 2 x diameter 1.3 +0.1/0; the drill is the upper tolerance end, 1.3 plus 0.1) pad 2.2 mm round; contact
-    pole a = pad number 13 at (32.5, 0) and (37.5, 0); pole b = pad number 14 at (32.5, 7.56) and (37.5, 7.56): four holes drill 1.6 mm (drawing 4 x diameter 1.5 +0.1/0, so 1.6 is the upper end) pad 2.5 mm round; the two pads
-    of one number are one pin (duplicate pad numbers). Pole a (pin 13) is on LINE1 and pole b (pin 14) on LINE, the order that puts LINE and LINE1 in the same order as the mains tabs J102 and J101 when the contacts face the
-    tabs, so the two feeds do not cross at the relay; the pad gap between the poles is 7.56 - 2.5 = 5.06 mm at least the basic 5.0 mm. The drawing''s tolerances for the layout are +-0.1 mm. Body outline 29 +-0.3 x 12.7 +-0.3
-    mm with the quick-connect tabs reaching 41 mm overall (vertical type), 15.7 mm high, 3.6 mm stand-off pins; body starts 2.5 mm before the coil holes (drawing dimension 2.5). The coil has no marked polarity in the sheet
-    (A1 and A2 are interchangeable).'
+- name: Relay_HF115F-I_1HS3A
+  from: Hongfa HF115F-I datasheet, page 202 (PCB layout, bottom view), https://datasheet.lcsc.com/datasheet/pdf/0ebe0ad433a21202e9ed2b99eb26b6ee.pdf; HF115F-S sheet page 214 gives the same pattern; read 2026-11-13
+  detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) round 2.2 mm, drill 1.4 mm (drawing 6 x diameter 1.3 +0.1/0, tolerance +-0.1); contact pins 13 at (20.16, 0) and (20.16, 7.56) and 14 at (25.20,
+    0) and (25.20, 7.56), round 2.0 mm, drill 1.4 mm; the two pads of one number are one pin (duplicate pad numbers; the maker joins the two pins of a contact column inside). Pin 13 is on LINE1 and pin 14 on LINE. Body 29
+    +-0.3 x 12.7 +-0.3 x 15.7 +-0.3 mm, stand-off 0.3 mm, pins 3.6 mm long; the coil column is 2.6 mm in from the body end. Coil pad to nearest contact pad 20.16 mm along the body; contact column to column pad edge gap 3.04
+    mm. The coil has no marked polarity (A1 and A2 are interchangeable).'
   sheet: Interlock
 - name: TS1187A_5.1x5.1mm_SMD
   from: XKB Connection TS-1187A-X-X-X drawing, rev A0 (LCSC C318884 maker sheet), PCB LAYOUT top view

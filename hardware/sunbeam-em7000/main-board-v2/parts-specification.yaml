@@ -48,6 +48,8 @@
 #   SMF series (revised 12/06/17): datasheet.lcsc.com 6d382c654924c5ddbeb5b90893b39699.pdf
 #   14D series Version A3 (revised 2023-10-27): datasheet.lcsc.com 305ba13b482fd415d345c9b9446eb189.pdf
 #   HF32FA-G 2026 Rev. 1.00 and HF115F-Q: source.hongfa.com Uploads/Product/PDF
+#   HF115F-I (K201), SCT520(P) (F101) and TE 63849-1 (tabs), read 2026-11-13: datasheet.lcsc.com
+#     0ebe0ad433a21202e9ed2b99eb26b6ee.pdf, c399a71412fc2cbf24b5ddba60b5c909.pdf, d78aaa5668ef44d19432bad6ab97dbf2.pdf
 #   SN74LVC1G17 SCES351Y (October 2025), SN74HCT541 SCLS306E (May 2022): ti.com symlink addresses
 #   AO3400A Rev 3.1 (July 2023), AO3401A Rev 3.1 (December 2023): aosmd.com
 #   HX711 Avia V2.0: the web.archive.org address in the schematic
@@ -71,68 +73,68 @@
 #
 positions:
   # ---- sheet: Mains entry and load feed
-  # J101: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J101: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J101
     value: TAB1_LINE1
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained red lead (live out to the loads)
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J102: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J102: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J102
     value: TAB2_LINE_IN
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained brown lead (live in from the plug)
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J103: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J103: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J103
     value: TAB3_NEUTRAL_IN
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained blue lead (neutral from the plug)
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J106: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J106: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J106
     value: TAB6_COFVALVE
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained brown lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J107: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J107: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J107
     value: TAB7_COFFPUMP
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained white lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J108: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J108: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J108
     value: TAB8_STEAMPUMP
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained black lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J109: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J109: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J109
     value: TAB9_HOTVALVE
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained blue lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J110: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J110: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J110
     value: WB_RET
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, same part as the tabs; the wall board's return wire ends here
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # F101: maker SETfuse (Xiamen SET Electronics); MPN SCT520T10A250V; catalogue class extended
+  # F101: maker SETfuse (Xiamen SET Electronics); MPN SCT520PT10A250V; catalogue class extended
   - reference: F101
     value: 10A_T_250V
-    package: Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal
-    rating: SETfuse SCT520 plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5 x 20 mm leadless ceramic; fitted in two Littelfuse 0111 0501 (111 501) clips
-    lcsc: C22447847
+    package: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+    rating: SETfuse SCT520PT plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5.2 x 20 mm ceramic cartridge with 0.8 mm soldered pigtail leads, soldered in, no clips
+    lcsc: C22447834
     class: fuse
   # JP101: maker none; MPN none (owner-fitted 1.5 mm2 wire); catalogue class none; LCSC field in schematic is empty
   - reference: JP101
@@ -144,7 +146,7 @@ positions:
   # RV101: maker Ruilon; MPN 14D471K; catalogue class extended
   - reference: RV101
     value: 14D471K
-    package: RV_Disc_D15.5mm_W5mm_P7.5mm
+    package: RV_Disc_14D471K_P7.5mm
     rating: 300 VAC max, 470 V class 14 mm disc, 423-517 V at 1 mA, 775 V clamp at 50 A
     lcsc: C8852
     class: varistor
@@ -297,12 +299,12 @@ positions:
     class: none
 
   # ---- sheet: Interlock
-  # K201: maker Hongfa (Xiamen Hongfa Electroacoustic); MPN HF115F-Q/005-1H; catalogue class none; LCSC field in schematic is empty
+  # K201: maker Hongfa (Xiamen Hongfa Electroacoustic); MPN HF115F-I/005-1HS3A; catalogue class extended
   - reference: K201
-    value: HF115F-Q/005-1H
-    package: Relay_HF115F-Q_1H_Vertical
-    rating: 440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
-    lcsc: none
+    value: HF115F-I/005-1HS3A
+    package: Relay_HF115F-I_1HS3A
+    rating: 440 VAC max, 1 Form A AgSnO2, coil 5 V 62 ohm +-10 %, 16 A 250 VAC resistive (VDE 16 A at 85 C), pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
+    lcsc: C2976795
     class: relay and connector
   # U201: maker Texas Instruments; MPN SN74AHCT1G14DCKR; catalogue class extended
   - reference: U201
