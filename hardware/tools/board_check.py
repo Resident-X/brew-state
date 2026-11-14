@@ -2153,7 +2153,10 @@ CATALOGUE_NAME = "catalogue-extract.yaml"
 
 #: The keys a position of the specification record holds; reference and lcsc are required, and class is
 #: required of every position by the derated-voltage rule, which reports a position without it.
-POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class")
+POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class", "fitted")
+#: The one value of a position's optional `fitted` key: the position is not fitted (do not populate). A position with
+#: no `fitted` key is fitted.
+NOT_FITTED = "no"
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
 #: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present and
@@ -2335,6 +2338,9 @@ def read_specification(yaml, root: str, repository: Repository, design: Design, 
             for key in ("reference", "lcsc"):
                 if key not in entry:
                     bad(f"{where}.{key}", f"{where} lacks {key}, which every position states")
+            if isinstance(entry.get("fitted"), str) and entry["fitted"].strip() and entry["fitted"] != NOT_FITTED:
+                bad(f"{where}.fitted", f"{where}.fitted is {entry['fitted']!r}, where its one value is '{NOT_FITTED}', "
+                                       "a position not fitted (do not populate); leave the key out of a fitted position")
             reference = entry.get("reference")
             if isinstance(reference, str) and reference.strip():
                 if reference in stated:
@@ -5135,6 +5141,117 @@ def pad_numbering(design: Design, tree: list) -> List[Violation]:
                                f"the pad numbers of {what} run clockwise round the part as seen from its top, the mirror "
                                "image of the counter-clockwise numbering from pin 1 that a dual-row or four-sided package "
                                "has, so the part would fit only turned over; number the pads counter-clockwise from pin 1"))
+    return found
+
+
+#: The values of a schematic symbol's text field named dnp that say the part is not populated, compared in lower case.
+DNP_TEXTS = ("true", "yes", "1")
+
+
+class SymbolMarks(NamedTuple):
+    """What one schematic symbol (one unit of a reference) says about being populated."""
+
+    unit: str
+    attribute: bool
+    text: Optional[bool]
+
+
+def schematic_marks(root: str, design: Design, repository: Repository) -> Dict[str, List[SymbolMarks]]:
+    """Each reference the design's schematic places, with what each of its units says: KiCad's own do-not-populate
+    attribute on the symbol instance, and the truth of a text field named dnp in any case (None where it has none).
+
+    Every sheet the schematic reaches is read, a power symbol and a symbol with `on_board` set to `no` are left out, as
+    `placed_positions` leaves them out, and a sheet that cannot be read is skipped, since the design fails for it already.
+    """
+    marks: Dict[str, List[SymbolMarks]] = {}
+    try:
+        files = sorted(sheet_files(root, design.schematic, repository.tracked))
+    except (OSError, sexpr.SexprError):
+        return marks
+    for path in files:
+        try:
+            with open(os.path.join(root, path), encoding="utf-8") as handle:
+                tree = sexpr.parse_one(handle.read())
+        except (OSError, sexpr.SexprError):
+            continue
+        library = sexpr.child(tree, "lib_symbols") or []
+        power = {str(item[1]) for item in sexpr.children(library, "symbol") if len(item) > 1 and sexpr.child(item, "power")}
+        for symbol in sexpr.children(tree, "symbol"):
+            if sexpr.child(symbol, "lib_id") is None:
+                continue
+            identity = str((sexpr.child(symbol, "lib_name") or sexpr.child(symbol, "lib_id"))[1])
+            on_board = sexpr.child(symbol, "on_board")
+            if identity in power or (on_board is not None and len(on_board) > 1 and on_board[1] == "no"):
+                continue
+            fields = [(str(prop[1]), str(prop[2])) for prop in sexpr.children(symbol, "property") if len(prop) > 2]
+            references = []
+            for project in sexpr.children(sexpr.child(symbol, "instances") or [], "project"):
+                if len(project) > 1 and project[1] == design.name:
+                    references += [str(ref[1]) for where in sexpr.children(project, "path")
+                                   for ref in sexpr.children(where, "reference") if len(ref) > 1]
+            if not references:
+                references = [text for name, text in fields if name == "Reference" and text]
+            flag = sexpr.child(symbol, "dnp")
+            attribute = flag is not None and len(flag) > 1 and str(flag[1]) == "yes"
+            texts = [text.strip().lower() in DNP_TEXTS for name, text in fields if name.lower() == "dnp"]
+            unit_item = sexpr.child(symbol, "unit")
+            unit = str(unit_item[1]) if unit_item is not None and len(unit_item) > 1 else "1"
+            for reference in references:
+                marks.setdefault(reference, []).append(SymbolMarks(unit, attribute, texts[0] if texts else None))
+    return marks
+
+
+def dnp_agreement(design: Design, tree: list, yaml, root: str, repository: Repository,
+                  not_for_manufacture: bool) -> List[Violation]:
+    """Every part the layout, the schematic and the parts record do not agree is populated, and every schematic symbol
+    whose text field named dnp disagrees with its do-not-populate attribute.
+
+    The ordering step builds the parts list from the schematic with KiCad's `--exclude-dnp`, which reads only the
+    attribute, and the placement file from the layout, so a part marked in one and not the other is listed as fitted
+    or placed without being listed. The layout marks a part with the `dnp` attribute of its footprint; the schematic
+    marks it when any unit of its symbol carries the attribute (a reference whose units differ fails); the record marks
+    it with `fitted: "no"`, and a position without that key is fitted. A source that does not list a reference says
+    nothing about it, and a record that cannot be read is no source here, since the design fails for it already.
+    """
+    layout = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        reference = board_geometry.reference(footprint)
+        if reference:
+            attributes = sexpr.child(footprint, "attr") or []
+            layout[reference] = "dnp" in [str(item) for item in attributes[1:]]
+    schematic = schematic_marks(root, design, repository)
+    stated, _ = read_specification(yaml, root, repository, design, not_for_manufacture)
+    found = []
+    for reference in sorted(schematic):
+        units = schematic[reference]
+        if len({unit.attribute for unit in units}) > 1:
+            found.append(Violation(design.project, "dnp_agreement", reference,
+                                   f"the units of {reference} disagree on do not populate: unit "
+                                   f"{', '.join(u.unit for u in units if u.attribute)} say it is not populated and unit "
+                                   f"{', '.join(u.unit for u in units if not u.attribute)} say it is fitted; set the attribute "
+                                   "on every unit alike"))
+        for unit in units:
+            if unit.text is not None and unit.text != unit.attribute:
+                says = "do not populate" if unit.text else "fitted"
+                has = "do not populate" if unit.attribute else "fitted"
+                found.append(Violation(design.project, "dnp_agreement", f"{reference} unit {unit.unit}",
+                                       f"the schematic symbol {reference} (unit {unit.unit}) carries a text field dnp that says "
+                                       f"{says} while its do-not-populate attribute says {has}; KiCad's parts list reads only "
+                                       "the attribute, so set the attribute and make the field agree or remove it"))
+    for reference in sorted(set(layout) | set(schematic) | (set(stated) if stated is not None else set())):
+        said = {}
+        if reference in layout:
+            said["the layout"] = layout[reference]
+        if reference in schematic:
+            said["the schematic"] = any(unit.attribute for unit in schematic[reference])
+        if stated is not None and said:
+            said["the parts record"] = stated.get(reference, {}).get("fitted") == NOT_FITTED
+        if len(set(said.values())) < 2:
+            continue
+        words = ", ".join(f"{who} marks it {'not populated' if flag else 'fitted'}" for who, flag in said.items())
+        found.append(Violation(design.project, "dnp_agreement", reference,
+                               f"{reference} is not held to one answer on do not populate: {words}; the parts list, the "
+                               "placement file and the parts record each read their own, so make all three agree"))
     return found
 
 
@@ -8867,6 +8984,7 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
                 return found
             found += measured(design, copper, figures, corner)
             found += pad_numbering(design, tree)
+            found += dnp_agreement(design, tree, yaml, root, repository, not_for_manufacture)
             found += pasted
             if limits is not None and board_rules is not None:
                 found += board_minimums(design, project, rules, tree, limits, board_rules["fabrication"]["outer_copper_oz"])

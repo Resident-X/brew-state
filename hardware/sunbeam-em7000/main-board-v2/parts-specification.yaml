@@ -545,6 +545,7 @@ positions:
     rating: NTC inrush limiter 10 ohm at 25 degC +/-20 %, 2 A maximum steady state, 0.46 ohm residual, B 2700 K, 150 uF maximum load capacitance, no voltage rating stated by the maker, 11 mm disc, 7.5 mm lead pitch (Ruilon NTC series, rev. A6 2023-10-16)
     lcsc: C3790
     class: none
+    fitted: "no"
   # C301: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C301
     value: 100 nF
@@ -1497,6 +1498,7 @@ positions:
     rating: 0603 zero-ohm link
     lcsc: C21189
     class: none
+    fitted: "no"
   # R545: maker UNI-ROYAL; MPN 0603WAF2200T5E; catalogue class basic
   - reference: R545
     value: '220'
@@ -1947,6 +1949,7 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C25804
     class: none
+    fitted: "no"
   # R573: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R573
     value: 1k
@@ -2003,6 +2006,7 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C25804
     class: none
+    fitted: "no"
   # R577: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R577
     value: 1k
@@ -2138,6 +2142,7 @@ positions:
     rating: 0603 0 ohm link
     lcsc: C21189
     class: none
+    fitted: "no"
   # R645: maker Panasonic; MPN ERA3AEB4021V; catalogue class extended
   - reference: R645
     value: 4.02k
@@ -2166,6 +2171,7 @@ positions:
     rating: 0603 0 ohm link
     lcsc: C21189
     class: none
+    fitted: "no"
   # TP620: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP620
     value: TP_PT1_BIAS

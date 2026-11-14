@@ -1017,6 +1017,15 @@ def clockwise_part(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, part))
 
 
+def layout_only_do_not_populate(seed: Seed) -> None:
+    """The footprint of R2 marked do-not-populate in the layout, while its schematic symbol and the parts record leave it fitted."""
+    def mark(tree: list) -> None:
+        attributes = sexpr.child(footprint(tree, "R2"), "attr")
+        assert attributes is not None, "the proof layout's R2 has no attribute list"
+        attributes.append("dnp")
+    seed.layout(mark)
+
+
 def via_under_paste(seed: Seed) -> None:
     """A surface-mount pad of /LV_A, paste layer and all, with a 0.3 mm /LV_A via drilled through its middle."""
     Q = sexpr.Quoted
@@ -1841,6 +1850,7 @@ FAULTS: List[tuple] = [
     ("a local clearance override on a low-voltage pad", "separation: no override outranks the signed figure", "local_clearance_override", "pad 1 of R2", local_override(lambda tree: pad(tree, "R2", "1"))),
     ("a clearance below the signed figure on a mains zone", "separation: no override outranks the signed figure", "local_clearance_override", "zone on Mains-class net /MAINS_L", mains_zone),
     ("a footprint numbered clockwise", "footprint numbering: a dual-row or four-sided footprint whose pad numbers run clockwise seen from the top of the part fails by name", "pad_numbering", "X3 (Seeded_Part)", clockwise_part),
+    ("a part the layout marks do not populate and the schematic leaves fitted", "do not populate: the layout, the schematic and the parts record are held to one answer, and a part marked in one and fitted in another fails by name", "dnp_agreement", "R2 is not held to one answer on do not populate", layout_only_do_not_populate),
     ("a mains pour the fill leaves empty", "separation: a Mains-class pour the fill leaves under 90 percent of its outline fails by name", "mains_zone_fill", "zone [/MAINS_L] on F.Cu", emptied_mains_zone),
     ("a mains run whose clearance list reaches KiCad's cap", "separation: a KiCad list cut at its cap on a design that declares mains fails the design", "report_cut_short", "the list was cut and a cut list is not a verdict", mains_run_over_the_cap),
     ("a mains pad whose copper the check does not size", "separation: a Mains pad beside a Mains pad of its part is measured from sized copper or fails by name", "mains_pad_pair", "pad 1 [/MAINS_L] of J1 stands on a Mains-class net beside a Mains-class pad of another net in its own part", custom_mains_pad),
