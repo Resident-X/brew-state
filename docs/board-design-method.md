@@ -1115,133 +1115,6 @@ A finding is corrected in the design, or in the commands where the export is wro
 
 Out of scope for this section: checking the design itself, which the pre-order check and the [layout review](#layout-review) do; the layout review's views, which are rendered from the design and not from the files sent to the manufacturer; and placing the order.
 
-## Placement, routing and review as practised on a dense mains board
-
-The sections above state each step's own rules. This section states how they were carried out on the first board that went through the whole method to the pre-order check: a six-layer board carrying mains and low-voltage circuits, whose layout was redone from the placement on. It adds the working practice around the steps: who decides what, how a floorplan is chosen and proved, how copper is drawn by script and judged by picture, how the work is reviewed, and what went wrong. It does not replace a step and does not relax one. Where it says a script draws copper, the checks, the locking and the record of [Routing](#routing-critical-nets-by-hand-and-locked-then-the-rest) and the rounds of the [layout review](#layout-review) still apply to what the script drew. A step that a script carries out from a shell needs no Konnect toolset, so a helper may run it, and the statement in [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) that toolsets are invisible to a subagent concerns only the steps done through Konnect. This section is not a step carried out in order: the order of the steps stays the one at the top of this document, and its last part gives the order for the next board.
-
-### 1. Read the checks and the records before placing, and rank what the board is for
-
-Before any part is placed, read every check the board will be judged by and the design records it is held to: the pre-order check's list of rules with the word each prints, the separation basis record, the board's rules table, the manufacturer's limits and the catalogue. Write a digest of the rules that bind the work in hand, with the command that runs each, so a helper that has never read this document can be told in a page what the board will be tested by. Run the whole pre-order check on the untouched starting board first and keep its report as the **baseline**: a board that already fails says what "new" means.
-
-Rank the goals, and write the ranking into the brief of everyone who works on the board:
-
-1. **Safety.** The signed separation figures are never relaxed to make a layout fit. A figure that cannot be met stops the work, and the figures are reported to the person who owns the separation basis record.
-2. **Neatness and workmanship.** Copper that is legal but wanders is never accepted and never locked, and neatness leads the count of joins.
-3. **The performance rules that matter on this board.** Keep each of them: sensing and reference integrity, the crystal's limits, decoupling closeness, the data interfaces' basics and test-point reach. A rule that exists for high-frequency or radio behaviour that the board does not have gives way to neatness, and each such relaxation is listed with its net, its rule and the reason this board does not need it.
-4. **Cost** of the board and its assembly.
-
-The bar is about 90 percent of what an excellent engineer would reach with unlimited time on the same placement. Say what the full result would look like and which imperfections are accepted at 90 percent. Keep strict what a reviewer notices first: hooks, loops round placement mistakes, via thickets, long diagonals across other nets and wandering.
-
-When the person who owns the project is not an electrical engineer, the **design owner**, the agent that holds the board's strategy, decides the method, the order, the part moves, the exceptions and when to accept, and records each decision and its reason in a **sign-off list**: one numbered entry for each, kept in the board's folder and handed to the project owner in one piece at the end. Group the entries as part moves, relaxed rules (rule, nets, reason), distances and heights accepted, mains-side notes and figures the project owner supplied. The design owner stops and asks only for a mains safety figure that cannot be met, or for a physical premise that no record states and that changes the board. A change to the layer stack is not made by the design owner alone: ask an independent owner as step 9 describes, and record the verdict and its conditions.
-
-### 2. Prove every footprint against the maker's drawing before placing
-
-A placement judged on footprints smaller than the real parts is not a placement. Before the floorplan, audit every footprint against the maker's own drawing, read from the drawing and not from an earlier note: the pad positions and sizes, the hole sizes, and the real body with its courtyard. Keep a file of real bodies, each a rectangle in its footprint's own coordinates, and measure the gaps between bodies from it as well as between pads and courtyards. A part whose body is larger than its footprint's courtyard is corrected before placement, in the footprint, so the board and its library agree.
-
-Read the pin numbers as well as the sizes. For every footprint with more than two pads, set the maker's top view beside the footprint and say where each numbered pin sits and what the schematic's symbol calls it: a footprint with every pad the right size in the right place can still be numbered as the mirror image of the part, and then no turning of the part makes it right. Three audits of sizes passed such footprints on the first board. The pre-order check now fails a dual-row or four-sided footprint whose numbers run clockwise seen from the top of the part; it cannot judge a part with three terminals, so those are read against the maker's sheet by a second reader who did not draw them.
-
-The board is built once. Whatever a person would have to bend, cut or re-solder at bring-up to make a part fit is a defect now: judge each part's real clearances, the keep-clear that plugs and tools need, and its height under the enclosure.
-
-### 3. Choose the floorplan by picture, then prove it on the real board
-
-Make a concept variant of each crowded block as a picture: the real bodies and pads drawn to scale in the region, with the figures that decide the block written beside it (the gaps, the area of copper available for heat, the tightest spots). Look at each picture and choose by eye, as an engineer would at a desk. Choose to make the routing short and straight, not only to fit.
-
-A picture is not yet a proof. Apply the chosen variant to the real board by script, with the footprints and records that go with it, and run the pre-order check on it before any copper is drawn. The check is the judge, line by line against the baseline: no new line of any rule except the unconnected items, the acceptances the change made stale and the silkscreen work. A floorplan measured on bodies alone failed this test: the real check found the mounting-hole keep-clear, courtyards that overlap, same-part clearances and an insulating distance that the body model had not covered, and the placement was cut again. Repair in the placement, not in the router: re-cut on the real board until the check has nothing new, and commit it as the placement of the [Placement](#placement) step before any track, arc, via or pour.
-
-A placement that puts a part on the back of the board to make room is judged for the second assembly side it forces and for the part's height and access there, and is refused where the board does not pay that cost. Find the room where it is free first, for example at the positions of parts that are not fitted.
-
-### 4. Route block by block, by script
-
-Split the copper into blocks that can be drawn and judged apart, in an order that follows how much each constrains the others: the entry and the trunks first, then the circuit blocks, the reconnection of the remaining low-voltage nets last.
-
-Write one **rulebook** for the helpers: the electrical rules that are never relaxed, the board's conventions, the decisions already made, the neatness list and the tool pitfalls of step 11. Give each block to one fresh helper with one narrow task. A helper's work is a **script** that takes the board in and writes the board out, adds only its block's copper from a table of geometry at the top, moves no part, touches no net outside its list and refills the zones. Each helper:
-
-1. proves its script on its own copy of the repository by running the real pre-order check and comparing by line with the baseline: its nets connected, no new line of any protected rule, and every workmanship line listed with a reason;
-2. renders every layer of its block as a picture, looks at it and fixes what a strict reviewer would circle, before it reports;
-3. writes notes: the geometry table, the tightest gaps with their figures, every via with its reason, the comparison, and what is not solved.
-
-The design owner then grades the pictures. Send a block back with a named defect; do not patch it. After three send-backs on one area without accepted progress, change the approach, and do not make a fourth: widen what the helper may use (a small part move, a pin swap that is electrically alike, a width the current allows, another layer), or hand the area to a helper that reasons from the figures. A choice about the layer stack goes to an independent owner (step 9). A helper that has reported is spent: a new task goes to a new helper with the notes, not to a resumed one.
-
-One **chain script** runs the whole pipeline from the placed board to the finished copper: the part moves, then each block's script in the order they were proven, then the pours, the refill and the restoring of what the editor's save drops. Run it twice on copies and compare the two boards byte for byte; a chain that does not repeat itself is not finished. After the chain, add the reconnection of the low-voltage nets as its own script, proven the same way, and commit each stage so the history shows the order. Where two helpers need the same script, give one a private copy and take its change as a patch.
-
-A pour on a mains net needs a rule of its own. A fill that a local clearance cuts down to a strip can leave the board looking connected through pad overlap with no copper in it. Draw the outline so that its shape holds the distance, leave the zone's own clearance unset, and assert after every fill that each such zone fills at least a stated share of its outline; the pre-order check carries the same test at a lower floor. Draw the trunk nets that carry the largest currents as polygons on two layers in parallel, joined through the plated pads, not as tracks.
-
-Keep low-voltage copper unlocked until the block is neat. Lock mains copper once it is signed, and lock and record all the critical classes at the close of the work, on the closed board.
-
-### 5. The check judges legality and the picture judges neatness
-
-Numbers are proxies for neatness, and the picture is the acceptance call. Judge each block's pictures of every layer for: straight lanes with at most one bend, no jogs or hooks, no detours round parts, one width along a net, branches that leave at right angles, vias in straight evenly spaced rows, pairs side by side at constant spacing, fills without slivers or islands, and the same channel drawn the same way wherever the placement allows. A route that is longer or less direct than the picture allows is a defect even where every check passes.
-
-The checks decide whether the board is legal, and no picture overrides them. On each finished board run all of these, one heavy run at a time:
-
-- the pre-order check on the whole board, compared by line with the baseline. KiCad cuts each kind of finding to a fixed number of lines per run, so a rule can look clean on a busy board: compare lines, not counts, and do not depend on a list KiCad cut. The board check gathers its clearance findings in more than one run and fails a design whose list was cut.
-- the creepage and the straight distance between mains and low-voltage copper on every layer, by the repository's method, with a second measurement by a one-rule probe of KiCad's own, and the barrier strips empty on every layer.
-- the placement history check in both modes, with the routed option and without it.
-- the lock, record and compare of the critical classes, on the closed board.
-- the collisions of the real bodies, the keep-clear envelopes of plugs and tools, and the keep-clear of the mounting holes.
-- the thermal and current figures with their margins: the copper area and vias under each power part against its junction figure at the assumed air temperature, and the width and via count of each current path against its current.
-- the mains copper compared with the baseline, where it was not meant to change.
-
-A figure a helper reports is verified with the tools by someone else before it is relied on.
-
-### 6. Review blind, with the versions unlabelled
-
-Give a fresh reviewer the rendered views of two boards, for example the previous version and the current one, with the versions unlabelled, and ask for ratings by category, the defects a skeptical reviewer on a public forum would circle, and the board it would order. A reviewer that does not know which board is current has no reason to favour it. Do the same for the silkscreen alone. A fresh blind reviewer reads the whole change before every pull request. For a decision the design owner has become anchored on, ask an independent owner (step 9).
-
-Fix what a blind report finds as classes, and re-judge narrowly. Decline a finding on the record when it is legal, invisible once built, and would cost a full re-proof to fix, and name it as a candidate if copper is ever reopened.
-
-### 7. Rebuild the silkscreen by script, last
-
-Rebuild all silkscreen text and marks with one deterministic script that reads only the finished board, and run it once, as the last step that changes the board. It places the hazard marks, the barrier labels, the function names of connectors and tabs, the fuse ratings, the net names of test points and the reference designators, fixed items first and designators after by a solver, upright or reading upward and never mirrored. A designator that does not fit stays off the silkscreen and goes on the assembly drawing; none is stacked on a pad. The script stops with a failure unless the board it writes differs from its input only in silkscreen: strip exactly the silkscreen items from the input and the output and the remainder must be byte-identical. Check its result with a checker that shares none of its code, then with the pictures, then with a blind review of the silkscreen. Any later change to a part or to copper means running the script again. After a run, restore what the editor's save drops and confirm that the comparison of locked copper still passes.
-
-Judge a text's smallest height against the manufacturer's stated figure. Where the board needs a smaller one, record it as the project owner's legibility decision and not as the manufacturer's figure.
-
-### 8. Run the work with the agents it needs
-
-Use the smallest agent that can do each task: a small fast model to run commands, render and report; a mid-size model for scripted routing, datasheet reading and measurement; a reasoning model only for a targeted hard corner; the design owner for strategy. Run at most two helpers at once and at most four heavy processes, under `nice`, since the placement and the checks compete for the same machine. A helper's brief holds the goal, the constraints, the reason, the rulebook, its inputs and the marker file it writes when done; do not tell the design owner how to do its own work.
-
-The design owner hands over to a fresh owner only when most of its own context is history that no longer drives a decision. Judge that at each stage boundary, and write a handover file after every step: the state, the files with their checksums, the decisions with their reasons, the open items in order, and the pitfalls found. A fresh owner reads the handover file and the rulebook, not the logs before them.
-
-Start a long run detached, with a log and an exit line, and watch it with a monitor; a run that outlasts one shell call is not waited on in the foreground.
-
-### 9. Let an independent owner decide what the design owner is anchored on
-
-For a decision that changes the layer stack or a protection part, or any choice the design owner has worked on long enough to be anchored to, give an independent owner only the figures and the question. It returns a **verdict** with: the decision and who signs it; the reasons with numbers, under safety, performance and workmanship; what the choice does not need to change; the conditions the work must meet, each with the figure that proves it; the text changes the records need when the work is imported; and the fallback if a condition cannot be met. A condition that fails stops the work and is reported, and nothing is relaxed. For a protection part the verdict lists the options with the worst case each leaves the part under, and rejects the options that cannot be shown safe.
-
-### 10. What went wrong, and the rule that came from it
-
-- **A stock autorouter on the dense board.** It stalled on the density and left a board a reviewer would call autorouted, which needed a long cleanup. Every block is drawn by script, to a rulebook.
-- **A floorplan measured on bodies alone.** See step 3. Prove a placement on the real board with the check before routing.
-- **Legal but wandering copper, locked.** Locked low-voltage copper walled in the pads still open, and later routes inherited its detours. Keep low-voltage copper unlocked until it is neat.
-- **A mains zone silently trimmed.** A local clearance cut a narrow strip to nothing and the board looked connected through pad overlap. See step 4.
-- **KiCad's cap on listed findings.** The clearance list was cut at a fixed number of lines per run, so a rule looked clean until copper was removed, and same-part pad pairs came and went between runs. The check must not depend on a cut list.
-- **A part on the back of the board.** A tall fuse holder placed on the back to make room forced a second assembly side and could not be serviced. Room was found at the positions of parts that are not fitted.
-- **Footprints smaller than the real parts.** A board that fitted only because its footprints undersold its parts. See step 2.
-- **Silkscreen drawn without a rule.** Hundreds of designators were printed upside down or on pads, and the board had no hazard text, because nothing asked for it. See step 7.
-
-### 11. Known tool pitfalls
-
-These were met with KiCad 10 and its Python module on macOS. They belong to the tools, and are kept here so that a helper's brief can quote them.
-
-- Never call `Flip()` on a footprint, nor `SetLayer` on its texts, before the footprint is added to a loaded board: KiCad's Python crashes and a dialog opens for each crash.
-- Never pass a Python polygon to `zone.SetOutline`: KiCad takes ownership of the object and crashes later when it triangulates the zone. Copy into the zone's own outline instead, `outline = zone.Outline()`, `outline.RemoveAllContours()`, then `outline.Append(polygon)`. Give every zone a valid closed outline of three or more points and a layer before adding it, and never refill a board that holds an empty zone.
-- Never keep a Python reference to a board item across a save, a zone fill or a removal. Copy what is needed into plain data first, or read the board file as text. Avoid `GetClass()` on the graphic items of a footprint.
-- Never repeat a crashing call to find its cause: each run opens a dialog. Stop and reason from the code.
-- `SaveBoard` drops the board-level `(property ...)` lines after `(setup ...)` and writes `(clearance 0)` for a zone whose clearance is unset, which the pre-order check reads as below the signed figure. Restore the first and drop the second by text after every save, and delete `.history` and the `.kicad_prl` file.
-- `kicad-cli pcb drc` with `--refill-zones --save-board` can hang: bound every such run.
-- macOS has no `timeout` command, and `zsh` does not split a variable that holds a list of class names: run those under `bash -c`.
-- Run the board check only in a `git clone --no-hardlinks` copy, with new files added to git, since it reads tracked files only. A script that is not byte-reproducible because of identifiers it generates is kept as the commit it wrote.
-- KiCad's schematic parity check compares every symbol field one at a time: set all the fields from the schematic before the first check.
-
-### 12. The next board
-
-Carry out the steps of this document in the order at its top, and use this section for how. For a board that follows one already taken through the method:
-
-1. **Reuse as they stand:** the pre-order check and its records, the history command, the lock, record and compare commands, the views and placement commands, the layout review, the picture renderer, the silkscreen script with its checker and its proof that only silkscreen changed, the form of the rulebook, the chain script's pattern, and the forms of the sign-off list and of the independent owner's verdict.
-2. **Re-derive for the board:** the footprint audit and the real-body file; the digest of the checks and the baseline run; the floorplan variants and their pictures; the blocks and their order; the rulebook's electrical rules from the board's own records; the signed figures from its own separation basis; and the heat, current and keep-clear figures from its own parts and enclosure.
-3. **Order:** read the checks and the records and run the baseline; audit the footprints; make the floorplan variants by picture; choose one and prove it on the real board by the check; commit it; write the rules and the rulebook; route by blocks with a chain script; add the reconnection; grade the pictures; run the checks of step 5; record and lock; run the silkscreen script; review blind; then the layout review and the ordering step of this document.
-4. **Keep the scripts with the board:** the audit, each block's script with its table, the chain script, the reconnection script, the silkscreen script's inputs and the sign-off list are tracked in the board's folder, so the board can be rebuilt from its placement and a later board can start from them.
-
 ## Layout review views
 
 An image of one layer shows no net names, so a ground drawn as a thin trace looks like any other track. The layout review therefore judges a board on an image of each layer (`layer-<layer>`) and on views that show each critical net against the board (`net-<net>`), the critical classes against each other (`classes`), each integrated circuit framed with its own decoupling parts (`crop-<reference>`), each side as it is assembled (`assembly-top`, `assembly-bottom`), the assembled board in three dimensions (`3d-top`, `3d-bottom`, `3d-angled`), and the board's parts with their unrouted connections and floorplan regions (`placement`), the [placement](#placement) view. It also uses a table of the facts a picture cannot carry, and the placement's measures. With the board closed in every editor, render them from the board's folder:
@@ -2430,3 +2303,130 @@ The areas, in order: [pin voltages](#pin-voltages-pinv), [required external part
 - **Source:** Flux, Gabriel Hacohen, *PCB Schematic Best Practices for Clean Circuit Design*, June 2026, § *Grouping Circuits*, § *Clean Schematic Checklist* and § *Labeling Conventions*, https://www.flux.ai/p/blog/pcb-schematic-best-practices, read 2026-10-18; and KiCad project, *KiCad 10.0 Schematic Editor* manual (the *Schematic Editor* chapter), §§ *Net name assignment rules* and *Power symbols*, https://docs.kicad.org/10.0/en/eeschema/eeschema.html, read 2026-10-18. The convention's own items each cite their sources in full.
 
 Out of scope for this section: applying the catalogue to a board, which the [schematic review](#schematic-review) does; the layout items, which the [Layout practice catalogue](#layout-practice-catalogue) holds; and any figure specific to one machine.
+
+## Placement, routing and review as practised on a dense mains board
+
+The sections above state each step's own rules. This section states how they were carried out on the first board that went through the whole method to the pre-order check: a six-layer board carrying mains and low-voltage circuits, whose layout was redone from the placement on. It adds the working practice around the steps: who decides what, how a floorplan is chosen and proved, how copper is drawn by script and judged by picture, how the work is reviewed, and what went wrong. It does not replace a step and does not relax one. Where it says a script draws copper, the checks, the locking and the record of [Routing](#routing-critical-nets-by-hand-and-locked-then-the-rest) and the rounds of the [layout review](#layout-review) still apply to what the script drew. A step that a script carries out from a shell needs no Konnect toolset, so a helper may run it, and the statement in [The board editor, driven by an agent](#the-board-editor-driven-by-an-agent) that toolsets are invisible to a subagent concerns only the steps done through Konnect. This section is not a step carried out in order: the order of the steps stays the one at the top of this document, and its last part gives the order for the next board.
+
+### 1. Read the checks and the records before placing, and rank what the board is for
+
+Before any part is placed, read every check the board will be judged by and the design records it is held to: the pre-order check's list of rules with the word each prints, the separation basis record, the board's rules table, the manufacturer's limits and the catalogue. Write a digest of the rules that bind the work in hand, with the command that runs each, so a helper that has never read this document can be told in a page what the board will be tested by. Run the whole pre-order check on the untouched starting board first and keep its report as the **baseline**: a board that already fails says what "new" means.
+
+Rank the goals, and write the ranking into the brief of everyone who works on the board:
+
+1. **Safety.** The signed separation figures are never relaxed to make a layout fit. A figure that cannot be met stops the work, and the figures are reported to the person who owns the separation basis record.
+2. **Neatness and workmanship.** Copper that is legal but wanders is never accepted and never locked, and neatness leads the count of joins.
+3. **The performance rules that matter on this board.** Keep each of them: sensing and reference integrity, the crystal's limits, decoupling closeness, the data interfaces' basics and test-point reach. A rule that exists for high-frequency or radio behaviour that the board does not have gives way to neatness, and each such relaxation is listed with its net, its rule and the reason this board does not need it.
+4. **Cost** of the board and its assembly.
+
+The bar is about 90 percent of what an excellent engineer would reach with unlimited time on the same placement. Say what the full result would look like and which imperfections are accepted at 90 percent. Keep strict what a reviewer notices first: hooks, loops round placement mistakes, via thickets, long diagonals across other nets and wandering.
+
+When the person who owns the project is not an electrical engineer, the **design owner**, the agent that holds the board's strategy, decides the method, the order, the part moves, the exceptions and when to accept, and records each decision and its reason in a **sign-off list**: one numbered entry for each, kept in the board's folder and handed to the project owner in one piece at the end. Group the entries as part moves, relaxed rules (rule, nets, reason), distances and heights accepted, mains-side notes and figures the project owner supplied. The design owner stops and asks only for a mains safety figure that cannot be met, or for a physical premise that no record states and that changes the board. A change to the layer stack is not made by the design owner alone: ask an independent owner as step 9 describes, and record the verdict and its conditions.
+
+### 2. Prove every footprint against the maker's drawing before placing
+
+A placement judged on footprints smaller than the real parts is not a placement. Before the floorplan, audit every footprint against the maker's own drawing, read from the drawing and not from an earlier note: the pad positions and sizes, the hole sizes, and the real body with its courtyard. Keep a file of real bodies, each a rectangle in its footprint's own coordinates, and measure the gaps between bodies from it as well as between pads and courtyards. A part whose body is larger than its footprint's courtyard is corrected before placement, in the footprint, so the board and its library agree.
+
+Read the pin numbers as well as the sizes. For every footprint with more than two pads, set the maker's top view beside the footprint and say where each numbered pin sits and what the schematic's symbol calls it: a footprint with every pad the right size in the right place can still be numbered as the mirror image of the part, and then no turning of the part makes it right. Three audits of sizes passed such footprints on the first board. The pre-order check now fails a dual-row or four-sided footprint whose numbers run clockwise seen from the top of the part; it cannot judge a part with three terminals, so those are read against the maker's sheet by a second reader who did not draw them.
+
+The board is built once. Whatever a person would have to bend, cut or re-solder at bring-up to make a part fit is a defect now: judge each part's real clearances, the keep-clear that plugs and tools need, and its height under the enclosure.
+
+### 3. Choose the floorplan by picture, then prove it on the real board
+
+Make a concept variant of each crowded block as a picture: the real bodies and pads drawn to scale in the region, with the figures that decide the block written beside it (the gaps, the area of copper available for heat, the tightest spots). Look at each picture and choose by eye, as an engineer would at a desk. Choose to make the routing short and straight, not only to fit.
+
+A picture is not yet a proof. Apply the chosen variant to the real board by script, with the footprints and records that go with it, and run the pre-order check on it before any copper is drawn. The check is the judge, line by line against the baseline: no new line of any rule except the unconnected items, the acceptances the change made stale and the silkscreen work. A floorplan measured on bodies alone failed this test: the real check found the mounting-hole keep-clear, courtyards that overlap, same-part clearances and an insulating distance that the body model had not covered, and the placement was cut again. Repair in the placement, not in the router: re-cut on the real board until the check has nothing new, and commit it as the placement of the [Placement](#placement) step before any track, arc, via or pour.
+
+A placement that puts a part on the back of the board to make room is judged for the second assembly side it forces and for the part's height and access there, and is refused where the board does not pay that cost. Find the room where it is free first, for example at the positions of parts that are not fitted.
+
+### 4. Route block by block, by script
+
+Split the copper into blocks that can be drawn and judged apart, in an order that follows how much each constrains the others: the entry and the trunks first, then the circuit blocks, the reconnection of the remaining low-voltage nets last.
+
+Write one **rulebook** for the helpers: the electrical rules that are never relaxed, the board's conventions, the decisions already made, the neatness list and the tool pitfalls of step 11. Give each block to one fresh helper with one narrow task. A helper's work is a **script** that takes the board in and writes the board out, adds only its block's copper from a table of geometry at the top, moves no part, touches no net outside its list and refills the zones. Each helper:
+
+1. proves its script on its own copy of the repository by running the real pre-order check and comparing by line with the baseline: its nets connected, no new line of any protected rule, and every workmanship line listed with a reason;
+2. renders every layer of its block as a picture, looks at it and fixes what a strict reviewer would circle, before it reports;
+3. writes notes: the geometry table, the tightest gaps with their figures, every via with its reason, the comparison, and what is not solved.
+
+The design owner then grades the pictures. Send a block back with a named defect; do not patch it. After three send-backs on one area without accepted progress, change the approach, and do not make a fourth: widen what the helper may use (a small part move, a pin swap that is electrically alike, a width the current allows, another layer), or hand the area to a helper that reasons from the figures. A choice about the layer stack goes to an independent owner (step 9). A helper that has reported is spent: a new task goes to a new helper with the notes, not to a resumed one.
+
+One **chain script** runs the whole pipeline from the placed board to the finished copper: the part moves, then each block's script in the order they were proven, then the pours, the refill and the restoring of what the editor's save drops. Run it twice on copies and compare the two boards byte for byte; a chain that does not repeat itself is not finished. After the chain, add the reconnection of the low-voltage nets as its own script, proven the same way, and commit each stage so the history shows the order. Where two helpers need the same script, give one a private copy and take its change as a patch.
+
+A pour on a mains net needs a rule of its own. A fill that a local clearance cuts down to a strip can leave the board looking connected through pad overlap with no copper in it. Draw the outline so that its shape holds the distance, leave the zone's own clearance unset, and assert after every fill that each such zone fills at least a stated share of its outline; the pre-order check carries the same test at a lower floor. Draw the trunk nets that carry the largest currents as polygons on two layers in parallel, joined through the plated pads, not as tracks.
+
+Keep low-voltage copper unlocked until the block is neat. Lock mains copper once it is signed, and lock and record all the critical classes at the close of the work, on the closed board.
+
+### 5. The check judges legality and the picture judges neatness
+
+Numbers are proxies for neatness, and the picture is the acceptance call. Judge each block's pictures of every layer for: straight lanes with at most one bend, no jogs or hooks, no detours round parts, one width along a net, branches that leave at right angles, vias in straight evenly spaced rows, pairs side by side at constant spacing, fills without slivers or islands, and the same channel drawn the same way wherever the placement allows. A route that is longer or less direct than the picture allows is a defect even where every check passes.
+
+The checks decide whether the board is legal, and no picture overrides them. On each finished board run all of these, one heavy run at a time:
+
+- the pre-order check on the whole board, compared by line with the baseline. KiCad cuts each kind of finding to a fixed number of lines per run, so a rule can look clean on a busy board: compare lines, not counts, and do not depend on a list KiCad cut. The board check gathers its clearance findings in more than one run and fails a design whose list was cut.
+- the creepage and the straight distance between mains and low-voltage copper on every layer, by the repository's method, with a second measurement by a one-rule probe of KiCad's own, and the barrier strips empty on every layer.
+- the placement history check in both modes, with the routed option and without it.
+- the lock, record and compare of the critical classes, on the closed board.
+- the collisions of the real bodies, the keep-clear envelopes of plugs and tools, and the keep-clear of the mounting holes.
+- the thermal and current figures with their margins: the copper area and vias under each power part against its junction figure at the assumed air temperature, and the width and via count of each current path against its current.
+- the mains copper compared with the baseline, where it was not meant to change.
+
+A figure a helper reports is verified with the tools by someone else before it is relied on.
+
+### 6. Review blind, with the versions unlabelled
+
+Give a fresh reviewer the rendered views of two boards, for example the previous version and the current one, with the versions unlabelled, and ask for ratings by category, the defects a skeptical reviewer on a public forum would circle, and the board it would order. A reviewer that does not know which board is current has no reason to favour it. Do the same for the silkscreen alone. A fresh blind reviewer reads the whole change before every pull request. For a decision the design owner has become anchored on, ask an independent owner (step 9).
+
+Fix what a blind report finds as classes, and re-judge narrowly. Decline a finding on the record when it is legal, invisible once built, and would cost a full re-proof to fix, and name it as a candidate if copper is ever reopened.
+
+### 7. Rebuild the silkscreen by script, last
+
+Rebuild all silkscreen text and marks with one deterministic script that reads only the finished board, and run it once, as the last step that changes the board. It places the hazard marks, the barrier labels, the function names of connectors and tabs, the fuse ratings, the net names of test points and the reference designators, fixed items first and designators after by a solver, upright or reading upward and never mirrored. A designator that does not fit stays off the silkscreen and goes on the assembly drawing; none is stacked on a pad. The script stops with a failure unless the board it writes differs from its input only in silkscreen: strip exactly the silkscreen items from the input and the output and the remainder must be byte-identical. Check its result with a checker that shares none of its code, then with the pictures, then with a blind review of the silkscreen. Any later change to a part or to copper means running the script again. After a run, restore what the editor's save drops and confirm that the comparison of locked copper still passes.
+
+Judge a text's smallest height against the manufacturer's stated figure. Where the board needs a smaller one, record it as the project owner's legibility decision and not as the manufacturer's figure.
+
+### 8. Run the work with the agents it needs
+
+Use the smallest agent that can do each task: a small fast model to run commands, render and report; a mid-size model for scripted routing, datasheet reading and measurement; a reasoning model only for a targeted hard corner; the design owner for strategy. Run at most two helpers at once and at most four heavy processes, under `nice`, since the placement and the checks compete for the same machine. A helper's brief holds the goal, the constraints, the reason, the rulebook, its inputs and the marker file it writes when done; do not tell the design owner how to do its own work.
+
+The design owner hands over to a fresh owner only when most of its own context is history that no longer drives a decision. Judge that at each stage boundary, and write a handover file after every step: the state, the files with their checksums, the decisions with their reasons, the open items in order, and the pitfalls found. A fresh owner reads the handover file and the rulebook, not the logs before them.
+
+Start a long run detached, with a log and an exit line, and watch it with a monitor; a run that outlasts one shell call is not waited on in the foreground.
+
+### 9. Let an independent owner decide what the design owner is anchored on
+
+For a decision that changes the layer stack or a protection part, or any choice the design owner has worked on long enough to be anchored to, give an independent owner only the figures and the question. It returns a **verdict** with: the decision and who signs it; the reasons with numbers, under safety, performance and workmanship; what the choice does not need to change; the conditions the work must meet, each with the figure that proves it; the text changes the records need when the work is imported; and the fallback if a condition cannot be met. A condition that fails stops the work and is reported, and nothing is relaxed. For a protection part the verdict lists the options with the worst case each leaves the part under, and rejects the options that cannot be shown safe.
+
+### 10. What went wrong, and the rule that came from it
+
+- **A stock autorouter on the dense board.** It stalled on the density and left a board a reviewer would call autorouted, which needed a long cleanup. Every block is drawn by script, to a rulebook.
+- **A floorplan measured on bodies alone.** See step 3. Prove a placement on the real board with the check before routing.
+- **Legal but wandering copper, locked.** Locked low-voltage copper walled in the pads still open, and later routes inherited its detours. Keep low-voltage copper unlocked until it is neat.
+- **A mains zone silently trimmed.** A local clearance cut a narrow strip to nothing and the board looked connected through pad overlap. See step 4.
+- **KiCad's cap on listed findings.** The clearance list was cut at a fixed number of lines per run, so a rule looked clean until copper was removed, and same-part pad pairs came and went between runs. The check must not depend on a cut list.
+- **A part on the back of the board.** A tall fuse holder placed on the back to make room forced a second assembly side and could not be serviced. Room was found at the positions of parts that are not fitted.
+- **Footprints smaller than the real parts.** A board that fitted only because its footprints undersold its parts. See step 2.
+- **Silkscreen drawn without a rule.** Hundreds of designators were printed upside down or on pads, and the board had no hazard text, because nothing asked for it. See step 7.
+
+### 11. Known tool pitfalls
+
+These were met with KiCad 10 and its Python module on macOS. They belong to the tools, and are kept here so that a helper's brief can quote them.
+
+- Never call `Flip()` on a footprint, nor `SetLayer` on its texts, before the footprint is added to a loaded board: KiCad's Python crashes and a dialog opens for each crash.
+- Never pass a Python polygon to `zone.SetOutline`: KiCad takes ownership of the object and crashes later when it triangulates the zone. Copy into the zone's own outline instead, `outline = zone.Outline()`, `outline.RemoveAllContours()`, then `outline.Append(polygon)`. Give every zone a valid closed outline of three or more points and a layer before adding it, and never refill a board that holds an empty zone.
+- Never keep a Python reference to a board item across a save, a zone fill or a removal. Copy what is needed into plain data first, or read the board file as text. Avoid `GetClass()` on the graphic items of a footprint.
+- Never repeat a crashing call to find its cause: each run opens a dialog. Stop and reason from the code.
+- `SaveBoard` drops the board-level `(property ...)` lines after `(setup ...)` and writes `(clearance 0)` for a zone whose clearance is unset, which the pre-order check reads as below the signed figure. Restore the first and drop the second by text after every save, and delete `.history` and the `.kicad_prl` file.
+- `kicad-cli pcb drc` with `--refill-zones --save-board` can hang: bound every such run.
+- macOS has no `timeout` command, and `zsh` does not split a variable that holds a list of class names: run those under `bash -c`.
+- Run the board check only in a `git clone --no-hardlinks` copy, with new files added to git, since it reads tracked files only. A script that is not byte-reproducible because of identifiers it generates is kept as the commit it wrote.
+- KiCad's schematic parity check compares every symbol field one at a time: set all the fields from the schematic before the first check.
+
+### 12. The next board
+
+Carry out the steps of this document in the order at its top, and use this section for how. For a board that follows one already taken through the method:
+
+1. **Reuse as they stand:** the pre-order check and its records, the history command, the lock, record and compare commands, the views and placement commands, the layout review, the picture renderer, the silkscreen script with its checker and its proof that only silkscreen changed, the form of the rulebook, the chain script's pattern, and the forms of the sign-off list and of the independent owner's verdict.
+2. **Re-derive for the board:** the footprint audit and the real-body file; the digest of the checks and the baseline run; the floorplan variants and their pictures; the blocks and their order; the rulebook's electrical rules from the board's own records; the signed figures from its own separation basis; and the heat, current and keep-clear figures from its own parts and enclosure.
+3. **Order:** read the checks and the records and run the baseline; audit the footprints; make the floorplan variants by picture; choose one and prove it on the real board by the check; commit it; write the rules and the rulebook; route by blocks with a chain script; add the reconnection; grade the pictures; run the checks of step 5; record and lock; run the silkscreen script; review blind; then the layout review and the ordering step of this document.
+4. **Keep the scripts with the board:** the audit, each block's script with its table, the chain script, the reconnection script, the silkscreen script's inputs and the sign-off list are tracked in the board's folder, so the board can be rebuilt from its placement and a later board can start from them.
