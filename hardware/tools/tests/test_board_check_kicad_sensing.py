@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -239,6 +240,20 @@ class TheSensingClearanceGuardReadsTheClearanceBound(unittest.TestCase):
 
 
 class EveryTrackedDesignPassesTheSensingAndGroundReturnRules(unittest.TestCase):
+    def assertSignedWarningsOnly(self, lines, rule):
+        """A design reports `rule` only as warnings its own signed severity policy counts; a proof design reports it not at all."""
+        mentioned = [line.split(" | ") for line in lines if f" | {rule} | " in line]
+        for fields in mentioned:
+            self.assertIn(fields[0], ("WARNING", "COUNT"), fields)
+        for project in {fields[1] for fields in mentioned}:
+            warnings = [fields for fields in mentioned if fields[0] == "WARNING" and fields[1] == project]
+            counts = [fields for fields in mentioned if fields[0] == "COUNT" and fields[1] == project]
+            self.assertNotIn("/hardware/proof/", "/" + project, f"a proof design reports {rule}: {mentioned}")
+            self.assertEqual(len(counts), 1, f"{project} reports {rule} warnings with no signed policy count: {mentioned}")
+            found, recorded = map(int, re.fullmatch(r"found ([0-9]+) of recorded ([0-9]+)", counts[0][-1]).groups())
+            self.assertEqual(found, recorded, counts)
+            self.assertEqual(len(warnings), recorded, f"{project}: {len(warnings)} {rule} warnings against a signed count of {recorded}")
+
     def test_no_design_the_repository_tracks_fails_either_rule_and_each_carries_a_synthetic_board_rules_record(self):
         # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C6: Every design git tracks passes the sensing-clearance rule and the ground-return rule, carrying the records they read, synthetic where the design is not for manufacture
         out = io.StringIO()
@@ -246,7 +261,9 @@ class EveryTrackedDesignPassesTheSensingAndGroundReturnRules(unittest.TestCase):
         lines = out.getvalue().splitlines()
         self.assertGreaterEqual(len([line for line in lines if line.startswith("DESIGN | ")]), 5)
         for rule in SENSING_RULES:
-            self.assertEqual([line for line in lines if f" | {rule} | " in line], [], out.getvalue())
+            self.assertEqual([line for line in lines if line.startswith("VIOLATION | ") and f" | {rule} | " in line], [],
+                             out.getvalue())
+            self.assertSignedWarningsOnly(lines, rule)
         yaml = board_check.require_yaml()
         records = {}
         for path in __import__("glob").glob(os.path.join(board_prove.REPO, "hardware", "proof", "*", "board-rules.yaml")):
@@ -258,7 +275,8 @@ class EveryTrackedDesignPassesTheSensingAndGroundReturnRules(unittest.TestCase):
         self.assertIsInstance(records["review-proof"]["ground_returns"], dict)
         self.assertTrue(all(record["sensing"] == "none" and record["ground_returns"] == "none"
                             for name, record in records.items() if name != "review-proof"))
-        figures = [line for line in lines if line.startswith("FIGURE | ") and "SENSE-6 sensing clearance" in line]
+        figures = [line for line in lines if line.startswith("FIGURE | ") and "SENSE-6 sensing clearance" in line
+                   and "/hardware/proof/" in "/" + line.split(" | ")[1]]
         self.assertEqual(len(figures), 1)
         self.assertIn("review-proof", figures[0])
         self.assertIn("board-rules.yaml sensing.clearance_mm | 0.5 mm", figures[0])
