@@ -348,14 +348,6 @@ accepted_workmanship:
     bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
     accepted_by: "owner (signed on behalf, session 2026-11-12)"
     accepted_on: "2026-11-12"
-  # track_segment_length at /Pump drives/PUMP_S_SNUB: 4 line(s) on the board. e.g. Track segment length (rule 'Jogs' min length 0.5000 mm; actual 0.2828 mm) (workmanship item WORK-5 no jog)
-  - rule: track_segment_length
-    scope: "/Pump drives/PUMP_S_SNUB"
-    count: 4
-    reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
-    bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
   # track_segment_length at /SHUNT_SENSE_NEUTRAL: 2 line(s) on the board. e.g. Track segment length (rule 'Jogs' min length 0.5000 mm; actual 0.0100 mm) (workmanship item WORK-5 no jog)
   - rule: track_segment_length
     scope: "/SHUNT_SENSE_NEUTRAL"
@@ -447,14 +439,6 @@ accepted_workmanship:
   # workmanship_detour at /Pump drives/PUMP_C_OPTO_MT: 1 line(s) on the board. e.g. WORK-2 routes run direct: /Pump drives/PUMP_C_OPTO_MT's tracks are 36.64 mm long, 1.52 times the 24.06 mm of the shortest straight-line tree joining i
   - rule: workmanship_detour
     scope: "/Pump drives/PUMP_C_OPTO_MT"
-    count: 1
-    reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
-    bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # workmanship_detour at /Pump drives/PUMP_S_SNUB: 1 line(s) on the board. e.g. WORK-2 routes run direct: /Pump drives/PUMP_S_SNUB's tracks are 30.57 mm long, 2.50 times the 12.24 mm of the shortest straight-line tree joining its 
-  - rule: workmanship_detour
-    scope: "/Pump drives/PUMP_S_SNUB"
     count: 1
     reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
     bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
@@ -615,38 +599,6 @@ accepted_workmanship:
   # workmanship_pad_entry at /NEUTRAL: 1 line(s) on the board. e.g. WORK-10 tracks enter a pad along its long axis from its end: pad 1 of J110 is 7 by 1.45 mm, more than the 2 times as long as wide WORK_PAD_ENTRY_RATIO
   - rule: workmanship_pad_entry
     scope: "/NEUTRAL"
-    count: 1
-    reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
-    bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # workmanship_pad_entry at /Pump drives/PUMP_C_MT2: 1 line(s) on the board. e.g. WORK-10 tracks enter a pad along its long axis from its end: pad 1 of R706 is 3.35 by 1.225 mm, more than the 2 times as long as wide WORK_PAD_ENTRY_R
-  - rule: workmanship_pad_entry
-    scope: "/Pump drives/PUMP_C_MT2"
-    count: 1
-    reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
-    bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # workmanship_pad_entry at /Pump drives/PUMP_C_SNUB: 1 line(s) on the board. e.g. WORK-10 tracks enter a pad along its long axis from its end: pad 2 of R706 is 3.35 by 1.225 mm, more than the 2 times as long as wide WORK_PAD_ENTRY_R
-  - rule: workmanship_pad_entry
-    scope: "/Pump drives/PUMP_C_SNUB"
-    count: 1
-    reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
-    bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # workmanship_pad_entry at /Pump drives/PUMP_S_MT2: 1 line(s) on the board. e.g. WORK-10 tracks enter a pad along its long axis from its end: pad 1 of R716 is 3.35 by 1.225 mm, more than the 2 times as long as wide WORK_PAD_ENTRY_R
-  - rule: workmanship_pad_entry
-    scope: "/Pump drives/PUMP_S_MT2"
-    count: 1
-    reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
-    bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # workmanship_pad_entry at /Pump drives/PUMP_S_SNUB: 1 line(s) on the board. e.g. WORK-10 tracks enter a pad along its long axis from its end: pad 2 of R716 is 3.35 by 1.225 mm, more than the 2 times as long as wide WORK_PAD_ENTRY_R
-  - rule: workmanship_pad_entry
-    scope: "/Pump drives/PUMP_S_SNUB"
     count: 1
     reason: "A neatness line on mains-class copper that is locked and identical to the previous signed routing; it was never edited by the neatness work (417 of 417 mains items identical item for item). Mains spacing, creepage and clearance have their own rules, which this entry does not touch."
     bounded_by: "the mains copper is locked and compared item for item by hw:copper-compare; the separation basis record bounds every clearance"

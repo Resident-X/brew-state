@@ -12,10 +12,10 @@ import board_check  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 POLICY = os.path.join("hardware", "sunbeam-em7000", "main-board-v2", board_check.DERATING_NAME)
-#: The day the check is told it is: the day the policy was signed.
-TODAY = datetime.date(2026, 11, 5)
+#: The day the check is told it is: the day the last entries of the policy were signed.
+TODAY = datetime.date(2026, 11, 14)
 #: The ten positions whose working voltage the derated-voltage rule finds over their limit at the top of the declared span, in the order the policy lists them.
-POSITIONS = ("F101", "F701", "F711", "F731", "K731", "K741", "R102", "R104", "R706", "R716")
+POSITIONS = ("F101", "F701", "F711", "F731", "K731", "K741", "R102", "R104", "D701", "D711")
 OWNER = "David Baker"
 
 
@@ -27,7 +27,7 @@ def committed():
 
 class DeratingPolicySigned(unittest.TestCase):
     def test_the_ten_over_limit_positions_each_hold_one_owner_signed_exception_the_reader_accepts(self):
-        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C7: The committed main-board derating-policy.yaml holds exactly ten accepted_exceptions entries, for F101, F701, F711, F731, K731, K741, R102, R104, R706 and R716, one each, each holding exactly the keys position, accepted_v, reason, bounded_by, accepted_by and accepted_on, accepted_v a positive number, reason and bounded_by non-empty, accepted_by naming the owner and not a placeholder, accepted_on a valid date no later than the day the check runs, and the check's own signature rule finds each signed; an entry with its acceptance emptied, a placeholder or a future date is found unsigned by the same rule. The policy's classes and shares are unchanged. Out of scope is the derating rule's behaviour on a position.
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C7: The committed main-board derating-policy.yaml holds exactly ten accepted_exceptions entries, for F101, F701, F711, F731, K731, K741, R102, R104, D701 and D711, one each, each holding exactly the keys position, accepted_v, reason, bounded_by, accepted_by and accepted_on, accepted_v a positive number, reason and bounded_by non-empty, accepted_by naming the owner and not a placeholder, accepted_on a valid date no later than the day the check runs, and the check's own signature rule finds each signed; an entry with its acceptance emptied, a placeholder or a future date is found unsigned by the same rule. The policy's classes and shares are unchanged. Out of scope is the derating rule's behaviour on a position.
         yaml, data = committed()
         entries = data["accepted_exceptions"]
         self.assertEqual([e["position"] for e in entries], list(POSITIONS))
@@ -47,7 +47,7 @@ class DeratingPolicySigned(unittest.TestCase):
                 self.assertIsNone(board_check.entry_unsigned(entry, None, TODAY))
                 # the same rule finds the entry unsigned once its acceptance is emptied, a placeholder or dated after the day the check runs
                 for field, value in (("accepted_by", ""), ("accepted_by", "tbd"), ("accepted_by", "<owner>"), ("accepted_on", ""),
-                                     ("accepted_on", "not a date"), ("accepted_on", "2026-11-06")):
+                                     ("accepted_on", "not a date"), ("accepted_on", "2026-11-15")):
                     self.assertIsNotNone(board_check.entry_unsigned(dict(entry, **{field: value}), None, TODAY), (field, value))
         # the classes and their shares are those the owner adopted: the voltage share of each class the ten positions are held to
         shares = {c["class"]: c["voltage"]["share"] for c in data["classes"]}
@@ -56,7 +56,7 @@ class DeratingPolicySigned(unittest.TestCase):
         self.assertEqual(shares["semiconductor"], 0.75)
 
     def test_the_checks_own_reader_accepts_the_policy_and_refuses_a_broken_entry(self):
-        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C7: The committed main-board derating-policy.yaml holds exactly ten accepted_exceptions entries, for F101, F701, F711, F731, K731, K741, R102, R104, R706 and R716, one each, each holding exactly the keys position, accepted_v, reason, bounded_by, accepted_by and accepted_on, accepted_v a positive number, reason and bounded_by non-empty, accepted_by naming the owner and not a placeholder, accepted_on a valid date no later than the day the check runs, and the check's own signature rule finds each signed; an entry with its acceptance emptied, a placeholder or a future date is found unsigned by the same rule. The policy's classes and shares are unchanged. Out of scope is the derating rule's behaviour on a position.
+        # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C7: The committed main-board derating-policy.yaml holds exactly ten accepted_exceptions entries, for F101, F701, F711, F731, K731, K741, R102, R104, D701 and D711, one each, each holding exactly the keys position, accepted_v, reason, bounded_by, accepted_by and accepted_on, accepted_v a positive number, reason and bounded_by non-empty, accepted_by naming the owner and not a placeholder, accepted_on a valid date no later than the day the check runs, and the check's own signature rule finds each signed; an entry with its acceptance emptied, a placeholder or a future date is found unsigned by the same rule. The policy's classes and shares are unchanged. Out of scope is the derating rule's behaviour on a position.
         import tempfile
         yaml, data = committed()
         files = board_check.tracked_files("git", REPO)

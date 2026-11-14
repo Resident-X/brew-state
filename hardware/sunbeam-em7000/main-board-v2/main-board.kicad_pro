@@ -1227,14 +1227,6 @@
       },
       {
         "netclass": "Mains",
-        "pattern": "/Pump drives/PUMP_C_SNUB"
-      },
-      {
-        "netclass": "Mains",
-        "pattern": "/Pump drives/PUMP_S_SNUB"
-      },
-      {
-        "netclass": "Mains",
         "pattern": "unconnected-(U601-GPO-Pad6)"
       },
       {

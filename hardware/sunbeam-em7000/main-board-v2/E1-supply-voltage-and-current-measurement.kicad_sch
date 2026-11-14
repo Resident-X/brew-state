@@ -4048,7 +4048,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Capacitor_SMD:C_0402_1005Metric"
 			(at 139.7 86.36 0)
 			(hide yes)
 			(effects
@@ -4075,7 +4075,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1588"
+		(property "LCSC" "C1523"
 			(at 139.7 86.36 0)
 			(hide yes)
 			(effects
@@ -4084,7 +4084,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B102KB8NNNC"
+		(property "MPN" "0402B102K500NT"
 			(at 139.7 86.36 0)
 			(hide yes)
 			(effects
@@ -4093,7 +4093,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "FH"
 			(at 139.7 86.36 0)
 			(hide yes)
 			(effects
@@ -4102,7 +4102,7 @@
 				)
 			)
 		)
-		(property "Rating" "X7R 50V 10% 0603"
+		(property "Rating" "X7R 50V 10% 0402"
 			(at 139.7 86.36 0)
 			(hide yes)
 			(effects

@@ -43,6 +43,14 @@
 #   C2976795, 1 to 49 for C22447834, 1 to 99 for C86469), for the part swaps of that day. They replace C20626104 (tabs)
 #   and C22447847 (F101 cartridge for clips), whose entries are removed since no position uses them now, so the
 #   extract holds 98 numbers. Each of the three entries carries its own lifecycle read_on; the extract's own read_on is unchanged.
+# C151285 (Littelfuse SMCJ400CA, D701 and D711) was read on 2026-11-14 through the same search service and exact match
+#   (library class expand, so extended; stock 475; the price its first tier lists, 1 to 9 pieces), for the pump-triac
+#   clamps added that day. It replaces C35218 (the unfitted snubber resistors R706 and R716), whose entry is removed
+#   since no position uses it now, so the count of numbers is unchanged. Its entry carries its own lifecycle read_on.
+# C1523 (FH 0402B102K500NT, 1 nF X7R 50 V 0402, position C606) was read on 2026-11-14 through the same search service and exact match
+#   (library class base, so basic; stock 3594365; the price its first tier lists, 1 to 999 pieces), for the move of C606 from 0603 to 0402. It joins the
+#   extract and C1588 (position C606 before) stays, since other positions still use it, so the extract holds 99 numbers.
+#   Its entry carries its own lifecycle read_on; the extract's own read_on is unchanged.
 # lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
 #   page was read, so every entry states no source publishes one, with the source naming
 #   what was looked at. It is not a finding that the part is active.
@@ -54,6 +62,14 @@ read_on: 2026-10-29
 max_age_days: 14
 source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), read 2026-10-29
 entries:
+  - lcsc: C1523
+    library_class: basic
+    stock: 3594365
+    unit_price: 0.0036
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-14
   - lcsc: C1588
     library_class: basic
     stock: 5273376
@@ -406,14 +422,6 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
-  - lcsc: C35218
-    library_class: extended
-    stock: 10470
-    unit_price: 0.0328
-    lifecycle:
-      status: no source publishes one
-      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
   - lcsc: C45961
     library_class: extended
     stock: 60750
@@ -583,6 +591,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library record read from the local copy of the library (Konnect jlcpcb.db) on 2026-11-07, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-07
+  - lcsc: C151285
+    library_class: extended
+    stock: 475
+    unit_price: 1.0438
+    lifecycle:
+      status: no source publishes one
+      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+      read_on: 2026-11-14
   - lcsc: C157968
     library_class: extended
     stock: 10489

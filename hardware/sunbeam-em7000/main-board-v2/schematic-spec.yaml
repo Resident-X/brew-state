@@ -56,8 +56,6 @@ mains_class_nets:
 - SHUNT_SENSE_IN
 - SHUNT_SENSE_NEUTRAL
 - LINE_MOD
-- PUMP_C_SNUB
-- PUMP_S_SNUB
 sheets_order:
 - Mains entry and load feed
 - Interlock
@@ -78,17 +76,15 @@ sheets_order:
 - Knob, tank-level and reed inputs
 totals:
   sheets: 17
-  parts: 448
-  nets: 232
+  parts: 446
+  nets: 230
   parts_by_catalogue_class:
-    extended: 144
+    extended: 142
     none: 95
     basic: 202
     preferred: 7
   hand_fitted_refs:
   - C101
-  - C701
-  - C711
   - F101
   - J101
   - J102
@@ -128,8 +124,6 @@ totals:
   - K201
   - K731
   - K741
-  - R706
-  - R716
   - RT301
   - RV101
   - U301
@@ -1121,7 +1115,7 @@ sheets:
   - name: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
     from: SETfuse SCT520(P) datasheet, https://datasheet.lcsc.com/datasheet/pdf/c399a71412fc2cbf24b5ddba60b5c909.pdf, page 1 (dimensions) and page 5 (lead bending); read 2026-11-13. Body diameter 5.2 x length 20.0 +-0.5, lead
       diameter 0.80 +-0.05 for above 6.3 A to 10 A.
-    detail: Two plated holes, drill 1.10 mm, pads round 4.2 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 23.8 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
+    detail: Two plated holes, drill 1.10 mm, pads round 3.0 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 25.0 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
       2 x 4.2 mm for the straight run and bend the maker's sheet asks for at the 0.8 mm lead; the leads are formed to that pitch. Courtyard the body plus 0.25 mm.
   - name: RV_Disc_14D471K_P7.5mm
     from: 'Ruilon 14D series datasheet version A3, https://datasheet.lcsc.com/datasheet/pdf/305ba13b482fd415d345c9b9446eb189.pdf, page 4 (14D471K: D max 17.0, T max 6.2, lead pitch 7.5 +-1.0, lead diameter 0.8 +-0.1); read
@@ -3428,11 +3422,11 @@ sheets:
   - ref: C606
     lib_id: Device:C
     value: 1n
-    rating: X7R 50V 10% 0603
-    footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B102KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1588
+    rating: X7R 50V 10% 0402
+    footprint: Capacitor_SMD:C_0402_1005Metric
+    mpn: 0402B102K500NT
+    maker: FH
+    lcsc: C1523
     class: basic
     hand: false
     function: 'C10: HLDO_IN to HGND, 1 nF'
@@ -7038,7 +7032,7 @@ sheets:
     '
 - order: 12
   sheet: Pump drives
-  function: Random-phase opto-triac and snubberless triac that switch the coffee pump and the steam pump on their neutral-side leads, each behind its own branch fuse.
+  function: Random-phase opto-triac and snubberless triac that switch the coffee pump and the steam pump on their neutral-side leads, each behind its own branch fuse, with a bidirectional TVS clamp across each triac.
   parts:
   - ref: F701
     lib_id: Device:Fuse
@@ -7298,35 +7292,19 @@ sheets:
     function: low-side switch sinking the steam pump opto-triac LED
     mains: false
     sim_exclude: false
-  - ref: R706
-    lib_id: Device:R
-    value: '100'
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: 25121WF1000T4E
-    maker: UNI-ROYAL
-    lcsc: C35218
+  - ref: D701
+    lib_id: Device:D_TVS
+    value: SMCJ400CA
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    footprint: Diode_SMD:D_SMC
+    mpn: SMCJ400CA
+    maker: Littelfuse
+    lcsc: C151285
     class: extended
-    hand: true
-    dnp: true
-    function: 'resistor of the coffee pump triac''s RC snubber (across MT2 and MT1): NOT FITTED. Fit with C701 only if the turn-off voltage across T701 exceeds 600 V, the rating of the opto-triac U701 on the same node (the
-      triac is 800 V) (bring-up, pump drives step). Steady state with the triac off it carries the capacitor''s 7.95 mA at 50 Hz (9.54 mA at 60 Hz; 253 V, 100 nF) and dissipates 6.3 mW (9.1 mW); at turn-on it discharges the
-      capacitor from at most 358 V crest, 3.6 A and 6.4 mJ, which the sheet''s pulse limits do not state (circuit-proof.md, pump snubber row)'
-    mains: true
-    sim_exclude: true
-  - ref: C701
-    lib_id: Device:C
-    value: 100nF_X2
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    footprint: Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    mpn: MPX104K31C3KN15600
-    maker: KNSCHA
-    lcsc: C489079
-    class: extended
-    hand: true
-    dnp: true
-    function: 'capacitor of the coffee pump triac''s RC snubber, in series with R706 from MT2 to NEUTRAL (MT1): NOT FITTED, X2 class so a failed-short capacitor is held by the branch fuse and a failed-open one leaves the triac
-      as built'
+    hand: false
+    function: 'bidirectional TVS clamp across the coffee pump triac T701, MT2 (PUMP_C_MT2) to NEUTRAL (MT1): FITTED. It holds the voltage across the triac and the opto-triac on the same node when the triac lets go of the pump
+      coil at its holding current, at most 527 V (494 V maximum breakdown, hot, at 45 mA) against the opto-triac''s 600 V and the triac''s 800 V, and a mains surge reaching the node through the coil at about 556 V; idle it
+      stands off the 358 V crest of 253 V (0.895 of its 400 V stand-off, under its 447 V minimum breakdown) and passes 1 uA at most (circuit-proof.md, pump clamp row)'
     mains: true
     sim_exclude: true
   - ref: TP702
@@ -7342,35 +7320,19 @@ sheets:
     function: 'test point on PUMP_C_MT2, the triac''s MT2: with NEUTRAL (TP106) it carries the turn-off voltage read with an isolated or differential probe (mains-referenced, never an earthed scope lead)'
     mains: true
     sim_exclude: true
-  - ref: R716
-    lib_id: Device:R
-    value: '100'
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: 25121WF1000T4E
-    maker: UNI-ROYAL
-    lcsc: C35218
+  - ref: D711
+    lib_id: Device:D_TVS
+    value: SMCJ400CA
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    footprint: Diode_SMD:D_SMC
+    mpn: SMCJ400CA
+    maker: Littelfuse
+    lcsc: C151285
     class: extended
-    hand: true
-    dnp: true
-    function: 'resistor of the steam pump triac''s RC snubber (across MT2 and MT1): NOT FITTED. Fit with C711 only if the turn-off voltage across T711 exceeds 600 V, the rating of the opto-triac U711 on the same node (the
-      triac is 800 V) (bring-up, pump drives step). Steady state with the triac off it carries the capacitor''s 7.95 mA at 50 Hz (9.54 mA at 60 Hz; 253 V, 100 nF) and dissipates 6.3 mW (9.1 mW); at turn-on it discharges the
-      capacitor from at most 358 V crest, 3.6 A and 6.4 mJ, which the sheet''s pulse limits do not state (circuit-proof.md, pump snubber row)'
-    mains: true
-    sim_exclude: true
-  - ref: C711
-    lib_id: Device:C
-    value: 100nF_X2
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    footprint: Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    mpn: MPX104K31C3KN15600
-    maker: KNSCHA
-    lcsc: C489079
-    class: extended
-    hand: true
-    dnp: true
-    function: 'capacitor of the steam pump triac''s RC snubber, in series with R716 from MT2 to NEUTRAL (MT1): NOT FITTED, X2 class so a failed-short capacitor is held by the branch fuse and a failed-open one leaves the triac
-      as built'
+    hand: false
+    function: 'bidirectional TVS clamp across the steam pump triac T711, MT2 (PUMP_S_MT2) to NEUTRAL (MT1): FITTED. It holds the voltage across the triac and the opto-triac on the same node when the triac lets go of the pump
+      coil at its holding current, at most 527 V (494 V maximum breakdown, hot, at 45 mA) against the opto-triac''s 600 V and the triac''s 800 V, and a mains surge reaching the node through the coil at about 556 V; idle it
+      stands off the 358 V crest of 253 V (0.895 of its 400 V stand-off, under its 447 V minimum breakdown) and passes 1 uA at most (circuit-proof.md, pump clamp row)'
     mains: true
     sim_exclude: true
   - ref: TP712
@@ -7413,13 +7375,8 @@ sheets:
       - F701.2
       - T701.2
       - R704.1
-      - R706.1
+      - D701.1
       - TP702.1
-    PUMP_C_SNUB:
-      scope: local
-      pins:
-      - R706.2
-      - C701.1
     PUMP_C_GATE_R:
       scope: local
       pins:
@@ -7465,13 +7422,8 @@ sheets:
       - F711.2
       - T711.2
       - R714.1
-      - R716.1
+      - D711.1
       - TP712.1
-    PUMP_S_SNUB:
-      scope: local
-      pins:
-      - R716.2
-      - C711.1
     PUMP_S_GATE_R:
       scope: local
       pins:
@@ -7508,8 +7460,8 @@ sheets:
       pins:
       - T701.1
       - T711.1
-      - C701.2
-      - C711.2
+      - D701.2
+      - D711.2
   no_connect:
   - pin: U701.3
     reason: no connection per MOC3052M/D pin table
@@ -7533,11 +7485,12 @@ sheets:
       and the leg width, not the leg centre pitch: draw the legs 22.0 mm apart (the body length) and let the layout task read the pitch from a sample (open item).'
   power_flags: []
   drawing_notes: 'Mains side is the left of this sheet: tab net -> fuse -> triac MT2; triac MT1 on NEUTRAL (the pump''s neutral piece joins the neutral pour on an inner layer: layout). No snubber and no varistor are fitted
-    across the triac or the pump (decided in the division record, The pump drives, and kept by the owner on 2026-10-29), but each triac has an unfitted RC snubber position across MT2 and MT1 (R706 with C701 for the coffee
-    pump, R716 with C711 for the steam pump, an X2-class capacitor and a 2512 resistor, DNP) and a test point on MT2 (TP702, TP712) for the turn-off measurement that decides whether to fit it (bring-up, pump drives); the surge
-    and emission margins stay open (open-items.md). The snubber nets PUMP_C_SNUB and PUMP_S_SNUB are mains class, with the parts'' mains flag set. Low-voltage side: +5V -> R703 -> MOC3052M pin 1; pin 2 -> AO3400A drain; gate
-    from PUMP_C_GATE (PA9) through R701 with R702 to ground. Draw coffee above steam, signal left to right: controller pin, gate stage, opto-triac, triac, fuse, tab net on the right. The opto-triac straddles the barrier: pins
-    1-2 low voltage, 4-6 mains; draw a dashed barrier line through the package. Fuse values: coffee 0.8 A, steam 0.5 A (SETfuse SCT520T0.8A250V / SCT520T0.5A250V).'
+    across the triac or the pump. A bidirectional TVS clamp stands across each triac, MT2 to MT1 (D701 on the coffee pump, D711 on the steam pump, Littelfuse SMCJ400CA, fitted): it holds the turn-off voltage of the pump coil
+    and a surge reaching the node under the opto-triac''s 600 V (at most 527 V and about 556 V; circuit-proof.md, pump clamp row). The unfitted RC snubber positions of the earlier drawing (R706 C701, R716 C711) and their nets
+    were removed on 2026-11-14, because the snubber resistor''s turn-on pulse had no stocked part with a published rating that covers it. A test point stands on each MT2 (TP702, TP712) for the bring-up reading that confirms
+    the clamped turn-off voltage; the emission margin stays open (open-items.md). Low-voltage side: +5V -> R703 -> MOC3052M pin 1; pin 2 -> AO3400A drain; gate from PUMP_C_GATE (PA9) through R701 with R702 to ground. Draw
+    coffee above steam, signal left to right: controller pin, gate stage, opto-triac, triac, fuse, tab net on the right. The opto-triac straddles the barrier: pins 1-2 low voltage, 4-6 mains; draw a dashed barrier line through
+    the package. Fuse values: coffee 0.8 A, steam 0.5 A (SETfuse SCT520T0.8A250V / SCT520T0.5A250V).'
 - order: 13
   sheet: Valve drives
   function: Two 5 V relays that switch the two valve coils on their neutral-side leads, with low-side coil drivers, and the fuse the two valve branches share.
@@ -9475,7 +9428,7 @@ custom_footprints:
 - name: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
   from: SETfuse SCT520(P) datasheet, https://datasheet.lcsc.com/datasheet/pdf/c399a71412fc2cbf24b5ddba60b5c909.pdf, page 1 (dimensions) and page 5 (lead bending); read 2026-11-13. Body diameter 5.2 x length 20.0 +-0.5, lead
     diameter 0.80 +-0.05 for above 6.3 A to 10 A.
-  detail: Two plated holes, drill 1.10 mm, pads round 4.2 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 23.8 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
+  detail: Two plated holes, drill 1.10 mm, pads round 3.0 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 25.0 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
     2 x 4.2 mm for the straight run and bend the maker's sheet asks for at the 0.8 mm lead; the leads are formed to that pitch. Courtyard the body plus 0.25 mm.
   sheet: Mains entry and load feed
 - name: RV_Disc_14D471K_P7.5mm
@@ -10557,11 +10510,6 @@ net_index:
     sheets:
     - Pump drives
     class: Mains
-  PUMP_C_SNUB:
-    scope: local
-    sheets:
-    - Pump drives
-    class: Mains
   PUMP_C_GATE_R:
     scope: local
     sheets:
@@ -10593,11 +10541,6 @@ net_index:
     - Pump drives
     class: low-voltage
   PUMP_S_MT2:
-    scope: local
-    sheets:
-    - Pump drives
-    class: Mains
-  PUMP_S_SNUB:
     scope: local
     sheets:
     - Pump drives

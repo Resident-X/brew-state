@@ -48,6 +48,8 @@
 #   SMF series (revised 12/06/17): datasheet.lcsc.com 6d382c654924c5ddbeb5b90893b39699.pdf
 #   14D series Version A3 (revised 2023-10-27): datasheet.lcsc.com 305ba13b482fd415d345c9b9446eb189.pdf
 #   HF32FA-G 2026 Rev. 1.00 and HF115F-Q: source.hongfa.com Uploads/Product/PDF
+#   SMCJ series (Littelfuse, revised 11/20/15; D701, D711), read 2026-11-14: the catalogue's datasheet for C151285
+#     (datasheet.lcsc.com), page 1 (ratings) and page 2 (SMCJ400CA row)
 #   HF115F-I (K201), SCT520(P) (F101) and TE 63849-1 (tabs), read 2026-11-13: datasheet.lcsc.com
 #     0ebe0ad433a21202e9ed2b99eb26b6ee.pdf, c399a71412fc2cbf24b5ddba60b5c909.pdf, d78aaa5668ef44d19432bad6ab97dbf2.pdf
 #   SN74LVC1G17 SCES351Y (October 2025), SN74HCT541 SCLS306E (May 2022): ti.com symlink addresses
@@ -1100,12 +1102,12 @@ positions:
     rating: X7R 50 V 10 % 0603
     lcsc: C14663
     class: capacitor
-  # C606: maker Samsung Electro-Mechanics; MPN CL10B102KB8NNNC; catalogue class basic
+  # C606: maker FH; MPN 0402B102K500NT; catalogue class basic
   - reference: C606
     value: 1n
-    package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1588
+    package: C_0402_1005Metric
+    rating: X7R 50V 10% 0402
+    lcsc: C1523
     class: capacitor
   # C607: maker Murata; MPN GRM31C5C1H104JA01L; catalogue class extended
   - reference: C607
@@ -2502,20 +2504,13 @@ positions:
     rating: 30V 5.7A, RDS(on) <48 mohm at VGS 2.5 V, VGS(th) 0.65-1.45 V
     lcsc: C20917
     class: semiconductor
-  # R706: maker UNI-ROYAL; MPN 25121WF1000T4E; catalogue class extended
-  - reference: R706
-    value: '100'
-    package: R_2512_6332Metric
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    lcsc: C35218
-    class: resistor
-  # C701: maker KNSCHA; MPN MPX104K31C3KN15600; catalogue class extended
-  - reference: C701
-    value: 100nF_X2
-    package: C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    lcsc: C489079
-    class: mains-rated safety part
+  # D701: maker Littelfuse; MPN SMCJ400CA; catalogue class extended
+  - reference: D701
+    value: SMCJ400CA
+    package: D_SMC
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    lcsc: C151285
+    class: semiconductor
   # TP702: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP702
     value: TP_PUMP_C_MT2
@@ -2523,20 +2518,13 @@ positions:
     rating: mains copper
     lcsc: none
     class: none
-  # R716: maker UNI-ROYAL; MPN 25121WF1000T4E; catalogue class extended
-  - reference: R716
-    value: '100'
-    package: R_2512_6332Metric
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    lcsc: C35218
-    class: resistor
-  # C711: maker KNSCHA; MPN MPX104K31C3KN15600; catalogue class extended
-  - reference: C711
-    value: 100nF_X2
-    package: C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    lcsc: C489079
-    class: mains-rated safety part
+  # D711: maker Littelfuse; MPN SMCJ400CA; catalogue class extended
+  - reference: D711
+    value: SMCJ400CA
+    package: D_SMC
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    lcsc: C151285
+    class: semiconductor
   # TP712: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP712
     value: TP_PUMP_S_MT2

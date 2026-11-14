@@ -92,6 +92,10 @@ domains:
     highest_voltage_v: 357.8
     rides_on: mains_line
     fraction: 1
+  # the pump-triac clamps' MT2 terminal (D701 pin 1 on PUMP_C_MT2, D711 pin 1 on PUMP_S_MT2). One catalogue entry serves both clamps and a listed pin names one domain, so the pin is given this domain of its own and not either pump's: it does not ride on the live, which keeps each pump net's voltage against its fuse and against NEUTRAL reckoned as before (a listed domain that rode on the live would be read as moving with the pump's own domain and would hide the 357.8 V across the branch fuse). Its rail is the coffee pump's MT2 net; switched mains conductor: the peak of 253 V rms, the top of the declared span
+  - name: mains_pump_clamp
+    rail: /Pump drives/PUMP_C_MT2
+    highest_voltage_v: 357.8
   # the coffee valve live tab J106 and valve relay K731 contact pin 13 (pin 14 is VALVE_COM); switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
   - name: mains_coffee_valve
     rail: /COFVALVE
@@ -124,14 +128,6 @@ domains:
     highest_voltage_v: 178.9
     rides_on: mains_line
     fraction: 0.5
-  # the coffee triac's snubber midpoint between R706 and the X2 capacitor C701 to NEUTRAL; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
-  - name: mains_pump_c_snubber
-    rail: /Pump drives/PUMP_C_SNUB
-    highest_voltage_v: 357.8
-  # the steam triac's snubber midpoint between R716 and the X2 capacitor C711 to NEUTRAL; switched or unswitched mains conductor: the peak of 253 V rms, the top of the declared span (separation-basis.yaml working_voltage: 253 V rms, 358 V peak); a Mains-class rail states at least that peak
-  - name: mains_pump_s_snubber
-    rail: /Pump drives/PUMP_S_SNUB
-    highest_voltage_v: 357.8
   # the first node of the 3 x 300 kohm line divider R601 to R603 over the 750 ohm R604 (900750 ohm in all): 600750/900750 of the line-to-neutral peak, 357.8 x 0.666944213156 = 238.632639467 V
   - name: mains_divider_n1
     rail: /Supply voltage and current measurement/VMEAS_N1
@@ -1467,6 +1463,27 @@ parts:
         absolute_max_v: 600
         absolute_min_v: -600
         tolerates_driven_unpowered: false
+  # pump-triac clamps: D701, D711 (added 2026-11-14)
+  # Bidirectional TVS across each pump triac, pin 1 on the triac's MT2 net and pin 2 on NEUTRAL. The figure written is the reverse stand-off voltage VR, 400 V either polarity, the highest voltage the maker rates the part to stand continuously (1 uA at most); it breaks down at 447 to 494 V at 1 mA and clamps at 648 V at 2.3 A, which is its function and not a limit of the pin. The part has no supply of its own to lose, so each pin tolerates being driven. Pin 1 is given the domain mains_pump_clamp, declared above for this entry (one entry serves both pumps, whose MT2 nets are in two domains); pin 2 the neutral's. The limits are written against the board ground like the other mains pins: the live's peak either way for pin 1, and the same figure for pin 2.
+  - lcsc: C151285
+    source:
+      document: "SMCJ Series Transient Voltage Suppression Diodes, Surface Mount 1500 W (Littelfuse)"
+      revision: "Revised 11/20/15"
+      section: "Maximum Ratings and Thermal Characteristics (page 1); Electrical Characteristics, row SMCJ400CA (page 2)"
+      read_on: 2026-11-14
+    pins:
+      # Terminal on the triac's MT2 net. VR 400 V, either polarity.
+      - pin: "1"
+        domain: mains_pump_clamp
+        absolute_max_v: 400
+        absolute_min_v: -400
+        tolerates_driven_unpowered: true
+      # Terminal on NEUTRAL. VR 400 V, either polarity.
+      - pin: "2"
+        domain: mains_neutral
+        absolute_max_v: 400
+        absolute_min_v: -400
+        tolerates_driven_unpowered: true
   # zero-crossing optocoupler: U602
   - lcsc: C108051
     source:

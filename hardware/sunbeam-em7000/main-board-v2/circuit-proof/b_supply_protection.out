@@ -48,10 +48,12 @@
     clamp: level 4 15 kV air and 8 kV contact in the features (Table 1 prints 15 kV contact: contradiction, either meets level 4); VCL 12 V at 1 A and 17 V at 5 A (8/20 us); 3.5 pF maximum
     residue at PA11 and PA12: the clamp's own table gives 17 V at 5 A, against the controller's 6 V DC limit (4 V with VDD absent): 11 V over; the controller sheet states no pulse withstand, so the residue is not bounded by it
     8 kV contact through 330 ohm is 24 A: DS4260 2.1 gives 31.2 V with pin 5 open, about 23.0 V with D402 on the VBUS node (b_usb_power.py (e)); the 8/20 us table figure does not cover 24 A at 1 ns
-(6) pump snubber (R706 C701, R716 C711) and module inrush thermistor RT301, both not fitted
-    snubber 100 ohm + 100 nF X2 (C101's part, 310 VAC): leakage with the triac off 7.95 mA at 50 Hz, 9.54 mA at 60 Hz; R dissipates 9.1 mW; at turn-on from 358 V crest: 3.6 A peak, 6.4 mJ
-    the triac's VDRM is 800 V and the opto-triac driver's (U701, U711) is 600 V, on the same MT2 node through 400 ohm, against the 358 V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up), the pair's lower rating
-    turn-off case 716 V (M16, calculated, undamped): triac 800 V is 84 V under (10.5 %); opto-triac 600 V is 116 V over
+(6) pump triac clamps (D701, D711: Littelfuse SMCJ400CA across each triac, MT2 to NEUTRAL) and module inrush thermistor RT301, not fitted
+    idle: the 358 V crest of the supply is 0.895 of the 400 V stand-off and 1.25 times under the 447 V minimum breakdown; the clamp conducts from 316 V rms and leaks 1 uA at most at the stand-off
+    turn-off kick at 45 mA, hot: (494 + (648 - 494) x 0.045 / 2.3) x 1.06 = 527 V; opto-triac 600 V is 1.14 times it, triac 800 V is 1.52 times it
+    surge through the coil's capacitance at 0.45 A, hot (interpolated between the 1 mA and 2.3 A points): (494 + (648 - 494) x 0.45 / 2.3) x 1.06 = 556 V; opto-triac 600 V is 1.08 times it
+    dissipation, the kick energy 50 times a second: 0.05 W (coffee, 1.5 H at 35 mA), 0.11 W (steam, 3.7 H), 0.43 W at the bound (8.5 H at 45 mA, 8.6 mJ); the coil inductance, iron loss and series diode are unmeasured
+    entry varistor alone, a mains surge at the pump parts before the clamp: the triac's VDRM is 800 V and the opto-triac driver's (U701, U711) is 600 V, on the same MT2 node through 400 ohm
     1 kV, clamp 800 to 805 V: triac 800 V over by 0 to 5 V; opto-triac 600 V over by 200 to 205 V
     2 kV, clamp 867 to 887 V: triac 800 V over by 67 to 87 V; opto-triac 600 V over by 267 to 287 V
     thermistor NTC10D-9: module 40 A typical at 230 Vac implies 8.1 ohm; at 358 V crest 44.0 A bare, 19.7 A with 10 ohm added (-55 %)
