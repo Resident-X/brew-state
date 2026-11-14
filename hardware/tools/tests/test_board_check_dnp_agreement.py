@@ -234,8 +234,12 @@ class TheHardwareNotesStateTheRule(unittest.TestCase):
         self.assertIn("| `dnp_agreement` |", notes)
         self.assertIn("`fitted`", notes[notes.index("**The specification record**"):])
         self.assertIn("dnp_agreement", notes[notes.index("task hw:prove` adds"):])
-        for words in ("do-not-populate footprints", "do-not-populate symbols", "`fitted: \"no\"`", "no acceptance record waives that"):
+        for words in ("do-not-populate footprints", "do-not-populate symbols", "whose `fitted` key is `\"no\"`", "no acceptance record waives that"):
             self.assertIn(words, verify)
+        import yaml
+        with open(os.path.join(repository, "Taskfile.yml"), encoding="utf-8") as handle:
+            parsed = yaml.safe_load(handle)
+        self.assertIn("whose `fitted` key is", parsed["tasks"]["hw:verify"]["desc"])
 
 
 if __name__ == "__main__":
