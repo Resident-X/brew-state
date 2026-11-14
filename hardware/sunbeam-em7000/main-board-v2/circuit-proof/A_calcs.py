@@ -18,10 +18,10 @@ for name, w in widths.items():
 print("\n== Largest let-through a conductor could withstand = k2 S2 (same grid), so the fuse sheet's figure at 6 kA must be at or under it")
 print("Fuse sheet (SETfuse SCT520(P) V1.0): average melting I2t of the 10 A rating 500 A2s at 10 x 10 A; pre-arcing only. Clearing time and let-through at 6 kA: NOT STATED.")
 print("Rated breaking capacity of the 10 A rating: UL 10 kA at 250 VAC (covers 6 kA, 1.67x); CQC/TUV 2 kA at 250 VAC (6000/2000 = %.1f x short)" % (6000 / 2000))
-print("\n== Relay contact against the series current (Hongfa HF115F-Q 2024 Rev 1.00)")
+print("\n== Relay contact against the series current (Hongfa HF115F-I 2020 Rev. 1.00)")
 for lab, I in (("steady, both elements+pumps+valves", 10.96), ("with valve inrush", 11.03), ("fuse overload band 1.5 x 10 A", 15.0)):
-    print("%-38s %.2f A : 20 A @250 VAC x%.2f ; VDE 18 A @105 C x%.2f ; VDE 16 A @125 C x%.2f" % (lab, I, 20 / I, 18 / I, 16 / I))
-print("voltage 440 VAC / 358 V peak = %.2f ; 440/253 = %.2f ; switching power 5000 VA / (253 x 15 = %.0f VA) = %.2f ; / (253 x 10.96 = %.0f) = %.2f" % (440/358, 440/253, 253*15, 5000/(253*15), 253*10.96, 5000/(253*10.96)))
+    print("%-38s %.2f A : 16 A @250 VAC (VDE 16 A @85 C, the same figure) x%.2f" % (lab, I, 16 / I))
+print("voltage 440 VAC / 358 V peak = %.2f ; 440/253 = %.2f ; switching power 4000 VA / (253 x 15 = %.0f VA) = %.2f ; / (253 x 10.96 = %.0f) = %.2f" % (440/358, 440/253, 253*15, 4000/(253*15), 253*10.96, 4000/(253*10.96)))
 print("\n== Varistor 14D471K (Ruilon 14D series A3, 2023-10-27)")
 print("stays off: lowest varistor voltage 423 V vs 358 V peak = %.2f ; max allowable 300 VAC vs 253 = %.2f ; 385 VDC vs 358 V peak = %.2f" % (423/358, 300/253, 385/358))
 print("clamp 775 V at 50 A (8/20 us) vs the 2.5 kV category-II surge (separation basis): %.2f x lower; 1725/4500 = %.2f ohm source impedance at which the 4500 A is met" % (2500/775, (2500-775)/4500))

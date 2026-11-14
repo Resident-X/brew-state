@@ -14,11 +14,11 @@ neutral pour and shunt lands           7.00 mm x 0.5 oz = S 0.1192 mm2 | (85,183
 Fuse sheet (SETfuse SCT520(P) V1.0): average melting I2t of the 10 A rating 500 A2s at 10 x 10 A; pre-arcing only. Clearing time and let-through at 6 kA: NOT STATED.
 Rated breaking capacity of the 10 A rating: UL 10 kA at 250 VAC (covers 6 kA, 1.67x); CQC/TUV 2 kA at 250 VAC (6000/2000 = 3.0 x short)
 
-== Relay contact against the series current (Hongfa HF115F-Q 2024 Rev 1.00)
-steady, both elements+pumps+valves     10.96 A : 20 A @250 VAC x1.82 ; VDE 18 A @105 C x1.64 ; VDE 16 A @125 C x1.46
-with valve inrush                      11.03 A : 20 A @250 VAC x1.81 ; VDE 18 A @105 C x1.63 ; VDE 16 A @125 C x1.45
-fuse overload band 1.5 x 10 A          15.00 A : 20 A @250 VAC x1.33 ; VDE 18 A @105 C x1.20 ; VDE 16 A @125 C x1.07
-voltage 440 VAC / 358 V peak = 1.23 ; 440/253 = 1.74 ; switching power 5000 VA / (253 x 15 = 3795 VA) = 1.32 ; / (253 x 10.96 = 2773) = 1.80
+== Relay contact against the series current (Hongfa HF115F-I 2020 Rev. 1.00)
+steady, both elements+pumps+valves     10.96 A : 16 A @250 VAC (VDE 16 A @85 C, the same figure) x1.46
+with valve inrush                      11.03 A : 16 A @250 VAC (VDE 16 A @85 C, the same figure) x1.45
+fuse overload band 1.5 x 10 A          15.00 A : 16 A @250 VAC (VDE 16 A @85 C, the same figure) x1.07
+voltage 440 VAC / 358 V peak = 1.23 ; 440/253 = 1.74 ; switching power 4000 VA / (253 x 15 = 3795 VA) = 1.05 ; / (253 x 10.96 = 2773) = 1.44
 
 == Varistor 14D471K (Ruilon 14D series A3, 2023-10-27)
 stays off: lowest varistor voltage 423 V vs 358 V peak = 1.18 ; max allowable 300 VAC vs 253 = 1.19 ; 385 VDC vs 358 V peak = 1.08

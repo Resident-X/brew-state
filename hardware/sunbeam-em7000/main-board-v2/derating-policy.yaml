@@ -36,7 +36,7 @@
 #
 # Classes the board uses that Table 1 has no row for: fuses, resettable fuses, the varistor,
 # crystals and oscillators, thermistors, the switch, jumpers and links, test points, and the
-# mains-rated, safety-listed parts (the X2 capacitors, relay contacts, tabs and fuse clips).
+# mains-rated, safety-listed parts (the X2 capacitors, relay contacts and tabs).
 # The owner (a hobbyist project) accepted on 2026-10-29 ("agree, proceed") that for these the
 # maker's rating is the limit: each of the nine classes after the Table 1 classes below takes
 # the share 1 on voltage, power and temperature, adds no margin of its own, and says so in its
@@ -189,13 +189,13 @@ classes:
   - class: mains-rated safety part
     voltage:
       share: 1
-      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated mains voltage and current is the limit; the owner accepted that on 2026-10-29
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs), so the maker's rated mains voltage and current is the limit; the owner accepted that on 2026-10-29
     power:
       share: 1
-      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs), so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
     temperature:
       share: 1
-      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs), so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
 
 # Owner-accepted derating exceptions (SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS). Every entry but the last two is signed on 2026-11-05: the owner
 # instructed Claude, in writing in the working session, to enter the owner's acceptance on the owner's behalf, so accepted_by names both.

@@ -48,7 +48,7 @@ parts = [
     ("U302 LT1963A input", 20.0, "IN +/-20 V (LT1963A absolute maximum ratings)"),
     ("U201 SN74AHCT1G14 VCC", 7.0, "Texas Instruments SN74AHCT1G14 SCLS322P (June 2013) absolute maximum ratings, VCC -0.5 to +7 V"),
     ("U791 SN74HCT541 VCC", 7.0, "Texas Instruments SCLS306C absolute maximum 7 V"),
-    ("K201 coil, HF115F-Q/005", 7.5, "Hongfa HF115F-Q coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm"),
+    ("K201 coil, HF115F-I/005", 7.5, "Hongfa HF115F-I coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm"),
     ("K731 K741 coils, HF32FA-G/005", 8.5, "Hongfa HF32FA-G 2026 Rev 1.00 coil data (circuit-proof.md valve coil row)"),
     ("Q822 AO3401A gate to source", 12.0, "AO3401A Rev 3.1: VGS +/-12 V; gate swings 0 to 5.25 V against a source on +5V, 6.75 V at most"),
     ("C303 10 uF X5R", 10.0, "rated voltage"),

@@ -117,6 +117,18 @@ and prices that quantity at the smallest break's unit price, which every charged
 
 So the fabrication of the main board's order is estimated at about 35.19 + 15 to 35, plus 17 if the range above does not already include the finish, that is **about 67 to 87 USD, or 32 to 52 USD more than the 35.19 USD of § Fabrication**, and the main board's total in the table of § Weighed against the declared spend (141.39 USD for the order) would read about 173 to 193 USD, against the declared spend of 250 USD. The range is wide because both changes are inferences from the maker's published points at other outlines, not a price for this board; if the 15 to 35 USD already includes the ENIG finish, the upper end falls by about 17 USD. Only the quote of the board's own design files settles it (§ Marks ended and re-pointed carries the same step for the four-layer figure).
 
+## Amendment: three part swaps of 2026-11-13
+
+**The rows and totals below are the estimate as priced on 2026-10-26 with the former parts, and are not restated.** The main board's design swapped three parts on 2026-11-13 (`hardware/sunbeam-em7000/main-board-v2/parts-specification.yaml` and `catalogue-extract.yaml`, read 2026-11-13 through the manufacturer's parts search, library class Extended for all three). What the rows below price, and what the board now carries:
+
+| Position | Priced below (2026-10-26) | The board now carries | Price at the smallest break, stock | One-set effect on the main board |
+|---|---|---|---|---|
+| Interlock relay K201 | C5318991, HF115F-Q/012-1H, the 12 V Q-family code standing in for the 5 V one, 3.2141 USD, charged quantity 2 | C2976795, Hongfa HF115F-I/005-1HS3A, the 5 V code itself | 2.7911 USD at one to nine, stock 20 | 2 × 2.7911 = 5.58 USD against 6.43, 0.85 USD less |
+| 6.3 mm board tabs J101 to J103, J106 to J110 | C20626104, BZXC BTC-3-PCB634908T, 0.0374 USD, charged quantity 12 (main board) and 10 (wall board) | C86469, TE Connectivity 63849-1 | 0.0678 USD at one to 99, stock 204 475 | main board 12 × 0.0678 = 0.81 USD against 0.45, 0.36 USD more; wall board 10 × 0.0678 = 0.68 USD against 0.37, 0.31 USD more |
+| Entry fuse F101 and its clips | C151075, two Littelfuse 01110501Z clips, 0.1676 USD, charged quantity 4 (0.67 USD), and the fuse cartridge row | C22447834, SETfuse SCT520PT10A250V, a soldered pigtail fuse; no clips | 0.1716 USD at one to 49, stock 767 | clips 0.67 USD removed; fuse 2 × 0.1716 = 0.34 USD against 0.32, 0.02 USD more |
+
+The mains-entry parts of the main board come to 0.34 + 0.44 + 0.11 = 0.89 USD against the 1.54 USD below, and the one set of hand-fitted parts with them to 21.55 − 0.85 + 0.36 − 0.65 = **20.41 USD**, 1.14 USD less than the 21.55 USD the later sections carry; the wall board's parts, one set, are 2.88 + 0.31 = **3.19 USD**. The shipping and tax shares, the board orders and the per-machine figures of the sections below rest on the former figures and move by the same cents; the quoted order cost that the board's design task records before ordering replaces them. Where a section below names a former part (C5318991, C20626104, C151075, the BZXC tab, the clips), it describes what was priced on the date given.
+
 ## Main board
 
 One board, 4 layers, 131.0 × 125.0 mm (16 375 mm²), 1 oz, leaded HASL, 1.6 mm, Economic assembly; five fabricated, two assembled.

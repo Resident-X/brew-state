@@ -259,7 +259,7 @@ first_power:
 - input: U301.1 and U301.2 LINE and NEUTRAL (mains)
   means: 'the first-power means of the board''s mains entry (owner A), which sits upstream of net LINE; the module takes LINE_MOD (LINE through the link JP303) and NEUTRAL and adds no means of its own. Interface requirement for the lead:
     the net the module taps must be on the load side of that means. If A''s means is a lamp or resistor in the link between the entry fuse and net LINE, it limits the module''s cold-start inrush too; if
-    the module tap is on the fuse''s own load-side clip ahead of that link, the module is not limited and the lead places a means here'
+    the module tap is on the fuse''s own load-side lead pad ahead of that link, the module is not limited and the lead places a means here'
   link: owner A's position, not this sheet's
   limited_current: 'not computed here: the means is owner A''s and its arithmetic is A''s row; the module''s cold start is 40 A typical at 230 Vac (IRM-20 sheet), typical only (inrush row of circuit-proof.md)'
 rail_loads:

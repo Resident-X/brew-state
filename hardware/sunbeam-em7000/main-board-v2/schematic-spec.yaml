@@ -178,8 +178,8 @@ header_to_wall_board:
   neutral_return_landing:
     ref: J110
     net: NEUTRAL
-    note: 'WB_RET: the eighth board-mounted 6.3 mm blade (C20626104, owner decision D8 drawn at the blade), a pad of the tab section in the NEUTRAL pour above the shunt; no retained lead lands on it, the wall board return
-      wire ends in a female push-on on it'
+    note: 'WB_RET: the eighth board-mounted 6.3 mm blade (C86469, owner decision D8 drawn at the blade), a pad of the tab section in the NEUTRAL pour above the shunt; no retained lead lands on it, the wall board return wire
+      ends in a female push-on on it'
   channels_crossing_header_for_the_pin_allocation_record:
   - HEAT_C_DRV -> HEAT_C_LED_K (controller PD11)
   - HEAT_S_DRV -> HEAT_S_LED_K (controller PD12)
@@ -584,8 +584,8 @@ derating_policy_proposed:
     microcircuits: supply at most 80 % of rated voltage, 75 % of rated power, junction temperature 100 degC
     inductive devices: at most 50 % of rated voltage, 60 % of rated temperature
     relays and connectors: at most 50 % of rated current
-  consequence_for_mains_rated_parts: Taken literally the table puts mains-rated, safety-listed parts (X2 capacitor, varistor, relay contacts, tabs, fuse clips) out of policy at 358 V peak and 15 A; those rows are findings
-    until the owner either declares a different factor for safety-listed parts with a stated reason or accepts the findings.
+  consequence_for_mains_rated_parts: Taken literally the table puts mains-rated, safety-listed parts (X2 capacitor, varistor, relay contacts, tabs) out of policy at 358 V peak and 15 A; those rows are findings until the owner
+    either declares a different factor for safety-listed parts with a stated reason or accepts the findings.
 departures_from_the_division_record:
 - 'Interlock drive has 21 parts, not 19 (counting the buffer as one part): R205 and R206 (100 kohm, each coupling node to ground) are added, because the record''s circuit holds the coil about 1.2 s when the output rests high
   after a rising edge (circuit-proof/A_removal_gate_high_rec.log); the record''s sentence that a level cannot cross the coupling capacitor is to be amended.'
@@ -742,13 +742,13 @@ sheets:
     lib_id: Device:Varistor
     value: 14D471K
     rating: 300 VAC max, 470 V class 14 mm disc, 423-517 V at 1 mA, 775 V clamp at 50 A
-    footprint: Varistor:RV_Disc_D15.5mm_W5mm_P7.5mm
+    footprint: RV_Disc_14D471K_P7.5mm
     mpn: 14D471K
     maker: Ruilon
     lcsc: C8852
     class: extended
     hand: true
-    function: Surge clamp across LINE and NEUTRAL, hard against the fuse's load-side clip (the disc outline and 7.5 mm pitch are the maker's 14D series drawing)
+    function: Surge clamp across LINE and NEUTRAL, hard against the fuse's load-side lead (the disc outline and 7.5 mm pitch are the maker's 14D series drawing)
     mains: true
     sim_exclude: true
   - ref: C101
@@ -1130,9 +1130,8 @@ sheets:
   - name: R_WSK2512_4T
     from: 'Vishay Dale WSK2512, document number 30108, revision 04-Apr-2022, ''Solder pad dimensions'' table for 0.0005 to 0.0049 ohm: a 3.30 mm, b 3.30 mm, c 0.76 mm, d 0.51 mm, e 1.70 mm, l 1.65 mm; body L 6.35 x W 3.18
       mm (inch figures converted).'
-    detail: 'Four pads: 1 = current terminal I1 and 4 = current terminal I2 (the two large pads, 3.30 mm along the body by 3.30 mm across, the gap between them l = 1.65 mm), 2 = sense E1 and 3 = sense E2 (two small pads c
-      0.76 mm by d 0.51 mm, spacing e 1.70 mm, inside the gap beside the large pads). The placement of the sense pads against the large pads is read from the maker''s land-pattern figure when the footprint is drawn (open item):
-      the text of the sheet gives the dimensions, not the sketch''s layout. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
+    detail: 'Four pads, centres in mm from the body centre: 1 = current terminal I1 at (-2.475, -0.635) and 4 = current terminal I2 at (2.475, 0.635), each 3.30 mm by 2.03 mm; 2 = sense E1 at (-3.275, 1.27) and 3 = sense E2
+      at (3.275, -1.27), each 1.70 mm by 0.76 mm. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
   - name: MountingHole_3.1mm_Lid
     from: 'Own design for the machine''s four lid-screw points (layout-plan.md BOARD-7: four holes of 3.1 mm, a part-free circle of 3.5 mm radius).'
     detail: One non-plated hole, drill 3.1 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
@@ -7753,9 +7752,9 @@ sheets:
   custom_footprints:
   - name: RELAY_HF32FA-G_1H_TYPE1_THT
     from: Hongfa HF32FA-G datasheet 2026 Rev 1.00, page 90 'Outline dimensions, wiring diagram and PC board layout', 1 Form A & Type 1, bottom view (read 2026-10-29)
-    detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,0.625) and 14 at (15.24,6.975) (holes 1.3 mm), the contact pair 6.35
-      mm apart and centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face, so mirror about the
-      vertical axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
+    detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,1.25) and 14 at (15.24,7.6) (holes 1.3 mm), the contact pair 6.35
+      mm apart and 0.625 mm along y from centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face,
+      so mirror about the vertical axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
   power_flags: []
   drawing_notes: 'Each relay has its contact between the valve''s tab net and VALVE_COM; VALVE_COM runs to the relay-side clip of the shared valve fuse F731, whose other clip is NEUTRAL: the valve''s live lead arrives on LINE1
     by the retained harness wire, so the contact opens the return. Coil side: +5V -> coil -> AO3400A drain; 1N4148WS across the coil (cathode on +5V); gate from VALVE_2W_DRV (PD13) / VALVE_3W_DRV (PB12) through 100 ohm, 100
@@ -9445,9 +9444,8 @@ custom_footprints:
 - name: R_WSK2512_4T
   from: 'Vishay Dale WSK2512, document number 30108, revision 04-Apr-2022, ''Solder pad dimensions'' table for 0.0005 to 0.0049 ohm: a 3.30 mm, b 3.30 mm, c 0.76 mm, d 0.51 mm, e 1.70 mm, l 1.65 mm; body L 6.35 x W 3.18 mm
     (inch figures converted).'
-  detail: 'Four pads: 1 = current terminal I1 and 4 = current terminal I2 (the two large pads, 3.30 mm along the body by 3.30 mm across, the gap between them l = 1.65 mm), 2 = sense E1 and 3 = sense E2 (two small pads c 0.76
-    mm by d 0.51 mm, spacing e 1.70 mm, inside the gap beside the large pads). The placement of the sense pads against the large pads is read from the maker''s land-pattern figure when the footprint is drawn (open item): the
-    text of the sheet gives the dimensions, not the sketch''s layout. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
+  detail: 'Four pads, centres in mm from the body centre: 1 = current terminal I1 at (-2.475, -0.635) and 4 = current terminal I2 at (2.475, 0.635), each 3.30 mm by 2.03 mm; 2 = sense E1 at (-3.275, 1.27) and 3 = sense E2
+    at (3.275, -1.27), each 1.70 mm by 0.76 mm. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
   sheet: Mains entry and load feed
 - name: MountingHole_3.1mm_Lid
   from: 'Own design for the machine''s four lid-screw points (layout-plan.md BOARD-7: four holes of 3.1 mm, a part-free circle of 3.5 mm radius).'
@@ -9491,9 +9489,9 @@ custom_footprints:
   sheet: Pump drives
 - name: RELAY_HF32FA-G_1H_TYPE1_THT
   from: Hongfa HF32FA-G datasheet 2026 Rev 1.00, page 90 'Outline dimensions, wiring diagram and PC board layout', 1 Form A & Type 1, bottom view (read 2026-10-29)
-  detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,0.625) and 14 at (15.24,6.975) (holes 1.3 mm), the contact pair 6.35
-    mm apart and centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face, so mirror about the vertical
-    axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
+  detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,1.25) and 14 at (15.24,7.6) (holes 1.3 mm), the contact pair 6.35 mm
+    apart and 0.625 mm along y from centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face, so
+    mirror about the vertical axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
   sheet: Valve drives
 - name: REED_PADS_P20.00mm
   from: docs/sunbeam-em7000/controller-board-division.md, The tank reed (pads 20.0 mm apart along Y) and connector-pinouts.md (leads 20 mm apart, through holes)
