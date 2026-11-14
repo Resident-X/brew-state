@@ -6,10 +6,10 @@
 #   - ONE unsigned or malformed entry voids the WHOLE policy (no line becomes a warning). accepted_on must not be after the day the check runs.
 #   - The class list is closed (14 names). silk_over_copper, courtyards_overlap and items_not_allowed can never be warnings.
 #   - A class here may not also have an entry in workmanship-acceptance.yaml (that entry would be stale).
-#   - KiCad cuts the track_angle and track_segment_length lists at 199; those classes are not here. silk_overlap is cut at 199 by KiCad too
-#     but the check does not treat it as capped, so a count of 199 is a floor, not a count: it hides growth beyond 199.
+#   - KiCad cuts the track_angle and track_segment_length lists at 199; those classes are not here. silk_overlap is cut at 199 by KiCad too;
+#     the check treats it as capped only when the list reaches 199; below that the count is exact.
 #
-# BOARD: the neat low-voltage routing of this design, sha256 183c5f7b923cfabe272aafd2225cc744f00e87b8a4fbb49b7f5e02b9e9500591 of the board file as imported (its router commit). Counts are the lines
+# BOARD: the neat low-voltage routing of this design, sha256 e0474ad8ed4d269ab25ec99c931a7756d35334f555f181fcfafc58b534fa5d02 of the board file after the mains copper was re-laid and the low-voltage nets re-joined (2026-11-14). Counts are the lines
 # the check reports on it, with the creepage constraint left out of the copy of the rules KiCad read. After a change to the board take the
 # check's own lines again: a count above the recorded one fails, a count below is fine (lowering is the owner's).
 # Why only these four classes: every other neatness class either has lines the owner's recorded relaxations sign (per-place entries in
@@ -19,34 +19,34 @@
 # silkscreen): added under the standing instruction for the owner to confirm. track_width is recorded for 2 of its lines.
 #
 severity_policy:
-  # silk_overlap: 199 line(s) reported on the board
+  # silk_overlap: 47 line(s) reported on the board
   - class: silk_overlap
     severity: WARNING
-    count: 199
-    reason: "Silkscreen text or lines closer than 0.15 mm to other silkscreen. Cosmetic: the maker prints silk without a clearance rule, and no electrical function depends on it. KiCad cuts this list at 199, so the count is the cap."
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # silk_edge_clearance: 21 line(s) reported on the board
+    count: 47
+    reason: "Silkscreen text or lines closer than 0.15 mm to other silkscreen. Cosmetic: the maker prints silk without a clearance rule, and no electrical function depends on it. KiCad's list is below its cap of 199, so the count is the lines reported."
+    accepted_by: "owner (signed on behalf, session 2026-11-14)"
+    accepted_on: "2026-11-14"
+  # silk_edge_clearance: 15 line(s) reported on the board
   - class: silk_edge_clearance
     severity: WARNING
-    count: 21
+    count: 15
     reason: "Silkscreen touching the board edge. Cosmetic: the maker clips silk at the edge, and the clipped text stays readable. No copper is involved."
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # designator_astray: 354 line(s) reported on the board
+    accepted_by: "owner (signed on behalf, session 2026-11-14)"
+    accepted_on: "2026-11-14"
+  # designator_astray: 115 line(s) reported on the board
   - class: designator_astray
     severity: WARNING
-    count: 354
+    count: 115
     reason: "A reference designator standing inside a courtyard or nearer another part than its own. Cosmetic: the board is assembled from the bill of materials and positions, not from the designator text, and the denser cells (the controller block, the pump strips) have no room for every designator clear of every courtyard."
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
-  # track_width: 42 line(s) reported on the board
+    accepted_by: "owner (signed on behalf, session 2026-11-14)"
+    accepted_on: "2026-11-14"
+  # track_width: 2 line(s) reported on the board
   - class: track_width
     severity: WARNING
-    count: 42
-    reason: "A track narrower than its net class's figure. Two lines are the 0.2 mm ground stubs inside the controller's pin field that the owner signed (U401 ground pins, stubs of 0.4 to 1.1 mm). The other 40 are on mains trunk copper that is locked and identical to the previous signed routing; the trunk's own current rating and its clearance rules are separate rules that still fail on any shortfall."
-    accepted_by: "owner (signed on behalf, session 2026-11-12)"
-    accepted_on: "2026-11-12"
+    count: 2
+    reason: "A track narrower than its net class's figure. The two lines are the 0.2 mm ground stubs inside the controller's pin field that the owner signed (U401 ground pins, stubs of 0.4 to 1.1 mm). The 40 lines the earlier routing held on mains trunk copper are gone with the re-lay."
+    accepted_by: "owner (signed on behalf, session 2026-11-14)"
+    accepted_on: "2026-11-14"
 
 # Not in this file on purpose: ground_return (the connectors' ground-return ratio, in no recorded relaxation), test_point_courtyard (test points
 # must stay reachable, the owner's strict item), and workmanship_pad_entry, workmanship_pad_corner, workmanship_direction and workmanship_detour
