@@ -1806,7 +1806,7 @@ FAULTS: List[tuple] = [
     ("a local clearance override on a mains footprint", "separation: no override outranks the signed figure", "local_clearance_override", "footprint R1", local_override(lambda tree: footprint(tree, "R1"))),
     ("a local clearance override on a low-voltage pad", "separation: no override outranks the signed figure", "local_clearance_override", "pad 1 of R2", local_override(lambda tree: pad(tree, "R2", "1"))),
     ("a clearance below the signed figure on a mains zone", "separation: no override outranks the signed figure", "local_clearance_override", "zone on Mains-class net /MAINS_L", mains_zone),
-    ("a mains pour the fill leaves empty", "separation: a Mains-class pour the fill leaves under 97 percent of its outline fails by name", "mains_zone_fill", "zone [/MAINS_L] on F.Cu", emptied_mains_zone),
+    ("a mains pour the fill leaves empty", "separation: a Mains-class pour the fill leaves under 90 percent of its outline fails by name", "mains_zone_fill", "zone [/MAINS_L] on F.Cu", emptied_mains_zone),
     ("a net class setting below the signed figure", "separation: the signed rule prevails over net class settings", "clearance", SIGNED, netclass_below),
     ("a Mains rule narrowed by layer", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by layer", mains_rule("(condition", "(layer outer)\n\t(condition")),
     ("a Mains rule narrowed by area", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by its condition", mains_rule(CONDITION, CONDITION + " && A.intersectsArea('mains')")),

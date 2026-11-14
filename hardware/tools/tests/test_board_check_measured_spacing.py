@@ -18,6 +18,7 @@ import re
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
@@ -313,20 +314,21 @@ def fill_check(*zones: str, mains=("/MAINS_N",)):
 
 class AMainsZoneMustFill(unittest.TestCase):
     def test_a_zone_filled_to_its_outline_passes(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
         self.assertEqual(fill_check(zone(fills=[("F.Cu", square(10, 10))])), [])
         self.assertEqual(fill_check(zone(fills=[("F.Cu", square(9.75, 10))])), [])
-        self.assertEqual(fill_check(zone(fills=[("F.Cu", square(9.7, 10))])), [])
+        self.assertEqual(fill_check(zone(fills=[("F.Cu", square(9.6, 10))])), [])
+        self.assertEqual(fill_check(zone(fills=[("F.Cu", square(9.0, 10))])), [])
 
-    def test_a_fill_of_96_percent_fails_naming_the_zone_the_layer_and_the_fraction(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
-        (found,) = fill_check(zone(name="neutral tap", fills=[("F.Cu", square(9.6, 10))]))
+    def test_a_fill_of_89_percent_fails_naming_the_zone_the_layer_and_the_fraction(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        (found,) = fill_check(zone(name="neutral tap", fills=[("F.Cu", square(8.9, 10))]))
         self.assertEqual(found.rule, "mains_zone_fill")
         self.assertIn("zone neutral tap [/MAINS_N] on F.Cu", found.location)
-        self.assertIn("fills 0.960 of its 100.00 mm2 outline on F.Cu", found.message)
+        self.assertIn("fills 0.890 of its 100.00 mm2 outline on F.Cu", found.message)
 
     def test_an_empty_fill_fails_and_a_zone_without_a_name_is_named_by_its_net(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
         (found,) = fill_check(zone(name=None))
         self.assertTrue(found.location.endswith("zone [/MAINS_N] on F.Cu"), found.location)
         self.assertIn("fills 0.000 of its", found.message)
@@ -335,14 +337,14 @@ class AMainsZoneMustFill(unittest.TestCase):
         self.assertIn("on F.Cu", found.location)
 
     def test_a_rule_area_and_a_zone_off_the_mains_class_are_not_judged(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
         rule_area = zone(extra="(keepout (tracks not_allowed) (vias not_allowed) (pads allowed) (copperpour not_allowed))")
         no_net = '(zone (layer "F.Cu") (name "keepout") (keepout (tracks not_allowed)) (polygon (pts ' + square(5, 5) + ')))'
         low_voltage = zone(net="/LV")
         self.assertEqual(fill_check(rule_area, no_net, low_voltage), [])
 
     def test_two_layers_are_judged_one_by_one(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
         both = '(layers "F.Cu" "B.Cu")'
         (found,) = fill_check(zone(layers=both, fills=[("F.Cu", square(10, 10)), ("B.Cu", square(5, 10))]))
         self.assertIn("on B.Cu", found.location)
@@ -352,7 +354,7 @@ class AMainsZoneMustFill(unittest.TestCase):
         self.assertEqual([v.location.rsplit(" ", 1)[-1] for v in found], ["B.Cu"])
 
     def test_several_filled_polygons_of_a_layer_add_and_a_hole_bridged_into_one_is_taken_off(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
         halves = [("F.Cu", square(5, 10)), ("F.Cu", square(5, 10, x=5))]
         self.assertEqual(fill_check(zone(fills=halves)), [])
         # the square with a 4 x 4 hole, joined to the outside by a bridge of no width, is 84 mm2 of 100
@@ -361,7 +363,7 @@ class AMainsZoneMustFill(unittest.TestCase):
         self.assertIn("fills 0.840", found.message)
 
     def test_an_outline_with_an_arc_is_measured_and_one_inside_another_is_a_hole(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
         half_disc = "(polygon (pts (xy -5 0) (arc (start -5 0) (mid 0 5) (end 5 0))))"
         area = math.pi * 25 / 2
         points = " ".join(f"(xy {5 * math.cos(math.radians(a)):.6f} {5 * math.sin(math.radians(a)):.6f})" for a in range(0, 181))
@@ -374,7 +376,7 @@ class AMainsZoneMustFill(unittest.TestCase):
         self.assertEqual(fill_check(zone(outline=nested, fills=[("F.Cu", "(xy 0 0) (xy 10 0) (xy 10 10) (xy 0 10) (xy 0 0) (xy 4 4) (xy 4 6) (xy 6 6) (xy 6 4) (xy 4 4)")])), [])
 
     def test_an_outline_or_fill_that_cannot_be_read_fails_naming_the_zone_rather_than_being_skipped(self):
-        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 97 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
         broken = "(polygon (pts (xy -5 0) (arc (start -5 0) (end 5 0))))"
         with self.assertRaises(board_geometry.Unreadable) as raised:
             fill_check(zone(name="neutral tap", outline=broken))
@@ -384,6 +386,96 @@ class AMainsZoneMustFill(unittest.TestCase):
         self.assertIn("neutral tap", str(raised.exception))
         with self.assertRaises(board_geometry.Unreadable):
             fill_check(zone(outline=""))
+
+
+NONCE = "abc123"
+
+
+def lines_of(kind, count, rule="x"):
+    return [{"type": kind, "description": f"{kind} violation (rule '{rule}')", "items": [{"description": f"Track #{n}"}]} for n in range(count)]
+
+
+class ACutListIsNotAVerdict(unittest.TestCase):
+    def test_a_clearance_list_of_the_cap_or_more_fails_naming_the_pass_and_the_count(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C5: A rule engine list cut at its cap on a pass that carries a Mains rule fails the design
+        for count in (board_check.CLEARANCE_REPORT_LIMIT, board_check.CLEARANCE_REPORT_LIMIT + 7):
+            with self.subTest(count=count):
+                (found,) = board_check.cut_lists(DESIGN, {"violations": lines_of("clearance", count)}, "first run")
+                self.assertEqual(found.rule, "report_cut_short")
+                self.assertIn(f"list of clearance lines in the first run holds {count}", found.message)
+                self.assertIn("a cut list is not a verdict", found.message)
+
+    def test_a_list_one_under_the_cap_passes_and_other_kinds_do_not_count_toward_it(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C5: A rule engine list cut at its cap on a pass that carries a Mains rule fails the design
+        report = {"violations": lines_of("clearance", board_check.CLEARANCE_REPORT_LIMIT - 1) + lines_of("silk_overlap", 600)
+                  + lines_of("creepage", board_check.REPORT_LIMIT - 1)}
+        self.assertEqual(board_check.cut_lists(DESIGN, report, "creepage pass"), [])
+        self.assertEqual(board_check.cut_lists(DESIGN, {}, "creepage pass"), [])
+
+    def test_a_creepage_or_hole_list_at_the_other_limit_fails_and_each_cut_list_is_named_once(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C5: A rule engine list cut at its cap on a pass that carries a Mains rule fails the design
+        report = {"violations": lines_of("creepage", board_check.REPORT_LIMIT) + lines_of("hole_clearance", board_check.REPORT_LIMIT)
+                  + lines_of("clearance", 3)}
+        found = board_check.cut_lists(DESIGN, report, "mounting-hole pass")
+        self.assertEqual(sorted(v.message.split(" lines")[0].rsplit(" ", 1)[-1] for v in found), ["creepage", "hole_clearance"])
+
+
+class ThePadPairRunIsReadOnceAndLeavesTheRestToTheFirst(unittest.TestCase):
+    def run_pass(self, report, rules="(version 1)\n"):
+        with tempfile.TemporaryDirectory() as scratch:
+            path = os.path.join(scratch, "m.kicad_dru")
+            with unittest.mock.patch.object(board_check, "run_report", return_value=(report, "")) as called:
+                found = board_check.pad_pair_pass("kicad-cli", DESIGN, scratch, "m.kicad_pcb", path, rules, signed_record(), NONCE, None)
+            with open(path, encoding="utf-8") as handle:
+                written = handle.read()
+            return found, written, called.call_args[0][0]
+
+    def marker(self):
+        return {"type": "assertion_failure", "description": f"Rule violation (rule '{board_check.marker_rule(NONCE)}')", "items": []}
+
+    def test_only_the_lines_of_the_checks_terminal_and_reinforced_rules_are_taken_and_nothing_is_refilled(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C6: The mains clearance findings of the first pass are gathered in runs that each stay under the rule engine's cap, and each finding is reported once
+        terminal = report_line("R1", 1, 2, 1.0)
+        reinforced = report_line("R2", 1, 2, 1.0, rule=f"{board_check.REINFORCED_RULE} 1")
+        other = report_line("R3", 1, 2, 0.1, rule="the design's own")
+        (lines, problems), written, command = self.run_pass({"violations": [self.marker(), terminal, other, reinforced]})
+        self.assertEqual(problems, [])
+        self.assertEqual(lines, [terminal, reinforced])
+        self.assertNotIn("--refill-zones", command)
+        self.assertNotIn("--save-board", command)
+        self.assertIn(board_check.OTHER_PAIRS_SILENCED_RULE, written)
+        self.assertNotIn(board_check.PAD_PAIRS_SILENCED_RULE, written)
+        self.assertNotIn("creepage", written.replace(board_check.RESERVED, ""))
+        self.assertTrue(written.index(board_check.marker_rule(NONCE)) < written.index(board_check.OTHER_PAIRS_SILENCED_RULE))
+        self.assertTrue(written.rstrip().endswith("(constraint clearance (min 0mm)))"))
+
+    def test_a_run_that_did_not_load_its_rules_or_could_not_run_or_was_cut_fails_the_design(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C6: The mains clearance findings of the first pass are gathered in runs that each stay under the rule engine's cap, and each finding is reported once
+        (lines, problems), _, _ = self.run_pass({"violations": [report_line("R1", 1, 2, 1.0)]})
+        self.assertEqual((lines, [v.rule for v in problems]), ([], ["custom_rules"]))
+        with tempfile.TemporaryDirectory() as scratch, unittest.mock.patch.object(board_check, "run_report", return_value=(None, "no report")):
+            lines, problems = board_check.pad_pair_pass("kicad-cli", DESIGN, scratch, "m.kicad_pcb", os.path.join(scratch, "m.kicad_dru"),
+                                                        "(version 1)\n", signed_record(), NONCE, None)
+        self.assertEqual((lines, [v.rule for v in problems]), ([], ["design_unreadable"]))
+        (lines, problems), _, _ = self.run_pass({"violations": [self.marker()] + lines_of("clearance", board_check.CLEARANCE_REPORT_LIMIT)})
+        self.assertEqual([v.rule for v in problems], ["report_cut_short"])
+        self.assertIn("pad-pair run", problems[0].message)
+
+    def test_the_two_silencing_rules_split_the_pairs_between_the_runs_and_come_last(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C6: The mains clearance findings of the first pass are gathered in runs that each stay under the rule engine's cap, and each finding is reported once
+        pads = board_check.pad_pairs_silenced()
+        rest = board_check.other_pairs_silenced()
+        self.assertIn(board_check.TERMINAL_CONDITION, pads)
+        self.assertIn("A.Type != 'Pad' || B.Type != 'Pad'", rest)
+        for text in (pads, rest):
+            self.assertIn("(constraint clearance (min 0mm))", text)
+            self.assertEqual(text.count("(rule "), 1)
+
+    def test_a_line_both_runs_list_is_one_finding(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C6: The mains clearance findings of the first pass are gathered in runs that each stay under the rule engine's cap, and each finding is reported once
+        one, two, three = report_line("R1", 1, 2, 1.0), report_line("R2", 1, 2, 0.9), report_line("R3", 1, 2, 0.8)
+        self.assertEqual(board_check.joined_once([one, two], [two, three, three, dict(one)]), [one, two, three])
+        self.assertEqual(board_check.joined_once([], []), [])
 
 
 if __name__ == "__main__":

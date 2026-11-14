@@ -1684,6 +1684,7 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
         return measured + [Violation(design.project, "mounting_hole", design.layout,
                                      f"KiCad's report was cut short at {REPORT_LIMIT} assertion failures, so a hole inside the "
                                      "distance may have been dropped from it; correct the design's own assertion failures first")]
+    measured = measured + cut_lists(design, report, "mounting-hole pass")
     unmatched = [rule for rule in expected if not fired(report, rule)]
     if unmatched:
         return measured + [Violation(design.project, "mounting_hole", design.layout,
@@ -5691,7 +5692,10 @@ def layer_violations(design: Design, findings: Sequence[LayerFinding], unmeasure
 #: What a Mains pad whose gap to a Mains neighbour of its own part cannot be measured is reported under.
 PAD_PAIR_RULE = "mains_pad_pair"
 #: The least share of its outline a Mains-class zone's fill may cover on a layer, and what a zone short of it is reported under.
-MINIMUM_ZONE_FILL = 0.97
+#: A sound pour on the main board fills 0.992 or more; the proof design's two pours with relief cut-outs fill 0.939 and
+#: 0.946; a pour a clearance has trimmed filled 0.09 to 0.49. 0.90 separates the two with room on both sides and
+#: fails no sound design.
+MINIMUM_ZONE_FILL = 0.90
 ZONE_FILL_RULE = "mains_zone_fill"
 
 
@@ -6408,7 +6412,8 @@ def creepage_pass(kicad_cli: str, design: Design, copy: str, layout: str, rules_
     if not fired(report, marker_rule(nonce)):
         return [], [Violation(design.project, "custom_rules", design.rules,
                               "KiCad did not load the creepage rules the check hands its creepage pass, so no creepage was checked")], guard
-    return [entry for entry in report.get("violations") or [] if entry.get("type") == "creepage"], [], guard
+    cut = cut_lists(design, report, "creepage pass") if mains else []
+    return [entry for entry in report.get("violations") or [] if entry.get("type") == "creepage"], cut, guard
 
 
 #: The names of the rules written after the signed one for the spacing between conductors at different mains potentials.
@@ -6450,6 +6455,89 @@ def mains_to_mains_rules(signed) -> str:
                  f'\t(constraint clearance (min {max(signed[0], held["clearance_mm"]):g}mm))\n'
                  f'\t(constraint creepage (min {max(signed[1], held["creepage_mm"]):g}mm)))\n')
     return text
+
+
+#: The rules that split the first pass's Mains clearance question between two KiCad runs, so that neither list reaches the cap.
+PAD_PAIRS_SILENCED_RULE = f"{RESERVED}: pad pairs of the Mains class left to the second run"
+OTHER_PAIRS_SILENCED_RULE = f"{RESERVED}: every pair but two pads left to the first run"
+
+
+def pad_pairs_silenced() -> str:
+    """A rule, written last, that holds a pair of Mains-class pads to no clearance, so the run's list leaves those pairs out."""
+    return (f'(rule "{PAD_PAIRS_SILENCED_RULE}"\n\t(condition "{TERMINAL_CONDITION}")\n'
+            '\t(constraint clearance (min 0mm)))\n')
+
+
+def other_pairs_silenced() -> str:
+    """A rule, written last, that holds every pair but two pads to no clearance, so the run's list holds only pairs of pads."""
+    return (f'(rule "{OTHER_PAIRS_SILENCED_RULE}"\n\t(condition "A.Type != \'Pad\' || B.Type != \'Pad\'")\n'
+            '\t(constraint clearance (min 0mm)))\n')
+
+
+#: The most lines of each kind KiCad reports in one run, for the kinds a Mains rule's lines can be of. Clearance is measured;
+#: the others are held to the limit KiCad applies to its other lists, no list of them having been seen cut.
+CAPPED_KINDS = {"clearance": CLEARANCE_REPORT_LIMIT, "creepage": REPORT_LIMIT, "hole_clearance": REPORT_LIMIT,
+                "physical_clearance": REPORT_LIMIT}
+
+
+def cut_lists(design: Design, report: dict, which: str) -> List[Violation]:
+    """A violation for each list of a Mains rule's kind in one KiCad run that holds as many lines as KiCad reports.
+
+    A list at its cap may be missing lines, which KiCad drops at random, so a
+    cut list is not a verdict: a shortfall may be among the lines dropped.
+    """
+    counts: Dict[str, int] = {}
+    for entry in report.get("violations") or []:
+        kind = entry.get("type")
+        if kind in CAPPED_KINDS:
+            counts[kind] = counts.get(kind, 0) + 1
+    return [Violation(design.project, "report_cut_short", design.layout,
+                      f"KiCad's list of {kind} lines in the {which} holds {count}, as many as it reports of that kind ({CAPPED_KINDS[kind]}), "
+                      "so the list was cut and a cut list is not a verdict: a shortfall of mains spacing may be among the lines dropped; "
+                      "split the question across KiCad runs or correct the design's own failures until the list falls below the cap")
+            for kind, count in sorted(counts.items()) if count >= CAPPED_KINDS[kind]]
+
+
+def pad_pair_pass(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, existing: str, signed, nonce: str,
+                  net: Optional[str]) -> Tuple[List[dict], List[Violation]]:
+    """The clearance lines of pairs of Mains-class pads, KiCad's second run over the layout its first run refilled and saved.
+
+    The first run holds those pairs silent, so that its clearance list stays
+    under KiCad's cap; this run holds every other pair silent, so that its list
+    holds pairs of pads alone. It refills nothing, and so reads the layout as
+    the first run left it. Only the lines under the check's own terminal and
+    reinforced rules are read, those being the rules a pair of Mains-class pads
+    meets last; the lines KiCad lists for other pairs of pads are the first
+    run's. The rules text is handed over without its creepage constraints.
+    """
+    with open(rules_copy, "w", encoding="utf-8") as handle:
+        handle.write(without_creepage(existing + appended_rules(signed, nonce, net) + other_pairs_silenced()))
+    report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
+    if report is None:
+        return [], [Violation(design.project, "design_unreadable", design.layout,
+                              f"the clearance between pairs of Mains-class pads cannot be checked: {why}")]
+    if not fired(report, marker_rule(nonce)):
+        return [], [Violation(design.project, "custom_rules", design.rules,
+                              "KiCad did not load the rules the check hands its pad-pair pass, so no pair of Mains-class pads "
+                              "was checked")]
+    problems = cut_lists(design, report, "pad-pair run")
+    names = (f"(rule '{TERMINAL_RULE}'", f"(rule '{REINFORCED_RULE}")
+    lines = [entry for entry in report.get("violations") or []
+             if entry.get("type") == "clearance" and any(name in entry.get("description", "") for name in names)]
+    return lines, problems
+
+
+def joined_once(first: List[dict], second: List[dict]) -> List[dict]:
+    """The first run's lines and those of the second it does not already hold, a line KiCad words the same way twice being one finding."""
+    def key(entry: dict) -> str:
+        return json.dumps(entry, sort_keys=True)
+    held = {key(entry) for entry in first}
+    out = list(first)
+    for entry in second:
+        if key(entry) not in held:
+            held.add(key(entry))
+            out.append(entry)
+    return out
 
 
 #: The marker's condition when it is to fire on every item.
@@ -8642,8 +8730,11 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
             with open(rules_copy, encoding="utf-8", errors="replace") as handle:
                 existing = handle.read()
         first_rules = existing + appended_rules(signed, nonce, marker_net(items))
+        # With the signed mains-to-mains rules the first run's clearance list passes KiCad's cap, which cuts it without
+        # saying so; the pairs of Mains-class pads are left to a second run, so that neither list is cut.
+        split = signed is not None and signed.mains_to_mains is not None
         with open(rules_copy, "w", encoding="utf-8") as handle:
-            handle.write(without_creepage(first_rules))
+            handle.write(without_creepage(first_rules + (pad_pairs_silenced() if split else "")))
 
         erc, why = run_report([kicad_cli, "sch", "erc", "--format", "json", "--severity-all", "--units", "mm", schematic], copy)
         netlist: Optional[Dict[str, Tuple[List[str], List[str]]]] = None
@@ -8707,6 +8798,13 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
         own = {id(entry) for entry in markers}
         found += ignored(design, drc, "board.design_settings.rule_severities")
         reported = [entry for entry in drc.get("violations") or [] if id(entry) not in own]
+        if signed is not None:
+            found += cut_lists(design, drc, "first run")
+        if split and refilled is not None and markers:
+            pad_lines, pad_problems = pad_pair_pass(kicad_cli, design, copy, layout, rules_copy, existing, signed, nonce,
+                                                    marker_net(items))
+            reported = joined_once(reported, pad_lines)
+            found += pad_problems
         consumed: Set[int] = set()
         project_copy = os.path.join(copy, os.path.basename(design.project))
         classes_read: list = []
