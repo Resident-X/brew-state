@@ -102,7 +102,7 @@ Status: **criterion C17 is not met.** What the records say, in full:
 
 ## Mask, silkscreen and assembly
 
-No record chooses a solder mask colour or a silkscreen colour. The maker's quote defaults read on 2026-10-13 are green mask and white silkscreen; a colour other than green, red, yellow, blue or purple has a wider minimum mask bridge (black and white, 0.13 mm against 0.10 mm), so any change to a colour is a decision for the quote. The board's designators are on F.SilkS (and B.SilkS for the test pads). Assembly options (side, count, which parts) are in `parts-specification.yaml` and the cost estimate, not here.
+No record chooses a solder mask colour or a silkscreen colour. The maker's quote defaults read on 2026-10-13 are green mask and white silkscreen; a colour other than green, red, yellow, blue or purple has a wider minimum mask bridge (black and white, 0.13 mm against 0.10 mm), so any change to a colour is a decision for the quote. The board's designators are on F.SilkS (and B.SilkS for the test pads), 376 of 446 of them after the rebuild of 2026-11-14 (`layout-plan.md`, MFG-7 states the 70 that are not); the mains warning stands on both sides inside the mains area, 2.0 mm text with an 8 mm triangle on the back and 1.5 mm text with a 6 mm triangle on the front, and F101's rating and the name of each tab stand beside the part. Assembly options (side, count, which parts) are in `parts-specification.yaml` and the cost estimate, not here.
 
 ### Tank reed J862, fitted by hand
 
@@ -112,6 +112,10 @@ The tank reed element is a glass-bodied switch that stands on the back of the bo
 2. Form the leads to the 20.0 mm pitch and check the spacing after forming against the footprint's 20.0 mm: the leads must go in without being sprung.
 3. The maker's minimum distance from the glass seal to the first bend is not stated by the records: hold the lead with pliers between the seal and the bend, and bend on the pliers' far side, so no bending force reaches the glass.
 4. Do not cut the leads with a shear that shocks the glass: hold the lead with pliers between the seal and the cut, and cut on the far side of the pliers.
+
+### Tab column, west edge
+
+When the tabs and their leads are fitted by hand, support the board under the tab column near (8.5, 95.3) mm with an insulating rest post, so that pushing a lead onto a tab does not flex the board at the notch beside the column.
 
 ## Unresolved before ordering
 
