@@ -2964,13 +2964,13 @@
 		(at 7 39.3)
 		(descr "TE Connectivity 63849-1 Faston .250 PC tab, two 1.40 mm plated holes 5.08 mm apart, both pads one terminal; blade 6.35 x 0.8 stands up, wide face along X")
 		(property "Reference" "J107"
-			(at 5.8395 2.6498 0)
+			(at -0.2996 2.7516 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "d81b3d67-6fdb-46f8-be52-5264bafa9efd")
 			(effects
 				(font
-					(size 0.8 0.8)
+					(size 1 1)
 					(thickness 0.15)
 				)
 			)
@@ -32542,7 +32542,7 @@
 		(at 7 29.7)
 		(descr "TE Connectivity 63849-1 Faston .250 PC tab, two 1.40 mm plated holes 5.08 mm apart, both pads one terminal; blade 6.35 x 0.8 stands up, wide face along X")
 		(property "Reference" "J108"
-			(at -0.2997 -4.0984 0)
+			(at -0.2997 2.7516 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "4269013c-7840-4ed8-ab36-2f3f5d199db7")
@@ -66409,7 +66409,7 @@
 		(at 7 21)
 		(descr "TE Connectivity 63849-1 Faston .250 PC tab, two 1.40 mm plated holes 5.08 mm apart, both pads one terminal; blade 6.35 x 0.8 stands up, wide face along X")
 		(property "Reference" "J109"
-			(at -0.292 -4.0984 0)
+			(at -0.292 2.7516 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "64c95bfc-5b32-49de-adb9-de274b3899ba")
@@ -75602,7 +75602,7 @@
 		(at 27.8 31.1)
 		(descr "XC Electronics BLX-A 5x20 fuse holder, two flat legs 1.5 x 0.35 mm, 22.0 mm apart, plated slot 1.1 x 2.2 (long axis across the fuse)")
 		(property "Reference" "F701"
-			(at -18.2989 2.9514 0)
+			(at -0.0238 -0.8325 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "0c3606bb-9d71-40a9-ba50-a05e6276e760")
@@ -76246,7 +76246,7 @@
 		(at 27.8 20.5)
 		(descr "XC Electronics BLX-A 5x20 fuse holder, two flat legs 1.5 x 0.35 mm, 22.0 mm apart, plated slot 1.1 x 2.2 (long axis across the fuse)")
 		(property "Reference" "F711"
-			(at -14.232 0.044 90)
+			(at -0.0238 -0.8322 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "5623db55-26c7-4a3c-99c0-8bf499d99986")
@@ -88244,7 +88244,7 @@
 		(at 27.8 41.2 180)
 		(descr "XC Electronics BLX-A 5x20 fuse holder, two flat legs 1.5 x 0.35 mm, 22.0 mm apart, plated slot 1.1 x 2.2 (long axis across the fuse)")
 		(property "Reference" "F731"
-			(at 17.9089 -4.304 0)
+			(at 0.0238 0.8562 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "65b4413f-5ca8-40f7-9d4b-9bf752b8b078")
@@ -102227,10 +102227,43 @@
 		(layer "Edge.Cuts")
 		(uuid "b942e56c-73f7-4c7a-b6b0-687d70b23e94")
 	)
+	(gr_text "T800mA 250V"
+		(at 27.7996 32.0234 0)
+		(layer "F.SilkS")
+		(uuid "133084e9-ebb3-5ed3-9812-5f8867cd881e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "T500mA 250V"
+		(at 27.7996 21.4231 0)
+		(layer "F.SilkS")
+		(uuid "b92f2f98-2c34-54bd-a799-989cfebcad0e")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "T400mA 250V"
+		(at 27.7996 42.1471 0)
+		(layer "F.SilkS")
+		(uuid "858e101d-94c2-59ca-b628-5ea386fabf86")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
 	(gr_text "DANGER"
 		(at 11.6514 12.4202 0)
 		(layer "F.SilkS")
-		(uuid "07f6b0ae-878b-59fc-afc1-b89a60773cf1")
+		(uuid "0de62561-c1eb-55af-a74b-c6707fea8874")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102241,7 +102274,7 @@
 	(gr_text "MAINS VOLTAGE"
 		(at 11.6528 14.5028 0)
 		(layer "F.SilkS")
-		(uuid "2f1613d0-e568-5867-9c6f-7fcb62ef64cb")
+		(uuid "7dcf2657-068a-570b-84c2-6eaee80cfd3d")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102252,7 +102285,7 @@
 	(gr_text "DANGER"
 		(at 30.348 13.7433 0)
 		(layer "B.SilkS")
-		(uuid "3fec4852-ea69-508f-aa7c-0d14da57831d")
+		(uuid "6bb35570-c78d-5ed1-841e-d21419f28932")
 		(effects
 			(font
 				(size 2 2)
@@ -102264,7 +102297,7 @@
 	(gr_text "MAINS VOLTAGE"
 		(at 30.3469 16.5496 0)
 		(layer "B.SilkS")
-		(uuid "ec2d030a-5bae-55a5-a980-4abfe1661bb6")
+		(uuid "9250586a-92b7-53c6-8fd9-31d3d858c199")
 		(effects
 			(font
 				(size 2 2)
@@ -102276,7 +102309,7 @@
 	(gr_text "EM7000 CONTROLLER"
 		(at 94.951 6.1704 0)
 		(layer "F.SilkS")
-		(uuid "4fca95b9-6f31-58cb-ab10-795b9f5c878e")
+		(uuid "9e4229c9-1373-5f99-810c-6188671d2dcf")
 		(effects
 			(font
 				(size 2 2)
@@ -102287,7 +102320,7 @@
 	(gr_text "v2  2026-11"
 		(at 95.0363 9.1893 0)
 		(layer "F.SilkS")
-		(uuid "408512b8-e389-51fa-88f9-bda6cbfcf89a")
+		(uuid "2a4a5a1d-36ba-5b49-8393-65363314dfd0")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102298,7 +102331,7 @@
 	(gr_text "OPEN HARDWARE  PUBLIC DOMAIN"
 		(at 95.0239 12.1 0)
 		(layer "F.SilkS")
-		(uuid "305a7266-f9cc-539c-bd2e-2d8d5eea4445")
+		(uuid "68e39bb2-cfaf-5653-bae3-81e5fd8cb270")
 		(effects
 			(font
 				(size 1 1)
@@ -102309,7 +102342,7 @@
 	(gr_text "JLCJLCJLCJLC"
 		(at 100 8 0)
 		(layer "B.SilkS")
-		(uuid "9a6877e7-4f37-55f5-b8f5-ae758d24afbf")
+		(uuid "8b1887a5-8806-55b2-8f6e-d65896eb2d8d")
 		(effects
 			(font
 				(size 1 1)
@@ -102321,7 +102354,7 @@
 	(gr_text "230 V~ 50 Hz"
 		(at 24.0449 96.9199 0)
 		(layer "F.SilkS")
-		(uuid "6ae5b059-8242-5fb5-a28f-58c047c13f40")
+		(uuid "5512aaa8-b71f-519e-a55c-380e279af5b3")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102332,7 +102365,7 @@
 	(gr_text "MAINS"
 		(at 53.4202 18.0359 90)
 		(layer "F.SilkS")
-		(uuid "cbfec466-3c53-5bff-902b-1e04b5202b1e")
+		(uuid "82ba7aad-994d-5004-8081-62809e652118")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102343,7 +102376,7 @@
 	(gr_text "LOW VOLTAGE"
 		(at 70.9203 24.0357 90)
 		(layer "F.SilkS")
-		(uuid "fe0635ab-e4bc-5e59-b5dd-74cde38dbf4c")
+		(uuid "fdd486fc-830a-5c49-bc1a-e91a8b5f2594")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102354,7 +102387,7 @@
 	(gr_text "MAINS"
 		(at 53.6234 29.024 90)
 		(layer "F.SilkS")
-		(uuid "cb072625-08ca-5381-8a44-38d965991cb0")
+		(uuid "658c94e3-fa37-51f1-b91f-54b25e8e7b1a")
 		(effects
 			(font
 				(size 1 1)
@@ -102365,7 +102398,7 @@
 	(gr_text "LOW VOLTAGE"
 		(at 68.6236 29.0238 90)
 		(layer "F.SilkS")
-		(uuid "3fe0f1b0-8bae-50f9-a7a2-b1056df428c5")
+		(uuid "70260528-bdaf-56e5-bc8a-ae72a375ea07")
 		(effects
 			(font
 				(size 1 1)
@@ -102376,7 +102409,7 @@
 	(gr_text "MAINS"
 		(at 60.1234 83.024 90)
 		(layer "F.SilkS")
-		(uuid "c0c465c2-b52b-5597-a2ae-313270716461")
+		(uuid "d83c4aa4-8dfe-511a-b43f-4875e98d579b")
 		(effects
 			(font
 				(size 1 1)
@@ -102387,7 +102420,7 @@
 	(gr_text "LOW VOLTAGE"
 		(at 65.1236 83.0238 90)
 		(layer "F.SilkS")
-		(uuid "388c8d35-23d0-5226-8804-c0caf6ece7f2")
+		(uuid "cc010e61-c1e6-5687-af1d-557c1013e490")
 		(effects
 			(font
 				(size 1 1)
@@ -102398,7 +102431,7 @@
 	(gr_text "MAINS"
 		(at 48.6234 98.024 90)
 		(layer "F.SilkS")
-		(uuid "ad790a6f-ed1a-5640-b8c1-39972d7cfaca")
+		(uuid "1ac8b373-a762-5f3c-8af6-267730a7cc13")
 		(effects
 			(font
 				(size 1 1)
@@ -102409,7 +102442,7 @@
 	(gr_text "LOW VOLTAGE"
 		(at 51.1236 98.0238 90)
 		(layer "F.SilkS")
-		(uuid "f00f47df-167f-5d79-8421-5580f6bd6473")
+		(uuid "f21a4f94-240b-5fc5-ae5f-8b22927135ba")
 		(effects
 			(font
 				(size 1 1)
@@ -102420,7 +102453,7 @@
 	(gr_text "MAINS"
 		(at 53.2872 28.0359 270)
 		(layer "B.SilkS")
-		(uuid "2cc29aad-f28a-555d-81a2-3a7c3c2f2a7a")
+		(uuid "4e4eeee7-8eb0-5133-8e2a-2c782873e5aa")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102432,7 +102465,7 @@
 	(gr_text "LOW VOLTAGE"
 		(at 60.2871 28.0357 270)
 		(layer "B.SilkS")
-		(uuid "791be69b-238e-56d0-bdc3-ff5a709e7500")
+		(uuid "6e98da67-dfca-5ab6-a597-8dffd6e24124")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102444,7 +102477,7 @@
 	(gr_text "MAINS"
 		(at 59.7872 85.0359 270)
 		(layer "B.SilkS")
-		(uuid "47203a7f-743d-57de-83bc-187f4c18da19")
+		(uuid "820b0ad5-6fc0-5daf-b2dd-1310e58fb1f8")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102456,7 +102489,7 @@
 	(gr_text "LOW VOLTAGE"
 		(at 65.2871 85.0357 270)
 		(layer "B.SilkS")
-		(uuid "18ff8708-8ad9-58fd-a54a-7fd82a4a0db6")
+		(uuid "9597da42-8e9c-5631-8c87-61080e9775dd")
 		(effects
 			(font
 				(size 1.5 1.5)
@@ -102468,7 +102501,7 @@
 	(gr_text "GAUGE_STEP2"
 		(at 96.85 62.3588 270)
 		(layer "B.SilkS")
-		(uuid "05d67c53-f3a3-5394-b44a-9b3c5b81add3")
+		(uuid "970f91c7-f40f-51f1-bc0a-545695c54cf6")
 		(effects
 			(font
 				(size 1 1)
@@ -102480,7 +102513,7 @@
 	(gr_text "GAUGE_DIR2"
 		(at 95.85 51.4121 270)
 		(layer "B.SilkS")
-		(uuid "61f1c5ee-c46b-5816-8e88-1efd91d472ed")
+		(uuid "bfe630ea-4a85-549f-81cb-04c0d3ebb95a")
 		(effects
 			(font
 				(size 1 1)
@@ -102492,7 +102525,7 @@
 	(gr_text "GAUGE_STEP1"
 		(at 92.85 50.8407 270)
 		(layer "B.SilkS")
-		(uuid "f4209238-c25b-5b68-9ee9-25d2fe4749b0")
+		(uuid "44c748bb-9cf2-5904-8689-a85b7e3e16bc")
 		(effects
 			(font
 				(size 1 1)
@@ -102504,7 +102537,7 @@
 	(gr_text "REED BODY THIS SIDE"
 		(at 118.6764 101.5722 270)
 		(layer "B.SilkS")
-		(uuid "7e6d3d2f-a7f5-529e-be6e-9768c32e0c4e")
+		(uuid "edc551d1-b441-57e5-9102-e2431c450fcf")
 		(effects
 			(font
 				(size 1 1)
@@ -102516,7 +102549,18 @@
 	(gr_text "REED: SOLDER THIS SIDE"
 		(at 119.623 101.5151 90)
 		(layer "F.SilkS")
-		(uuid "a3c3caa4-c1ff-51d2-8c4c-da7a39526edd")
+		(uuid "028fdce6-accf-5c79-9826-222e3aee0e03")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(gr_text "COFFEE PUMP"
+		(at 6.7007 43.4573 0)
+		(layer "F.SilkS")
+		(uuid "e7b6d2aa-a3da-5d35-8d04-035ad7be11d5")
 		(effects
 			(font
 				(size 1 1)
@@ -102527,7 +102571,7 @@
 	(gr_text "LINE OUT"
 		(at 6.5897 111.3569 0)
 		(layer "F.SilkS")
-		(uuid "09f671b7-0edf-5bfa-b45b-5797b35375df")
+		(uuid "34df30b3-981e-5739-8350-943f4cdb0e5e")
 		(effects
 			(font
 				(size 1 1)
@@ -102538,7 +102582,7 @@
 	(gr_text "T10A 250V"
 		(at 28.1674 82.9073 0)
 		(layer "F.SilkS")
-		(uuid "3c4bea82-1009-5d4d-b985-ae2440bd3f44")
+		(uuid "f2b8732b-ed43-58e9-938d-419a705cb970")
 		(effects
 			(font
 				(size 1 1)
@@ -102549,7 +102593,7 @@
 	(gr_text "LINE IN"
 		(at 6.6979 96.0069 0)
 		(layer "F.SilkS")
-		(uuid "7946c018-24f1-5731-bd94-4d0daf6e1c89")
+		(uuid "de80fc76-6887-57e8-adc8-d09b8cd3e051")
 		(effects
 			(font
 				(size 1 1)
@@ -102558,9 +102602,9 @@
 		)
 	)
 	(gr_text "STEAM PUMP"
-		(at 6.6769 27.0073 0)
+		(at 6.6769 33.8573 0)
 		(layer "F.SilkS")
-		(uuid "c5e4362e-a1b7-5b2b-bfd9-7205db2467f7")
+		(uuid "7af464d7-28d5-5089-8e0b-7e43134679dc")
 		(effects
 			(font
 				(size 1 1)
@@ -102571,7 +102615,7 @@
 	(gr_text "COFFEE VALVE"
 		(at 6.754 54.0573 0)
 		(layer "F.SilkS")
-		(uuid "7d96a6c4-cbeb-5319-b27f-fc618fa77030")
+		(uuid "7219aa84-04fa-54a4-8cae-f8c38668474f")
 		(effects
 			(font
 				(size 1 1)
@@ -102582,7 +102626,7 @@
 	(gr_text "NEUTRAL IN"
 		(at 15.7527 94.1568 0)
 		(layer "F.SilkS")
-		(uuid "aade1384-8b31-59cb-9bbd-67297bf08adc")
+		(uuid "ed12dde7-068e-5163-bd15-dbc5239c3aa3")
 		(effects
 			(font
 				(size 1 1)
@@ -102591,31 +102635,9 @@
 		)
 	)
 	(gr_text "HOT VALVE"
-		(at 6.6611 18.3073 0)
+		(at 6.6611 25.1573 0)
 		(layer "F.SilkS")
-		(uuid "e1f91d2f-0f31-5825-a3a2-40c2f962cce1")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.15)
-			)
-		)
-	)
-	(gr_text "T800mA 250V"
-		(at 9.5245 35.4573 0)
-		(layer "F.SilkS")
-		(uuid "b05a252e-4552-5acc-adee-a8d4a6ea5692")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.15)
-			)
-		)
-	)
-	(gr_text "T400mA 250V"
-		(at 9.9145 46.9573 0)
-		(layer "F.SilkS")
-		(uuid "b2369443-2f0f-5d0e-856e-fe9dbbee0556")
+		(uuid "d60a3255-ea00-57fa-b007-7543aca85d11")
 		(effects
 			(font
 				(size 1 1)
@@ -102626,18 +102648,7 @@
 	(gr_text "BREW D"
 		(at 122.6893 124.8367 90)
 		(layer "F.SilkS")
-		(uuid "3e858506-c641-51ae-9c36-f4ac6154ad6a")
-		(effects
-			(font
-				(size 0.8 0.8)
-				(thickness 0.15)
-			)
-		)
-	)
-	(gr_text "COFFEE PUMP"
-		(at 6.165 41.9498 0)
-		(layer "F.SilkS")
-		(uuid "7095ee53-874e-5c76-908b-d472179f32cf")
+		(uuid "b3bd7329-4751-5ef2-8df2-7f3c5d265b2d")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102648,7 +102659,7 @@
 	(gr_text "SP2"
 		(at 130.6843 15.1162 90)
 		(layer "F.SilkS")
-		(uuid "dd1a240c-e82d-57cb-b1f8-1850c62bd85e")
+		(uuid "e8e25957-e263-5dcb-8190-5476d3eb792d")
 		(effects
 			(font
 				(size 1 1)
@@ -102659,7 +102670,7 @@
 	(gr_text "WT1 H"
 		(at 100.1608 92.3153 0)
 		(layer "F.SilkS")
-		(uuid "5116defc-45f5-5511-a5d3-5d9e8e1f2083")
+		(uuid "562e8ff7-2bf1-5ce0-b1c1-a8e1cf40d831")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102670,7 +102681,7 @@
 	(gr_text "LINK 3V3"
 		(at 74.0488 29.0235 90)
 		(layer "F.SilkS")
-		(uuid "1c93b65d-4d07-5a1f-a60e-32fed8daaf95")
+		(uuid "8233be8a-16ee-539f-9850-d2f161123a98")
 		(effects
 			(font
 				(size 1 1)
@@ -102681,7 +102692,7 @@
 	(gr_text "WB RETURN"
 		(at 15.1955 78.5493 0)
 		(layer "F.SilkS")
-		(uuid "5213890d-471c-5b8f-93c3-6b1900dbfc1e")
+		(uuid "fec41eec-663b-59a6-b38c-e1e8dcafa085")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102692,7 +102703,7 @@
 	(gr_text "TEMP C"
 		(at 91.1128 24.7956 90)
 		(layer "F.SilkS")
-		(uuid "1489357b-ca27-5fba-b22b-06300d1a2116")
+		(uuid "44f6d0d3-3c1e-5732-a3af-c1a430d779d0")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102703,7 +102714,7 @@
 	(gr_text "LINK"
 		(at 123.3838 13.3384 90)
 		(layer "F.SilkS")
-		(uuid "18070401-b188-5ade-8ca9-bfe80cb150ad")
+		(uuid "13471da6-5149-5380-a00e-8abf5d76f534")
 		(effects
 			(font
 				(size 1 1)
@@ -102714,7 +102725,7 @@
 	(gr_text "STM D"
 		(at 102.3826 122.0613 0)
 		(layer "F.SilkS")
-		(uuid "827e32cb-0faf-5aba-a340-53e27fabec94")
+		(uuid "7ab93dc4-a010-5c17-ab78-0588232050db")
 		(effects
 			(font
 				(size 1 1)
@@ -102725,7 +102736,7 @@
 	(gr_text "LINK"
 		(at 114.3478 22.9784 90)
 		(layer "F.SilkS")
-		(uuid "34bcac36-351b-57ac-9114-d5c1ffd0348a")
+		(uuid "d0c1b5ce-b8f6-5c0f-9acd-4583584e0429")
 		(effects
 			(font
 				(size 1 1)
@@ -102736,7 +102747,7 @@
 	(gr_text "LINK LIVE"
 		(at 41.5568 93.9297 90)
 		(layer "F.SilkS")
-		(uuid "0b526816-1543-532a-89b1-34dd7b633d59")
+		(uuid "c3232eb2-016f-5d06-8cc7-7f06c41318da")
 		(effects
 			(font
 				(size 1 1)
@@ -102747,7 +102758,7 @@
 	(gr_text "WB LV10"
 		(at 130.7408 46.1754 90)
 		(layer "F.SilkS")
-		(uuid "dc1ec62f-9dc3-5e5c-8908-25e128eb016f")
+		(uuid "f65123ed-ad24-5737-828f-207db3464045")
 		(effects
 			(font
 				(size 1 1)
@@ -102758,7 +102769,7 @@
 	(gr_text "USB PANEL"
 		(at 82.7888 82.7254 0)
 		(layer "F.SilkS")
-		(uuid "a2ac4a80-d333-5b12-bb4c-1653cc10722d")
+		(uuid "62ef404b-60f7-5ca4-b84f-26dcd3c0330a")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102769,7 +102780,7 @@
 	(gr_text "TEMP W"
 		(at 125.6603 52.3445 90)
 		(layer "F.SilkS")
-		(uuid "80cd1a46-b345-5e31-832c-f77da7f2dba5")
+		(uuid "8afa1a28-df53-51bf-8a76-b267686415be")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102780,7 +102791,7 @@
 	(gr_text "SPARE AN2 H"
 		(at 107.6553 9.8833 0)
 		(layer "F.SilkS")
-		(uuid "200c8772-b898-5533-b12c-144ad799c615")
+		(uuid "5063f75a-3dbf-5126-8d22-56707f1e72a6")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102791,7 +102802,7 @@
 	(gr_text "SPARE A"
 		(at 103.0933 29.6812 90)
 		(layer "F.SilkS")
-		(uuid "8ea583b0-c4a8-501d-ab19-1071afd55c54")
+		(uuid "b6929c5d-2530-5b36-b645-1b5ad03c4c66")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102800,12 +102811,12 @@
 		)
 	)
 	(gr_text "LINK MOD"
-		(at 28.2097 47.6494 0)
+		(at 14.2668 50.0082 90)
 		(layer "F.SilkS")
-		(uuid "abe45921-d967-5992-828a-02bf9ae10b28")
+		(uuid "6022f493-c17d-55be-bd1d-7aab99e477b8")
 		(effects
 			(font
-				(size 0.8 0.8)
+				(size 1 1)
 				(thickness 0.15)
 			)
 		)
@@ -102813,7 +102824,7 @@
 	(gr_text "WT2 H"
 		(at 106.4803 114.5732 90)
 		(layer "F.SilkS")
-		(uuid "a0bab737-5827-55be-91d6-1ccb918d5e31")
+		(uuid "8fe863c5-9012-573d-833e-8f3c93baff8f")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102824,7 +102835,7 @@
 	(gr_text "BREW A"
 		(at 107.8633 97.1898 90)
 		(layer "F.SilkS")
-		(uuid "e53e3317-973b-59c3-844c-e83b456728e8")
+		(uuid "0cbbb325-0824-5d7c-87d1-145835574477")
 		(effects
 			(font
 				(size 0.8 0.8)
@@ -102835,21 +102846,10 @@
 	(gr_text "LINK"
 		(at 118.8094 47.2201 90)
 		(layer "F.SilkS")
-		(uuid "fed24040-2912-5b24-b322-bb233c01adf1")
+		(uuid "0c837bb0-9599-5747-a39e-804460a313c3")
 		(effects
 			(font
 				(size 0.8 0.8)
-				(thickness 0.15)
-			)
-		)
-	)
-	(gr_text "T500mA 250V"
-		(at 17.5673 8.2154 90)
-		(layer "F.SilkS")
-		(uuid "7cc2bad1-14d0-5498-9de1-491ad59b7fa4")
-		(effects
-			(font
-				(size 1 1)
 				(thickness 0.15)
 			)
 		)
@@ -103897,9 +103897,9 @@
 		)
 	)
 	(gr_text "LOWWATER_K"
-		(at 118.9771 47.8468 270)
+		(at 114.4271 46.2468 270)
 		(layer "B.SilkS")
-		(uuid "b1ec3c37-b423-5dbe-b099-fd8fabbb5c8a")
+		(uuid "288a52e1-6b85-5b82-a27b-82892ad9079e")
 		(effects
 			(font
 				(size 1 1)
