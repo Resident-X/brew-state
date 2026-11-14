@@ -4993,6 +4993,151 @@ def unsized_pads(design: Design, layout: Layout) -> List[Violation]:
             for pad in layout.unsized]
 
 
+#: The most a pad may stand off a straight line, in mm, and still be on it.
+ROW_TOLERANCE = 0.05
+#: Fewest distinct numbers a footprint needs for its direction to be judged.
+NUMBERING_MIN_NUMBERS = 4
+
+
+def hull_corners(points: Sequence[board_geometry.Point]) -> List[board_geometry.Point]:
+    """The corners of the convex hull of `points`, in order, with no point that only lies along a side."""
+    ordered = sorted(set(points))
+    if len(ordered) < 3:
+        return ordered
+
+    def half(sequence):
+        chain: List[board_geometry.Point] = []
+        for point in sequence:
+            while len(chain) >= 2 and ((chain[-1][0] - chain[-2][0]) * (point[1] - chain[-2][1])
+                                       - (chain[-1][1] - chain[-2][1]) * (point[0] - chain[-2][0])) <= 1e-9:
+                chain.pop()
+            chain.append(point)
+        return chain
+    return half(ordered)[:-1] + half(list(reversed(ordered)))[:-1]
+
+
+def numbered_ring(footprint: list, table: Dict[str, str]) -> Dict[int, board_geometry.Point]:
+    """Where each pad number of a footprint stands on the board, for the numbers that lie round the part.
+
+    Only a numbered pad with copper counts: a pad whose number is not a whole number, a hole with no copper and an
+    opening on a paste or mask layer alone are left out. A pad that lies inside the outline of the rest, such as an
+    exposed centre pad, is left out, and so is a number that more than one of the remaining pads carries.
+    """
+    nodes = sexpr.children(footprint, "pad")
+    centres: List[Tuple[int, board_geometry.Point]] = []
+    for node, pad in zip(nodes, board_geometry.footprint_pads(footprint, table)):
+        kind = str(node[2]) if len(node) > 2 else ""
+        if (kind != "np_thru_hole" and re.fullmatch(r"[0-9]+", pad.number)
+                and any(layer.endswith(".Cu") for layer in pad.layers)):
+            centres.append((int(pad.number), pad.centre))
+    corners = hull_corners([point for _, point in centres])
+    if len(corners) < 3:
+        return {}
+    sides = list(zip(corners, corners[1:] + corners[:1]))
+    ring = [(number, point) for number, point in centres
+            if min(board_geometry.distance_to_segment(point, a, b) for a, b in sides) <= ROW_TOLERANCE]
+    counts: Dict[int, int] = {}
+    for number, _ in ring:
+        counts[number] = counts.get(number, 0) + 1
+    return {number: point for number, point in ring if counts[number] == 1}
+
+
+def on_lines(points: Sequence[board_geometry.Point]) -> Optional[List[List[board_geometry.Point]]]:
+    """The straight lines the points stand in, the line with most points first, or None for more than four.
+
+    Two points are the least a line holds; a point on no such line stands alone.
+    """
+    left = list(points)
+    lines: List[List[board_geometry.Point]] = []
+    while left:
+        best = [left[0]]
+        for i, a in enumerate(left):
+            for b in left[i + 1:]:
+                held = [p for p in left
+                        if abs((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])) / math.dist(a, b) <= ROW_TOLERANCE]
+                if len(held) > len(best):
+                    best = held
+        lines.append(best)
+        left = [p for p in left if p not in best]
+    return lines if len(lines) <= 4 else None
+
+
+def direction_of(line: Sequence[board_geometry.Point]) -> Optional[float]:
+    """The direction of a line of two points or more, in degrees modulo 180, or None for one point."""
+    if len(line) < 2:
+        return None
+    far = max(((a, b) for a in line for b in line), key=lambda pair: math.dist(*pair))
+    return math.degrees(math.atan2(far[1][1] - far[0][1], far[1][0] - far[0][0])) % 180
+
+
+def rows_or_sides(ring: Dict[int, board_geometry.Point]) -> bool:
+    """Whether the pads stand in two parallel rows or on the four sides of a part."""
+    lines = on_lines(list(ring.values()))
+    if lines is None or len(lines) < 2:
+        return False
+    directions = [direction_of(line) for line in lines if len(line) > 1]
+
+    def apart(a: float, b: float) -> float:
+        return min((a - b) % 180, (b - a) % 180)
+    if len(lines) == 2:
+        return len(directions) < 2 or apart(directions[0], directions[1]) <= 1.0
+    if len(lines) != 4 or len(directions) != 4:
+        return False
+    turns = sorted(apart(directions[0], d) for d in directions[1:])
+    return turns[0] <= 1.0 and all(abs(turn - 90) <= 1.0 for turn in turns[1:])
+
+
+def numbered_clockwise(footprint: list, table: Dict[str, str]) -> Optional[bool]:
+    """Whether the pad numbers of a dual-row or four-sided footprint run clockwise round the part as seen from its top,
+    or None when the footprint is not judged: its pads do not stand in two parallel rows or on four sides, it has
+    fewer than four distinct numbers, or its numbers follow no single direction round the part.
+
+    The numbers are taken in ascending order and the turn from each to the next is read about the centroid of the
+    pads, with y pointing down the board as KiCad writes it, so a growing angle is clockwise on the screen. Every turn
+    has to be in the same direction, none of nought (a pad in line with the centroid and another), and all together less than a full turn. A
+    footprint on the back of the board is seen from the back, so the sense is turned about.
+    """
+    ring = numbered_ring(footprint, table)
+    if len(ring) < NUMBERING_MIN_NUMBERS or not rows_or_sides(ring):
+        return None
+    points = [ring[number] for number in sorted(ring)]
+    cx, cy = sum(p[0] for p in points) / len(points), sum(p[1] for p in points) / len(points)
+    angles = [math.degrees(math.atan2(p[1] - cy, p[0] - cx)) for p in points]
+    steps = [(b - a + 180) % 360 - 180 for a, b in zip(angles, angles[1:])]
+    if all(step > 1e-6 for step in steps):
+        clockwise = True
+    elif all(step < -1e-6 for step in steps):
+        clockwise = False
+    else:
+        return None
+    if abs(sum(steps)) >= 360:
+        return None
+    layer = sexpr.child(footprint, "layer")
+    on_back = layer is not None and len(layer) > 1 and str(layer[1]).startswith("B.")
+    return clockwise != on_back
+
+
+def pad_numbering(design: Design, tree: list) -> List[Violation]:
+    """Every footprint of a layout, in two parallel rows or on four sides, whose pad numbers run clockwise as seen from
+    the top of the part. Real dual-row and four-sided packages number counter-clockwise from pin 1, so a footprint that
+    runs the other way is the mirror image of the part and fits it only turned over."""
+    table = board_geometry.net_table(tree)
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        if numbered_clockwise(footprint, table) is not True:
+            continue
+        reference = board_geometry.reference(footprint) or "?"
+        name = str(footprint[1]).split(":")[-1] if len(footprint) > 1 else "?"
+        part = next((str(item[2]) for item in sexpr.children(footprint, "property")
+                     if len(item) > 2 and str(item[1]) == "MPN" and str(item[2]).strip()), "")
+        what = f"{reference} ({name}{', part ' + part if part else ''})"
+        found.append(Violation(design.project, "pad_numbering", what,
+                               f"the pad numbers of {what} run clockwise round the part as seen from its top, the mirror "
+                               "image of the counter-clockwise numbering from pin 1 that a dual-row or four-sided package "
+                               "has, so the part would fit only turned over; number the pads counter-clockwise from pin 1"))
+    return found
+
+
 def measured(design: Design, layout: Layout, figures: Dict[str, float], corner: Optional[float]) -> List[Violation]:
     """Every measured workmanship rule but the width rule, which needs the nets' classes, each whose figure the design sets.
 
@@ -8721,6 +8866,7 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
                                        f"the layout's copper cannot be read for its workmanship rules ({unread})"))
                 return found
             found += measured(design, copper, figures, corner)
+            found += pad_numbering(design, tree)
             found += pasted
             if limits is not None and board_rules is not None:
                 found += board_minimums(design, project, rules, tree, limits, board_rules["fabrication"]["outer_copper_oz"])

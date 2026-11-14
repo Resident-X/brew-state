@@ -1007,6 +1007,16 @@ def track_under_bridging_part(seed: Seed) -> None:
                               tree.insert(len(tree) - 1, segment("/LV_B", 32, 4, 34, 4, "0b0e5c1a-0000-4000-8000-000000000801"))))
 
 
+def clockwise_part(seed: Seed) -> None:
+    """A four-pad part X3 in two rows whose pads are numbered clockwise from the top: 1 and 2 along the upper row, left to
+    right, then 3 and 4 along the lower row, right to left."""
+    surface = ("smd", ["F.Cu", "F.Mask", "F.Paste"])
+    part = small_part("X3", 30, 4, "0b0e5c1a-0000-4000-8000-000000000f00", ("1", *surface, "/LV_A", -1.3, -2.5, 1),
+                      ("2", *surface, "/LV_A", 1.3, -2.5, 1), ("3", *surface, "/LV_A", 1.3, 2.5, 1),
+                      ("4", *surface, "/LV_A", -1.3, 2.5, 1))
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, part))
+
+
 def via_under_paste(seed: Seed) -> None:
     """A surface-mount pad of /LV_A, paste layer and all, with a 0.3 mm /LV_A via drilled through its middle."""
     Q = sexpr.Quoted
@@ -1830,6 +1840,7 @@ FAULTS: List[tuple] = [
     ("a local clearance override on a mains footprint", "separation: no override outranks the signed figure", "local_clearance_override", "footprint R1", local_override(lambda tree: footprint(tree, "R1"))),
     ("a local clearance override on a low-voltage pad", "separation: no override outranks the signed figure", "local_clearance_override", "pad 1 of R2", local_override(lambda tree: pad(tree, "R2", "1"))),
     ("a clearance below the signed figure on a mains zone", "separation: no override outranks the signed figure", "local_clearance_override", "zone on Mains-class net /MAINS_L", mains_zone),
+    ("a footprint numbered clockwise", "footprint numbering: a dual-row or four-sided footprint whose pad numbers run clockwise seen from the top of the part fails by name", "pad_numbering", "X3 (Seeded_Part)", clockwise_part),
     ("a mains pour the fill leaves empty", "separation: a Mains-class pour the fill leaves under 90 percent of its outline fails by name", "mains_zone_fill", "zone [/MAINS_L] on F.Cu", emptied_mains_zone),
     ("a mains run whose clearance list reaches KiCad's cap", "separation: a KiCad list cut at its cap on a design that declares mains fails the design", "report_cut_short", "the list was cut and a cut list is not a verdict", mains_run_over_the_cap),
     ("a mains pad whose copper the check does not size", "separation: a Mains pad beside a Mains pad of its part is measured from sized copper or fails by name", "mains_pad_pair", "pad 1 [/MAINS_L] of J1 stands on a Mains-class net beside a Mains-class pad of another net in its own part", custom_mains_pad),
