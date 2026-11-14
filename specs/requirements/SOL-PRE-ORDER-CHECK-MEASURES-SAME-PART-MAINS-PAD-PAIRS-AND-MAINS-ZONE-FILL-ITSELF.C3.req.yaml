@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C3
+type: criterion
+title: A zone clearance written as 0 is read as no local clearance
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A zone whose clearance is written as 0 in the layout file is read as a zone with no local clearance of its own, since the tool that writes the file writes 0 for an unset clearance, and is not reported as holding a clearance below the signed figure. A zone with a local clearance above 0 is judged as before. A zone clearance above 0 and the signed figures are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF
+    type: criterion-of

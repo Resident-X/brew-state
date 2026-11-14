@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C1
+type: criterion
+title: A same-part mains pad pair nearer than the signed pad-to-pad clearance is found by the check's own measurement, whether or not the rule engine's list names it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  For every part, each pair of its pads on two different Mains-class nets is measured by the check from the pads' own copper, and a pair nearer than the signed pad-to-pad clearance is reported as a clearance finding worded as the rule engine words it, with the pair as one finding. A shortfall the rule engine's list leaves out is still reported, and a shortfall it lists is reported once. Pairs of pads of different parts, and the signed figures themselves, are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF
+    type: criterion-of

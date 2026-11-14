@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C5
+type: criterion
+title: A rule engine list cut at its cap on a pass that carries a Mains rule fails the design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When the number of lines the rule engine reports for a kind reaches its cap on a pass that carries a Mains rule, the design fails with a finding that names the pass and the count, since lines past the cap are not seen. A list under its cap does not fail. The caps of lists on a pass that carries no Mains rule are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF
+    type: criterion-of
