@@ -8,7 +8,7 @@ Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/
 
 | Item | Statement | Source |
 |---|---|---|
-| Outline | 131.0 x 125.0 mm | `manufacturer-limits.yaml` header |
+| Outline | 131.0 x 125.6 mm | `manufacturer-limits.yaml` header |
 | Thickness | 1.6 mm (offered at six layers; 2.5 mm and over is reserved for 12 layers and more) | `design-rules.md` Stackup row; `manufacturer-limits.yaml` |
 | Copper layers | six, in this order from the component side: F.Cu (components, signals); In1.Cu (solid `GND` plane, nothing routed); In2.Cu (`GND` fill, permitted signals, a `+3V3` pour over the low-voltage digital area, and the `Mains`-class routes inside the `mains` region); In3.Cu (signals, and two `Mains`-class runs inside the `mains` region); In4.Cu (`GND` fill, slow nets only, never `Fast`, `Sense`, supply or `Mains`); B.Cu (tracks, `GND` pour, test pads) | `design-rules.md` Stackup row |
 | Copper weight | 1 oz finished outer copper (the weight a standard multilayer order carries without a surcharge); inner copper 0.5 oz, the maker's default for a multilayer board, taken as is | `board-rules.yaml` `fabrication.outer_copper_oz: 1`; `manufacturer-limits.yaml` |
@@ -109,7 +109,7 @@ No record chooses a solder mask colour or a silkscreen colour. The maker's quote
 Both are unresolved in the records and must be checked at the quote, not assumed:
 
 1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 334 vias of 0.6 mm and 533 of 0.7 and 0.75 mm, all over that range; the 238 of 0.5 mm are inside the filled range, the six ground vias that stand inside surface-mount pads among them.
-2. **The six-layer engineering and board fee and the ENIG charge at 131 x 125 mm.** Only the quote reads them; the cost estimate carries an estimate, not a quote.
+2. **The six-layer engineering and board fee and the ENIG charge at 131 x 125.6 mm.** Only the quote reads them; the cost estimate carries an estimate, not a quote.
 
 ## Unsigned deviations carried by this board
 

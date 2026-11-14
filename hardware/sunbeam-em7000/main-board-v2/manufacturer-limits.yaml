@@ -1,6 +1,6 @@
 # The manufacturer limits of the Sunbeam EM7000 main board: what JLCPCB publishes it will make
 # for the board's process: a six-layer board with 1 oz finished outer copper, 1.6 mm thick, ENIG.
-# That is the stackup the main board is designed to (six copper layers, 1.6 mm, 131.0 x 125.0 mm).
+# That is the stackup the main board is designed to (six copper layers, 1.6 mm, 131.0 x 125.6 mm).
 # The four-layer entry that the board was first designed to is kept beside it, as a record of the
 # process the earlier layout was held to; the board's own layer count selects the entry the check
 # holds it to.
@@ -31,7 +31,7 @@
 #     ("the default for 6-layer and above"), for via diameters of 0.15 to 0.55 mm. The board's
 #     0.5 mm vias are inside that range; its 0.6 mm vias are over it, and the page says nothing of
 #     how a via over 0.55 mm is finished at six layers (unresolved, to be read at the quote).
-#   - The largest six-layer FR-4 board is 656 x 586 mm; this board is 131.0 x 125.0 mm.
+#   - The largest six-layer FR-4 board is 656 x 586 mm; this board is 131.0 x 125.6 mm.
 #   - The smallest via is 0.15 mm hole and 0.25 mm diameter; 0.2 mm hole with a via diameter under
 #     0.45 mm costs more, and a via diameter should be 0.1 mm (0.15 mm preferred) over the hole.
 #     The board's 0.5 / 0.2 mm via (annular ring 0.15 mm, the multilayer 1 oz absolute minimum) and
