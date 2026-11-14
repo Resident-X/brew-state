@@ -4209,7 +4209,7 @@
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "a1777846-81a6-4951-8176-936d631585f2")
 		(property "Reference" "R522"
 			(at 144.272 50.8 90)

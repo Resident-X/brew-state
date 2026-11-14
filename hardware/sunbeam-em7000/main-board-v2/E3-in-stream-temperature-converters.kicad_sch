@@ -3856,7 +3856,7 @@
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "2ba7b048-e446-4f64-93a9-88247aea71b5")
 		(property "Reference" "R643"
 			(at 101.092 78.74 90)
@@ -5230,7 +5230,7 @@
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "ca3e2139-84e4-474c-9c9b-c5a2e30f1081")
 		(property "Reference" "R648"
 			(at 101.092 180.34 90)
