@@ -1,6 +1,6 @@
 # Fabrication notes: Sunbeam EM7000 main controller board
 
-What the board maker is asked to build, as the design records state it at the commit that adds this file, and what is still open before the board is ordered. It carries the production-side statements the graph asks of the main board (laminate, coat) and says plainly where the evidence for them is missing. Nothing here is signed or accepted by this file; the separation basis (`hardware/sunbeam-em7000/separation-basis.yaml`) is signed (2026-11-05, re-signed 2026-11-06, on the owner's written instruction entered by Claude, its 32 accepted exceptions signed with it) and so are the ten exceptions of the derating policy (`derating-policy.yaml`).
+What the board maker is asked to build, as the design records state it at the commit that adds this file, and what is still open before the board is ordered. It carries the production-side statements the graph asks of the main board (laminate, coat) and says plainly where the evidence for them is missing. Nothing here is signed or accepted by this file; the separation basis (`hardware/sunbeam-em7000/separation-basis.yaml`) is signed (2026-11-05, re-signed 2026-11-06, on the owner's written instruction entered by Claude, its 32 accepted exceptions of that day signed with it; the record holds 42 accepted exceptions today, each with its own acceptance date) and so are the ten exceptions of the derating policy (`derating-policy.yaml`).
 
 Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/capabilities/pcb-capabilities), re-read on 2026-11-05 and held in `manufacturer-limits.yaml` and `docs/board-manufacturer-jlcpcb.md`. Where this file says the maker publishes nothing, that is what the pages read on 2026-11-05 held, not a statement about the maker's practice.
 
@@ -20,11 +20,11 @@ Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/
 
 | Via | Count in the placed board | Annular width | Use |
 |---|---|---|---|
-| 0.6 mm pad, 0.2 mm drill | 334 | 0.20 mm (the maker's recommended figure) | signal vias |
-| 0.5 mm pad, 0.2 mm drill | 238 | (0.5 - 0.2) / 2 = 0.15 mm (the maker's absolute minimum, below its 0.20 mm recommendation) | non-critical slow nets, and the ground vias inside surface-mount pads |
-| 0.75 mm pad, 0.3 mm drill (the count includes 15 of 0.7 mm pad, 0.3 mm drill) | 533 | 0.225 mm | ground, supply and mains vias |
+| 0.6 mm pad, 0.3 mm drill | 462 | (0.6 - 0.3) / 2 = 0.15 mm (the maker's absolute minimum, below its 0.20 mm recommendation) | every ordinary via: signal, ground and supply nets |
+| 0.7 mm pad, 0.3 mm drill | 6 | (0.7 - 0.3) / 2 = 0.20 mm (the maker's recommended figure) | four on `+5V`, one each on the converter nets `AMC_DCDC_OUT` and `AMC_HLDO_IN` |
+| 0.75 mm pad, 0.3 mm drill | 69 | 0.225 mm | mains-class vias (the `Mains` classes' routing default) |
 
-Counts are those of `design-rules.md`, "Via sizes in the layout", read from the board file. Every drill (0.2 or 0.3 mm) is over the maker's 0.15 mm minimum drill, and every via pad is at least 0.10 mm over its hole. The board setup's minimum annular width is 0.15 mm for the 0.5 / 0.2 mm via; the deviation from the recommended 0.20 mm is unsigned, for the owner (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1). No via of under 0.45 mm pad diameter with a 0.2 mm drill is placed, so the maker's extra charge for that size does not arise.
+The board has 537 vias, read from the board file on 2026-11-15; the counts of `design-rules.md`, "Via sizes in the layout", are the same. Every drill is 0.3 mm, over the maker's 0.15 mm minimum drill, and every via pad is 0.30 mm or more over its hole. No via stands inside a surface-mount pad. The board setup's minimum annular width is 0.15 mm, the ring of the 462 vias of 0.6 mm pad; the deviation from the recommended 0.20 mm is unsigned, for the owner (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1; `owner-sign-off.md`, S-24). No 0.2 mm drill is placed, so the maker's capability charge for it and its four-wire test do not arise (`design-rules.md`, Via sizes in the layout).
 
 ## Laminate and comparative tracking index (graph criterion C16)
 
@@ -115,20 +115,19 @@ The tank reed element is a glass-bodied switch that stands on the back of the bo
 
 ### Tab column, west edge
 
-When the tabs and their leads are fitted by hand, support the board under the tab column near (8.5, 95.3) mm with an insulating rest post, so that pushing a lead onto a tab does not flex the board at the notch beside the column.
+When the tabs and their leads are fitted by hand, support the board under the tab column near (7.0, 94.45) mm, midway between the tabs J103 (7.0, 90.2) and J102 (7.0, 98.7), with an insulating rest post, so that pushing a lead onto a tab does not flex the board at the notch beside the column.
 
 ## Unresolved before ordering
 
 Both are unresolved in the records and must be checked at the quote, not assumed:
 
-1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 334 vias of 0.6 mm and 533 of 0.7 and 0.75 mm, all over that range; the 238 of 0.5 mm are inside the filled range, the six ground vias that stand inside surface-mount pads among them.
+1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 537 vias, all with a pad over that range (462 of 0.6 mm, 6 of 0.7 mm, 69 of 0.75 mm) and a 0.3 mm hole, none of 0.55 mm or less; no via stands inside a surface-mount pad.
 2. **The six-layer engineering and board fee and the ENIG charge at 131 x 125.6 mm.** Only the quote reads them; the cost estimate carries an estimate, not a quote.
 
 ## Unsigned deviations carried by this board
 
-Every one of these is a recorded draft for the owner, not an acceptance, and none changes a signed figure of the basis (signed 2026-11-06). They are held, with their measurements, in the open rows of `layout-plan.md` ("Open after the fix rounds") and in `layout-review.md`; this file points to them and does not restate them.
+Every one of these is a recorded draft for the owner, not an acceptance, and none changes a signed figure of the basis (signed 2026-11-06). They are held, with their measurements, in `owner-sign-off.md`; this file points to them and does not restate them.
 
-- The 0.15 mm annular width of the 0.5 / 0.2 mm via (above).
-- The detour ratios of routed critical nets (`layout-plan.md` open rows). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's 32 signed exceptions (2026-11-06), not carried here as unsigned; the standing mains items row of `layout-plan.md` holds them.
-- The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14), the pour gaps under 0.09 mm, the back-side assembled parts without a fiducial, and the other open rows of that section.
-- The three `footprint_symbol_mismatch` parity entries for R522, R572 and R576 (do-not-populate set on the board footprints, not on the schematic symbols; `open-items.md`, flow meter output type).
+- The 0.15 mm annular width of the 0.6 / 0.3 mm via (above).
+- The detour ratios of routed critical nets (`owner-sign-off.md`, S-48 and S-49). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's signed exceptions (32 on 2026-11-06, 42 today), not carried here as unsigned.
+- The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14) (`owner-sign-off.md`, S-32).
