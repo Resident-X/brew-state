@@ -51,6 +51,14 @@
 #   (library class base, so basic; stock 3594365; the price its first tier lists, 1 to 999 pieces), for the move of C606 from 0603 to 0402. It joins the
 #   extract and C1588 (position C606 before) stays, since other positions still use it, so the extract holds 99 numbers.
 #   Its entry carries its own lifecycle read_on; the extract's own read_on is unchanged.
+# C7394034 (UMW SN74LVC1G17DCKR(UMW), position U520) was read on 2026-11-14 through the same search service and exact match
+#   (library class expand, so extended; stock 3125; the price its first tier lists, 1 to 99 pieces), for the swap from TI C10425, which
+#   had 11 in stock that day (49321 on 2026-10-29), too few for a one-shot order of 5. The record has no field saying whether the part is
+#   machine placed; it lists a least patch number of 5. C10425 has no position now, so its entry is removed.
+# C492401 (XFCN PZ254V-11-02P, 1x2 2.54 mm header, positions JP302, JP401, JP402 and now J622, J623, J627, J628) was read again on 2026-11-14 through the
+#   same search service (extended; stock 774881; 0.019 USD, the price its first tier lists): the four J62x positions were on C2337, a 40-pin strip (BOOMELE
+#   2.54-1*40P), a pin count the 1x2 footprint does not take, and move to this 1x2 part. C2337 has no position now, so its entry is removed and
+#   the extract holds 98 numbers.
 # lifecycle: the library's search record carries no lifecycle field and no maker lifecycle
 #   page was read, so every entry states no source publishes one, with the source naming
 #   what was looked at. It is not a finding that the part is active.
@@ -118,14 +126,6 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
-  - lcsc: C2337
-    library_class: extended
-    stock: 64801
-    unit_price: 0.1594
-    lifecycle:
-      status: no source publishes one
-      source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
   - lcsc: C3131
     library_class: extended
     stock: 85371
@@ -174,14 +174,14 @@ entries:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-10-29
-  - lcsc: C10425
+  - lcsc: C7394034
     library_class: extended
-    stock: 49321
-    unit_price: 0.0728
+    stock: 3125
+    unit_price: 0.0493
     lifecycle:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
+      read_on: 2026-11-14
   - lcsc: C14663
     library_class: basic
     stock: 39446122
@@ -681,12 +681,12 @@ entries:
       read_on: 2026-10-29
   - lcsc: C492401
     library_class: extended
-    stock: 927590
-    unit_price: 0.0187
+    stock: 774881
+    unit_price: 0.019
     lifecycle:
       status: no source publishes one
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
-      read_on: 2026-10-29
+      read_on: 2026-11-14
   - lcsc: C492404
     library_class: extended
     stock: 181147

@@ -4351,7 +4351,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g17.pdf"
+		(property "Datasheet" "https://www.lcsc.com/datasheet/lcsc_datasheet_2403202350_UMW-Youtai-Semiconductor-Co---Ltd--SN74LVC1G17DCKR-UMW_C7394034.pdf"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4369,7 +4369,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C10425"
+		(property "LCSC" "C7394034"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4378,7 +4378,7 @@
 				)
 			)
 		)
-		(property "MPN" "SN74LVC1G17DCKR"
+		(property "MPN" "SN74LVC1G17DCKR(UMW)"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4387,7 +4387,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Texas Instruments"
+		(property "Manufacturer" "UMW"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4396,7 +4396,7 @@
 				)
 			)
 		)
-		(property "Rating" "6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs"
+		(property "Rating" "7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects

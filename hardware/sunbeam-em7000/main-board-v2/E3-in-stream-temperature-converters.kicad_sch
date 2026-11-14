@@ -3613,7 +3613,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 33.02 0)
 			(hide yes)
 			(effects
@@ -3622,7 +3622,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 33.02 0)
 			(hide yes)
 			(effects
@@ -3631,7 +3631,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
 			(at 193.04 33.02 0)
 			(hide yes)
 			(effects
@@ -3640,7 +3640,7 @@
 				)
 			)
 		)
-		(property "Rating" "2.54 mm header with jumper cap"
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 33.02 0)
 			(hide yes)
 			(effects
@@ -3709,7 +3709,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 83.82 0)
 			(hide yes)
 			(effects
@@ -3718,7 +3718,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 83.82 0)
 			(hide yes)
 			(effects
@@ -3727,7 +3727,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
 			(at 193.04 83.82 0)
 			(hide yes)
 			(effects
@@ -3736,7 +3736,7 @@
 				)
 			)
 		)
-		(property "Rating" "2.54 mm header with jumper cap"
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 83.82 0)
 			(hide yes)
 			(effects
@@ -4987,7 +4987,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 134.62 0)
 			(hide yes)
 			(effects
@@ -4996,7 +4996,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 134.62 0)
 			(hide yes)
 			(effects
@@ -5005,7 +5005,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
 			(at 193.04 134.62 0)
 			(hide yes)
 			(effects
@@ -5014,7 +5014,7 @@
 				)
 			)
 		)
-		(property "Rating" "2.54 mm header with jumper cap"
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 134.62 0)
 			(hide yes)
 			(effects
@@ -5083,7 +5083,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 185.42 0)
 			(hide yes)
 			(effects
@@ -5092,7 +5092,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 185.42 0)
 			(hide yes)
 			(effects
@@ -5101,7 +5101,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
 			(at 193.04 185.42 0)
 			(hide yes)
 			(effects
@@ -5110,7 +5110,7 @@
 				)
 			)
 		)
-		(property "Rating" "2.54 mm header with jumper cap"
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 185.42 0)
 			(hide yes)
 			(effects

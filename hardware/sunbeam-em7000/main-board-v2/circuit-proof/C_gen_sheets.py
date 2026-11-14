@@ -60,9 +60,9 @@ PART = {
                  mpn="2.54mm 1x4 header", maker="not read", lcsc="C32713270", cls="extended", hand=True),
     "TP": dict(lib_id="Connector:TestPoint", value="TestPoint", rating="pad 1.5mm",
                footprint="main-board:TestPoint_Pad_D1.0mm_Tight", mpn="", maker="", lcsc="", cls="none"),
-    "BUF": dict(lib_id="74xGxx:74LVC1G17", value="SN74LVC1G17", rating="6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs",
-                footprint="Package_TO_SOT_SMD:SOT-353_SC-70-5", mpn="SN74LVC1G17DCKR",
-                maker="Texas Instruments", lcsc="C10425", cls="extended"),
+    "BUF": dict(lib_id="74xGxx:74LVC1G17", value="SN74LVC1G17", rating="7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs",
+                footprint="Package_TO_SOT_SMD:SOT-353_SC-70-5", mpn="SN74LVC1G17DCKR(UMW)",
+                maker="UMW", lcsc="C7394034", cls="extended"),
 }
 
 

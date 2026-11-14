@@ -4668,11 +4668,11 @@ sheets:
   - ref: U520
     lib_id: 74xGxx:74LVC1G17
     value: SN74LVC1G17
-    rating: 6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs
+    rating: 7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs
     footprint: Package_TO_SOT_SMD:SOT-353_SC-70-5
-    mpn: SN74LVC1G17DCKR
-    maker: Texas Instruments
-    lcsc: C10425
+    mpn: SN74LVC1G17DCKR(UMW)
+    maker: UMW
+    lcsc: C7394034
     class: extended
     hand: false
     function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_BUF, and through R545 to FLOW_IN, for either meter output type, and its Ioff protects PB10 with +3V3 absent (the unfitted link position R522 joins its input
@@ -6120,11 +6120,11 @@ sheets:
   - ref: J622
     lib_id: Connector_Generic:Conn_01x02
     value: PT1_2W_P
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -6133,11 +6133,11 @@ sheets:
   - ref: J623
     lib_id: Connector_Generic:Conn_01x02
     value: PT1_23W_N
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
@@ -6159,11 +6159,11 @@ sheets:
   - ref: J627
     lib_id: Connector_Generic:Conn_01x02
     value: PT2_2W_P
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -6172,11 +6172,11 @@ sheets:
   - ref: J628
     lib_id: Connector_Generic:Conn_01x02
     value: PT2_23W_N
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'

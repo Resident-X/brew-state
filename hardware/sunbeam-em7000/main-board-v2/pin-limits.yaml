@@ -865,35 +865,35 @@ parts:
         absolute_min_v: -0.5
         tolerates_driven_unpowered: false
   # flow input buffer: U520
-  - lcsc: C10425
+  - lcsc: C7394034
     source:
-      document: "SN74LVC1G17 Single Schmitt-Trigger Buffer data sheet SCES351"
-      revision: "Y (October 2025)"
-      section: "5.1 Absolute Maximum Ratings; 5.3 Recommended Operating Conditions; the Ioff / partial-power-down statement of the features and the electrical characteristics"
-      read_on: 2026-10-29
+      document: "UMW SN74LVC1G17 Single Schmitt-Trigger Buffer data sheet, as hosted by the LCSC listing C7394034 (the UMW part replaces the TI SN74LVC1G17DCKR, C10425)"
+      revision: "Jan.2025"
+      section: "6 Absolute Maximum Ratings; 7 Recommended Operating Conditions; 8 Electrical Characteristics (VT+, VT-, IIN, IOFF)"
+      read_on: 2026-11-14
     pins:
-      # A input. 5.1 VI -0.5 to 6.5 V; recommended 0 to 5.5 V (5.3). Ioff: inputs and outputs take up to 5.5 V with VCC = 0 V (7.x Ioff row, VI or VO = 5.5 V, +/-10 uA).
+      # A input. 6: VI -0.5 to 7 V; recommended 0 to 5.5 V (7). Ioff: inputs and outputs take up to 5.5 V with VCC = 0 V (8, IOFF row, VIN or VOUT = 5.5 V, 1 uA typical and 10 uA at most). The pin table of section 4 lists pin 4 as VCC and pin 5 as OUT, which the sheet's own Figure 1 contradicts (pin 4 OUTY, pin 5 VCC, the TI pinout); the figure is followed here and on the board.
       - pin: "2"
         domain: logic
-        absolute_max_v: 6.5
+        absolute_max_v: 7
         absolute_min_v: -0.5
         tolerates_driven_unpowered: true
       # GND
       - pin: "3"
         domain: ground
-        absolute_max_v: 6.5
+        absolute_max_v: 7
         absolute_min_v: -0.5
         tolerates_driven_unpowered: true
-      # Y output. 5.1: -0.5 to 6.5 V in the high-impedance or power-off state, -0.5 to VCC + 0.5 V in the high or low state; the larger, power-off figure is used, as the record has one maximum per pin. Ioff covers a driven output with VCC = 0 V.
+      # Y output. 6: VO -0.5 to VCC + 0.5 V in the high or low state; the sheet gives no power-off or high-impedance maximum, so the Ioff test level, 5.5 V, is the figure used (TI gave 6.5 V). Ioff covers a driven output with VCC = 0 V.
       - pin: "4"
         domain: logic
-        absolute_max_v: 6.5
+        absolute_max_v: 5.5
         absolute_min_v: -0.5
         tolerates_driven_unpowered: true
-      # VCC. 5.1 -0.5 to 6.5 V; recommended operating 1.65 to 5.5 V (5.3).
+      # VCC. 6: -0.5 to 7 V; recommended operating 1.65 to 5.5 V (7).
       - pin: "5"
         domain: logic
-        absolute_max_v: 6.5
+        absolute_max_v: 7
         absolute_min_v: -0.5
         tolerates_driven_unpowered: false
   # gauge drive buffer: U791

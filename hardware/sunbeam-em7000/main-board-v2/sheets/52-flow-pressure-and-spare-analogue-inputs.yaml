@@ -102,11 +102,11 @@ parts:
   - ref: U520
     lib_id: "74xGxx:74LVC1G17"
     value: "SN74LVC1G17"
-    rating: "6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs"
+    rating: "7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs"
     footprint: "Package_TO_SOT_SMD:SOT-353_SC-70-5"
-    mpn: "SN74LVC1G17DCKR"
-    maker: "Texas Instruments"
-    lcsc: C10425
+    mpn: "SN74LVC1G17DCKR(UMW)"
+    maker: "UMW"
+    lcsc: C7394034
     class: extended
     hand: false
     function: "Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_BUF, and through R545 to FLOW_IN, for either meter output type, and its Ioff protects PB10 with +3V3 absent (the unfitted link position R522 joins its input net to FLOW_IN)"

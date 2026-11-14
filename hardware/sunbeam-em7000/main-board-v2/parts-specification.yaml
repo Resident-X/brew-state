@@ -1504,12 +1504,12 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C22962
     class: none
-  # U520: maker Texas Instruments; MPN SN74LVC1G17DCKR; catalogue class extended; FITTED
+  # U520: maker UMW; MPN SN74LVC1G17DCKR(UMW); catalogue class extended; FITTED
   - reference: U520
     value: SN74LVC1G17
     package: SOT-353_SC-70-5
-    rating: 6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs
-    lcsc: C10425
+    rating: 7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs
+    lcsc: C7394034
     class: integrated circuit
   # C521: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic; FITTED (decoupling of U520)
   - reference: C521
@@ -2075,19 +2075,19 @@ positions:
     rating: JST XH 2.5 mm 3 A 250 V
     lcsc: C5258885
     class: relay and connector
-  # J622: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J622: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J622
     value: PT1_2W_P
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
-  # J623: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J623: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J623
     value: PT1_23W_N
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
   # J625: maker ZHOURI (JST XH family); MPN XH-4PA; catalogue class extended
   - reference: J625
@@ -2096,19 +2096,19 @@ positions:
     rating: JST XH 2.5 mm 3 A 250 V
     lcsc: C5258885
     class: relay and connector
-  # J627: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J627: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J627
     value: PT2_2W_P
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
-  # J628: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J628: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J628
     value: PT2_23W_N
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
   # R640: maker Panasonic; MPN ERA3AEB4021V; catalogue class extended
   - reference: R640
@@ -3151,7 +3151,7 @@ positions:
     rating: '4-way header, JST B4B-PH-K-S (2.00 mm; the harness measures 1.95 mm +/-0.1: family not identified)'
     lcsc: C131334
     class: none
-  # J862: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
+  # J862: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty; not in the bill of materials or the position file
   - reference: J862
     value: REED
     package: REED_PADS_P20.00mm

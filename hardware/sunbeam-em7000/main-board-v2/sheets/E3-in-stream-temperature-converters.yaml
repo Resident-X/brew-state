@@ -95,11 +95,11 @@ parts:
 - ref: J622
   lib_id: Connector_Generic:Conn_01x02
   value: PT1_2W_P
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -108,11 +108,11 @@ parts:
 - ref: J623
   lib_id: Connector_Generic:Conn_01x02
   value: PT1_23W_N
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
@@ -134,11 +134,11 @@ parts:
 - ref: J627
   lib_id: Connector_Generic:Conn_01x02
   value: PT2_2W_P
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -147,11 +147,11 @@ parts:
 - ref: J628
   lib_id: Connector_Generic:Conn_01x02
   value: PT2_23W_N
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
