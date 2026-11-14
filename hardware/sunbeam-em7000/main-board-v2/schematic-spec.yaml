@@ -1167,7 +1167,7 @@ sheets:
     mains: true
     sim_exclude: true
   - ref: U201
-    lib_id: 74xGxx:74LVC1G14
+    lib_id: 74LVC1G14
     value: SN74AHCT1G14
     rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; first of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate
       Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
@@ -1182,7 +1182,7 @@ sheets:
     mains: false
     sim_exclude: false
   - ref: U203
-    lib_id: 74xGxx:74LVC1G14
+    lib_id: 74LVC1G14
     value: SN74AHCT1G14
     rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; second of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate
       Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
@@ -1707,7 +1707,32 @@ sheets:
     reason: SOT-23 pin 2 is n.c. on the BZX84 (Nexperia BZX84 series Rev. 7, table 2)
   - pin: Z202.2
     reason: n.c. on the BZX84 SOT-23
-  custom_symbols: []
+  custom_symbols:
+  - name: 74LVC1G14
+    ref_prefix: U
+    note: KiCad's stock 74xGxx 74LVC1G14 (single Schmitt inverter, pins 1 NC, 2 A, 3 GND, 4 Y, 5 VCC), copied into the project symbol library with the footprint filter widened to 'SOT?23* SOT?353* SOT?553*' so that the SC-70-5
+      package of U201 and U203 matches.
+    pins:
+    - number: '1'
+      name: NC
+      type: no_connect
+      unit: 1
+    - number: '2'
+      name: ''
+      type: input
+      unit: 1
+    - number: '3'
+      name: GND
+      type: power_in
+      unit: 1
+    - number: '4'
+      name: ''
+      type: output
+      unit: 1
+    - number: '5'
+      name: VCC
+      type: power_in
+      unit: 1
   custom_footprints:
   - name: Relay_HF115F-I_1HS3A
     from: Hongfa HF115F-I datasheet, page 202 (PCB layout, bottom view), https://datasheet.lcsc.com/datasheet/pdf/0ebe0ad433a21202e9ed2b99eb26b6ee.pdf; HF115F-S sheet page 214 gives the same pattern; read 2026-11-13
@@ -4266,7 +4291,7 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D502
-    lib_id: Diode:BAT54S
+    lib_id: Diode:BAT54SW
     value: BAT54SW
     rating: dual series Schottky 30V 200mA
     footprint: Package_TO_SOT_SMD:SOT-323_SC-70
@@ -4364,7 +4389,7 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D504
-    lib_id: Diode:BAT54S
+    lib_id: Diode:BAT54SW
     value: BAT54SW
     rating: dual series Schottky 30V 200mA
     footprint: Package_TO_SOT_SMD:SOT-323_SC-70
@@ -4462,7 +4487,7 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D506
-    lib_id: Diode:BAT54S
+    lib_id: Diode:BAT54SW
     value: BAT54SW
     rating: dual series Schottky 30V 200mA
     footprint: Package_TO_SOT_SMD:SOT-323_SC-70
@@ -4561,8 +4586,8 @@ sheets:
   custom_footprints: []
   power_flags: []
   drawing_notes: 'Signal flows left to right: header (left) -> divider node -> series resistor -> filter node -> converter pin label. +3V3A at the top, GND at the bottom. Each header pin 1 is the square pad; the wand header
-    is fitted rotated 180 degrees on the board (placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. BAT54S symbol Diode:BAT54S pins: 1=A (to GND), 2=K (to
-    +3V3A), 3=COM (to the converter pin node).'
+    is fitted rotated 180 degrees on the board (placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. BAT54SW symbol Diode:BAT54SW pins: 1=A (to GND), 2=K
+    (to +3V3A), 3=COM (to the converter pin node).'
 - order: 8
   sheet: Flow, pressure and spare analogue inputs
   function: Flow-meter pulse input, the two digital pressure-transducer buses, and the three analogue sensor inputs with 5 V scaling
@@ -4821,7 +4846,7 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D523
-    lib_id: Diode:BAT54S
+    lib_id: Diode:BAT54SW
     value: BAT54SW
     rating: dual series Schottky 30V 200mA
     footprint: Package_TO_SOT_SMD:SOT-323_SC-70
@@ -4835,7 +4860,7 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D524
-    lib_id: Diode:BAT54S
+    lib_id: Diode:BAT54SW
     value: BAT54SW
     rating: dual series Schottky 30V 200mA
     footprint: Package_TO_SOT_SMD:SOT-323_SC-70
@@ -5003,7 +5028,7 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D527
-    lib_id: Diode:BAT54S
+    lib_id: Diode:BAT54SW
     value: BAT54SW
     rating: dual series Schottky 30V 200mA
     footprint: Package_TO_SOT_SMD:SOT-323_SC-70
@@ -5017,7 +5042,7 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D528
-    lib_id: Diode:BAT54S
+    lib_id: Diode:BAT54SW
     value: BAT54SW
     rating: dual series Schottky 30V 200mA
     footprint: Package_TO_SOT_SMD:SOT-323_SC-70
@@ -5728,7 +5753,7 @@ sheets:
     buffer, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels
     STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520, R545 and C521 are fitted; R522 is drawn and
     marked do-not-populate (the buffer replaces the link; fitting both would join the buffer''s input to its output through R545). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X;
-    J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header.
+    J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54SW pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header.
     Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
 - order: 9
   sheet: Current sensing inputs
@@ -9322,6 +9347,32 @@ sheets:
     so either lead may be the grounded one. Pin 1 is the contact nearest the right edge of the board. Reed (J862): two through-hole pads 20.0 mm apart, hand-fitted; pad 2 = TANK_LEVEL, pad 1 = GND. 10 k to +3V3 and 100 nF
     to ground on each line. The mains-presence inputs are not drawn.'
 custom_symbols:
+- name: 74LVC1G14
+  ref_prefix: U
+  note: KiCad's stock 74xGxx 74LVC1G14 (single Schmitt inverter, pins 1 NC, 2 A, 3 GND, 4 Y, 5 VCC), copied into the project symbol library with the footprint filter widened to 'SOT?23* SOT?353* SOT?553*' so that the SC-70-5
+    package of U201 and U203 matches.
+  pins:
+  - number: '1'
+    name: NC
+    type: no_connect
+    unit: 1
+  - number: '2'
+    name: ''
+    type: input
+    unit: 1
+  - number: '3'
+    name: GND
+    type: power_in
+    unit: 1
+  - number: '4'
+    name: ''
+    type: output
+    unit: 1
+  - number: '5'
+    name: VCC
+    type: power_in
+    unit: 1
+  sheet: Interlock
 - name: TLV803S
   ref_prefix: U
   note: TI SBVS157A (TLV803 3-pin voltage supervisors with active-low, open-drain reset) pin table, DBZ SOT-23-3; the stock TPS3839DBZ body and pin positions with RESET typed open collector

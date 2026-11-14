@@ -43,7 +43,7 @@ PART = {
     "TVS": dict(lib_id="Device:D_TVS", value="PESD5V0F1BL", rating="bidirectional 5.5V standoff, 0.55pF max",
                 footprint="Diode_SMD:D_SOD-882", mpn="PESD5V0F1BL,315", maker="Nexperia", lcsc="C45961",
                 cls="extended"),
-    "BAT54S": dict(lib_id="Diode:BAT54S", value="BAT54SW", rating="dual series Schottky 30V 200mA",
+    "BAT54S": dict(lib_id="Diode:BAT54SW", value="BAT54SW", rating="dual series Schottky 30V 200mA",
                    footprint="Package_TO_SOT_SMD:SOT-323_SC-70", mpn="BAT54SW,115", maker="Nexperia", lcsc="C78606",
                    cls="extended"),
     "PTC": dict(lib_id="Device:Polyfuse", value="MF-NSMF012-2", rating="PTC 0.12A hold 0.29A trip 30V",
@@ -155,7 +155,7 @@ for ch, hname, what, j, rd, rs, c, dt, db, tp, pc in CH:
 S1.notes = ("Signal flows left to right: header (left) -> divider node -> series resistor -> filter node -> converter pin label. "
             "+3V3A at the top, GND at the bottom. Each header pin 1 is the square pad; the wand header is fitted rotated 180 degrees on the board "
             "(placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. "
-            "BAT54S symbol Diode:BAT54S pins: 1=A (to GND), 2=K (to +3V3A), 3=COM (to the converter pin node).")
+            "BAT54SW symbol Diode:BAT54SW pins: 1=A (to GND), 2=K (to +3V3A), 3=COM (to the converter pin node).")
 
 # ======================================================================= SHEET 2
 S2 = Sheet("Flow, pressure and spare analogue inputs",
@@ -241,7 +241,7 @@ S2.notes = ("Four stacked cells, signal left to right: FLOW (header, pull-up, TV
             "or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> "
             "1k -> 47n -> label). U520, R545 and C521 are fitted; R522 is drawn and marked do-not-populate (the buffer replaces the link; fitting both would join the buffer's input to its output through R545). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; "
             "J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. "
-            "Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.")
+            "Diode:BAT54SW pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.")
 
 # ======================================================================= SHEET 3
 S3 = Sheet("Current sensing inputs",
