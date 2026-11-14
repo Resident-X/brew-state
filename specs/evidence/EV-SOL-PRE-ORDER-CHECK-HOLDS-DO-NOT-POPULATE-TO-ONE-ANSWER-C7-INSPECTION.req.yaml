@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER-C7-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C7
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-14T23:28:26Z"
+artifact:
+  kind: external
+  reference: 'hardware/README.md at 446c53a97f3156986fedc2c9632d25021043fc5e, read against each clause of the criterion: the rule and the three sources (the layout''s footprint attribute, the schematic''s symbol attribute, the parts record''s fitted key) are stated in the Do not populate paragraph (dnp_agreement); what each ordering file reads (placement file from the layout, parts list from the schematic attribute with a text field not read, both with --exclude-dnp) is stated there; the failure and what it names (the reference, and which source marks it not populated and which fitted) is stated there; the text field named dnp check is stated there; that no acceptance record waives it is stated there; the dnp_agreement row is in the table of rule names (line 639); the account of the parts specification record states the fitted key (line 465, the string no) and the record key list (line 571) includes it.'
+  artifact_version: 446c53a97f3156986fedc2c9632d25021043fc5e
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C7
+    type: satisfies
