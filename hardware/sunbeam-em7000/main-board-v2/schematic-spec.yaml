@@ -9152,7 +9152,7 @@ sheets:
     lcsc: none
     class: none
     hand: true
-    function: tank reed element pads
+    function: tank reed element pads; hand-fitted, not in the bill of materials, not in the position file
     mains: false
     sim_exclude: true
   - ref: R861

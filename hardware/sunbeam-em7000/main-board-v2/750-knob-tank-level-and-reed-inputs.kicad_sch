@@ -1324,7 +1324,7 @@
 		(lib_id "main-board:Conn_01x02")
 		(at 40.64 154.94 180)
 		(unit 1)
-		(in_bom yes)
+		(in_bom no)
 		(on_board yes)
 		(dnp no)
 		(uuid "a6eefd79-ec6d-4500-9507-2cce13bd5aef")

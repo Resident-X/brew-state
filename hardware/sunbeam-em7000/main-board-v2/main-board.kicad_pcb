@@ -52022,7 +52022,7 @@
 			)
 		)
 		(path "/820a13ac-b7b7-49d9-a538-a11c5837650e/a6eefd79-ec6d-4500-9507-2cce13bd5aef")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files exclude_from_bom)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_rect
 			(start -1.15 -1.15)

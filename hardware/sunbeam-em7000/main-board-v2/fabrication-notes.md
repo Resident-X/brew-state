@@ -104,6 +104,15 @@ Status: **criterion C17 is not met.** What the records say, in full:
 
 No record chooses a solder mask colour or a silkscreen colour. The maker's quote defaults read on 2026-10-13 are green mask and white silkscreen; a colour other than green, red, yellow, blue or purple has a wider minimum mask bridge (black and white, 0.13 mm against 0.10 mm), so any change to a colour is a decision for the quote. The board's designators are on F.SilkS (and B.SilkS for the test pads). Assembly options (side, count, which parts) are in `parts-specification.yaml` and the cost estimate, not here.
 
+### Tank reed J862, fitted by hand
+
+The tank reed element is a glass-bodied switch that stands on the back of the board with its two leads through the holes of J862 and soldered on the front. It is in neither the placement file nor the parts list (its footprint carries `exclude_from_pos_files` and `exclude_from_bom`, its symbol `in_bom no`), so the assembler never sees it, and it has no catalogue number. Before soldering:
+
+1. Measure the lead diameter with calipers. The footprint's holes are 1.0 mm drill with 2.0 mm round pads, 20.0 mm apart along Y (pad centre to pad centre); a lead over 0.8 mm will not leave a soldering gap in a 1.0 mm hole. The records do not give the lead diameter (`open-items.md`, reed element lead diameter); this measurement is what closes that row.
+2. Form the leads to the 20.0 mm pitch and check the spacing after forming against the footprint's 20.0 mm: the leads must go in without being sprung.
+3. The maker's minimum distance from the glass seal to the first bend is not stated by the records: hold the lead with pliers between the seal and the bend, and bend on the pliers' far side, so no bending force reaches the glass.
+4. Do not cut the leads with a shear that shocks the glass: hold the lead with pliers between the seal and the cut, and cut on the far side of the pliers.
+
 ## Unresolved before ordering
 
 Both are unresolved in the records and must be checked at the quote, not assumed:

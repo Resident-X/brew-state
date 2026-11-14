@@ -8,6 +8,8 @@ Part references are those of `schematic-spec.yaml`. A test point is a one-pin pa
 
 Where the method requires a rating for a link on a path that carries a protective device's fault current, the link's conductor row is in `circuit-proof.md`; a link whose rating or conductor row is not met there is listed in `open-items.md` and the row below stays open until the source it names is amended.
 
+**Tank reed J862 is fitted by hand.** Before soldering it, measure the reed's lead diameter and, after forming, the lead spacing against the footprint's 1.0 mm holes and 20.0 mm pitch; form the leads no closer to the glass seal than the maker allows (the records do not state the figure: hold the lead with pliers between the seal and the bend), and do not cut a lead with shock on the glass. The full note is in `fabrication-notes.md`, "Tank reed J862, fitted by hand".
+
 ## Provisions
 
 | Rail, producer-only net, key signal or first power | Net | Test point | Isolating link | What it is for |
