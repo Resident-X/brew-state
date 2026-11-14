@@ -24,7 +24,7 @@ import board_check  # noqa: E402
 import board_prove  # noqa: E402
 import sexpr  # noqa: E402
 from board_kicad_fixtures import KICAD_CLI, load_tests, setUpModule  # noqa: E402,F401
-from board_kicad_fixtures import Copy, Proved, outcomes  # noqa: E402
+from board_kicad_fixtures import Copy, Proved, basis_record, outcomes  # noqa: E402
 
 Q = sexpr.Quoted
 #: The most the rule's own computation may take, in seconds, on a fill of 50,000 vertices with 360 pieces of mains copper over it.
@@ -268,6 +268,7 @@ class TheRuleKeepsEveryTrackedDesignPassing(unittest.TestCase):
             name = os.path.basename(design)
             with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
                 seed = board_prove.prepare(scratch, design, name)
+                basis_record(seed, design)
                 status, lines, stderr = board_prove.check(seed, KICAD_CLI)
                 self.assertNotEqual(status, 2, stderr)
                 self.assertEqual([line for line in lines if board_check.LAYER_RULE in line], [], brief(lines))

@@ -315,8 +315,9 @@ class EveryTrackedDesignPassesTheMainsToMainsRules(unittest.TestCase):
 
     def test_every_tracked_design_passes_and_the_mains_present_ones_state_the_new_keys(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C7: Every tracked design passes the check, the throwaway ones passing as fixtures without the mains_to_mains mapping and MAINS_ENTRY, bar those kept to exercise the rules, which carry synthetic figures and MAINS_ENTRY, in the build round for board changes and nightly on main. The hardware notes' record-key list, text-variable list, checks table and adopter section state mains_to_mains, MAINS_ENTRY, Mains_Entry and the floor reading. The signed record of the machine is out of scope; its leaf adds the real figures.
-        tracked = set(subprocess.run(["git", "ls-files", "*.kicad_pro"], cwd=board_prove.REPO, capture_output=True,
-                                     text=True, check=True).stdout.split())
+        # the machine's own design is held by the whole-repository check and its own tests, not by this list of proof designs
+        tracked = {path for path in subprocess.run(["git", "ls-files", "*.kicad_pro"], cwd=board_prove.REPO, capture_output=True,
+                                                   text=True, check=True).stdout.split() if path.startswith("hardware/proof/")}
         self.assertEqual(tracked, {f"hardware/proof/{name}/{name}.kicad_pro" for name in self.DESIGNS})
         for name in self.DESIGNS:
             with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
