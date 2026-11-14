@@ -1,12 +1,12 @@
 id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C2
 type: criterion
-title: The record holds exactly the 33 exceptions of the finished layout and states which forms make them up
+title: The record holds exactly the 42 exceptions of the finished layout and states which forms make them up
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The committed record's accepted_exceptions holds 33 entries: 4 pump-triac tab-to-lead creepage entries at 2.0 mm, 5 same-connector hole_to_hole entries at 1.25 mm for J630, J635, J791, J821 and J861, 7 net-pair entries, 9 same-part creepage entries, 4 opto-triac pin-5 creepage entries at 0.76 mm for U701 and U711, and 4 gate-resistor creepage entries. The test states why the count is 33 and not the 98 drafted before the layout was finished: 29 entries are used by a shortfall of the finished layout and the other 69 are removed, and the 4 gate-resistor entries are added to the 29. Every entry's pair is mains_to_mains or same_connector_pins, every entry has a non-empty reason and bounding element, and each between entry names two pads of one part. Out of scope is any figure not named here.
+  The committed record's accepted_exceptions holds 42 entries: 4 pump-triac tab-to-lead creepage entries at 2.0 mm, 5 same-connector hole_to_hole entries at 1.25 mm for J630, J635, J791, J821 and J861, 7 net-pair entries, 6 same-part creepage entries, 12 same-part clearance entries, 4 opto-triac pin-5 creepage entries at 0.76 mm for U701 and U711, and 4 gate-resistor creepage entries. The test states why the count is 42 and not the 98 drafted before the layout was finished: 29 entries were used by a shortfall of the finished layout and the other 69 are removed, the 4 gate-resistor entries were added to the 29, the C606 pad-pair entry was removed on 2026-11-07 (SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED), the 2 R105 creepage entries the re-laid mains side no longer reports short were removed on 2026-11-14, and the 12 same-part clearance entries that layout reports short were added on 2026-11-14. Every entry's pair is mains_to_mains or same_connector_pins, every entry has a non-empty reason and bounding element, and each between entry names two pads of one part. Out of scope is any figure not named here.
 links:
   - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
     type: criterion-of

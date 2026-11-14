@@ -2,11 +2,11 @@ id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C7
 type: criterion
 title: Each same-part entry states its ground and bounding element
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  Each same-part between entry's reason names that the part's pitch forces the gap, that both pads are on nets of the neutral-referenced set with a working voltage under 10 V across the gap, and that the part is not changed, and its bounded_by names the energy limit of the circuit and the entry fuse for any path to the line. Out of scope is the owner's acceptance.
+  Each same-part between entry of constraint creepage that names the set N of neutral-referenced nets has a reason that names that the part's pitch forces the gap, that both pads are on nets of the neutral-referenced set with a working voltage under 10 V across the gap, and that the part is not changed, and its bounded_by names the energy limit of the circuit and the entry fuse for any path to the line. Each same-part clearance entry, and each creepage entry for a pad pair outside set N, states its own ground in its reason instead, that the gap is the part's own pad gap and the entry excuses only that pair, and a bounding element. Out of scope is the owner's acceptance.
 links:
   - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
     type: criterion-of
