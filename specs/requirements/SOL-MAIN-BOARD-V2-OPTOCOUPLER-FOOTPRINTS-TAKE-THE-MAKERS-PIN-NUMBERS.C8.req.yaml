@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C8
+type: criterion
+title: R522, R572 and R576 carry do-not-populate
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The schematic and the board carry the do-not-populate mark on R522, R572 and R576 as the parts specification states. A mark missing on any of the three fails. Out of scope: the other resistors of the board.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C5
+type: criterion
+title: The seeded-fault proof holds a design whose footprint is numbered clockwise, and the check catches it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The seeded-fault proof makes a throwaway copy of a proof design whose one footprint is numbered clockwise and requires the check to fail it as pad_numbering. The unseeded proof design passes the rule. Out of scope: the proof's seeds for other rules.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C3
+type: criterion
+title: A footprint whose pad numbers follow no single direction round the part is not judged
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A footprint whose numbers follow no single direction round the part, such as a header numbered by rows or in a zig-zag, a part of fewer than four distinct numbers, an in-line part, or one whose numbers wind more than once round the part, is not judged and so cannot fail the rule. A pad inside the outline of the rest, a pad whose number is not a whole number, a hole with no copper and a pad with no copper layer are left out before the footprint is judged. Out of scope: a footprint that C1 judges.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE
+    type: criterion-of

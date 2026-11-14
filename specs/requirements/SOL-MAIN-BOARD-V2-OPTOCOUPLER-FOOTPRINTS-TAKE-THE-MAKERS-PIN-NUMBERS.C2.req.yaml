@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C2
+type: criterion
+title: Each optocoupler pin stands on the net its function needs
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  On U701, U711 and U602 each numbered pad of the board stands on the net its pin function needs: the LED anode on the supply-side net and the cathode on the switch net for the two triac drivers, a main terminal on the triac gate net and the other on the net through the series resistors, no connection on pins 3 and 5, and for the detector the neutral and the LED feed on pins 1 and 2, the emitter on ground and the collector on the zero-crossing input. A pad on another net, or a pin 3 or 5 with a net, fails. Out of scope: the circuit's component values.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C1
+type: criterion
+title: A dual-row or four-sided footprint whose pad numbers run clockwise seen from the top of the part fails the design, naming the footprint
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A footprint whose numbered copper pads stand in two parallel rows or on four sides, with four or more distinct numbers, and whose numbers run clockwise round the part in ascending order seen from its top, fails the design under the name pad_numbering. The failure names the reference, the footprint and the part number field where the footprint has one, and says the numbering is the mirror image of the counter-clockwise convention. Three-terminal parts are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE
+    type: criterion-of

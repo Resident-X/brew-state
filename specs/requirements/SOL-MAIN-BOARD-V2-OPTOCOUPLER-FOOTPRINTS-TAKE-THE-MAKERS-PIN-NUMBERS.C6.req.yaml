@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C6
+type: criterion
+title: The locked-copper record compares with no item changed after the correction
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Comparing the corrected board against the locked-copper record reports no difference over its 1664 critical-class items. A critical-class item that is unlocked or that differs from the record fails. Out of scope: the low-voltage copper outside the critical classes.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of

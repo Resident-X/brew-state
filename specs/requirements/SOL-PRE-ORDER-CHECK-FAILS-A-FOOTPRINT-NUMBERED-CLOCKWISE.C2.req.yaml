@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C2
+type: criterion
+title: A footprint numbered counter-clockwise passes, on the front and on the back of the board
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A footprint of the same pad layout whose numbers run counter-clockwise round the part passes the rule when placed on the front of the board and when placed on the back, where the sense is read as the pads lie on the board seen from the front. The back-side reading is held by a test in which the layout tool itself places the pads of a back footprint. Out of scope: a footprint numbered clockwise, which C1 judges.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE
+    type: criterion-of

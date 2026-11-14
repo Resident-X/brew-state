@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C1
+type: criterion
+title: The optocoupler footprints are numbered as the makers number the parts
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The library footprints of the MOC3052SVM and the LTV-814S number their pads counter-clockwise from pin 1 in the top view, with the pin functions the makers' sheets give, and the pin-1 mark and the fabrication chamfer stand at the true pin 1. A footprint numbered clockwise, or a pin-1 mark at another pad, fails. Out of scope: the assembler's placement rotation of the parts.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of

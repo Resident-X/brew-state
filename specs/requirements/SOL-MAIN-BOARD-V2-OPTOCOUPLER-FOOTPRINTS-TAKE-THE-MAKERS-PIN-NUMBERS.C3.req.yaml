@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C3
+type: criterion
+title: The mains copper of the board is identical item for item after the correction and no low-voltage copper stands within 3.0 mm of it
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  Compared by a second tool, the mains copper of the corrected board is identical item for item with the mains copper before the correction, 266 of 266 items, and no low-voltage copper stands within 3.0 mm of it that did not stand so before. A mains item that moved, changed size or changed net, or a new low-voltage item within 3.0 mm, fails. Out of scope: the low-voltage copper itself.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of

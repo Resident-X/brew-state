@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C7
+type: criterion
+title: The records that name the renumbered pads follow the copper
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every record that names a pad of U602, U701 or U711 states the pad number the corrected copper carries: the eight separation-basis entries between pins 4 and 6 of U701 and U711 with their figures, acceptance and day unchanged, the pin-limits record of the detector, the sheet records and the schematic specification. A record that names a pad by its old number fails. Out of scope: prose documents that restate no pad number.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of
