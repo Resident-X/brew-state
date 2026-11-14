@@ -4281,6 +4281,15 @@
 				)
 			)
 		)
+		(property "dnp" "true"
+			(at 142.24 50.8 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Rating" "0603 zero-ohm link"
 			(at 142.24 50.8 0)
 			(hide yes)

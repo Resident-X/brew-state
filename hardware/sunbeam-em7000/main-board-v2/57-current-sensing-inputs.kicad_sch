@@ -1647,6 +1647,15 @@
 			)
 		)
 	
+		(property "dnp" "true"
+			(at 68.58 66.04 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Rating" "1% 100ppm/K 0603 100mW"
 			(at 68.58 66.04 0)
 			(hide yes)
@@ -2400,6 +2409,15 @@
 			)
 		)
 	
+		(property "dnp" "true"
+			(at 68.58 142.24 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Rating" "1% 100ppm/K 0603 100mW"
 			(at 68.58 142.24 0)
 			(hide yes)

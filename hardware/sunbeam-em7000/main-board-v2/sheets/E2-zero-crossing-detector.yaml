@@ -10,8 +10,8 @@ parts:
 nets:
   LINE: {scope: global, pins: [R630.1]}
   ZC_N1: {scope: local, pins: [R630.2, R631.1]}
-  ZC_LED_A: {scope: local, pins: [R631.2, U602.1]}
-  NEUTRAL: {scope: global, pins: [U602.2]}
+  ZC_LED_A: {scope: local, pins: [R631.2, U602.2]}
+  NEUTRAL: {scope: global, pins: [U602.1]}
   ZC_IN: {scope: global, pins: [U602.4, R632.1, C630.1, TP630.1]}
   "+3V3": {scope: power, pins: [R632.2]}
   GND: {scope: power, pins: [U602.3, C630.2]}
@@ -28,9 +28,9 @@ custom_symbols:
 custom_footprints:
   - name: LTV-814S_SMD-4
     from: "Lite-On LTV-814/824/844 series BNS-OD-C131/A4, page 13 recommended foot print pattern, 4 pin, and page 5 outline of the LTV-814S"
-    detail: "4 SMD pads 1.5 x 1.3 mm (1.5 along the row, 1.3 across), pitch 2.54 mm along the row, rows 9.0 mm apart centre to centre (pads 1 and 2 on one row, pads 4 and 3 on the other, pin 1 at top-left looking from above, pin 4 opposite pin 1 as the package); body 6.5 x 4.6 mm, lead span 10.16 mm. The input row (1, 2) is the mains side and the output row (3, 4) the low-voltage side; the gap between the rows' pad edges is 7.7 mm. Stock Package_DIP:SMDIP-4_W9.53mm has rows 9.53 mm apart and is not the maker's pattern."
+    detail: "4 SMD pads 1.5 x 1.3 mm (1.5 along the row, 1.3 across), pitch 2.54 mm along the row, rows 9.0 mm apart centre to centre (pads 1 and 2 on one row, pads 4 and 3 on the other, pin 1 at top-right looking from above (the input row on top), numbered counter-clockwise as the package, pin 4 opposite pin 1); body 6.5 x 4.6 mm, lead span 10.16 mm. The input row (1, 2) is the mains side and the output row (3, 4) the low-voltage side; the gap between the rows' pad edges is 7.7 mm. Stock Package_DIP:SMDIP-4_W9.53mm has rows 9.53 mm apart and is not the maker's pattern."
 power_flags: []
 notes: |
-  Drawing: left to right: LINE -> R630 -> R631 -> U602 pin 1; U602 pin 2 -> NEUTRAL (mains side, left). U602 pins 3, 4 on the right (low-voltage side): pin 3 to GND, pin 4 to the node ZC_IN, with R632 up to +3V3 and C630 down to GND, and the global label ZC_IN leaving to the right. Mark the barrier between the optocoupler's two halves with a dashed line and the text "mains | low voltage".
+  Drawing: left to right: LINE -> R630 -> R631 -> U602 pin 2; U602 pin 1 -> NEUTRAL (mains side, left). U602 pins 3, 4 on the right (low-voltage side): pin 3 to GND, pin 4 to the node ZC_IN, with R632 up to +3V3 and C630 down to GND, and the global label ZC_IN leaving to the right. Mark the barrier between the optocoupler's two halves with a dashed line and the text "mains | low voltage".
   The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PB11) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764 and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PB11).
   Both crossings: the LEDs are antiparallel, so the output falls once per half-cycle whatever the polarity; the supply's period is the time between like edges (division record: PA10, capture on both edges).

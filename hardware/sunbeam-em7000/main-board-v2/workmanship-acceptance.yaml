@@ -1177,6 +1177,14 @@ accepted_workmanship:
     bounded_by: "1 line at J761 on GND; the pad's other ground joins are listed in the reason, and clearance and every separation rule still judge the copper"
     accepted_by: "owner (signed on behalf, session 2026-11-14)"
     accepted_on: "2026-11-14"
+  # workmanship_detour at /Pump drives/PUMP_C_LED_A: 1 line(s) on the board of the optocoupler renumbering
+  - rule: workmanship_detour
+    scope: "/Pump drives/PUMP_C_LED_A"
+    count: 1
+    reason: "On this net the tracks are 20.02 mm against 12.11 mm of shortest tree, 1.65 times where 1.5 is allowed. The net is the LED anode feed of the coffee pump opto-triac U701, a slow drive at DC to about 100 Hz: a longer path costs no timing and tens of milliohms at most. The anode pad (pad 1 of U701) lies behind the Q701 collector pad and the cathode run, so the net hops under them on the back layer by a via pair and then takes the one corridor east of Q701 to its resistor; no shorter lay was found on either outer layer (the corridors to the south are held by the PUMP_C_GATE_G, VALVE_3W_G and PUMP_S_LED_K copper). The net is in the net class Noisy."
+    bounded_by: "1 line on the net /Pump drives/PUMP_C_LED_A (class Noisy); the track's width, clearance and every separation rule still judge this copper, and the pad's connection is unchanged"
+    accepted_by: "owner (signed on behalf, session 2026-11-14)"
+    accepted_on: "2026-11-14"
   # lib_footprint_mismatch at Y402: 1 line(s) on the board of 574467e2
   - rule: lib_footprint_mismatch
     scope: "Y402"

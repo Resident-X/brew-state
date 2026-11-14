@@ -30,8 +30,8 @@ nets:
   "PUMP_C_LED_K": {"scope": "local", "pins": ["U701.2", "Q701.3"]}
   "PUMP_C_MT2": {"scope": "local", "pins": ["F701.2", "T701.2", "R704.1", "D701.1", "TP702.1"]}
   "PUMP_C_GATE_R": {"scope": "local", "pins": ["R704.2", "R705.1"]}
-  "PUMP_C_OPTO_MT": {"scope": "local", "pins": ["R705.2", "U701.6"]}
-  "PUMP_C_TRIAC_G": {"scope": "local", "pins": ["U701.4", "T701.3"]}
+  "PUMP_C_OPTO_MT": {"scope": "local", "pins": ["R705.2", "U701.4"]}
+  "PUMP_C_TRIAC_G": {"scope": "local", "pins": ["U701.6", "T701.3"]}
   "COFFPUMP": {"scope": "global", "pins": ["F701.1"]}
   "PUMP_S_GATE": {"scope": "global", "pins": ["R711.1"]}
   "PUMP_S_GATE_G": {"scope": "local", "pins": ["R711.2", "Q711.1", "R712.1"]}
@@ -39,8 +39,8 @@ nets:
   "PUMP_S_LED_K": {"scope": "local", "pins": ["U711.2", "Q711.3"]}
   "PUMP_S_MT2": {"scope": "local", "pins": ["F711.2", "T711.2", "R714.1", "D711.1", "TP712.1"]}
   "PUMP_S_GATE_R": {"scope": "local", "pins": ["R714.2", "R715.1"]}
-  "PUMP_S_OPTO_MT": {"scope": "local", "pins": ["R715.2", "U711.6"]}
-  "PUMP_S_TRIAC_G": {"scope": "local", "pins": ["U711.4", "T711.3"]}
+  "PUMP_S_OPTO_MT": {"scope": "local", "pins": ["R715.2", "U711.4"]}
+  "PUMP_S_TRIAC_G": {"scope": "local", "pins": ["U711.6", "T711.3"]}
   "STEAMPUMP": {"scope": "global", "pins": ["F711.1"]}
   "GND": {"scope": "power", "pins": ["Q701.2", "R702.2", "Q711.2", "R712.2"]}
   "+5V": {"scope": "power", "pins": ["R703.1", "R713.1"]}

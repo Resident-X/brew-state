@@ -1492,15 +1492,15 @@ parts:
       section: "ABSOLUTE MAXIMUM RATING table"
       read_on: 2026-10-29
     pins:
-      # Input LED, AC input (two anti-parallel LEDs). The input has a current limit, IF +/-50 mA, and no voltage rating: not stated. The voltage of the net that drives it is used (the mains peak).
+      # Input LED, one terminal, on neutral. Not stated, as pin 2.
       - pin: "1"
-        domain: mains_line
+        domain: mains_neutral
         absolute_max_v: 357.8
         absolute_min_v: -357.8
         tolerates_driven_unpowered: false
-      # Input LED, other terminal, on neutral. Not stated, as pin 1.
+      # Input LED, AC input (two anti-parallel LEDs); this terminal is on the line side. The input has a current limit, IF +/-50 mA, and no voltage rating: not stated. The voltage of the net that drives it is used (the mains peak).
       - pin: "2"
-        domain: mains_neutral
+        domain: mains_line
         absolute_max_v: 357.8
         absolute_min_v: -357.8
         tolerates_driven_unpowered: false
