@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 import sys
 import unittest
 
@@ -92,7 +93,11 @@ class EveryTrackedDesignPassesTheConnectivityCheck(unittest.TestCase):
         self.assertEqual(status, 0, out.getvalue())
         designs = [line for line in lines if line.startswith("DESIGN | ")]
         self.assertGreaterEqual(len(designs), 2)
-        self.assertTrue(all(line.endswith(" | PASS") for line in designs), designs)
+        # the verdict is the third field; a design whose severity policy marks classes as warnings carries their count as a fourth
+        verdicts = [line.split(" | ")[2] for line in designs]
+        self.assertEqual(verdicts, ["PASS"] * len(designs), designs)
+        self.assertTrue(all(len(fields) == 3 or re.fullmatch(r"[0-9]+ warnings?", fields[3]) and len(fields) == 4
+                            for fields in (line.split(" | ") for line in designs)), designs)
         self.assertFalse([line for line in lines if " | connectivity | " in line or " | pin_allocation | " in line], lines)
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C6: Every design git tracks passes the derated-voltage rule and the pin-limit rule, carrying the records they read, synthetic where the design is not for manufacture.
         # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C5: Every design git tracks passes the coverage rule, its pin-limit record carrying an entry for every connected pin of every semiconductor and integrated circuit it places, through the board gate the pre-order check already uses.
