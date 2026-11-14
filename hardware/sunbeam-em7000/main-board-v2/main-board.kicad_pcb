@@ -39326,7 +39326,7 @@
 			)
 		)
 		(path "/7940377e-2ea7-4718-bab0-689683dfacca/9f9f0e21-386a-4c19-a69a-1cf699069ddb")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_rect
 			(start -1.65 -1.65)
@@ -60295,7 +60295,7 @@
 			)
 		)
 		(path "/f031f618-2775-4dd3-8aca-5dd164d386ab/0d6c8fdf-947e-4a95-8f22-6108d074194d")
-		(attr through_hole)
+		(attr through_hole exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_rect
 			(start -1.65 -1.65)
@@ -102825,7 +102825,7 @@
 		)
 	)
 	(gr_text "SPARE AN2 H"
-		(at 107.6553 9.8833 0)
+		(at 96.0000 14.2000 0)
 		(layer "F.SilkS")
 		(uuid "5063f75a-3dbf-5126-8d22-56707f1e72a6")
 		(effects

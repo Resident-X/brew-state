@@ -735,7 +735,7 @@ sheets:
     lcsc: none
     class: none
     hand: true
-    function: 'Isolating link in the live between the fuse and everything it feeds (bring-up): wire link in service, lamp or resistor on first power; open voltage across the link is 253 V rms'
+    function: 'Isolating link in the live between the fuse and everything it feeds (bring-up): wire link in service, lamp or resistor on first power; open voltage across the link is 253 V rms; hand-fitted, listed in the bill of materials without an assembler part number (so the assembler does not fit it), not in the position file'
     mains: true
     sim_exclude: true
   - ref: RV101
@@ -1783,7 +1783,7 @@ sheets:
     hand: true
     function: 'series position in the module''s mains feed, wire link in service so the board works with RT301 unfitted; remove the link when RT301 is fitted, never both: with both fitted the link shorts the thermistor. Open
       voltage across the link when the inrush thermistor RT301 replaces it is the thermistor''s drop, under 253 V rms. Pin 1 = LINE side, pin 2 = LINE_MOD side (module). A 1206 0 ohm chip link was not used: its sheet gives
-      2 A rated and 10 A overload (UNI-ROYAL data sheet, 1206 row) and no duration, against the module''s 40 A typical cold-start inrush (IRM-20 sheet), where the wire has no such limit'
+      2 A rated and 10 A overload (UNI-ROYAL data sheet, 1206 row) and no duration, against the module''s 40 A typical cold-start inrush (IRM-20 sheet), where the wire has no such limit; hand-fitted, listed in the bill of materials without an assembler part number (so the assembler does not fit it), not in the position file'
     mains: true
     sim_exclude: true
   - ref: RT301
