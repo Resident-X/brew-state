@@ -6623,10 +6623,10 @@ sheets:
     mains: false
     sim_exclude: true
   - ref: J630
-    lib_id: Connector_Generic:Conn_01x05
+    lib_id: Conn_01x05
     value: WT1_H
     rating: JST PH 2.0 mm 2 A 250 V
-    footprint: Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    footprint: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     mpn: KH-PH-5P-Z
     maker: Kinghelm (JST PH family)
     lcsc: C2898948
@@ -6766,10 +6766,10 @@ sheets:
     mains: false
     sim_exclude: true
   - ref: J635
-    lib_id: Connector_Generic:Conn_01x05
+    lib_id: Conn_01x05
     value: WT2_H
     rating: JST PH 2.0 mm 2 A 250 V
-    footprint: Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    footprint: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     mpn: KH-PH-5P-Z
     maker: Kinghelm (JST PH family)
     lcsc: C2898948
@@ -7012,8 +7012,38 @@ sheets:
     reason: 'BASE: external regulator transistor not used, NC when not used (Avia V2.0 Table 1)'
   - pin: U631.13
     reason: 'XO: crystal not used, NC when not used (Avia V2.0 Table 1)'
-  custom_symbols: []
-  custom_footprints: []
+  custom_symbols:
+  - name: Conn_01x05
+    ref_prefix: J
+    note: KiCad's stock Connector_Generic Conn_01x05 (single row, five passive pins numbered 1 to 5, named Pin_1 to Pin_5), copied into the project symbol library without its footprint filter 'Connector*:*_1x??_*', which cannot
+      match a footprint of the project library.
+    pins:
+    - number: '1'
+      name: Pin_1
+      type: passive
+      unit: 1
+    - number: '2'
+      name: Pin_2
+      type: passive
+      unit: 1
+    - number: '3'
+      name: Pin_3
+      type: passive
+      unit: 1
+    - number: '4'
+      name: Pin_4
+      type: passive
+      unit: 1
+    - number: '5'
+      name: Pin_5
+      type: passive
+      unit: 1
+  custom_footprints:
+  - name: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
+    from: KiCad's stock Connector_JST footprint JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical (JST PH B5B-PH-K, 1x05, 2.0 mm pitch), copied; the hole diameter changed from the stock 0.75 mm to 0.85 mm. The Kinghelm KH-PH-5P-Z sheet
+      (LCSC C2898948) asks for a PCB hole of 0.80 +0.10/-0.00 mm; 0.85 mm is the middle of that band.
+    detail: Five plated pads at 2.0 mm pitch along X, pad 1 a rounded rectangle and the others ovals, each 1.2 mm across the row by 1.75 mm, drill 0.85 mm (ring 0.175 mm across the row, 0.45 mm along it, hole edge to hole
+      edge 1.15 mm). Pad size, positions, courtyard, silkscreen and 3D model are the stock footprint's.
   power_flags: []
   drawing_notes: 'Drawing: two identical blocks, weight channel 1 above channel 2. In each: the load-cell header on the left (pins E+, E-, A-, A+, SHIELD labelled), the filter R/R/C to its right, the amplifier in the middle
     with +5V on VSUP and AVDD (tied, 10 uF below), +3V3 on DVDD (0.1 uF), the labels WT1_DATA (DOUT) and WT1_CLK (PD_SCK) leaving to the right. Unused inputs and strap pins to GND: VFB, XI, RATE, INB+, INB- (draw a small GND
@@ -9416,6 +9446,32 @@ custom_symbols:
     type: passive
     unit: 1
   sheet: Zero-crossing detector
+- name: Conn_01x05
+  ref_prefix: J
+  note: KiCad's stock Connector_Generic Conn_01x05 (single row, five passive pins numbered 1 to 5, named Pin_1 to Pin_5), copied into the project symbol library without its footprint filter 'Connector*:*_1x??_*', which cannot
+    match a footprint of the project library.
+  pins:
+  - number: '1'
+    name: Pin_1
+    type: passive
+    unit: 1
+  - number: '2'
+    name: Pin_2
+    type: passive
+    unit: 1
+  - number: '3'
+    name: Pin_3
+    type: passive
+    unit: 1
+  - number: '4'
+    name: Pin_4
+    type: passive
+    unit: 1
+  - number: '5'
+    name: Pin_5
+    type: passive
+    unit: 1
+  sheet: Load-cell amplifiers
 custom_footprints:
 - name: Tab_TE_63849-1
   from: TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469), https://datasheet.lcsc.com/datasheet/pdf/d78aaa5668ef44d19432bad6ab97dbf2.pdf; read 2026-11-13. Blade 6.35 +-0.08 wide, 0.76 to 0.84 thick, overall 14.02,
@@ -9475,6 +9531,12 @@ custom_footprints:
     pin 4 opposite pin 1 as the package); body 6.5 x 4.6 mm, lead span 10.16 mm. The input row (1, 2) is the mains side and the output row (3, 4) the low-voltage side; the gap between the rows' pad edges is 7.7 mm. Stock Package_DIP:SMDIP-4_W9.53mm
     has rows 9.53 mm apart and is not the maker's pattern.
   sheet: Zero-crossing detector
+- name: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
+  from: KiCad's stock Connector_JST footprint JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical (JST PH B5B-PH-K, 1x05, 2.0 mm pitch), copied; the hole diameter changed from the stock 0.75 mm to 0.85 mm. The Kinghelm KH-PH-5P-Z sheet
+    (LCSC C2898948) asks for a PCB hole of 0.80 +0.10/-0.00 mm; 0.85 mm is the middle of that band.
+  detail: Five plated pads at 2.0 mm pitch along X, pad 1 a rounded rectangle and the others ovals, each 1.2 mm across the row by 1.75 mm, drill 0.85 mm (ring 0.175 mm across the row, 0.45 mm along it, hole edge to hole edge
+    1.15 mm). Pad size, positions, courtyard, silkscreen and 3D model are the stock footprint's.
+  sheet: Load-cell amplifiers
 - name: MOC3052SVM_SMD-6
   from: onsemi MOC3052M/D Rev. 3 (May 2019), case outline PDIP6 8.51x6.35 2.54P CASE 646BY Issue A (15 Jul 2019, the SMT lead-bend package of MOC3052SM, MOC3052SVM and MOC3052SR2VM), recommended mounting footprint
   detail: '6 SMD pads 1.78 mm along the row by 1.52 mm across, pitch 2.54 mm along the row, rows 9.02 mm apart centre to centre (outer edges 10.54 mm, gap between the rows'' pad edges 7.49 mm: the maker''s recommended footprint);

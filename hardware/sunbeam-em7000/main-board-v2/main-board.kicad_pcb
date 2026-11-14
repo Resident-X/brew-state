@@ -7186,11 +7186,11 @@
 			)
 		)
 	)
-	(footprint "Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical"
+	(footprint "main-board:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85"
 		(layer "F.Cu")
 		(uuid "0e3b7d2d-8960-414e-bc5c-3c119f8534ff")
 		(at 105.084 92.426 -90)
-		(descr "JST PH series connector, B5B-PH-K (http://www.jst-mfg.com/product/pdf/eng/ePH.pdf)")
+		(descr "JST PH series connector, B5B-PH-K (http://www.jst-mfg.com/product/pdf/eng/ePH.pdf); plated holes 0.85 mm, the middle of the 0.80 +0.10/-0.00 mm the Kinghelm KH-PH-5P-Z sheet (LCSC C2898948) asks for, where the stock footprint has 0.75 mm, which is below that band")
 		(tags "connector JST PH vertical")
 		(property "Reference" "J630"
 			(at -2.8557 1.5704 0)
@@ -7701,7 +7701,7 @@
 		(pad "1" thru_hole roundrect
 			(at 0 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(roundrect_rratio 0.208333)
@@ -7711,7 +7711,7 @@
 		(pad "2" thru_hole oval
 			(at 2 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "GND")
@@ -7720,7 +7720,7 @@
 		(pad "3" thru_hole oval
 			(at 4 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "/Load-cell amplifiers/WT1_SN_RAW")
@@ -7729,7 +7729,7 @@
 		(pad "4" thru_hole oval
 			(at 6 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "/Load-cell amplifiers/WT1_SP_RAW")
@@ -7738,7 +7738,7 @@
 		(pad "5" thru_hole oval
 			(at 8 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "GND")
@@ -61752,11 +61752,11 @@
 			)
 		)
 	)
-	(footprint "Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical"
+	(footprint "main-board:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85"
 		(layer "F.Cu")
 		(uuid "b26db686-4216-4cfa-859c-0de41f84e08b")
 		(at 103.791 110.324 -90)
-		(descr "JST PH series connector, B5B-PH-K (http://www.jst-mfg.com/product/pdf/eng/ePH.pdf)")
+		(descr "JST PH series connector, B5B-PH-K (http://www.jst-mfg.com/product/pdf/eng/ePH.pdf); plated holes 0.85 mm, the middle of the 0.80 +0.10/-0.00 mm the Kinghelm KH-PH-5P-Z sheet (LCSC C2898948) asks for, where the stock footprint has 0.75 mm, which is below that band")
 		(tags "connector JST PH vertical")
 		(property "Reference" "J635"
 			(at 3.2443 -3.8301 0)
@@ -62267,7 +62267,7 @@
 		(pad "1" thru_hole roundrect
 			(at 0 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(roundrect_rratio 0.208333)
@@ -62277,7 +62277,7 @@
 		(pad "2" thru_hole oval
 			(at 2 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "GND")
@@ -62286,7 +62286,7 @@
 		(pad "3" thru_hole oval
 			(at 4 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "/Load-cell amplifiers/WT2_SN_RAW")
@@ -62295,7 +62295,7 @@
 		(pad "4" thru_hole oval
 			(at 6 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "/Load-cell amplifiers/WT2_SP_RAW")
@@ -62304,7 +62304,7 @@
 		(pad "5" thru_hole oval
 			(at 8 0 270)
 			(size 1.2 1.75)
-			(drill 0.75)
+			(drill 0.85)
 			(layers "*.Cu" "*.Mask")
 			(remove_unused_layers no)
 			(net "GND")

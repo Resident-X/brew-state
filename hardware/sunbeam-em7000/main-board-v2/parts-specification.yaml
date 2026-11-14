@@ -2242,7 +2242,7 @@ positions:
   # J630: maker Kinghelm (JST PH family); MPN KH-PH-5P-Z; catalogue class extended
   - reference: J630
     value: WT1_H
-    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     rating: JST PH 2.0 mm 2 A 250 V
     lcsc: C2898948
     class: relay and connector
@@ -2317,7 +2317,7 @@ positions:
   # J635: maker Kinghelm (JST PH family); MPN KH-PH-5P-Z; catalogue class extended
   - reference: J635
     value: WT2_H
-    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     rating: JST PH 2.0 mm 2 A 250 V
     lcsc: C2898948
     class: relay and connector

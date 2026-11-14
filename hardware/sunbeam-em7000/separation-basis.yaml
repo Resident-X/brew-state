@@ -17,6 +17,7 @@
 # The entry for the C606 pad pair (pads 1 and 2) was removed on 2026-11-07 on the owner's written instruction, because the layout rule check no longer reports a creepage shortfall for it; the removal excuses nothing and relaxes nothing, and the removal changed no signature day.
 #
 # On 2026-11-14 the owner, in writing to Claude, accepted the changes the re-laid mains side needed, and Claude entered them: the entries for the pad pairs R105.1 with R105.3 and R105.4 with R105.2 were removed because the layout rule check no longer reports a creepage shortfall for them (the removal excuses nothing and relaxes nothing); the entries for R105.1 with R105.2 and R105.4 with R105.3 now state the 0.51 mm gap the layout leaves between those pads, in place of 0.44 mm; twelve entries of constraint clearance were added for pads of one part, since the layout rule check now reports them at the pad-to-pad terminal clearance, at the land's own gap rounded down to 0.01 mm: R101, R102, R103 and R104 (1.8 mm, 1206 land), R704, R705, R714 and R715 (1.8 mm, 1206 land) and pin 5 of U701 and of U711 against pins 4 and 6 (0.76 mm, the figure their creepage entries already hold); and the wording of the interlock-relay barrier follows the HF115F-I/005-1HS3A now fitted as K201. The new and the changed entries carry accepted_on 2026-11-14 and the record's own accepted_on reads 2026-11-14 as the latest acceptance; every other entry keeps its signer and day, and no figure of the mains-to-low-voltage or mains-to-mains basis changed.
+# On the same day the owner ruled, in writing to Claude, that the plated holes of J630 and J635 become 0.85 mm, the middle of the 0.80 +0.10/-0.00 mm hole the Kinghelm KH-PH-5P-Z sheet asks for (the stock 0.75 mm is below it), on a project footprint of their own; Claude entered the two same_connector_pins entries of those headers at the 1.15 mm that a 2.0 mm pitch leaves with that drill, in place of 1.25 mm, and they carry accepted_on 2026-11-14. J791, J821 and J861 are the maker's own 0.7 +0.1 mm part and keep the 0.75 mm drill, 1.25 mm and their day.
 #
 # On 2026-11-07 the owner accepted, in the working session and in his own word "Accept", the change of the zero-cross feed resistors R630 and R631 from 60.4 kohm to 59 kohm: the text and arithmetic of the three entries that name them (the ZC_N1 net pair and the two pump-gate and ZC_LED_A net pairs) and of rows 5, 10 and 11 of the single-fault table; no distance, pair or bound changed. Those three entries carry accepted_by naming that acceptance and accepted_on 2026-11-07. The record's top-level accepted_on reads 2026-11-07 because no entry may be dated later than the record; every other entry keeps its signer and the day 2026-11-06, and the record was not re-signed as a whole on 2026-11-07.
 #
@@ -548,8 +549,9 @@ table_rows:
 # stand 2.0 mm apart, which the board's plated-hole spacing rule holds to a larger figure than a 2.0 mm
 # pitch can reach. Their ground, that the header carries slow signals only and no fast signal crosses
 # its strip, is the owner's assertion and the check does not test it; the owner is shown the nets on
-# each header's pins when accepting. Each accepted_mm is the 2.0 mm pitch less the 0.75 mm drill of the
-# JST PH pad of the footprint, to be confirmed against the finished layout.
+# each header's pins when accepting. Each accepted_mm is the 2.0 mm pitch less the drill of the
+# header's pad, to be confirmed against the finished layout: J791, J821 and J861 are at 1.25 mm (0.75 mm drill of the JST PH footprint),
+# J630 and J635 are at 1.15 mm (0.85 mm drill of their own project footprint).
 accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
 accepted_on: "2026-11-14"
 
@@ -590,20 +592,20 @@ accepted_exceptions:
     constraint: hole_to_hole
     connector: J630
     pitch_mm: 2.0
-    accepted_mm: 1.25
-    reason: "J630 (WT1_H) is the first load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 1. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
+    accepted_mm: 1.15
+    reason: "J630 (WT1_H) is the first load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 1. A 2.0 mm pitch with the 0.85 mm drill of its own project footprint (the middle of the 0.80 +0.10/-0.00 mm hole the Kinghelm KH-PH-5P-Z sheet asks for) leaves 1.15 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
     bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
     accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-06"
+    accepted_on: "2026-11-14"
   - pair: same_connector_pins
     constraint: hole_to_hole
     connector: J635
     pitch_mm: 2.0
-    accepted_mm: 1.25
-    reason: "J635 (WT2_H) is the second load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 2. A 2.0 mm pitch with the 0.75 mm drill of its JST PH footprint leaves 1.25 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
+    accepted_mm: 1.15
+    reason: "J635 (WT2_H) is the second load-cell header (5 ways), whose pins carry the supply, ground and the two raw bridge signals of weight channel 2. A 2.0 mm pitch with the 0.85 mm drill of its own project footprint (the middle of the 0.80 +0.10/-0.00 mm hole the Kinghelm KH-PH-5P-Z sheet asks for) leaves 1.15 mm between the edges of adjacent holes, which the board's plated-hole spacing rule, drawn for the rings its pins open in a ground plane, holds to a larger distance; a 2.0 mm pitch cannot reach it. The owner's ground is that this header carries slow signals only and that no fast signal crosses its strip: an assertion the owner makes, which the tool does not check."
     bounded_by: "The layout review's item that no track runs over a gap in the ground plane beneath it: a fast track crossing the merged rings of this header's strip fails that item, so none can cross it unnoticed. Proposed by the drafter for the owner to accept or correct."
     accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-06"
+    accepted_on: "2026-11-14"
   - pair: same_connector_pins
     constraint: hole_to_hole
     connector: J791

@@ -34,6 +34,7 @@ SAME_PART_CLEARANCE_COUNT = len(DISCHARGE_RESISTOR_REFS) + len(GATE_RESISTOR_REF
 #: removed, and reported the four gate-resistor pairs short with no entry, which were added (33); the C606 pad-pair entry was then removed (SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED, 32); the re-laid mains side
 #: of 2026-11-14 removed the two R105 creepage entries it no longer reports short (30) and added the twelve same-part clearance entries it reports (42).
 EXCEPTION_COUNT = 42
+KINGHELM_HEADERS = ("J630", "J635")
 DRAFTED_EXCEPTIONS, USED_BY_A_SHORTFALL, REMOVED_AS_USED_BY_NONE = 98, 29, 69
 C606_REMOVED, R105_STALE_REMOVED = 1, 2
 #: The signature the record and every exception carry: the owner, with the note that Claude entered it on the owner's written instruction.
@@ -608,15 +609,20 @@ class SameConnectorRecord(unittest.TestCase):
             with self.subTest(connector=entry["connector"]):
                 self.assertEqual(sorted(entry), sorted(board_check.SAME_CONNECTOR_KEYS))
                 self.assertEqual((entry["constraint"], entry["pitch_mm"]), ("hole_to_hole", 2.0))
-                # the pitch less the 0.75 mm drill of the JST PH footprint, and below the plated-hole figure the layout practice derives
-                self.assertEqual(entry["accepted_mm"], 1.25)
+                # the pitch less the drill of the header's footprint, and below the plated-hole figure the layout practice derives:
+                # the 0.75 mm drill of the JST PH footprint leaves 1.25 mm, the 0.85 mm drill of the Kinghelm headers' own footprint 1.15 mm
+                narrowed = entry["connector"] in KINGHELM_HEADERS
+                self.assertEqual(entry["accepted_mm"], 1.15 if narrowed else 1.25)
+                self.assertAlmostEqual(entry["pitch_mm"] - entry["accepted_mm"], 0.85 if narrowed else 0.75)
+                self.assertIn("0.85 mm drill of its own project footprint" if narrowed else "0.75 mm drill of its JST PH footprint", entry["reason"])
+                self.assertIn("1.15 mm between the edges" if narrowed else "1.25 mm between the edges", entry["reason"])
+                self.assertEqual(entry["accepted_on"], "2026-11-14" if narrowed else "2026-11-06")
                 self.assertIn("slow signals only", entry["reason"])
                 self.assertIn("no fast signal crosses its strip", entry["reason"])
                 self.assertIn("the owner makes, which the tool does not check", entry["reason"])
                 self.assertIn(entry["connector"], entry["reason"])
                 self.assertTrue(entry["bounded_by"].strip())
                 self.assertIn(OWNER, entry["accepted_by"])
-                self.assertIn(entry["accepted_on"], ("2026-11-06", data["accepted_on"]))
 
     def test_the_checks_own_reader_accepts_each_entry_as_a_form_and_refuses_a_broken_one(self):
         # SOL-PRE-ORDER-CHECK-JUDGES-SAME-CONNECTOR-PLATED-HOLE-SPACING-EXCEPTIONS.C6: The committed record holds one same_connector_pins entry for each of J630, J635, J791, J821 and J861 with pitch_mm 2.0, an accepted_mm drafted from the schematic and the division record, the reason that the header carries slow signals only and no fast signal crosses its strip, a bounding element, and the entry's own accepted_by and accepted_on empty. The five entries are read through the check's own reader from the committed record in whatever acceptance state the record as a whole is in, and each is accepted as a form; the test asserts nothing about whether the record as a whole reads signed or unsigned.
@@ -989,7 +995,7 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
     ZERO_CROSS_BY = "David Baker (owner), accepted in session 2026-11-07, words: Accept"
     #: The day the owner accepted the changes the re-laid mains side needed: the record's own day, as the latest acceptance, and that of the fourteen entries it changed or added.
     RELAID = "2026-11-14"
-    RELAID_COUNT = 14
+    RELAID_COUNT = 16
 
     @staticmethod
     def relaid(entry):
@@ -998,11 +1004,11 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
 
     @classmethod
     def day_and_signer_hold(cls, case, data):
-        """The record's day is the latest acceptance; the entries that name R630 and R631 carry the owner's acceptance of 2026-11-07, the fourteen the re-laid mains side changed or added carry 2026-11-14, and every other entry keeps the re-signing day and signer."""
+        """The record's day is the latest acceptance; the entries that name R630 and R631 carry the owner's acceptance of 2026-11-07, the fourteen the re-laid mains side changed or added and the two same-connector entries of the Kinghelm headers carry 2026-11-14, and every other entry keeps the re-signing day and signer."""
         case.assertEqual(data["accepted_on"], cls.RELAID)
         entries = data["accepted_exceptions"]
         zero_cross = [e for e in entries if "R630" in e["reason"]]
-        relaid = [e for e in entries if cls.relaid(e)]
+        relaid = [e for e in entries if cls.relaid(e) or e.get("connector") in KINGHELM_HEADERS]
         case.assertEqual(len(zero_cross), 3)
         case.assertEqual(len(relaid), cls.RELAID_COUNT)
         for position, entry in enumerate(entries):
@@ -1092,6 +1098,24 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.day_and_signer_hold(self, dict(data, accepted_on=self.ZERO_CROSS_DAY))
 
+
+    def test_the_two_kinghelm_headers_state_the_maker_hole_band_and_the_record_header_states_the_ruling(self):
+        # The owner's ruling of 2026-11-14 on the Kinghelm headers' holes: J630 and J635 are drilled 0.85 mm, the middle of the maker's 0.80 +0.10/-0.00 mm, so their same-connector entries state 1.15 mm and the header states the ruling and the day. (No graph criterion states it yet.)
+        _, data = committed()
+        for entry in (e for e in data["accepted_exceptions"] if e.get("connector") in KINGHELM_HEADERS):
+            self.assertIn("0.80 +0.10/-0.00 mm hole the Kinghelm KH-PH-5P-Z sheet asks for", entry["reason"])
+        header = self.header()
+        for phrase in ("the plated holes of J630 and J635 become 0.85 mm", "the stock 0.75 mm is below it", "at the 1.15 mm that a 2.0 mm pitch leaves with that drill",
+                       "in place of 1.25 mm", "they carry accepted_on 2026-11-14", "J791, J821 and J861 are the maker's own 0.7 +0.1 mm part and keep the 0.75 mm drill, 1.25 mm and their day"):
+            self.assertIn(phrase, header, phrase)
+        self.assertIn("J630 and J635 are at 1.15 mm (0.85 mm drill of their own project footprint)", " ".join(record_text().split()).replace("# ", ""))
+        # the check can fail: a header of the old figure, or an entry left at the old day, is caught
+        for connector in KINGHELM_HEADERS:
+            entries = [dict(e) for e in data["accepted_exceptions"]]
+            at = next(i for i, e in enumerate(entries) if e.get("connector") == connector)
+            entries[at]["accepted_on"] = self.RESIGNED
+            with self.assertRaises(AssertionError):
+                self.day_and_signer_hold(self, dict(data, accepted_exceptions=entries))
 
     REMOVAL_STATEMENT = ("entry for the C606 pad pair", "was removed on 2026-11-07", "on the owner's written instruction",
                          "the removal excuses nothing and relaxes nothing", "the removal changed no signature day")
@@ -1396,7 +1420,7 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
         earlier = [(e["pair"], e["constraint"], tuple(e.get("between") or ()), e.get("connector"), e["accepted_mm"]) for e in entries[:ORIGINAL_ENTRIES]]
         expected = ([("mains_to_mains", "creepage", pads, None, 2.0) for pads in (
             ("T701.2", "T701.1"), ("T701.2", "T701.3"), ("T711.2", "T711.1"), ("T711.2", "T711.3"))]
-                    + [("same_connector_pins", "hole_to_hole", (), connector, 1.25) for connector in ("J630", "J635", "J791", "J821", "J861")])
+                    + [("same_connector_pins", "hole_to_hole", (), connector, 1.15 if connector in KINGHELM_HEADERS else 1.25) for connector in ("J630", "J635", "J791", "J821", "J861")])
         self.assertEqual(earlier, expected)
         # the count can fail: an entry dropped or added is a different record from the one the reader signs
         self.assertNotEqual(len(entries[:-1]), EXCEPTION_COUNT)

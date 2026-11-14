@@ -126,5 +126,5 @@ Every one of these is a recorded draft for the owner, not an acceptance, and non
 
 - The 0.15 mm annular width of the 0.5 / 0.2 mm via (above).
 - The detour ratios of routed critical nets (`layout-plan.md` open rows). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's 32 signed exceptions (2026-11-06), not carried here as unsigned; the standing mains items row of `layout-plan.md` holds them.
-- The plated-hole pairs at 1.25 mm, the pour gaps under 0.09 mm, the back-side assembled parts without a fiducial, and the other open rows of that section.
+- The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14), the pour gaps under 0.09 mm, the back-side assembled parts without a fiducial, and the other open rows of that section.
 - The three `footprint_symbol_mismatch` parity entries for R522, R572 and R576 (do-not-populate set on the board footprints, not on the schematic symbols; `open-items.md`, flow meter output type).

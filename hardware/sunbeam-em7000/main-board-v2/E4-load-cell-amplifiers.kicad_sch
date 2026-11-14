@@ -391,7 +391,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Connector_Generic:Conn_01x05"
+		(symbol "main-board:Conn_01x05"
 			(pin_names
 				(offset 1.016)
 				(hide yes)
@@ -455,17 +455,6 @@
 				)
 			)
 			(property "ki_keywords" "connector"
-				(at 0 0 0)
-				(show_name no)
-				(do_not_autoplace no)
-				(hide yes)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "ki_fp_filters" "Connector*:*_1x??_*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -2118,7 +2107,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x05")
+		(lib_id "main-board:Conn_01x05")
 		(at 60.96 73.66 0)
 		(unit 1)
 		(in_bom yes)
@@ -2141,7 +2130,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical"
+		(property "Footprint" "main-board:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85"
 			(at 60.96 73.66 0)
 			(hide yes)
 			(effects
@@ -3128,7 +3117,7 @@
 			)
 		))
 	(symbol
-		(lib_id "Connector_Generic:Conn_01x05")
+		(lib_id "main-board:Conn_01x05")
 		(at 60.96 175.26 0)
 		(unit 1)
 		(in_bom yes)
@@ -3151,7 +3140,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical"
+		(property "Footprint" "main-board:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85"
 			(at 60.96 175.26 0)
 			(hide yes)
 			(effects
