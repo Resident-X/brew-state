@@ -20,11 +20,11 @@ Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/
 
 | Via | Count in the placed board | Annular width | Use |
 |---|---|---|---|
-| 0.6 mm pad, 0.3 mm drill | 462 | (0.6 - 0.3) / 2 = 0.15 mm (the maker's absolute minimum, below its 0.20 mm recommendation) | every ordinary via: signal, ground and supply nets |
+| 0.6 mm pad, 0.3 mm drill | 466 | (0.6 - 0.3) / 2 = 0.15 mm (the maker's absolute minimum, below its 0.20 mm recommendation) | every ordinary via: signal, ground and supply nets |
 | 0.7 mm pad, 0.3 mm drill | 6 | (0.7 - 0.3) / 2 = 0.20 mm (the maker's recommended figure) | four on `+5V`, one each on the converter nets `AMC_DCDC_OUT` and `AMC_HLDO_IN` |
 | 0.75 mm pad, 0.3 mm drill | 69 | 0.225 mm | mains-class vias (the `Mains` classes' routing default) |
 
-The board has 537 vias, read from the board file on 2026-11-15; the counts of `design-rules.md`, "Via sizes in the layout", are the same. Every drill is 0.3 mm, over the maker's 0.15 mm minimum drill, and every via pad is 0.30 mm or more over its hole. No via stands inside a surface-mount pad. The board setup's minimum annular width is 0.15 mm, the ring of the 462 vias of 0.6 mm pad; the deviation from the recommended 0.20 mm is unsigned, for the owner (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1; `owner-sign-off.md`, S-24). No 0.2 mm drill is placed, so the maker's capability charge for it and its four-wire test do not arise (`design-rules.md`, Via sizes in the layout).
+The board has 541 vias, read from the board file on 2026-11-15, after the four ground vias beside the tab of U302 were placed; the counts of `design-rules.md`, "Via sizes in the layout", are the same. Every drill is 0.3 mm, over the maker's 0.15 mm minimum drill, and every via pad is 0.30 mm or more over its hole. No via stands inside a surface-mount pad. The board setup's minimum annular width is 0.15 mm, the ring of the 466 vias of 0.6 mm pad; the deviation from the recommended 0.20 mm is unsigned, for the owner (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1; `owner-sign-off.md`, S-24). No 0.2 mm drill is placed, so the maker's capability charge for it and its four-wire test do not arise (`design-rules.md`, Via sizes in the layout).
 
 ## Laminate and comparative tracking index (graph criterion C16)
 
@@ -128,7 +128,7 @@ The first-power link JP101 (live, between the fuse F101 and everything it feeds)
 
 Both are unresolved in the records and must be checked at the quote, not assumed:
 
-1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 537 vias, all with a pad over that range (462 of 0.6 mm, 6 of 0.7 mm, 69 of 0.75 mm) and a 0.3 mm hole, none of 0.55 mm or less; no via stands inside a surface-mount pad.
+1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 541 vias, all with a pad over that range (466 of 0.6 mm, 6 of 0.7 mm, 69 of 0.75 mm) and a 0.3 mm hole, none of 0.55 mm or less; no via stands inside a surface-mount pad.
 2. **The six-layer engineering and board fee and the ENIG charge at 131 x 125.6 mm.** Only the quote reads them; the cost estimate carries an estimate, not a quote.
 
 ## Unsigned deviations carried by this board
