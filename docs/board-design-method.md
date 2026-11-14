@@ -38,7 +38,7 @@ KiCad's bundled Python is used here for the router's export and import, and for 
 
 ### The board editor, driven by an agent
 
-The agent drives KiCad's editors through the Konnect MCP server, and runs every other command in this document from a shell. Konnect loads its tools in toolsets, mid-session. A toolset is visible only to the session that loaded it, not to a subagent spawned from that session, so all board work, routing and locking included, runs in the session that loaded the board toolsets.
+The agent drives KiCad's editors through the Konnect MCP server, and runs every other command in this document from a shell. Konnect loads its tools in toolsets, mid-session. A toolset is visible only to the session that loaded it, not to a subagent spawned from that session, so all board work, routing and locking included, runs in the session that loaded the board toolsets. That is the limit of the toolsets, not of the work: a step that a script carries out from a shell, such as drawing a block's copper with KiCad's own scripting interface, needs no Konnect toolset, so any agent may run it, as the section on [placement, routing and review as practised](#placement-routing-and-review-as-practised-on-a-dense-mains-board) describes.
 
 Konnect's editing tools act on the board through KiCad's IPC interface, so they need the board open in the board editor of the KiCad that Konnect reaches. Konnect reaches one KiCad only: the one holding KiCad's default IPC endpoint, which the first KiCad started takes. A board editor started while another KiCad is running takes an endpoint of its own, which Konnect does not reach (this was measured with KiCad 10.0.7 on macOS). So run one KiCad at a time while designing a board.
 
@@ -1126,8 +1126,9 @@ Before any part is placed, read every check the board will be judged by and the 
 Rank the goals, and write the ranking into the brief of everyone who works on the board:
 
 1. **Safety.** The signed separation figures are never relaxed to make a layout fit. A figure that cannot be met stops the work, and the figures are reported to the person who owns the separation basis record.
-2. **Performance that matters on this board, and neatness.** Keep every performance rule that matters on this board: sensing and reference integrity, the crystal's limits, decoupling closeness, the data interfaces' basics and test-point reach. A rule that exists for high-frequency or radio behaviour that the board does not have may give way to neatness, and each such relaxation is listed with its net, its rule and the reason this board does not need it. Neatness leads the count of joins: copper that is legal but wanders is never accepted and never locked.
-3. **Cost** of the board and its assembly.
+2. **Neatness and workmanship.** Copper that is legal but wanders is never accepted and never locked, and neatness leads the count of joins.
+3. **The performance rules that matter on this board.** Keep each of them: sensing and reference integrity, the crystal's limits, decoupling closeness, the data interfaces' basics and test-point reach. A rule that exists for high-frequency or radio behaviour that the board does not have gives way to neatness, and each such relaxation is listed with its net, its rule and the reason this board does not need it.
+4. **Cost** of the board and its assembly.
 
 The bar is about 90 percent of what an excellent engineer would reach with unlimited time on the same placement. Say what the full result would look like and which imperfections are accepted at 90 percent. Keep strict what a reviewer notices first: hooks, loops round placement mistakes, via thickets, long diagonals across other nets and wandering.
 
@@ -1136,6 +1137,8 @@ When the person who owns the project is not an electrical engineer, the **design
 ### 2. Prove every footprint against the maker's drawing before placing
 
 A placement judged on footprints smaller than the real parts is not a placement. Before the floorplan, audit every footprint against the maker's own drawing, read from the drawing and not from an earlier note: the pad positions and sizes, the hole sizes, and the real body with its courtyard. Keep a file of real bodies, each a rectangle in its footprint's own coordinates, and measure the gaps between bodies from it as well as between pads and courtyards. A part whose body is larger than its footprint's courtyard is corrected before placement, in the footprint, so the board and its library agree.
+
+Read the pin numbers as well as the sizes. For every footprint with more than two pads, set the maker's top view beside the footprint and say where each numbered pin sits and what the schematic's symbol calls it: a footprint with every pad the right size in the right place can still be numbered as the mirror image of the part, and then no turning of the part makes it right. Three audits of sizes passed such footprints on the first board. The pre-order check now fails a dual-row or four-sided footprint whose numbers run clockwise seen from the top of the part; it cannot judge a part with three terminals, so those are read against the maker's sheet by a second reader who did not draw them.
 
 The board is built once. Whatever a person would have to bend, cut or re-solder at bring-up to make a part fit is a defect now: judge each part's real clearances, the keep-clear that plugs and tools need, and its height under the enclosure.
 
