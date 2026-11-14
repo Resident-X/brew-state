@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS-C6-TEST-6
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-14T17:40:24Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_sensing.py::EveryTrackedDesignPassesTheSensingAndGroundReturnRules.test_no_design_the_repository_tracks_fails_either_rule_and_each_carries_a_synthetic_board_rules_record
+  artifact_version: d61c853072db143dac194761042558f41cf25846
+links:
+  - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-AND-GROUND-RETURNS.C6
+    type: satisfies
