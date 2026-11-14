@@ -4194,7 +4194,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:MountingHole_3.1mm_Lid"
+		(property "Footprint" "main-board:MountingHole_3.4mm_Lid"
 			(at 30.48 190.5 0)
 			(hide yes)
 			(effects
@@ -4230,7 +4230,7 @@
 				)
 			)
 		)
-		(property "Rating" "M3 lid screw, 3.1 mm non-plated hole"
+		(property "Rating" "M3 lid screw, 3.4 mm non-plated hole"
 			(at 30.48 190.5 0)
 			(hide yes)
 			(effects
@@ -4272,7 +4272,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:MountingHole_3.1mm_Lid"
+		(property "Footprint" "main-board:MountingHole_3.4mm_Lid"
 			(at 50.8 190.5 0)
 			(hide yes)
 			(effects
@@ -4308,7 +4308,7 @@
 				)
 			)
 		)
-		(property "Rating" "M3 lid screw, 3.1 mm non-plated hole"
+		(property "Rating" "M3 lid screw, 3.4 mm non-plated hole"
 			(at 50.8 190.5 0)
 			(hide yes)
 			(effects
@@ -4350,7 +4350,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:MountingHole_3.1mm_Lid"
+		(property "Footprint" "main-board:MountingHole_3.4mm_Lid"
 			(at 71.12 190.5 0)
 			(hide yes)
 			(effects
@@ -4386,7 +4386,7 @@
 				)
 			)
 		)
-		(property "Rating" "M3 lid screw, 3.1 mm non-plated hole"
+		(property "Rating" "M3 lid screw, 3.4 mm non-plated hole"
 			(at 71.12 190.5 0)
 			(hide yes)
 			(effects
@@ -4428,7 +4428,7 @@
 				)
 			)
 		)
-		(property "Footprint" "main-board:MountingHole_3.1mm_Lid"
+		(property "Footprint" "main-board:MountingHole_3.4mm_Lid"
 			(at 91.44 190.5 0)
 			(hide yes)
 			(effects
@@ -4464,7 +4464,7 @@
 				)
 			)
 		)
-		(property "Rating" "M3 lid screw, 3.1 mm non-plated hole"
+		(property "Rating" "M3 lid screw, 3.4 mm non-plated hole"
 			(at 91.44 190.5 0)
 			(hide yes)
 			(effects

@@ -936,8 +936,8 @@ sheets:
   - ref: H1
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -949,8 +949,8 @@ sheets:
   - ref: H2
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -962,8 +962,8 @@ sheets:
   - ref: H3
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -975,8 +975,8 @@ sheets:
   - ref: H4
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -1132,9 +1132,9 @@ sheets:
       mm (inch figures converted).'
     detail: 'Four pads, centres in mm from the body centre: 1 = current terminal I1 at (-2.475, -0.635) and 4 = current terminal I2 at (2.475, 0.635), each 3.30 mm by 2.03 mm; 2 = sense E1 at (-3.275, 1.27) and 3 = sense E2
       at (3.275, -1.27), each 1.70 mm by 0.76 mm. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
-  - name: MountingHole_3.1mm_Lid
+  - name: MountingHole_3.4mm_Lid
     from: 'Own design for the machine''s four lid-screw points (layout-plan.md BOARD-7: four holes of 3.1 mm, a part-free circle of 3.5 mm radius).'
-    detail: One non-plated hole, drill 3.1 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
+    detail: One non-plated hole, drill 3.4 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
   power_flags: []
   drawing_notes: 'Placement and drawing notes. (1) The whole sheet is mains: draw it as the left, mains-referenced region of the board with the plug-side tabs at the left edge and signal flow left to right: J102 (LINE_IN)
     -> TP101 -> F101 -> TP102 -> JP101 -> LINE bus; the LINE bus carries RV101, C101, the R101-R102 / R103-R104 discharge strings (drawn as two parallel strings across C101, each of two resistors in series, DISCH_A and DISCH_B
@@ -9447,9 +9447,9 @@ custom_footprints:
   detail: 'Four pads, centres in mm from the body centre: 1 = current terminal I1 at (-2.475, -0.635) and 4 = current terminal I2 at (2.475, 0.635), each 3.30 mm by 2.03 mm; 2 = sense E1 at (-3.275, 1.27) and 3 = sense E2
     at (3.275, -1.27), each 1.70 mm by 0.76 mm. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
   sheet: Mains entry and load feed
-- name: MountingHole_3.1mm_Lid
+- name: MountingHole_3.4mm_Lid
   from: 'Own design for the machine''s four lid-screw points (layout-plan.md BOARD-7: four holes of 3.1 mm, a part-free circle of 3.5 mm radius).'
-  detail: One non-plated hole, drill 3.1 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
+  detail: One non-plated hole, drill 3.4 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
   sheet: Mains entry and load feed
 - name: Relay_HF115F-I_1HS3A
   from: Hongfa HF115F-I datasheet, page 202 (PCB layout, bottom view), https://datasheet.lcsc.com/datasheet/pdf/0ebe0ad433a21202e9ed2b99eb26b6ee.pdf; HF115F-S sheet page 214 gives the same pattern; read 2026-11-13
