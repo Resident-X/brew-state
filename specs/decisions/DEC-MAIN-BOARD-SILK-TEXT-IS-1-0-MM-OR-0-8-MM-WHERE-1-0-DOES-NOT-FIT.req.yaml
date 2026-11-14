@@ -1,0 +1,30 @@
+id: DEC-MAIN-BOARD-SILK-TEXT-IS-1-0-MM-OR-0-8-MM-WHERE-1-0-DOES-NOT-FIT
+type: decision
+category: tactical
+title: Silkscreen text on the v2 main board is 1.0 mm high, or 0.8 mm at a 0.15 mm stroke where 1.0 mm does not fit
+status: active
+version: 1
+decided_by: owner (signed on behalf, session 2026-11-14)
+text: |
+  Silkscreen text on the v2 main board is 1.0 mm high by default, and 0.8 mm high at the full 0.15 mm stroke where 1.0 mm does not fit beside its part. The board maker's capabilities page, read again on 2026-11-14, still gives 1.0 mm as the text height below which characters will be unidentifiable and 0.15 mm as the least line width; the page treats it as a legibility figure and not a limit on which boards the maker refuses. The 0.8 mm height is therefore the owner's own legibility decision, signed on his behalf, and not the maker's figure.
+
+  The cost is that a designator set at 0.8 mm may print faint. It changes no function: the fabrication drawing carries every designator, and the board is assembled from the bill of materials and positions.
+rationale: |
+  Context: the dense board has parts whose designator has no legal spot at 1.0 mm but has one at 0.8 mm, and the maker's page gives 1.0 mm as the legibility minimum, so any 0.8 mm text departs from that figure and the departure needs a recorded finding.
+
+  Trade-offs: setting all text at 1.0 mm was rejected because it would leave more designators off the silkscreen. Setting all text at 0.8 mm was rejected because it gives up legibility where 1.0 mm fits. The cost is a possibly faint designator on the parts that take 0.8 mm.
+
+  Reversibility: cheap before the boards are ordered, since the silkscreen is rebuilt by script; after ordering, a board revision. A change of the maker's figure or a worse print result at the first board returns the choice to the owner.
+
+  Consequences: the board rules record states 0.8 mm as the least text height the rule check accepts and 1.0 mm as the default. No node of the graph stated a text height. The designators that still have no spot at 0.8 mm are carried by the reference_off_silkscreen class entry of the decision on the main board's accepted neatness lines.
+options_considered:
+  - option: Text at 1.0 mm by default and 0.8 mm at 0.15 mm stroke where 1.0 mm does not fit
+    reason_rejected: ""
+  - option: All text at 1.0 mm
+    reason_rejected: leaves more designators off the silkscreen
+  - option: All text at 0.8 mm
+    reason_rejected: gives up legibility where 1.0 mm fits
+chosen: Text at 1.0 mm by default and 0.8 mm at 0.15 mm stroke where 1.0 mm does not fit
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: addresses
