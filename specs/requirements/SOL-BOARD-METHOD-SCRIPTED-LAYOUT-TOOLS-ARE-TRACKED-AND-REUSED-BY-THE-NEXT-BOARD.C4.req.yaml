@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C4
+type: criterion
+title: The chain runner reproduces a board byte for byte from its placed state on two runs and names the first step that differs
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Run twice over a synthetic board and ordered steps, the runner writes a board whose bytes are identical on both runs and reports success. When a step's output differs between the runs it fails and names the first such step. Tests cover identical runs, a step made nondeterministic, a step that fails and an empty step list, in text and in JSON. This does not cover the content of any board's own steps, which their own folders hold.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

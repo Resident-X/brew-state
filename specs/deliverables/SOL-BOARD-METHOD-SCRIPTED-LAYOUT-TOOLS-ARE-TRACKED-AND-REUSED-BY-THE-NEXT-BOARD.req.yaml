@@ -1,0 +1,39 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+type: deliverable
+category: solution
+title: The scripted layout tools the board method relies on are tracked in the repository and reused by the next board
+status: active
+version: 1
+text: |
+  The board design method that DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK records says the next board reuses the checks, the chain-script pattern, the silkscreen script, the picture renderer and the sign-off list form. Of those, the repository tracks the checks, the picture renderer, the locked-copper tool and the sign-off list form. The silkscreen rebuild, the mains-copper compare, the safe zone refill with its fill-difference report, the acceptance-entry generator, the chain runner, the main board's own block scripts and tables, and the footprint body-gap and rotation audit exist only as working files outside the repository. A reader on another machine therefore cannot rebuild the main board's copper or silkscreen from the repository, and the wall board cannot follow the practised method from the repository alone. This solution tracks those tools so that each is generic in the tooling folder, keeps whatever is specific to one board in that board's own folder, and is proven on synthetic designs.
+
+  Settled for the build:
+  - Order: the small tools first (mains-copper compare, safe refill and fill difference, chain runner), then the acceptance generator, then the silkscreen command, then the footprint audit, then the main board's own scripts and tables.
+  - Mains-copper compare: the whole tool is a command beside the locked-copper tool in the tooling folder. Nothing in it is specific to one board.
+  - Safe refill and fill difference: the whole tool is generic. The refill goes through KiCad's scripting interface and keeps the board's property lines and never writes a zero zone clearance. The fill difference reports the copper difference of two boards per zone and layer. Its handling of the noise KiCad's save adds is tested against the real tool.
+  - Chain runner: the runner, with its ordered steps, a checksum per step and a run-twice proof, is generic in the tooling folder. Each block script and coordinate table is a build script of its own board and is tracked in that board's folder, with paths made relative.
+  - Main board's block scripts and tables: tracked in the main board's folder, with the chain runner rebuilding the board's committed mains and low-voltage copper from the placed board.
+  - Acceptance generator: the log parsing, the refusal of any line on a Mains-class net or inside a mains region, and the entry writing are generic. The reasons by net kind are a table in the board's folder.
+  - Silkscreen command: the placement engine, the legality measures, the silkscreen-only proof and the unplaced report are generic. Text-height and warning-legend choices, fuse-label rules and per-part overrides are a small table in the board's folder.
+  - Footprint audit: the body-gap measure and the pad-table dump are generic and measure real part bodies. The body table and the maker readings per part are a table in the board's folder. The rotation solver is generic.
+  - The fetch of an assembler's library footprints is an outside service and stays a documented manual step in the hardware notes, not a tracked tool.
+  - Each tool is described in the hardware notes with the command that runs it, and the board design method names the tooling folder commands in place of the working files.
+rationale: |
+  Why this exists: the decision states as settled that a design's scripts, their tables and its sign-off list are tracked in the board's folder, and that the next board reuses the silkscreen script and the chain-script pattern. No criterion required that and no delivered work provided it, so the statement described the practised method and not the repository. The method's followability criterion on the existing method solution covers the text, not the tools the text relies on.
+
+  Why a maintenance item: the method task that names this capability is sealed, so its contributing composition is frozen and a new solution cannot be grafted onto it. The method fell short in a way its sealed criteria, that the method can be followed by another designer and that its tools can be obtained by a reader who is not the author, did not catch, and this item restores that behaviour.
+
+  Placement: each tool is split into a generic part, which any board can run, and a board specific table, which carries that board's choices. A generic part holding a board's figures would break the method's rule of carrying nothing specific to one machine, and a table held in the tooling folder would couple every board to one board's choices.
+
+  Size: about five build leaves of work in all, of which the silkscreen command is the largest. The order puts the small tools first because every later board step uses them.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: PER-ADOPTER-001.C3
+    type: targets
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by

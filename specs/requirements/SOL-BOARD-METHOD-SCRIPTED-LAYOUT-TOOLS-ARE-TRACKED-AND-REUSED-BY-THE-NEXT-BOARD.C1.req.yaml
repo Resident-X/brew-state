@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1
+type: criterion
+title: The mains-copper compare command reports every Mains-class item identical between two boards and any low-voltage copper nearer than a stated distance
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

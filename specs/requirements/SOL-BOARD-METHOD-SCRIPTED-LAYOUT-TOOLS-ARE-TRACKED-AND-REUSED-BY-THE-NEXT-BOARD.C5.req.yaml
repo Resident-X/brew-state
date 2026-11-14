@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C5
+type: criterion
+title: The main board's block scripts and tables are tracked in its folder and the chain rebuilds its committed mains and low-voltage copper from the placed board
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The block scripts and coordinate tables that draw the main board's copper are tracked in the main board's folder with paths relative to the repository, and running the chain runner over them from the placed board writes the same mains and low-voltage copper the committed board holds. This does not cover the wall board's scripts, which its own work delivers.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10
+type: criterion
+title: The body-gap audit measures real part bodies from a table in the board's folder
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. Tests cover bodies apart, touching and overlapping, a rotated part and a missing table entry, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C9
+type: criterion
+title: The acceptance generator writes entries the pre-order check accepts
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over a synthetic board and check log, every entry the generator writes, with its reason taken from the board's table by net kind, is accepted by the pre-order check, which then no longer reports the entry's line as failing. Tests cover each net kind in the table and a net kind missing from the table, which the generator refuses by name. This does not cover the reasons themselves, which each board's table holds.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

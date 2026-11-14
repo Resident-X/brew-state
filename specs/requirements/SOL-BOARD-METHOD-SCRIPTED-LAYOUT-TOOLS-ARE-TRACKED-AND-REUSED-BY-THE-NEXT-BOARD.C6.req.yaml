@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C6
+type: criterion
+title: The silkscreen command rebuilds a board's silkscreen deterministically
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Run twice over the same synthetic board and the same table, the command writes boards whose silkscreen is identical in both runs. Tests cover several parts, a part with an override in the table, a part whose label cannot be placed, which is listed in the unplaced report, and an empty board, in text and in JSON. This does not cover the choice of text heights and legends, which the board's table holds.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of
