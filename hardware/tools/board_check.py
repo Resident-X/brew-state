@@ -5244,8 +5244,8 @@ def dnp_agreement(design: Design, tree: list, yaml, root: str, repository: Repos
             said["the layout"] = layout[reference]
         if reference in schematic:
             said["the schematic"] = any(unit.attribute for unit in schematic[reference])
-        if stated is not None and said:
-            said["the parts record"] = stated.get(reference, {}).get("fitted") == NOT_FITTED
+        if stated is not None and reference in stated:
+            said["the parts record"] = stated[reference].get("fitted") == NOT_FITTED
         if len(set(said.values())) < 2:
             continue
         words = ", ".join(f"{who} marks it {'not populated' if flag else 'fitted'}" for who, flag in said.items())

@@ -133,6 +133,15 @@ class TheRecordAgrees(Agreement):
                 found = self.judge(footprints, symbols, record(("R1", '"no"')))
                 self.assertEqual([v.location for v in found], ["R1"])
 
+    def test_a_part_the_record_does_not_list_is_not_judged_by_the_record(self):
+        # SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C2: A part the parts record states as not fitted and the layout or the schematic marks as fitted, or the reverse, fails the design, naming the part
+        listed_elsewhere = record(("R2", ""))
+        self.assertEqual(self.judge([footprint("R1", True), footprint("R2")], [symbol("R1", "yes"), symbol("R2")], listed_elsewhere), [])
+        found = self.judge([footprint("R1", True), footprint("R2")], [symbol("R1"), symbol("R2")], listed_elsewhere)
+        self.assertEqual([v.location for v in found], ["R1"])
+        self.assertNotIn("the parts record marks", found[0].message)
+        self.assertEqual(self.judge([footprint("R2")], [symbol("R2")], record(("R2", ""), ("R9", '"no"'))), [])
+
     def test_a_design_with_no_record_is_judged_on_the_layout_and_the_schematic_alone(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C2: A part the parts record states as not fitted and the layout or the schematic marks as fitted, or the reverse, fails the design, naming the part
         self.assertEqual(self.judge([footprint("R1", True)], [symbol("R1", "yes")]), [])
