@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C14-TEST-2
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C14 on the version-2 floorplan
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-15T00:05:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-division.md::Reported for the board design tasks, item 28; Appendix: the checks (checks.py main, wall, --tables, --selftest)'
+  artifact_version: 0cb6e81cb021517202300bc01cddf656ebb0774b
+  verifier: claude (AI agent)
+text: |
+  Re-run at the commit stated in the artifact version, because the node text requires the selftest to be rerun after any floorplan revision and the version-2 board's floorplan (relay, tabs, fuses, clamps) changed after the earlier evidence. The record's own script was extracted from its appendix with the command the appendix gives and run on the record as it stands: 'main' ends 'all main board checks pass', 'wall' ends 'all wall board checks pass', '--tables' reports '644 generated cells compared with the record; 0 differ', and '--selftest' ends 'selftest: 360 of 360 perturbations caught by the check they target'. The record's item 28 still reads that the owner of the pump drives' margins is the pump-figures leaf, SOL-HW-PUMP-DRIVE-FIGURES-CLOSED. The division itself is unchanged.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C14
+    type: satisfies
