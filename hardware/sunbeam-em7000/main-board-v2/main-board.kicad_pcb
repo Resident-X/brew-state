@@ -102627,7 +102627,7 @@
 		)
 	)
 	(gr_text "LINE IN"
-		(at 6.6979 96.0069 0)
+		(at 15.1 98.7 0)
 		(layer "F.SilkS")
 		(uuid "de80fc76-6887-57e8-adc8-d09b8cd3e051")
 		(effects
@@ -102660,7 +102660,7 @@
 		)
 	)
 	(gr_text "NEUTRAL IN"
-		(at 15.7527 94.1568 0)
+		(at 12.8 91.3 90)
 		(layer "F.SilkS")
 		(uuid "ed12dde7-068e-5163-bd15-dbc5239c3aa3")
 		(effects
