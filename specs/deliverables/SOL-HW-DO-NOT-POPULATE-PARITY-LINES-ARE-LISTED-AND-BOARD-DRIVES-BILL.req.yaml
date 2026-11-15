@@ -1,18 +1,22 @@
 id: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL
 type: deliverable
 category: solution
-title: The board's do-not-populate parity lines are listed and the board's attribute drives the bill of materials
+title: The main board's unfitted parts carry the do-not-populate attribute on the footprint and the symbol, so the parts list leaves them out and the parity check reports no line for them
 status: active
-version: 1
+version: 2
 text: |
-  Records and holds the repo-side effect of a tooling gap: the schematic editor's component-edit tool has no parameter for a symbol's do-not-populate or in-bill-of-materials flag, and the project's rules forbid editing the schematic file directly, so a part the board leaves unfitted carries the flag on the board's footprint and not on its schematic symbol. The board's schematic-to-board parity check therefore reports a footprint_symbol_mismatch line for each such part. The board attribute drives the production bill of materials, because the production seed builds it from the board with the exporter's exclude-do-not-populate option. The gap is upstream and is not fixed here.
+  Records and holds the main board's do-not-populate marks as they now stand. A part the board leaves unfitted carries the do-not-populate attribute on its footprint in the layout and on its symbol in the schematic. The ordering step builds the production parts list from the schematic with the exporter's exclude-do-not-populate option, which reads the symbol's attribute, and builds the placement file from the layout, which reads the footprint's attribute, so the attribute on both is what leaves a part out of both files.
+
+  An earlier state of this item recorded a tooling gap: the schematic editor's component-edit tool has no parameter for a symbol's do-not-populate flag, so the unfitted parts carried the flag on the layout only, the board's schematic-to-board parity check reported a footprint_symbol_mismatch line for each, and the production parts list was built from the board's attributes. That state ended when the symbols of the six unfitted parts were given the attribute. The expected parity lines are now none, there is no list of expected parity lines to keep, and the parts list is built from the schematic.
 
   Settled for the build:
-  - The expected parity lines are three, for the parts the main board leaves unfitted in the flow-meter input; the board records list each with its attribute and its reason.
-  - The check's report is compared with that list, so a mismatch not on it fails and a listed one that has gone is reported as stale.
-  - Out of scope: the upstream tool's missing parameter, and any direct edit of a schematic file.
+  - The main board's six unfitted parts, R522, R572, R576, R643, R648 and RT301, carry the attribute on the footprint and on the symbol, and the parts record lists each as not fitted with its reason.
+  - The production parts list built from the schematic with the exclude-do-not-populate option omits a symbol marked by attribute and lists the fitted parts.
+  - The pre-order check reports any footprint_symbol_mismatch line as a violation, and the main board has none for these parts.
+  - Agreement between the layout, the schematic and the parts record is held by the pre-order check's own rule, which is the subject of SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER, not of this item.
+  - Out of scope: the upstream tool's missing parameter, and any other mark of the ordering files.
 rationale: |
-  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 asks: a failed verification blocks the order, and proceeding requires the verification to pass. Three standing parity lines the check reports and nothing lists are indistinguishable from a real mismatch, so a genuine one could be waved through as one of them.
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 asks: a failed verification blocks the order, and proceeding requires the verification to pass. A parity line that the check reports and a record accepts as standing is indistinguishable from a real mismatch, so a genuine one could be waved through as one of them; with the attribute on both the footprint and the symbol the check has no standing line, and any parity line that appears is a real one. The statement of the earlier state, that the board's attribute drives the bill of materials and three parity lines are expected, was corrected here after the schematic symbols were given the attribute, so that a reader rebuilding the ordering step is sent to the schematic for the parts list and not to the board.
 links:
   - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
     type: targets
