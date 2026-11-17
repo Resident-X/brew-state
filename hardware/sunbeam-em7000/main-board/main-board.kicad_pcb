@@ -108808,6 +108808,15 @@
 		(uuid "9ed79c30-45c4-5980-a8a1-3818aa4f669b")
 	)
 	(segment
+		(start 42.05 27.6625)
+		(end 42.05 28.7)
+		(width 0.6)
+		(locked yes)
+		(layer "F.Cu")
+		(net "/Pump drives/PUMP_C_MT2")
+		(uuid "a933ba92-749a-4e3e-9a12-6ee5647ae2e0")
+	)
+	(segment
 		(start 42.3 24.3)
 		(end 43.7 24.3)
 		(width 0.25)
