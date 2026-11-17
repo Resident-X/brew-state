@@ -57,6 +57,6 @@ links:
   - target: DEC-MAIN-BOARD-NEATNESS-LINES-ARE-ACCEPTED-BY-CLASS-AND-PER-NET-ENTRIES-SIGNED-ON-BEHALF
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief re-reviewer
-  fingerprint: 439bec2d3d51437526cb2499fb22bc77b1da1bb2f5e1b03cde3bacf8eb1add23
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 26ec08758daae34c2abc393a6bd423d3c912645fd340bf190151e7cbcfc76e8d
   gating_profile: ""
