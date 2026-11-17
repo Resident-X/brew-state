@@ -271,7 +271,7 @@ All thirteen are rated, and 20 other pins with the rating are free (PA0, PA1, PA
 
 ### The pressure and display allocation on the main board
 
-Settled by the owner, and drawn on the main board (`hardware/sunbeam-em7000/main-board-v2/`):
+Settled by the owner, and drawn on the main board (`hardware/sunbeam-em7000/main-board/`):
 
 - **Display link.** The separate display unit (`DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT`), a touchscreen for brew profiles, live readings and profile selection, reaches the controller over header J522: USART1 on PB6/PB7 (AF7) at 3.3 V logic, with 3.3 V and ground on the same header. The USART1 transmit and receive mapping of PB6 and PB7 (AF7) is the datasheet's, DS12110 Table 10; the main board's controller pin table lists the pair as I2C4 (AF6) only and has not yet been updated. J522 was drawn as the second digital I²C-or-UART transducer header, so the pins need no change to serve a UART, and its nets keep the names BREW_SCL_X and BREW_SDA_X from that drawing; the names do not describe the display link.
 - **Steam-path pressure.** An XDB401-class I²C transducer on header J521, I2C1 on PB8/PB9.

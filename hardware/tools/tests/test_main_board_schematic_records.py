@@ -10,7 +10,7 @@ sys.path.insert(0, TOOLS)
 import board_check  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
-BOARD = os.path.join(REPO, "hardware", "sunbeam-em7000", "main-board-v2")
+BOARD = os.path.join(REPO, "hardware", "sunbeam-em7000", "main-board")
 #: The channels the header carries to the wall board, each with the controller pin the pin allocation record gives it.
 HEADER_CHANNELS = {"heat_c_drv": "PD11", "heat_s_drv": "PD12", "mains_pres_c": "PE15", "mains_pres_s": "PB11"}
 RECORDS = ("pin-allocation.yaml", "parts-specification.yaml", "derating-policy.yaml", "pin-limits.yaml", "catalogue-extract.yaml")

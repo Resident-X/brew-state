@@ -354,7 +354,7 @@ class EveryTrackedDesignPassesTheSensingAndGroundReturnRules(unittest.TestCase):
     def test_every_sensing_clearance_line_on_the_finished_main_board_names_a_sensing_item(self):
         # SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1: On the finished main board the check prints no sensing_clearance line that does not name a sensing item.
         lines = whole_check().splitlines()
-        main_project = "sunbeam-em7000/main-board-v2/"
+        main_project = "sunbeam-em7000/main-board/"
         main = [line for line in lines if line.startswith("DESIGN | ") and main_project in line]
         self.assertEqual(len(main), 1, "the finished main board is not among the designs checked")
         # the rule ran on the main board: it made its own KiCad run there and got a report back

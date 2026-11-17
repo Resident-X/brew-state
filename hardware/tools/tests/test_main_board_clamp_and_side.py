@@ -20,7 +20,7 @@ import locked_copper  # noqa: E402
 import sexpr  # noqa: E402
 
 REPO = os.path.dirname(os.path.dirname(TOOLS))
-FOLDER = os.path.join("hardware", "sunbeam-em7000", "main-board-v2")
+FOLDER = os.path.join("hardware", "sunbeam-em7000", "main-board")
 BOARD = os.path.join(REPO, FOLDER)
 PROJECT = os.path.join(FOLDER, "main-board.kicad_pro")
 LAYOUT = os.path.join(BOARD, "main-board.kicad_pcb")
