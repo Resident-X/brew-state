@@ -1,0 +1,21 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES-C6-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T11:36:18Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/README.md
+  artifact_version: 9a61994770f3c649b942e3dbef516a75977f217f
+text: |
+  Inspection of hardware/README.md at the commit named, clause by clause against C6, with the rule table of "The report" section read against board_check.ACCEPTABLE_WORKMANSHIP (nineteen names).
+  Entry form with each key: the section "Owner-accepted workmanship lines" names the record, accepted_workmanship, synthetic and each of the seven entry keys. The ACCEPTED line: the section holds "ACCEPTED | <design> | workmanship_acceptance |". Each failure of an entry: the section lists not a mapping, lacks a key, holds another key, repeats a rule and scope, a count of zero, unsigned, empty, malformed or later than today, outside the set, names a place the design does not have, stale, and synthetic on a design not marked not for manufacture. The rules the record cannot accept: side_fiducials, hole_to_hole, workmanship_rule, workmanship_figure, workmanship_pad_copper and any mains, creepage, clearance, derating, pin-limit or other safety rule are stated with why. That an entry is the owner's to sign and how a signature by Claude on his written standing instruction reads: the section states the standing instruction, that Claude may enter the signature, the wording "owner (signed on behalf, session 2026-11-12)" and that the wording is the audit trail.
+  Rule table: a gap was found in an earlier inspection, four of the nineteen names (track_angle, track_segment_length, courtyards_overlap, items_not_allowed) had no row of their own, appearing only in the workmanship_rule row and in prose. Rows were added for each, taken from the check's code (ACCEPTABLE_WORKMANSHIP, acceptable_line, POLICY_CLASSES, POLICY_CAPPED, NEVER_WARNING_POLICY): track_angle and track_segment_length are KiCad findings, list capped at 199, a class the severity policy may mark WARNING, acceptable by place and count; courtyards_overlap and items_not_allowed cannot be marked WARNING and are accepted only for a plain part-courtyard overlap and a floorplan region rule respectively. After the change all nineteen names read from the check have a row of their own in the table, including silk_over_copper, starved_thermal, footprint_symbol_field_mismatch, footprint_symbol_mismatch and lib_footprint_mismatch. The prose below the table is unchanged and consistent with the new rows.
+  Out of scope, any board's own records, was not inspected. The test test_the_notes_state_the_entry_form_the_accepted_line_each_failure_the_rules_refused_and_whose_it_is_to_sign now asserts a row for every name of ACCEPTABLE_WORKMANSHIP in the report section's table, and was shown to fail with the items_not_allowed row removed.
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C6
+    type: satisfies
