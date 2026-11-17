@@ -2,12 +2,12 @@ id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C2
 type: criterion
 title: The wall board's interface limits are stated as requirements the wall board's design must meet, each with its arithmetic
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 scope: 'Out of scope: the wall board''s own schematic, layout and parts, and any change to the main board''s header.'
 text: |
-  The wall board is not designed by this solution. The limits the board division record states for it at the header are recorded as requirements of its design, each with its arithmetic: the mains-presence levels it drives into the main board's dividers stay at or below the pin limit of 4.0 V with the controller unpowered (the dividers' ratio of 0.7485 to 0.756 puts 4.0 V at the pin for about 5.29 V at the divider input); the indicator drive holds its sink current at the indicator's forward-voltage worst case; the anode rail's brown-out fall is bounded before the controller's supply falls; and the buzzer's resistance is 36 ohm or more, since 0.6 of its 250 mW rating is 150 mW with 5.33 V across it. A limit the record does not already hold is added to it before the wall board's design starts.
+  The wall board is not designed by this solution. The limits the board division record states for it at the header are recorded as requirements of its design, each with its arithmetic: the mains-presence levels it drives into the main board's dividers stay at or below the pin limit of 4.0 V with the controller unpowered (the dividers' ratio of 0.7485 to 0.756 puts 4.0 V at the pin for about 5.29 V at the divider input); the indicator drive holds its sink current at the indicator's forward-voltage worst case; the anode rail's brown-out fall is bounded before the controller's supply falls; and the buzzer's resistance is 36 ohm or more, since 0.6 of its 250 mW rating is 150 mW with 5.25 V across it, the rail's highest steady value. A limit the record does not already hold is added to it before the wall board's design starts.
   Out of scope: the wall board's own schematic, layout and parts, and any change to the main board's header.
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER

@@ -1,0 +1,13 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C8
+type: criterion
+title: The ripple-current limits of C302 and C792 are recorded with their calculation or carried reading
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The record states the ripple-current limit of the two aluminium electrolytic capacitors C302 (on +5V_MOD) and C792 (on +5V_GAUGE) from their makers' sheets, that no maker publishes the ripple current each carries, and, for each, either a calculation that bounds it below its limit with the arithmetic shown or a reading carried to bring-up with a stated limit that does not rely on an unpublished figure, with the test point and the part change that follows a failing reading.
+  Out of scope: the other capacitors, the voltage and reverse-voltage rows already carried for these two parts, and the readings themselves.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
+    type: criterion-of

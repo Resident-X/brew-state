@@ -3,11 +3,11 @@ type: deliverable
 category: solution
 title: The main board's carried schematic findings are settled before the boards are ordered
 status: active
-version: 1
+version: 2
 text: |
   Settles, before the boards are ordered, the findings of the main board's schematic review that the owner carried to this solution (DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER, entry of 2026-11-18). Each criterion is a final-state brief for one finding or a group of related ones. A respin after ordering costs the owner about 500 USD, so every item that could change copper is settled here; a change of a part's value or catalogue number is free before the order.
 
-  Scope: the main board's schematic, parts specification, catalogue extract and the board records that state the figures. It does not design the wall board, does not add a hardware bound for a pump left on by a fault, does not measure anything on a built board (bring-up does), and does not close findings 7.53 and 7.61 on the main board's two electrolytic capacitors' ripple, which close through DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP with their stated limit and belong with the existing figure-recording criterion of the schematic leaf, not here. It closes no criterion of the schematic leaf and edits none.
+  Scope: the main board's schematic, parts specification, catalogue extract and the board records that state the figures. It does not design the wall board, does not add a hardware bound for a pump left on by a fault, does not measure anything on a built board (bring-up does). It records the ripple-current limits of the main board's two electrolytic capacitors (findings 7.53 and 7.61) as its C8, under DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP. It closes no criterion of the schematic leaf and edits none.
 rationale: |
   The schematic leaf's first criterion lets the owner's recorded decision close a finding by carrying it to a named later step that asks for it. These findings had no criterion that asked for them, so a new leaf under the same task holds them, rather than amending a criterion the schematic leaf's evidence already rests on. Raised on the owner's instruction in session on 2026-11-18.
 links:
