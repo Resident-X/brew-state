@@ -79,6 +79,6 @@ links:
   - target: DEC-MAIN-BOARD-TWO-MAINS-NETS-ARE-ROUTED-ON-IN3
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: d767f547d9179c01e3eb6b463e814d26baee2ee200af9742ac0c06ec5dda38f7
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 28d4c07b799ee4b480e5b47000d5b9e7b073ee0cb39491415cdcb92d887977e1
   gating_profile: ""
