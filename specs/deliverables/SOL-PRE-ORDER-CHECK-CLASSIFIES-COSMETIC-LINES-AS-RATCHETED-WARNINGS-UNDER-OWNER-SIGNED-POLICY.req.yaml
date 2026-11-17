@@ -3,11 +3,11 @@ type: deliverable
 category: solution
 title: The pre-order check prints a cosmetic or neatness line as a non-failing warning only for a class the owner-signed severity policy names, bounded by a count that fails when it rises, and fails every other line
 status: active
-version: 4
+version: 5
 text: |-
   Gives the pre-order check a second tier for purely cosmetic and neatness lines, under an owner-signed severity policy with a ratchet, so that a board whose only remaining lines are of those classes can pass while every other line still fails. Today the check exits non-zero on any line it prints. The sibling item for a per-line signed acceptance record lets the owner excuse particular lines, each by rule and place and count, which suits a few lines but not hundreds of router-neatness lines whose number moves with every re-route. A severity policy states, once per class of line, whether the class is an error or a warning, and bounds the warnings by a count, so the owner signs a classification rather than a list of lines.
 
-  Not built. This item is authored and unbuilt. The wall board's check should have it built first, before that board's layout passes, so that board can end green on cosmetic lines by policy and does not repeat the main board's ending red.
+  The check reads this record from each board design, so a board whose remaining lines are cosmetic can end green by policy and does not end red on them.
 
   Settled for the build:
   - Record shape. Each board design's records gain an optional severity policy record, `severity-policy.yaml`, found and read as the derating policy record and the workmanship acceptance record are: the nearest at or above the design's folder, tracked. Its top level holds `severity_policy`, a list that is required, an explicit empty list being a policy that marks nothing a warning, and optionally `synthetic`. No board ships with a policy, and the main board's real policy file is the owner's to sign. Each entry, whose keys are `class`, `severity`, `count`, `reason`, `accepted_by` and `accepted_on`, names a class of line, as the check names it in its report (the rule name, such as silk_overlap or track_angle); a severity, ERROR or WARNING; for a WARNING entry the count of warning lines of the class the owner accepted, a non-negative whole number; the owner's reason; who signed; and the date. An ERROR entry is allowed and states a class the owner has considered and keeps as an error; it carries no count. Every key is present on an entry except `count`, which is required on a WARNING entry and absent on an ERROR entry. An entry that is not a mapping, lacks a key, holds another key, repeats a class, gives another severity or gives a bad count fails the record naming the entry and the key. Failures of the policy are reported under the rule name `severity_policy`.
@@ -18,6 +18,8 @@ text: |-
   - Relation to the per-line record. The per-line acceptance record of the sibling stays for what a class policy cannot cover, a few lines of one rule and place; it may still name `test_point_courtyard` and `workmanship_width`, whose lines a valid policy WARNING entry makes stale. The plated coil-pin lines of the relays K201, K731 and K741 are not among them: they were an artefact of the mounting-hole rule's straight-line measure, which the sibling item that measures a low-voltage part's plated hole round the barrier slots corrects, so no such line remains to be recorded, and they are never a warning. Under a valid signed policy, an entry of that record for a class the policy marks WARNING is unused and is reported stale; a void policy marks nothing, so the per-line entries are judged as before.
   - No signing by the agent. Nothing in the check or in a record is signed by the agent; the policy is the owner's, a drafted policy stays unsigned until the owner signs, and the check fails closed on it meanwhile.
   - Proof designs and notes. The throwaway proof design gains synthetic policies where a test needs them, on designs not for manufacture (an agent never writes `accepted_by` for the owner; tests and seeds use synthetic copies), with a seeded fault caught for each failure above, and the hardware notes state the tiers, the entry form, the WARNING and count lines and the failures.
+    - A policy record marked synthetic on a design that is not marked not for manufacture fails as a severity_policy line and voids the policy.
+    - A per-line workmanship entry that a valid policy WARNING entry makes stale is reported under the rule name workmanship_acceptance.
 
   Out of scope: which classes the owner signs as WARNING, the owner's signing of any policy, the counts, the rules' thresholds and measures, any change to a board's design files, the per-line acceptance record's own behaviour, and the safety, mains-spacing and derating exception forms.
 
@@ -52,6 +54,8 @@ links:
     type: justified-by
   - target: SOL-BOARD-LAYOUT-WORKMANSHIP-ITEMS
     type: depends-on
+  - target: DEC-MAIN-BOARD-NEATNESS-LINES-ARE-ACCEPTED-BY-CLASS-AND-PER-NET-ENTRIES-SIGNED-ON-BEHALF
+    type: justified-by
 brief_confirmation:
   confirmer: claude-sonnet-5-5 blind brief re-reviewer
   fingerprint: 439bec2d3d51437526cb2499fb22bc77b1da1bb2f5e1b03cde3bacf8eb1add23
