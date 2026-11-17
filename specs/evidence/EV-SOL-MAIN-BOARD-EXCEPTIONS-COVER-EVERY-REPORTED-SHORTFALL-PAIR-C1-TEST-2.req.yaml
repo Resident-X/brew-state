@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR-C1-TEST-2
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T14:14:20.233985Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_every_entry_of_the_committed_record_states_a_ground_and_a_bounding_element
+  artifact_version: 83938560b5bbae372eeca04f2011b04655286708
+attested_by: crun-4f61b2f539b36367
+links:
+  - target: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C1
+    type: satisfies
