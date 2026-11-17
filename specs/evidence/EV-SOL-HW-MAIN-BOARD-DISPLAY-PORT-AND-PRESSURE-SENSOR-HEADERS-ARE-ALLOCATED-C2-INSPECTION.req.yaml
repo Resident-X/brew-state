@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T00:15:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board-v2/main-board.kicad_pcb
+  artifact_version: 0b7429798b0a982955a821e409e44d32296a23d3
+text: |
+  Read the pad nets of hardware/sunbeam-em7000/main-board-v2/main-board.kicad_pcb (sha256 9bcc3ebdd8a3c3f7e6d080947431c5375577251747638e63996a7dbebbad506e) at commit 0b7429798b0a982955a821e409e44d32296a23d3. J521 pad 3 is net STM_SCL_X and pad 4 is STM_SDA_X; the controller's pins 95 and 96 carry nets STM_SCL and STM_SDA. The controller pin table names pin 95 as PB8 with I2C1_SCL AF4 and pin 96 as PB9 with I2C1_SDA AF4, against DS12110 Table 9 and the alternate-function table the pin table cites.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C2
+    type: satisfies
