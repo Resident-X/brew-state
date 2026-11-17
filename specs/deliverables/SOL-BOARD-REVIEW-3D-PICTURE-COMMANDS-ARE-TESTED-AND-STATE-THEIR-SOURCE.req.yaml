@@ -1,0 +1,20 @@
+id: SOL-BOARD-REVIEW-3D-PICTURE-COMMANDS-ARE-TESTED-AND-STATE-THEIR-SOURCE
+type: deliverable
+category: solution
+title: The three-dimensional picture commands are tested module by module and the fetch command states its unofficial source
+status: active
+version: 1
+text: |
+  Why this exists. The commands that draw the assembled board in three dimensions for the layout review (the model fetch, the render, the fallback models, the model placement, the collision check and the model simplifier, under hardware/tools) were built under the review-view item without a criterion of their own. Their one test module carries no trace comment, and the simplifier is imported by no test, so no test shows that a change to it is noticed. The fetch command also draws on an unofficial web service and says nothing of it in its own header.
+
+  Settled for the build:
+  - Every module of the three-dimensional picture commands is exercised by at least one test, the simplifier included, and each test that verifies a criterion of this item or of the review-view item carries the criterion's trace comment.
+  - The fetch command's header states that its source is the unofficial endpoints of a vendor's web editor and not a documented interface, that the endpoints can change or stop without notice, that the models are the vendor's property and are never committed, and that whoever runs the command answers for the service's terms. The header text is already written; the criterion holds it in place.
+  - Out of scope: the pictures themselves, the models fetched, the collision rules and any change to a command's behaviour.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 relies on: a board is judged on views, and the three-dimensional views are one of them, so the commands that draw them are held to the same test-and-trace discipline as the rest of the board tooling. Work that shipped without a governing criterion is placed here rather than left ungoverned.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets

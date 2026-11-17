@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-3D-PICTURE-COMMANDS-ARE-TESTED-AND-STATE-THEIR-SOURCE.C1
+type: criterion
+title: Every module of the three-dimensional picture commands is exercised by a test, and each criterion-verifying test carries its trace comment
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over the fetch, render, fallback-model, model-placement, collision and simplifier modules under hardware/tools, each module is imported by at least one test that runs one of its functions, the simplifier included, and every test that verifies a criterion of this item or of the review-view item opens with that criterion's id and text as a trace comment. Out of scope is any change to what a command does and the pictures and models it produces.
+links:
+  - target: SOL-BOARD-REVIEW-3D-PICTURE-COMMANDS-ARE-TESTED-AND-STATE-THEIR-SOURCE
+    type: criterion-of

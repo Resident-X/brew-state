@@ -1,0 +1,12 @@
+id: SOL-BOARD-REVIEW-3D-PICTURE-COMMANDS-ARE-TESTED-AND-STATE-THEIR-SOURCE.C2
+type: criterion
+title: The fetch command's header states its unofficial source, that it can stop working, and that the user answers for the service's terms
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The comment above the fetch command's endpoint constants states that the endpoints are the unofficial ones of a vendor's web editor and not a documented interface, that the service's answers and the tokens in its paths were observed and can change or stop at any time, that the fetched models are the vendor's property under the service's own terms, cached in an ignored directory and never committed, and that whoever runs the command answers for those terms. Out of scope is the command's behaviour and the choice of service.
+links:
+  - target: SOL-BOARD-REVIEW-3D-PICTURE-COMMANDS-ARE-TESTED-AND-STATE-THEIR-SOURCE
+    type: criterion-of
