@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import board_check  # noqa: E402
 import board_prove  # noqa: E402
+import sexpr  # noqa: E402
 from board_kicad_fixtures import load_tests, setUpModule  # noqa: E402,F401
 from board_kicad_fixtures import Copy, KICAD_CLI, Proved  # noqa: E402
 
@@ -228,6 +229,29 @@ class FloorAndHolesRunDirectly(Copy):
         found = [v for v in self.holes(lines) if v[2] == "mounting_hole"]
         self.assertTrue(found, "a 4.2 mm gap is inside the signed clearance of 4.5 mm, the larger of 4.5 and 4")
         self.assertTrue(all("inside the 4.5 mm that is the larger of the signed clearance" in v[4] for v in found), found)
+
+    def part_hole_beside_mains(self, slotted: bool) -> list:
+        """The plated hole of a part H9 on /LV_A 3.9 mm in a straight line from R1's Mains pad, with a slot between them or none."""
+        board_prove.hole_near_mains("/LV_A")(self.seed)
+        if slotted:
+            self.seed.layout(lambda tree: tree.insert(len(tree) - 1, ["gr_rect", ["start", "27", "2"], ["end", "28.2", "18"], ["stroke", ["width", "0.1"], ["type", "default"]],
+                ["fill", "no"], ["layer", sexpr.Quoted("Edge.Cuts")], ["uuid", sexpr.Quoted("0b0e5c1a-0000-4000-8000-000000001a04")]]))
+        _, lines = self.check()
+        return [v for v in self.violations(lines) if v[2] == "mounting_hole" and "H9" in v[3]]
+
+    def test_a_part_hole_across_a_long_slot_from_mains_copper_gives_no_line_from_the_real_kicad_report(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        self.assertEqual(self.part_hole_beside_mains(True), [])
+
+    def test_the_same_part_hole_with_no_slot_gives_exactly_one_line_of_the_checks_own_and_not_kicads_straight_line(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        found = self.part_hole_beside_mains(False)
+        self.assertEqual(len(found), 1, found)
+        self.assertIn("pad 1 [/LV_A] of H9", found[0][3])
+        self.assertIn("of /MAINS_N", found[0][3])
+        self.assertIn("3.900 mm in a straight line", found[0][4])
+        self.assertIn("signed clearance of 3 mm", found[0][4])
+        self.assertNotIn("actual", found[0][4])
 
     def test_a_basis_lacking_the_floor_inputs_fails_the_run_by_key_and_still_runs_every_other_check(self):
         # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C3: each reading only the design's files and the records the design is held to
