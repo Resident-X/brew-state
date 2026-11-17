@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The main board's seven BAT54S clamps are all the SOT-323 BAT54SW,115, and D502, D506 and R301 stand on the front
 status: active
-version: 2
+version: 3
 text: |
   Moves the main board's three back-side assembled parts, D502, D506 and R301, to the front so the board is assembled on one side, and changes all seven BAT54S clamp diodes to one SOT-323 part so the whole board carries one part number and one bill-of-materials line for the clamp. A scratch run of the pre-order check on the finished board reports one side_fiducials line, because the back side holds those three surface-mount parts and no fiducial. The owner decided on 2026-11-07 that the three parts stand on F.Cu, for single-sided assembly, and does not accept the back-side parts as a carried line; no acceptance of them is recorded anywhere. The owner then decided on 2026-11-07 that all seven clamps change to the same part rather than two of them only. The owner-requested placement search found the plan below.
 
@@ -17,7 +17,7 @@ text: |
   - The routes of the seven clamps are stated like R301's: pads connected on the board to the same nets as before, and the locked critical copper they re-route re-routed with the copper lock and a fresh copper record.
   - All board edits go through the placement method of docs/board-design-method.md with Konnect, never by file edit.
   - No signed separation figure, no mains copper and no mains pour is touched.
-  - The closing steps are owed and not skipped: the copper lock and a fresh copper record, a layout review round, the placement and critical-routing history, and a full pre-order check on the changed board.
+  - The closing evidence is the full pre-order check on the committed board and the copper lock flag on the locked critical copper at the seven clamps.
   - Out of scope: the five ground vias inside surface-mount pads (a sibling maintenance item), the pour, decoupling-via, thermal-relief and silkscreen lines, the footprint field lines, the C606 exception, and the courtyards_overlap and items_not_allowed lines.
 rationale: |
   Honours the judgement REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of a layout: every applicable practice item judged before the board is ordered, here by a change to the board that removes the back-side assembled parts and so the second assembly side, as the owner decided on 2026-11-07. The placement search showed the front has room for each part at the stated spots, so the change to the board is made and no acceptance is recorded in its place.

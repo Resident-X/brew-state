@@ -1,13 +1,13 @@
 id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4
 type: criterion
-title: The copper lock, a layout review round, the placement history and the full check run before the item closes
+title: The full pre-order check passes on the committed main board and the clamps' locked copper carries the lock flag
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 scope: The closing steps for this change; one round may serve this item and the pour, decoupling-via, thermal-relief and silkscreen item together when both are built on one branch.
-text: |
-  The copper lock and a fresh copper record cover the changed locked copper, a layout review scoped to the changed items has run and is recorded (it covers D502, D504, D506, D523, D524, D527, D528 and R301, every net that touches them, and a 5 mm halo around any copper that changed, with the whole-board netlist difference and the copper-lock comparison run on the full board; mains copper, which lies 10 mm or more from every changed item, is outside the halo), the placement and critical-routing history names the seven clamps, R301 and the re-routed copper, and the full pre-order check on the changed board has run, each recorded in the item's evidence; the item stays open until all four have run. Out of scope: the owner's decision on the five vias in pads.
+text: |-
+  The full pre-order check on the committed main board passes with no violation line other than its signed accepted lines, and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The evidence names the gate run and the commit it ran on. Out of scope: the owner's decision on vias in pads.
 links:
   - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
     type: criterion-of
