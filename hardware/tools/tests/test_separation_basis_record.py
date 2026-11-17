@@ -123,6 +123,42 @@ class SeparationBasisRecord(unittest.TestCase):
         for field, value in (("accepted_by", ""), ("accepted_by", "TBD"), ("accepted_on", "2099-01-01"), ("accepted_on", "")):
             self.assertIsNotNone(board_check.entry_unsigned(dict(data["accepted_exceptions"][0], **{field: value}), board_check.iso_date(data["accepted_on"]), TODAY), (field, value))
 
+    def test_the_check_fails_an_exception_entry_that_is_unsigned_or_dated_after_the_record_in_each_of_the_three_entry_forms(self):
+        # SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C4: With the acceptance committed, the check's reader on the committed record, the existing test route, finds it signed and reports no separation_basis failure of the record as unsigned, as holding an exception entry unsigned, or as holding an exception dated after the record's own acceptance. Failures that concern a board's layout against the figures are out of scope here.
+        _, data = committed()
+        entries = data["accepted_exceptions"]
+        forms = {"between": next(i for i, e in enumerate(entries) if board_check.NET_PAIR_FORM_KEY not in e and e.get("pair") != board_check.SAME_CONNECTOR_PAIR),
+                 "nets": next(i for i, e in enumerate(entries) if board_check.NET_PAIR_FORM_KEY in e),
+                 "connector": next(i for i, e in enumerate(entries) if e.get("pair") == board_check.SAME_CONNECTOR_PAIR)}
+        record_day = board_check.iso_date(data["accepted_on"])
+        after = record_day + datetime.timedelta(days=1)
+        later = record_day + datetime.timedelta(days=6)
+
+        def refusals(index, today, **change):
+            changed = [dict(e) for e in entries]
+            changed[index].update(change)
+            signed, problems = reading(dict(data, accepted_exceptions=changed))
+            self.assertIsNotNone(signed)
+            self.assertEqual(problems, [])
+            judged = board_check.judge_exceptions(DESIGN, RECORD, signed, [], ["kicad_pcb"], today, set())
+            return [v for v in judged.violations if v.rule == "spacing_exception" and v.location.endswith(f"accepted_exceptions[{index}]")
+                    and "is not an acceptance, so it excuses nothing" in v.message]
+
+        for form, index in forms.items():
+            # the signed entry as committed is not refused as unsigned
+            self.assertEqual(refusals(index, TODAY), [], form)
+            for change, said in (({"accepted_by": ""}, "accepted_by"), ({"accepted_by": "tbd"}, "placeholder"),
+                                 ({"accepted_by": None}, "accepted_by"), ({"accepted_on": "soon"}, "not a valid calendar date"),
+                                 ({"accepted_on": "2099-01-01"}, "later than today")):
+                found = refusals(index, TODAY, **change)
+                self.assertEqual(len(found), 1, (form, change))
+                self.assertIn(said, found[0].message, (form, change))
+                self.assertIn(f"accepted_exceptions[{index}]", found[0].message)
+            # dated after the record's own acceptance, though not after the day the check runs
+            found = refusals(index, later, accepted_on=after.isoformat())
+            self.assertEqual(len(found), 1, form)
+            self.assertIn(f"later than the record's own accepted_on {record_day.isoformat()}", found[0].message)
+
     def test_every_barrier_has_exactly_one_type_and_the_floor_holds_on_its_own_figures(self):
         # SOL-HW-SEPARATION-BASIS-SIGNED.C1: Every barrier named has exactly one barrier_types entry, giving its insulation type, basic or reinforced, whether its low-voltage side is bonded to protective earth, the low-voltage parts a person can touch beyond it (such as a service port, the operator's controls or the enclosure), and the part or spacing that forms it; The mains-to-low-voltage clearance and creepage are at or above the floor those rows give. It also runs the check's floor rule on the record's own figures taken as signed and finds no violation.
         _, data = committed()
