@@ -245,7 +245,7 @@ class SamePartPairsAreJudgedOnTheCheckOwnMeasurement(unittest.TestCase):
         (found,) = judged.violations
         self.assertIn("relaxes nothing", found.message)
 
-    def test_twelve_entries_are_each_accepted_whatever_subset_of_their_lines_kicad_lists(self):
+    def test_eight_entries_are_each_accepted_whatever_subset_of_their_lines_kicad_lists(self):
         # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C2: A signed same-part clearance entry is judged against the check's own measurement of its pad pair, and the verdict does not change with what the rule engine lists
         # four resistors with two pads each and two three-pad parts whose middle pad stands 0.76 from either end pad
         parts = [(f"R{n}", [pad(1, 0, 0, "/MAINS_L"), pad(2, 2.8, 0, "/MAINS_N")]) for n in (101, 102, 103, 104)]
