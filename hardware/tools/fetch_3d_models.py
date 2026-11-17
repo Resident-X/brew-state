@@ -42,6 +42,11 @@ sys.path.insert(0, HERE)
 import board_models_3d as bm  # noqa: E402
 import render_fallback_models as fallback  # noqa: E402
 
+# These are the unofficial endpoints of a vendor's web editor, not a documented API. The service answers a
+# plain client's User-Agent and refuses a browser's. The opaque path token in STEP_URL and the version string
+# in COMPONENT_URL were observed from the service and can change or stop working at any time. The models it
+# returns are the vendor's property under the service's own terms: they are cached in an ignored directory and
+# never committed. This command is run on demand, and whoever runs it answers for the service's terms.
 COMPONENT_URL = "https://easyeda.com/api/products/{lcsc}/components?version=6.4.19.5"
 OBJ_URL = "https://modules.easyeda.com/3dmodel/{uuid}"
 STEP_URL = "https://modules.easyeda.com/qAxj6KHrDKw4blvCG8QJPs7Y/{uuid}"
