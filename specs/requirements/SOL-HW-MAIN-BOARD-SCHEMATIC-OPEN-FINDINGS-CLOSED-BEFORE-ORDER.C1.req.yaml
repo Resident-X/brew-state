@@ -1,14 +1,14 @@
 id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C1
 type: criterion
-title: The controller's core-supply capacitor pair meets the maker's stated effective-capacitance floor at worst case
+title: The core-regulator capacitors' datasheet window, the fitted part's arithmetic against it and the carried reading that settles it are recorded
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 scope: 'Out of scope: the other ceramics that set a filter, a stability or a reference, the layout and any bring-up measurement.'
 text: |
-  The two capacitors on the controller's core-regulator output pin hold an effective capacitance at or above the floor the controller's datasheet states (1.76 uF in the board's record), at the worst case of tolerance, temperature and DC bias read from the capacitor maker's own bias curve, with the arithmetic shown. The part chosen is in stock in the JLCPCB catalogue and fits the footprint the board already draws, so no copper changes; the value change is made in the schematic, the parts specification and the catalogue extract. The present part's 1.68 uF before bias loss is below the floor and is replaced. This replaces, for these two parts, the carry of the ceramics' bias and tolerance curves to bring-up measurement. The other ceramics that set a filter, a stability or a reference stay with the carried measurement.
-  Out of scope: the other ceramics that set a filter, a stability or a reference, the layout and any bring-up measurement.
+  The record states, for each of the two capacitors on the controller's core-regulator output pins (C412 and C413), the window the controller's datasheet gives (2.2 uF with a variation of plus or minus 20 percent tolerated, so an effective capacitance of 1.76 to 2.64 uF, and an ESR below 100 milliohm), the arithmetic for the part fitted at the maker's own tolerance and temperature limits before any DC-bias loss (1.68 uF, below the floor, and equally so for any 10 percent ceramic of the X5R or X7R class in this footprint, because both carry a 15 percent temperature limit), that the maker's catalogue states no DC-bias or temperature curve for the part, and that the floor is therefore settled by the carried reading of the effective capacitance on the built board (item 5.7 of the carrying decision), with its limit, its method for a home builder before mains, and the part change that follows a reading below the limit. The part and the footprint stay as drawn, so no copper changes.
+  Out of scope: the other ceramics that set a filter, a stability or a reference, the layout and the reading itself.
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
     type: criterion-of
