@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS-C1-TEST-9
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:48:19.856586Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_part_hole_with_no_slot_between_gives_one_line_naming_the_hole_the_item_and_both_figures_and_not_kicads
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-41f1b21a9b940b4c
+links:
+  - target: SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1
+    type: satisfies

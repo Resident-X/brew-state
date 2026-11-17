@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE-C2-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:47:55.527712Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_plated_pad_on_a_net_is_a_terminal_whatever_its_footprints_pad_count_and_a_fixing_of_each_mark_is_a_hole
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-f40a0937c0b41d30
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C2
+    type: satisfies

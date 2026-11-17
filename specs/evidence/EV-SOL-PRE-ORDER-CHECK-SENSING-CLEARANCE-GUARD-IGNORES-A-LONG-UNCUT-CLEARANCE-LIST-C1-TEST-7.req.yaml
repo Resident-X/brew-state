@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST-C1-TEST-7
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:46:29.859094Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_sensing.py::test_the_sensing_line_is_printed_in_the_checks_one_line_report_shape
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-69a688a51bc64937
+links:
+  - target: SOL-PRE-ORDER-CHECK-SENSING-CLEARANCE-GUARD-IGNORES-A-LONG-UNCUT-CLEARANCE-LIST.C1
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD-C7-TEST
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:48:45.100231Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_main_board_clamp_and_side.py::test_the_clamp_pads_are_joined_by_copper_to_their_nets_and_the_thermistor_copper_there_is_locked
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-a2de17f8c76e08aa
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C7
+    type: satisfies

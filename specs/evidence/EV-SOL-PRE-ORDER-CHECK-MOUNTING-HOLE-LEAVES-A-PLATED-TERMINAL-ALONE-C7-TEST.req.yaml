@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE-C7-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:47:55.895935Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_floor.py::test_an_unmarked_one_pad_plated_fixing_on_protective_earth_loses_only_its_courtyard_measure
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-f40a0937c0b41d30
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C7
+    type: satisfies

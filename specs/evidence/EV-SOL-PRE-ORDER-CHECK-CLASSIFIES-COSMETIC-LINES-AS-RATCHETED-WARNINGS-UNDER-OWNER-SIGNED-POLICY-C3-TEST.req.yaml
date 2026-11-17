@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY-C3-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:47:26.047877Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_severity_policy.py::test_a_line_that_no_policy_entry_names_stays_a_violation_with_the_warning_lines_unchanged
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-a955955e5c6ee0f2
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C3
+    type: satisfies
