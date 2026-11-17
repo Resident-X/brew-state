@@ -16,7 +16,7 @@ Written 2026-11-10 on branch `req/DEL-MAINTENANCE/pre-order-check-fixes` (HEAD 4
 | Question | Decision | Why |
 |---|---|---|
 | Folder | `hardware/sunbeam-em7000/main-board-v2/`, permanent. The KiCad file stem stays `main-board` (`main-board.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `circuit-proof/main-board.cir`). | `task hw:history` (`hardware/tools/board_history.py`) reads every version of the board file at its path and judges the placement section against the first commit with a footprint and the first commit with copper. At the old path those are v1 commits from weeks ago, so a re-placed board at `main-board/` can never pass. A new path starts a clean history. Renaming v2 back to `main-board/` at the end would merge the two histories again and fail the same way, so v2 keeps its folder. |
-| v1 at the end | Removed from the tree on this branch (in the seed phase, not at the end), frozen as the local tag `main-board-v1-final` on the commit just before removal. | `board_check.py` checks every tracked `.kicad_pro` (`discover()`), so two tracked boards double every full check (about 2.5 h to about 5 h). v1 also cannot pass parity once U203, R208 and C206 are in the shared schematic. A worktree of the tag gives read access for comparisons. Pushing the tag needs David's go-ahead. |
+| v1 at the end | Removed from the tree on this branch (in the seed phase, not at the end), frozen as the local tag `main-board-v1-final` on the commit just before removal (commit e8615c82; the tag is not published). | `board_check.py` checks every tracked `.kicad_pro` (`discover()`), so two tracked boards double every full check (about 2.5 h to about 5 h). v1 also cannot pass parity once U203, R208 and C206 are in the shared schematic. A worktree of the tag gives read access for comparisons. Pushing the tag needed the owner's go-ahead; none was given and the tag is not published (see Questions for the owner, item 3). |
 | Pin map | Pin map A with the two changes above. | See the next section. |
 | Layer count | Six, same stack-up, same In1 ground and In2 mains pours; amended 2026-11-12: In2 also carries a `+3V3` pour over the low-voltage digital area (`layout-plan.md` Stack). | Safety first: no separation re-proof, no change to the signed basis. The pilot (a scratch report kept outside the repository) put 1 to 3% of routed length on inner layers, so six layers gives margin, not cost risk. |
 | Via drill (0.2 vs 0.3 mm, quote pending) | A parameter. Every ordinary via is 0.3/0.6 mm whatever the quote says. Only the vias inside exposed pads (U620, U621 and any other exposed pad) wait on the quote. | A larger drill never costs more and the pilot never needed 0.2 mm. At six layers JLC fills vias up to 0.55 mm across by default, so 0.3/0.6 vias are left open, which is fine away from pads. Exposed-pad vias must be filled or tented: 0.2/0.5 (filled by default) if the quote shows 0.2 mm is free, otherwise 0.3/0.6 with paid filling, otherwise moved out of the pad. That is a late, local swap of about 18 vias, applied in phase 6 before those parts are locked. |
@@ -73,7 +73,7 @@ Written 2026-11-10 on branch `req/DEL-MAINTENANCE/pre-order-check-fixes` (HEAD 4
 
 ## Phases
 
-Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/staircase-wf` or the engine's `recommended_tier` would name. "Chosen" is David's rule (Sonnet 5.5 medium by default, Opus only for class-of-miss reasoning, Haiku for deterministic runs). Konnect work runs only in the main session.
+Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/staircase-wf` or the engine's `recommended_tier` would name. "Chosen" is the owner's rule (Sonnet 5.5 medium by default, Opus only for class-of-miss reasoning, Haiku for deterministic runs). Konnect work runs only in the main session.
 
 ### Phase 0: freeze and seed (about 2 h)
 
@@ -81,7 +81,7 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 
 **Steps.**
 1. Commit the uncommitted U201/U203 change (sheet 102, its proofs, records and the two docs) in `main-board/` as it stands. The change is verified, and committing it keeps its trail.
-2. Tag `main-board-v1-final`.
+2. Tag `main-board-v1-final` (local only, on commit e8615c82; not published).
 3. Create `main-board-v2/` by copying the schematic, sheets, libraries, library tables, rules files and every record. The v2 board file is v1's board with every footprint, track, via and copper zone removed: outline, stack-up, board settings, net classes and text variables only, so the board holds no footprint and no copper yet. Add this PLAN.md.
 4. Remove `main-board/` from the tree.
 5. Update the test, doc and graph-prose paths listed above.
@@ -154,7 +154,7 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 |---|---|---|
 | An AF or boot-state fault on a moved pin | Phase 2 | Move that one pin to a freed plain GPIO on the same package side. Re-run the phase 1 escape study for that side only (minutes). |
 | A review finding that adds or changes a part | Phase 2 | Fix it before the floorplan is committed. After phase 3 it is a plan append (allowed). |
-| A finding that changes a mains part | Stop | Reopens the separation basis. Tell David. |
+| A finding that changes a mains part | Stop | Reopens the separation basis. Tell the owner. |
 
 **Common-cause check on failure.** Does the same fault apply to every pin moved for the same reason (all the SPI3 pins, all the PD selects)? Sweep the class before fixing one.
 
@@ -263,7 +263,7 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 **Purpose.** Carry the mains copper over unchanged, with a proof, then hand-route every critical low-voltage net, hardest area first.
 
 **Steps.**
-1. Record v1's Mains-class copper with `task hw:copper-record`, run in a detached worktree of the tag `main-board-v1-final`, with the record written outside every design folder.
+1. Record v1's Mains-class copper with `task hw:copper-record`, run in a detached worktree of the commit e8615c82 (marked by the local, unpublished tag `main-board-v1-final`), with the record written outside every design folder.
 2. In v2, copy every mains-class track, via and zone from the tag with KiCad scripting on the closed board, keeping each item's uuid and lock. Commit. This is the first-copper commit.
 3. Run `task hw:copper-compare` against the v1 record. It matches by uuid first, so it must report no missing, changed or added item. That makes "mains copper unchanged" a tool result, not a claim.
 4. In Konnect, in this order, each block followed by a crop DRC:
@@ -342,7 +342,7 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 
 | Finding | Re-enter | Narrowest re-entry |
 |---|---|---|
-| A safety finding (separation, fusing, insulation) | Phase 6 or 4, wherever its cause is | A safety finding never closes by reason without David's own `accepted_by`. |
+| A safety finding (separation, fusing, insulation) | Phase 6 or 4, wherever its cause is | A safety finding never closes by reason without the owner's own `accepted_by`. |
 | A workmanship finding caused by part positions | Phase 4 logic (move parts) | Close by a placement change naming the parts moved and the before/after measures (method, Layout review step 7). |
 | A planned item not met in round 1 | Phase 3 plan row, by its trace | Amend the method item only if the row, followed as written, would not have met the item (Layout review step 6). |
 | A finding in a full round after a narrow round | The next round | Every new round needs a full check, so batch all fixes before starting it. |
@@ -367,8 +367,8 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 3. Submit the held runs, then ONE `task check:round`. Its board tier runs `hw:verify` and `hw:test:round` (about 2.5 to 3 h): detached with a log and Monitor. Emulation runs because the constraints doc changed.
 4. WF-REVIEW each run.
 5. Blind review of the PR.
-6. Ask David before pushing, then push and raise the PR (merge commit only).
-7. JLCPCB re-export from the final commit (Haiku), with a BOM and CPL diff against `~/Downloads/jlcpcb-main-board-quote-2/`.
+6. Ask the owner before pushing, then push and raise the PR (merge commit only).
+7. JLCPCB re-export from the final commit (Haiku), with a BOM and CPL diff against the quote the owner downloaded (the second quote's BOM and CPL files).
 
 **Tier.** Skill would pick mid-tier. Chosen: Sonnet medium for records and graph authoring, Haiku for the gate, export and diff, and a fresh Sonnet medium blind reviewer.
 
@@ -400,7 +400,7 @@ The scope is the hardest area: the MCU ring, the measurement cell (U620, U621, U
 2. Swap plain GPIOs within the facing side (selects, HX711 lines, the AMC_DRDY EXTI line), with no AF risk. Re-run the escape study.
 3. Move the MCU along OPINION2's preferred band (y 60 to 75), or try the second-best grid point.
 4. Allow In3 as a second routing layer for the measurement cell (still six layers, no cost).
-5. If it still fails, stop. Report to David with the figures, and fall back to OPINION's targeted fixes on v1 (decoupling and crystal capacitors, HX711 and select re-pin, U791 channel permute, panel drivers by J791/J821). In that case delete v2 and restore v1 from the tag.
+5. If it still fails, stop. Report to the owner with the figures, and fall back to OPINION's targeted fixes on v1 (decoupling and crystal capacitors, HX711 and select re-pin, U791 channel permute, panel drivers by J791/J821). In that case delete v2 and restore v1 from the tag.
 
 ## Phase 1 outcome (2026-11-10): accepted as a conditional go
 
@@ -497,7 +497,7 @@ Rungs 3 to 6 each need a reason a lower rung could not give. A move up is writte
 
 **Graph amendments.** Read each node with `show` first, bump the version once per node on this branch, and use `--actor david`.
 - **SOL-MAIN-BOARD-U201-INTERLOCK-BUFFER-HAS-NO-STOCKED-EQUIVALENT-AWAITS-OWNER-DECISION.** Retitle and rewrite: U201 and U203 are two series SN74AHCT1G14DCKR, with R208 100 k and C206 100 n. Replace the criterion with ones the built change meets (proof decks re-run, records updated, placed on the board).
-- **SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.** Add to "Settled for the build": the board is re-placed and re-routed in `hardware/sunbeam-em7000/main-board-v2/`; v1 is frozen at tag `main-board-v1-final` and removed; the mains copper is carried over unchanged, proved by the copper compare; six layers. Its brief confirmation goes stale, so re-review it.
+- **SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.** Add to "Settled for the build": the board is re-placed and re-routed in `hardware/sunbeam-em7000/main-board-v2/`; v1 is frozen at commit e8615c82 (local tag `main-board-v1-final`, not published) and removed; the mains copper is carried over unchanged, proved by the copper compare; six layers. Its brief confirmation goes stale, so re-review it.
 - **DEL-HW-MAIN-BOARD-DESIGNED.C27 and SOL-FW-SPI2-PORT-RUNS-SLOW-EDGES-AND-A-LOW-CLOCK.** Change SPI2 to SPI3. Replace the 4 MHz and 5 ns limits with the v2 signal study's figures. If the study shows no limit is needed, supersede rather than amend.
 - **SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.** Position-free criteria, as above.
 - **SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION.** State that the owner's acceptance applied to v1 and that v2 has no via in an SMD pad other than exposed pads. Retitle away from "AWAIT".
@@ -535,11 +535,13 @@ Rungs 3 to 6 each need a reason a lower rung could not give. A move up is writte
 - **History-check trap.** Squashing, rebasing, or committing a footprint before the floorplan voids `hw:history`, with no in-place fix. Guard: forward test in phase 3, and merge-commit only.
 - **Single most likely failure.** Moving the scratch placement into the committed board by hand in Konnect changes positions or rotations slightly, so the committed candidate no longer routes the way the probe did. Expensive phase 6 work then meets the lane conflicts again. Guard: a scripted positions diff between the phase 1 table and each committed candidate, and the escape study re-run on the committed board, before any copper.
 
-## Questions for David
+## Questions for the owner
 
 1. **Exposed-pad vias.** When the live quote breakdown comes, does a 0.2 mm drill with a 0.5 mm pad show any surcharge at six layers, and what does via filling (POFV) cost? Only the about 18 exposed-pad vias depend on it, and they are applied late in phase 6.
 2. **Panel cable pin order.** Is the pin order on J791 and J821 fixed by the panel cables you keep? The plan assumes yes and places the drivers to suit the cable.
 3. **The v1 tag.** May the tag `main-board-v1-final` be pushed to origin with the PR, so the frozen v1 stays reachable after the folder is removed?
+
+   *Answered (note of 2026-11-18, the question above kept as asked).* The first design never reached `main` and the board is named v1 in its place (owner's decision of 2026-11-17, `DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME`). No push of the tag was authorised: it exists only in the local repository, on commit e8615c82, and `git ls-remote --tags origin` lists none. The frozen first design is read from that commit only.
 
 ## Deferred to close-out (lean pass, 2026-11-10)
 
@@ -575,7 +577,7 @@ Evidence: a scratch handoff note kept outside the repository (never committed). 
 | (d) D401 | within 5 mm of J402 | pads 1 and 3 to J402 pins 1 and 2: 4.69 and 4.63 mm | 3.93 and 4.90 mm |
 | (d) D402 | beside J402 pin 5 | 3.85 mm | 3.24 mm |
 
-**v1 on the same four items** (tag `main-board-v1-final`, positions read from its board with the v2 footprints, so approximate): sensing parts 17.1 mm from the relay at the nearest cell part and 8 refs under 20 mm (TP602, TP609 at 4.3 and 1.8 mm are the U601 cell); U401 21.6 mm from the module but its block 12.9 mm (C406), so (a) was not met; (b) met, no part in the box; (c) not comparable, U302 at (80, 40) 5.2 mm from the module and 9.2 mm from U401, C304 and C305 3.5 and 4.9 mm from the tab (BOARD-2's 10 mm not met); (d) met, D401 pads 2.8 and 5.6 mm from J402, D402 2.8 mm. The constrained v2 is therefore a stricter test than v1 passed on (a) and (c), and R is at v1's own level on (a).
+**v1 on the same four items** (commit e8615c82, local tag `main-board-v1-final`, not published; positions read from its board with the v2 footprints, so approximate): sensing parts 17.1 mm from the relay at the nearest cell part and 8 refs under 20 mm (TP602, TP609 at 4.3 and 1.8 mm are the U601 cell); U401 21.6 mm from the module but its block 12.9 mm (C406), so (a) was not met; (b) met, no part in the box; (c) not comparable, U302 at (80, 40) 5.2 mm from the module and 9.2 mm from U401, C304 and C305 3.5 and 4.9 mm from the tab (BOARD-2's 10 mm not met); (d) met, D401 pads 2.8 and 5.6 mm from J402, D402 2.8 mm. The constrained v2 is therefore a stricter test than v1 passed on (a) and (c), and R is at v1's own level on (a).
 
 **Routing results** (same router and recipe throughout; main window x 66 to 133, y 4 to 128, interlock window routed after; one pass of the Phase 1 recipe with `--gndfirst`, `--inner 4.5`, net orders prio, rand 1 and rand 2; control = the Phase 1 placement `pl_final` re-routed once with this router, main window only).
 
