@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD.C1
+type: criterion
+title: The committed record's 42 exception entries read 2026-11-06 on 23, 2026-11-07 on 3 and 2026-11-14 on 16
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed separation basis record holds 42 accepted_exceptions entries whose accepted_on reads 2026-11-06 on 23 of them, 2026-11-07 on 3 and 2026-11-14 on 16. A test of the record reads the committed record and fails on any other split of the 42 entries across those three days. Out of scope is every other field of the record and the days the owner accepted on.
+links:
+  - target: SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD
+    type: criterion-of
