@@ -90,7 +90,7 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 80 | PC12 | SPI3_MOSI | SPI3_MOSI AF6 | FT_h | floating input (analog mode per RM0433) |  |
 | 81 | PD0 | PT1_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
 | 82 | PD1 | PT2_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 83 | PD2 | WT2_DATA | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 83 | PD2 | WT2_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
 | 84 | PD3 | WT2_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
 | 85 | PD4 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
 | 86 | PD5 | WT1_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
