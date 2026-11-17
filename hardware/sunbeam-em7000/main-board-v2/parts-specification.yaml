@@ -1611,7 +1611,7 @@ positions:
     rating: pad 1.5mm
     lcsc: none
     class: none
-  # J522: maker not read; MPN 2.54mm 1x4 header; catalogue class extended
+  # J522 (display link header): maker not read; MPN 2.54mm 1x4 header; catalogue class extended
   - reference: J522
     value: BREW_D
     package: PinHeader_1x04_P2.54mm_Vertical

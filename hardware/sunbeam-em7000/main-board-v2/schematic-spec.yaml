@@ -5626,6 +5626,7 @@ sheets:
       - F521.2
       - R541.1
       - TP526.1
+    # BRWD_3V3 feeds J522, the display unit serial header (USART1 on PB6/PB7); the net names BREW_SCL_X and BREW_SDA_X are retained
     BRWD_3V3:
       scope: local
       pins:
@@ -5753,7 +5754,7 @@ sheets:
     buffer, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels
     STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520, R545 and C521 are fitted; R522 is drawn and
     marked do-not-populate (the buffer replaces the link; fitting both would join the buffer''s input to its output through R545). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X;
-    J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54SW pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header.
+    J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X (J522 is the display unit serial header, USART1 TX and RX on PB6 and PB7, 3.3 V logic; the nets keep their names); analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54SW pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header.
     Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
 - order: 9
   sheet: Current sensing inputs

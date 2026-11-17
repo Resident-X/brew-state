@@ -22,7 +22,7 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Rail +3V3A | +3V3A_FB, +3V3A | TP303 | R301 | Derived from +3V3 by FB301 (600 ohm at 100 MHz, 0.50 ohm DC) onto +3V3A_FB with TP303; R301 (0 ohm, 1 A rated) is the isolating link. Feeds VDDA (pin 21) with C408 and C409 and the VREF+ link R302; any analogue front end that takes the converter's supply takes +3V3A. |
 | Rail VREF+ | +3V3A, VREF+ | TP403, TP402 | R302 | Reference rail for the three ADCs: pin 20 with C410 (100 nF) and C411 (1 uF), tied to +3V3A through R302 (0 ohm, AN4938 Table 9 star point). TP403 on the source side (+3V3A), TP402 on the pin side to read what the converter sees. Opening R302 lets firmware use the internal reference buffer (2.5 V class) instead; the pin is then driven by the part. |
 | Rail STMD_3V3 | STMD_3V3_SRC, STMD_3V3 | TP523 | R540 | 3.3 V feed of the digital steam-path pressure transducer: +3V3 through the PTC F520 to the test point and link R540, then pin 2 or 1 of J521; the PTC and the link are the only parts on the source side |
-| Rail BRWD_3V3 | BRWD_3V3_SRC, BRWD_3V3 | TP526 | R541 | 3.3 V feed of the digital brew-path pressure transducer: +3V3 through the PTC F521 to the test point and link R541, then pin 2 or 1 of J522; the PTC and the link are the only parts on the source side |
+| Rail BRWD_3V3 | BRWD_3V3_SRC, BRWD_3V3 | TP526 | R541 | 3.3 V feed of the display unit: +3V3 through the PTC F521 to the test point and link R541, then pin 2 or 1 of J522; the PTC and the link are the only parts on the source side |
 | Rail SPAREA_3V3 | SPAREA_3V3_SRC, SPAREA_3V3 | TP528 | R542 | 3.3 V feed of the spare analogue input header: +3V3 through the PTC F522 to the test point and link R542, then pin 2 or 1 of J523; the PTC and the link are the only parts on the source side |
 | Rail BREWA_3V3 | BREWA_3V3_SRC, BREWA_3V3 | TP530 | R543 | 3.3 V feed of the brew-path analogue header: +3V3 through the PTC F523 to the test point and link R543, then pin 2 or 1 of J524; the PTC and the link are the only parts on the source side |
 | Rail SPAN2_3V3 | SPAN2_3V3_SRC, SPAN2_3V3 | TP532 | R544 | 3.3 V feed of the second spare analogue header: +3V3 through the PTC F524 to the test point and link R544, then pin 2 or 1 of J525; the PTC and the link are the only parts on the source side |
@@ -79,8 +79,8 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | Key signal: FLOW_IN | FLOW_IN | R522 | — | flow-meter input after the fitted buffer U520 (PB10); probed at R522 pad 2, the unfitted link position (a bare pad) |
 | Key signal: STM_SCL | STM_SCL | R523 | — | steam-path I2C clock (PB8); probed at R523 pad 2, the controller side of the 100 ohm series resistor |
 | Key signal: STM_SDA | STM_SDA | TP522 | — | steam-path I2C data (PB9) |
-| Key signal: BREW_SCL | BREW_SCL | R527 | — | brew-path I2C clock (PB6); probed at R527 pad 2, the controller side of the 100 ohm series resistor |
-| Key signal: BREW_SDA | BREW_SDA | TP525 | — | brew-path I2C data (PB7) |
+| Key signal: BREW_SCL | BREW_SCL | R527 | — | display link transmit (PB6, USART1_TX); probed at R527 pad 2, the controller side of the 100 ohm series resistor |
+| Key signal: BREW_SDA | BREW_SDA | TP525 | — | display link receive (PB7, USART1_RX) |
 | Key signal: STMP_AN | STMP_AN | TP527 | — | steam-path analogue fallback after scaling and filter (PC5) |
 | Key signal: BREW_AN | BREW_AN | TP529 | — | brew-path analogue fallback after scaling and filter (PA6) |
 | Key signal: SPARE_AN2 | SPARE_AN2 | TP531 | — | second spare analogue after scaling and filter (PA0) |
@@ -179,10 +179,10 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | J521.2 | GND | ground | transducer ground |
 | J521.3 | STM_SCL_X | signal | I2C clock |
 | J521.4 | STM_SDA_X | signal | I2C data |
-| J522.1 | BRWD_3V3 | power_leaving | 3.3 V supply of the digital pressure transducer through the PTC and link; nothing can power the board through it |
-| J522.2 | GND | ground | transducer ground |
-| J522.3 | BREW_SCL_X | signal | I2C clock |
-| J522.4 | BREW_SDA_X | signal | I2C data |
+| J522.1 | BRWD_3V3 | power_leaving | 3.3 V supply of the display unit through the PTC and link; nothing can power the board through it |
+| J522.2 | GND | ground | display unit ground |
+| J522.3 | BREW_SCL_X | signal | serial transmit from the controller |
+| J522.4 | BREW_SDA_X | signal | serial receive to the controller |
 | J523.1 | +5V | power_leaving | 5 V supply of an analogue sensor; unfused |
 | J523.2 | SPAREA_3V3 | power_leaving | 3.3 V supply of an analogue sensor through the PTC and link |
 | J523.3 | GND | ground | sensor ground |
@@ -190,7 +190,7 @@ Where the method requires a rating for a link on a path that carries a protectiv
 | J524.1 | +5V | power_leaving | 5 V supply of an analogue sensor; unfused |
 | J524.2 | BREWA_3V3 | power_leaving | 3.3 V supply of an analogue sensor through the PTC and link |
 | J524.3 | GND | ground | sensor ground |
-| J524.4 | BREWA_RAW | signal | analogue sensor output, up to 5.5 V |
+| J524.4 | BREWA_RAW | signal | brew-path pressure sensor output, 0.5 V to 4.5 V, up to 5.5 V |
 | J525.1 | +5V | power_leaving | 5 V supply of an analogue sensor; unfused |
 | J525.2 | SPAN2_3V3 | power_leaving | 3.3 V supply of an analogue sensor through the PTC and link |
 | J525.3 | GND | ground | sensor ground |

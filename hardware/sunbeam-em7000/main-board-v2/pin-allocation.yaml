@@ -101,10 +101,10 @@ channels:
   - channel: mains_pres_c
     net: MAINS_PRES_C
     controller_pin: PE15
-  - channel: brew_scl
+  - channel: display_tx
     net: BREW_SCL
     controller_pin: PB6
-  - channel: brew_sda
+  - channel: display_rx
     net: BREW_SDA
     controller_pin: PB7
   - channel: pt1_cs

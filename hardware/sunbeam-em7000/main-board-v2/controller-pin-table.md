@@ -99,8 +99,8 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 89 | PB3 | SWO | JTDO/TRACESWO AF0 (serial-wire output, optional) | FT | AF0 debug, floating (no pull) per RM0433 11.3.1 |  |
 | 90 | PB4 | no connect | unused (NJTRST) | FT | AF0 NJTRST, internal pull-up, until firmware releases it |  |
 | 91 | PB5 | ANODE_GATE | TIM3_CH2 AF2 | FT | floating input (analog mode per RM0433) |  |
-| 92 | PB6 | BREW_SCL | I2C4_SCL AF6 | FT_f | floating input (analog mode per RM0433) | I2C1_SCL in the ST bootloader: open-drain, no pull (AN2606 Rev 70, Table 135) |
-| 93 | PB7 | BREW_SDA | I2C4_SDA AF6 | FT_fa | floating input (analog mode per RM0433) | I2C1_SDA in the ST bootloader: open-drain, no pull (AN2606 Rev 70, Table 135) |
+| 92 | PB6 | BREW_SCL | USART1_TX AF7 (display link, header J522 pin 3); also I2C4_SCL AF6, I2C1_SCL AF4 | FT_f | floating input (analog mode per RM0433) | I2C1_SCL in the ST bootloader: open-drain, no pull (AN2606 Rev 70, Table 135) |
+| 93 | PB7 | BREW_SDA | USART1_RX AF7 (display link, header J522 pin 4); also I2C4_SDA AF6, I2C1_SDA AF4 | FT_fa | floating input (analog mode per RM0433) | I2C1_SDA in the ST bootloader: open-drain, no pull (AN2606 Rev 70, Table 135) |
 | 94 | BOOT0 | BOOT0 | boot mode select | B | sampled 4th SYSCLK rising edge after reset release |  |
 | 95 | PB8 | STM_SCL | I2C1_SCL AF4 (also UART4_RX AF8) | FT_fh | floating input (analog mode per RM0433) |  |
 | 96 | PB9 | STM_SDA | I2C1_SDA AF4 (also UART4_TX AF8) | FT_fh | floating input (analog mode per RM0433) |  |
