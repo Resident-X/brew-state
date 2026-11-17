@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C14
+type: criterion
+title: The steam-path and brew-path pressure sensors each have a header on the board
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The steam-path pressure sensor, an XDB401-class part on I2C, connects to header J521, whose pins 3 and 4 join the controller's I2C1 clock and data pins PB8 and PB9. The brew-path pressure sensor, an analogue transducer with a 0.5 V to 4.5 V output, connects to analogue header J524, whose signal pin reaches the controller's PA6 conversion input. J523 and J525 remain analogue headers assigned to no sensor, and pins 7 to 10 of J761 remain unconnected. Fitting either sensor is out of scope.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
+    type: criterion-of

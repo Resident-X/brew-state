@@ -2,11 +2,11 @@ id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHE
 type: criterion
 title: Mains copper stands at least 3.0 mm and 10.0 mm by path from low-voltage copper on every layer
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  On the finished board the pre-order check, which holds every mains copper item to the signed 3.0 mm straight and 10.0 mm by path round the slots and the board edge against every low-voltage copper item on all six copper layers, reports no clearance, creepage or layer-separation line. A second measurement by a separate tool, taken on the re-laid copper with the zone fills in before the finishing changes to low-voltage copper, found the least straight distance 3.704 mm and the least path 10.669 mm; the mains copper compares identical item for item after each later change, and each later change left no low-voltage copper within 3.0 mm of it. A distance under either signed figure on any layer fails. Out of scope: the distances between two mains nets, which the separation basis record carries.
+  On the finished board the pre-order check, which holds every mains copper item to the signed 3.0 mm straight and 10.0 mm by path round the slots and the board edge against every low-voltage copper item on all six copper layers, reports no clearance, creepage or layer-separation line. A second measurement by a separate tool, taken on the finished board with the zone fills in, found the least straight distance 3.747 mm and the least path 10.872 mm; the mains copper compares identical item for item with the re-laid copper. A distance under either signed figure on any layer fails. Out of scope: the distances between two mains nets, which the separation basis record carries.
 links:
   - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
     type: criterion-of
