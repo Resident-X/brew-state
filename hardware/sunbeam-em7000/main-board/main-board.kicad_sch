@@ -3807,11 +3807,11 @@
 			(at 234.95 222.25 0)
 			(uuid "beb8f619-605e-457e-888f-47ce2fe34d0e")
 		)
-		(pin "MAINS_PRES_C" bidirectional
+		(pin "MAINS_PRES_C" output
 			(at 234.95 224.79 0)
 			(uuid "01223c23-f5a8-45e9-a631-331d9044d3a6")
 		)
-		(pin "MAINS_PRES_S" bidirectional
+		(pin "MAINS_PRES_S" output
 			(at 234.95 227.33 0)
 			(uuid "011eec5e-f163-42ca-808c-e2b6e8fdb9bf")
 		)
