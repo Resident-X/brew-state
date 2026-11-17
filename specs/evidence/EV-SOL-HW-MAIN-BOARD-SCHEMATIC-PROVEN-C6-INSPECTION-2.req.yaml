@@ -1,0 +1,30 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C6-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C6, read clause by clause
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T14:31:19Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/controller-input-map.yaml; hardware/sunbeam-em7000/main-board/pin-allocation.yaml; hardware/sunbeam-em7000/main-board/controller-pin-table.md::Converter-input map
+  artifact_version: 361517aee5a885fad4095ad5a6a5a738b7d75083
+text: |
+  Inspection of the criterion clause by clause. Files are in hardware/sunbeam-em7000/main-board/ and are unmodified against the commit named in the artifact version.
+
+  Clause "The map names, for each sensor channel the pin allocation record carries, the converter input of the selected controller part on the pin the record names, taken from the part's maker's description".
+
+  1. The sensor channels the pin allocation record carries. pin-allocation.yaml lists, among its channels, eight that are analogue sensor inputs, each with its controller pin: ntc_cof (net NTC_COF) PC0, ntc_stm (NTC_STM) PC1, spare_an2 (SPARE_AN2) PA0, curr1_an (CURR1_AN) PA2, curr2_an (CURR2_AN) PA3, brew_an (BREW_AN) PA6, ntc_wand (NTC_WAND) PC4, stmp_an (STMP_AN) PC5. The other channels are digital (keys, drives, chip selects, flow and zero-crossing timer inputs, load-cell clock and data lines) and reach no converter input of the controller; they are not sensor channels in the sense of a converter input and the map is not required to name them.
+
+  2. The map. controller-input-map.yaml (authored beside the pin allocation record, in the same folder) lists under `inputs:` each converter input with its pin. Comparing the eight channels with it: PC0 is ADC_CHANNEL_10 (comment "ADC123_INP10, NTC_COF"); PC1 is ADC_CHANNEL_11 (ADC123_INP11, NTC_STM); PA0 is ADC_CHANNEL_16 (ADC1_INP16, SPARE_AN2); PA2 is ADC_CHANNEL_14 (ADC12_INP14, CURR1_AN); PA3 is ADC_CHANNEL_15 (ADC12_INP15, CURR2_AN); PA6 is ADC_CHANNEL_3 (ADC12_INP3, BREW_AN); PC4 is ADC_CHANNEL_4 (ADC12_INP4, NTC_WAND); PC5 is ADC_CHANNEL_8 (ADC12_INP8, STMP_AN). All eight channels' pins appear, on the pin the allocation record names, each with the converter input of that pin. The map also lists the free ADC pins PB1, PA7, PB0, PA1, PA4 and PA5 (ADC_CHANNEL_5, 7, 9, 17, 18, 19), and its header says PC2_C and PC3_C are not listed and why.
+
+  3. Taken from the maker's description. The file's header says each converter_input is the ADC_CHANNEL_n number of the pin's ADC input in the controller maker's datasheet DS12110 Rev 11 Table 9, LQFP100 column, read 2026-10-29, "as set out in the converter-input map of controller-pin-table.md". controller-pin-table.md, section "Converter-input map", gives for the same eight nets the maker's ADC channel names and converters: NTC_COF PC0 ADC123_INP10, NTC_STM PC1 ADC123_INP11, NTC_WAND PC4 ADC12_INP4, STMP_AN PC5 ADC12_INP8, SPARE_AN2 PA0 ADC1_INP16, CURR1_AN PA2 ADC12_INP14, CURR2_AN PA3 ADC12_INP15, BREW_AN PA6 ADC12_INP3. In each row the channel number n of INPn equals the map's ADC_CHANNEL_n. The pin rows of controller-pin-table.md (rows for pins 15, 16, 22, 24, 25, 30, 32 and 33) give the same names. Matches. Limit of the check: the datasheet text itself is not in the repository, so the check is the map against the pin table that cites it.
+
+  Out of scope and not inspected: wiring the firmware's pin checks to the records, and changing the checks.
+
+  Result: every clause is met.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C6
+    type: satisfies

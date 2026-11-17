@@ -1,0 +1,38 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C2-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C2, read clause by clause
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T14:31:19Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'hardware/sunbeam-em7000/main-board/circuit-proof.md::Hold-off of the loads the drive stages switch; Hold-off table of the interlock; Hold-off of every switched load: controller pin states; hardware/sunbeam-em7000/main-board/circuit-proof/D_holdoff.log; hardware/sunbeam-em7000/main-board/sheets/700-pump-drives.yaml; hardware/sunbeam-em7000/main-board/sheets/710-valve-drives.yaml; hardware/sunbeam-em7000/main-board/sheets/720-heater-led-drive-and-wall-board-header.yaml; hardware/sunbeam-em7000/main-board/sheets/102-interlock.yaml'
+  artifact_version: 361517aee5a885fad4095ad5a6a5a738b7d75083
+text: |
+  Inspection of the criterion clause by clause, against the sheets and the circuit proof of the main board (hardware/sunbeam-em7000/main-board/), read at the commit named in the artifact version.
+
+  Clause "The design holds each heater switch, pump and valve drive off in reset, unpowered and disconnected, with the circuit shown for each."
+
+  1. The drive stages that exist. sheets/700-pump-drives.yaml draws the two pump opto-triac LED stages (Q701 on net PUMP_C_GATE_G with gate resistor R701 and pull-down R702, Q711 on PUMP_S_GATE_G with R711 and R712). sheets/710-valve-drives.yaml draws the two valve relay coil stages (Q731 on VALVE_2W_G with R731 and R732, Q741 on VALVE_3W_G with R741 and R742). sheets/720-heater-led-drive-and-wall-board-header.yaml draws the two heater opto-triac LED stages (Q761 on HEAT_C_G with R761 and R762, Q771 on HEAT_S_G with R771 and R772). In each sheet the pull-down's pin 1 is on the gate net and pin 2 is on GND (the net lists quoted above), so each of the six stages has a gate pull-down drawn. The interlock relay coil has its own drive, sheet 102-interlock.yaml. Matches: six switched stages plus the interlock, all drawn.
+
+  2. The circuit shown for each, in reset. circuit-proof.md, section "Hold-off of the loads the drive stages switch", table "The six loads, state by state", row "Controller in reset": the pin is a floating input or analog mode and the gate sits at (350 nA + 100 nA) x (101 ohm + 101 kohm) = 0.45 uA x 101.1 kohm = 45.5 mV against the switch's VGS(th) minimum 0.65 V, so 0.65 / 0.0455 = 14.3, the "factor 14" the section states. The part that holds the load is named: R702, R712, R732, R742, R762, R772 (100 kohm gate pull-downs). The pin facts come from section "Hold-off of every switched load: controller pin states", "What every pin does before firmware configures it" (no internal pull on the drive pins, high-impedance floating input in reset, and the datasheet gives no pin state below the power-on-reset threshold, so each stage holds its load off from VDD = 0 V by itself) and the table "The drive outputs", which lists every drive net with its pin, class and state in reset and with BOOT0 high. Matches: reset state shown for each stage with the holding part and the arithmetic.
+
+  3. Unpowered. Same table, rows "+3V3 absent, +5V present" (pin unpowered, floating, gate 45.5 mV or lower, pull-downs hold), "+5V absent, +3V3 present" (the load has no supply: pump and heater LED 0 mA, valve coil 0 V, with no back-feed path because each drain reaches only its LED or coil and the AO3400A body diode points away from the rail) and "+5V and +3V3 rising" and "falling" (pull-downs hold; the gate decays through 100 kohm with RC about 63 us). Load current in the held state: at most IDSS 5 uA, which is x2000 under the pump LED's maximum trigger current 10 mA (5 uA against 10 mA), x1000 under the heater LED's 5 mA, and 5 uA x 97.2 ohm = 0.49 mV across a valve coil against its 0.25 V drop-out, x514. Matches.
+
+  4. Disconnected. Same table, row "Cable conductor open or connector unplugged": pump and valve stages have no cable between the stage and the load's switch (the opto-triac and the relay are on the main board), and for the heater header an open HEAT_x_LED_K conductor leaves the LED with no return, an open +5V_WB conductor leaves it with no supply, and an unplugged header does both. Matches: the open conductor is itself the hold.
+
+  5. Interlock coil. circuit-proof.md, "Hold-off table of the interlock (coil de-energised without firmware acting)": rows controller in reset (POL_OUT high impedance, held low by R201 || R202, gates decay in 56.5 ms, coil released), 3V3 absent with 5 V present (same), 5 V absent (coil unpowered), output held low or high by a stopped main loop (56.5 ms, held high needs R205 and R206), supply rising (a power-up gate blip of at most 1.10 V for at most 17.3 ms, coil current at most 30 mA against the 51.3 mA pick-up current), and cable open (there is no cable between the drive and the coil). The power-up row is stated as carried and accepted (owner acceptance (m) in open-items.md); the coil current is 30.2 / 51.3 = 59 % of pick-up, so the relay does not close, which is the hold-off result the clause asks for.
+
+  6. The arithmetic is run, not only written. circuit-proof/D_holdoff.log ends "SUMMARY: 0 failing []".
+
+  Single faults beyond the three named states (an open gate pull-down or gate resistor, a heater cable conductor shorted to ground) are listed in the same section as "Single faults inside the stage" and "Heater cable, single faults beyond an open conductor", each with what covers it (the interlock contact in LINE1). They are not part of this criterion's clause (reset, unpowered, disconnected) and are not claimed here.
+
+  Out of scope and not inspected: the behaviour of the built board.
+
+  Result: every clause of the criterion is met by the drawn sheets and the circuit proof as read.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C2
+    type: satisfies
