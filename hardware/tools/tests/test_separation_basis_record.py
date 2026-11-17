@@ -1099,6 +1099,36 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
             self.day_and_signer_hold(self, dict(data, accepted_on=self.ZERO_CROSS_DAY))
 
 
+    @staticmethod
+    def day_split_holds(case, data):
+        """The record's accepted_exceptions number 42 and their accepted_on days split exactly 23, 3 and 16 across the three days; any other count, day or split fails."""
+        import collections
+        entries = data["accepted_exceptions"]
+        case.assertEqual(len(entries), 42)
+        days = collections.Counter(str(board_check.iso_date(entry.get("accepted_on"))) for entry in entries)
+        case.assertEqual(days, collections.Counter({"2026-11-06": 23, "2026-11-07": 3, "2026-11-14": 16}))
+
+    def test_the_committed_exceptions_split_across_the_three_acceptance_days_as_stated(self):
+        # SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD.C1: The committed separation basis record holds 42 accepted_exceptions entries whose accepted_on reads 2026-11-06 on 23 of them, 2026-11-07 on 3 and 2026-11-14 on 16. A test of the record reads the committed record and fails on any other split of the 42 entries across those three days. Out of scope is every other field of the record and the days the owner accepted on.
+        import copy
+        _, data = committed()
+        self.day_split_holds(self, data)
+        moved = copy.deepcopy(data)
+        first = next(e for e in moved["accepted_exceptions"] if e["accepted_on"] == "2026-11-06")
+        first["accepted_on"] = "2026-11-14"
+        dropped = copy.deepcopy(data)
+        del dropped["accepted_exceptions"][0]
+        duplicated = copy.deepcopy(data)
+        duplicated["accepted_exceptions"].append(copy.deepcopy(duplicated["accepted_exceptions"][0]))
+        outside = copy.deepcopy(data)
+        outside["accepted_exceptions"][0]["accepted_on"] = "2026-11-05"
+        swapped = copy.deepcopy(data)
+        other = next(e for e in swapped["accepted_exceptions"] if e["accepted_on"] == "2026-11-14")
+        other["accepted_on"] = "2026-11-07"
+        for label, faulty in (("moved", moved), ("dropped", dropped), ("duplicated", duplicated), ("outside", outside), ("swapped", swapped)):
+            with self.assertRaises(AssertionError, msg=label):
+                self.day_split_holds(self, faulty)
+
     def test_the_two_kinghelm_headers_state_the_maker_hole_band_and_the_record_header_states_the_ruling(self):
         # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C9: The committed record's two same-connector hole_to_hole entries for the Kinghelm load-cell headers J630 and J635 each state accepted_mm 1.15, each state in their reason the 0.80 +0.10/-0.00 mm hole the maker's sheet asks for, and each carry accepted_on 2026-11-14. The record's three same-connector hole_to_hole entries for the JST headers J791, J821 and J861 keep accepted_mm 1.25. The record's header states that the plated holes of J630 and J635 become 0.85 mm, that the entries stand at 1.15 mm in place of 1.25 mm, that they carry the day 2026-11-14, and that the other three headers keep their 0.75 mm drill, 1.25 mm and their day. An entry of a Kinghelm header left at the earlier day is refused. Out of scope is any entry of another connector.
 
