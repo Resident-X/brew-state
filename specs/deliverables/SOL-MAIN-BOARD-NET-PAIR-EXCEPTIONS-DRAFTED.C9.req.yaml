@@ -1,7 +1,7 @@
 id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C9
 type: criterion
 title: The record holds a single-fault table with a bounded row for each fault of each net-pair entry
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
     type: criterion-of
+attributes:
+  deprecation_reason: Carried in the finished state by SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3, which states the seven net-pair entries and their single-fault table; this criterion required a table row for each of the eleven drafted entries, and C10 of this leaf records that only seven of the eleven are in the signed record.
