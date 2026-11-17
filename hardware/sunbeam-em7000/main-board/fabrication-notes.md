@@ -195,7 +195,7 @@ Every one of these is signed. None changes a signed figure of the basis (signed 
 
 - The 0.15 mm annular width of the 0.6 / 0.3 mm via (above): `owner-sign-off.md` S-24, signed on the owner's behalf under his standing instruction of 2026-11-07.
 - The detour ratios of routed critical nets: `owner-sign-off.md` S-48 and S-49, signed on the owner's behalf in the workmanship acceptance lines (`workmanship-acceptance.yaml`, sessions of 2026-11-12 and 2026-11-14; the S-49 line of the coffee pump LED anode net, 2026-11-14). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's signed exceptions (33 on 2026-11-06, of which the C606 pad pair was removed on 2026-11-07; 42 today: 23 dated 2026-11-06, 3 dated 2026-11-07 and 16 dated 2026-11-14).
-- The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14): exceptions of `hardware/sunbeam-em7000/separation-basis.yaml`, the 1.25 mm entries accepted_on 2026-11-06 and the 1.15 mm entries accepted_on 2026-11-14, each by the owner, entered by Claude on the owner's written instruction (`owner-sign-off.md`, S-32, records the hole sizes).
+- The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14): exceptions of `hardware/sunbeam-em7000/separation-basis.yaml`, each entry accepted_on 2026-11-18 (the 1.25 mm entries first accepted on 2026-11-06 and the 1.15 mm entries on 2026-11-14), each by the owner, entered by Claude on the owner's written instruction (`owner-sign-off.md`, S-32, records the hole sizes).
 
 ## The board as it stands
 
