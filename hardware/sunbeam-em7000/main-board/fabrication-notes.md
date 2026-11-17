@@ -93,12 +93,70 @@ What remains unverified, and is a pre-order action for the owner: the identity a
 
 The requirement: the notes name the coat that supports the basis's pollution degree 2 credit (which rests on the enclosure), with its type and the maker's current datasheet, and state that it is applied after bring-up, once the machine is deemed functional from a hardware perspective, and covers the gaps between the board's mains pads, except keep-outs for contacts listed by reference designator.
 
-Status: **criterion C17 is not met.** What the records say, in full:
+Status: criterion C17 is **met on paper** (read 2026-11-17). The coat is a supporting measure and earns no part of the pollution degree 2 credit, which stands on the enclosure (`separation-basis.yaml` conditions 1 and 2). No coating test is planned and none is claimed (`layout-plan.md` ENV-1 row).
 
-- The coat is planned, applied after the boards work (`docs/sunbeam-em7000/reference-machine.md`), as a supporting measure that does not itself earn the pollution degree 2 credit; the credit stands on the enclosure (`separation-basis.yaml` conditions 1 and 2).
-- No coat type is chosen and no coat datasheet is cited anywhere in the repository. No keep-out list exists. No coating test is planned and none is claimed (`layout-plan.md` ENV-1 row).
-- Stated here as the requirement the owner is to confirm: the coat is applied after bring-up, once the machine is deemed functional from a hardware perspective (owner, 2026-11-06), so the board's first connection to mains and the bring-up bench tests run on the uncoated board in a clean room and the coat is no part of any bound until applied; it covers the gaps between the board's mains pads, and leaves uncovered only contacts whose reference designators are listed in this file. The list is empty at this commit because no keep-out has been decided; which parts need a keep-out (for example any contact a plug or probe must reach bare) is the owner's decision, each listed here by designator once decided.
-- Applying the coat and choosing its supplier are out of scope of the criterion. The bring-up humidity step (DEL-HW-BRING-UP) is the only check planned for the pollution degree 2 credit, and it reads the closed machine, coated or not.
+### Coat chosen
+
+Type: one-part acrylic conformal coating in an aerosol can. It is chosen for application at home with no equipment beyond a ventilated space: spray, room-temperature cure, no oven, no vacuum, no mixing, and rework by a common solvent or by soldering through it.
+
+- **Product: MG Chemicals 419D Acrylic Conformal Coating, aerosol, part number 419D-340G** (410 mL, 340 g net).
+- **Fallback, equivalent type: Techspray Turbo-Coat Acrylic Conformal Coating, aerosol, product 2108-12S** (12 oz).
+- **Australian supply (web search 2026-11-17; the retailer's page itself was not opened):** Mektronics (mektronics.com.au) lists the 419D 340 g aerosol as in stock at 82.81 AUD including GST, and lists the Techspray Turbo-Coat 12 oz acrylic at 64.22 AUD including GST. Aerosols are dangerous goods in freight, so a courier may refuse or surcharge them; the owner confirms shipping terms with the seller at purchase. Choosing the supplier is out of scope of the criterion.
+
+### The maker's current datasheet
+
+- **419D-340G:** "419D Aerosol, Acrylic Conformal Coating", technical data sheet, 3 pages, dated 31 July 2025, Ver. 4.0. `https://mgchemicals.com/downloads/tds/tds-419d-a.pdf`, the address the product page on mgchemicals.com links for the aerosol, fetched 2026-11-17. It is the maker's own copy and the revision on the maker's site that day. The copy is kept outside the repository and is not committed.
+- **Safety data sheet read for the flammability figures:** MG Chemicals "Premium Acrylic Conformal Coating", SDS code 419D-Aerosol, a distributor-hosted copy (`https://assets.testequity.com/te1/Documents/pdf/MG-Chemicals/mg-sds-419d-a.pdf`, no revision date read); not the maker's current SDS, so the owner reads the SDS packed with the can.
+- **Fallback:** "Turbo-Coat Acrylic Conformal Coating, Product# 2108", Techspray, Rev. D (3/21), 4 pages, `https://www.techspray.com/content/msds/TS-2108_ENG_TDS.pdf`, fetched 2026-11-17.
+
+Figures relied on, as printed on the 419D sheet (the fallback's, where read, follow in brackets):
+
+| Need | Printed figure |
+|---|---|
+| Dielectric strength | "Dielectric Strength 1 000 V/mil"; "Breakdown Voltage >1 500 V" (ASTM D149). [2108: "Dielectric strength 1000 volts", ASTM D-149 / IPC-TM-650 2.5.6.1] |
+| Service temperature | "-65-125 C". [2108: "-65 to 125 C"] The enclosure air is assumed at 70 degC until bring-up measures it, and the joint cap in the bring-up record is 110 degC, both under 125 degC. |
+| Moisture, fungus | "protects effectively against moisture, corrosion, fungus, dirt, dust, thermal shock, short circuits, high voltage arcing"; "Moisture Insulation Resistance 1 x 10^12 ohm.cm" (IPC-TM-650 2.6.3.4). [2108: IPC-CC-830B fungus resistance, moisture and insulation resistance and dielectric withstand voltage "pass"] |
+| Standards | "Certified UL 94 V-0 (File# E203094)"; "Certified IPC-CC-830B". [2108: UL94/746E V-0, IPC-CC-830B qualification] |
+| Cure | "Dry Time to Handle 10 min (1 coat), 20 min (2 coats)"; "Minimum Recoat Time 3 min"; "Allow to dry at room temperature for 24 hours". [2108: dry to touch 3 min, ambient cure 15 hours at 23 degC] |
+| Thickness | "Recommended Film Thickness 25-75 um"; theoretical coverage 5 700 cm2 per can at that thickness. |
+| Rework | "It may be removed with appropriate strippers, or soldered through for repair or rework." [2108: removal "Alkane, Acetone or Acetate, Solder iron burn through"; Techspray removal pen 2510] The sheet names no stripper for 419D; Mektronics' listing names MG 435 Thinner, 8309 and 8310A removers, which the owner confirms on the maker's pages before relying on them. |
+| Preparation | "Clean the substrate with MG #824 99.9% Isopropyl Alcohol". |
+| Spray | "Shake the can vigorously"; spray a test pattern; "Tilt the board at 45 degrees and spray a thin, even coat from a distance of 20-25 cm"; "Wait 3 min before applying another coat"; "Rotate the board 90 degrees and spray again". |
+| Flammability (SDS) | Flammable aerosol category 2; flash point 9 degC; flammable limits 2 % to 11 % (dimethyl ether propellant); "Use only outdoors or in a well-ventilated area"; keep away from sparks and flames. The sheet prints a glass transition of 27 degC, so the film is above it, and soft, at the enclosure's 70 degC; the sheet prints no figure for that state and none is relied on. |
+
+What the sheet does not say: it states no creepage or clearance credit and no pollution degree, so none is taken from it; the coat stays a support, as the basis states. The cured film's chemical resistance is printed "Poor", so the coat is no protection against solvent spills; the enclosure is.
+
+### When it is applied
+
+After bring-up, once the machine is deemed functional from a hardware perspective (owner, 2026-11-06). Until then the board is uncoated: the board's first connection to mains and the bring-up bench tests run on the uncoated board, in a clean room, and the coat is no part of the bound on any fault between mains pads until it is applied. The coat is applied by the owner at home. It covers the gaps between the board's mains pads on both faces, which the layout plan's `mains` region and the mains-referenced test pads on B.Cu define, and in practice the whole board face except the keep-outs below.
+
+### Home application steps
+
+1. Finish every bring-up repair first. The two wire links JP101 and JP303 are fitted as links (JP101's first-power lamp removed), and any part to be fitted later (RT301, never with JP303) is fitted before coating, since a later part is soldered through the film.
+2. Clean both faces with 99.9 % isopropyl alcohol and a clean brush, remove flux residue, and let the board dry. Handle by the edges.
+3. Mask the keep-outs below with masking tape or a peelable mask, and plug the connector sockets and fuse holders with tape or foam. Do not let the tape lie on a pad it is to leave open without pressing it flat.
+4. In a well-ventilated place away from flames, sparks and heaters (outdoors or by an open door, no pilot light or heater running), shake the can, spray a test pattern, then spray the board 20 to 25 cm away at 45 degrees in thin coats, rotating the board 90 degrees between coats, waiting 3 min between coats. Spray the bottom face the same way after the top has handled dry (10 min), propping the board on its edges. Aim for 25 to 75 um: two or three thin coats per face, never a heavy one, which traps solvent. Coverage check: one face of the board is 131.0 x 125.6 mm = 164.5 cm2 (about 330 cm2 for both faces), and the sheet gives 5 700 cm2 per can at the recommended thickness, so one can is enough for the job.
+5. Peel the masking and plugs once the coat is touch dry (10 min), cutting along the tape edge with a knife first so no film lifts at the edge. Cure 24 hours at room temperature before powering or closing the enclosure.
+6. Inspect under a bright light at a low angle, looking for bare gaps between mains pads, bubbles, pinholes, webs between pins, and film on a keep-out. A coat on a keep-out is removed with a swab and the removal solvent before it dries hard. A gap between mains pads is re-sprayed. The inspection is the owner's check; the sheet's UV-A fluorescence means a UV torch also shows coverage.
+7. Record the day, the can's batch, and the inspection result in the bring-up record (`DEL-HW-BRING-UP`).
+
+### Keep-out list (left uncoated, by reference designator)
+
+Each part or area is derived from the board file and `parts-specification.yaml` read on 2026-11-17.
+
+- **J101, J102, J103, J106, J107, J108, J109, J110** (push-on tab blades): the receptacle must grip bare metal. Mask the blade and its first 2 mm above the board; coat the board surface and the pad gaps up to the blade's base.
+- **F701, F711, F731** (fuse holders, 5 x 20 mm): the clip contacts and the fuse ends must stay bare so a fuse can be changed. Mask the whole holder; coat the pads at the pins on the bottom face. F101 is a soldered pigtail fuse and is coated.
+- **K201, K731, K741** (relays): film must not enter the case or its seams. The sealing type of these three is not read in the records, so treat them as vented: mask the case body above the board, coat the board and the pin bases on both faces so the gaps between their mains pins are covered.
+- **J401** (SWD debug header) and **J402** (USB panel cable header): programming and the bench USB power path; mask the pins and the socket.
+- **JP301, JP302, JP401, JP402, JP761, JP791, JP821** (jumper headers): the shorting jumper or the open link is moved or read in service; mask the header and its pins. JP101 and JP303 are wire links soldered in, not headers: they are coated.
+- **J501, J502, J503, J520, J521, J522, J523, J524, J525, J570, J571, J620, J622, J623, J625, J627, J628, J630, J635, J761, J791, J821, J861** (sensor, probe, load-cell, wall-board, gauge, panel and knob headers and sockets): a plug mates in them; mask the connector body, its pins and the mating cavity. The solder fillets on the other face are coated.
+- **SW401** (reset switch): film under the actuator can stick the switch; mask it.
+- **H1, H2, H3, H4** (M3 lid screw holes, 3.4 mm, non-plated): mask the hole and a ring 3 mm wide round it, so a screw head or washer seats on the board and not on a film that creeps; H3 stands in the `mains` region, so its gap to the neighbouring mains pad is coated outside that ring.
+- **The tank reed element at J862** (hand fitted, glass body): mask the glass body; the pads and solder joints are coated once it is soldered and tested.
+
+Not keep-outs, and coated: the 84 test points on B.Cu (TP101 to TP108, TP603 to TP608, TP702 and TP712 among them stand in mains gaps; the bring-up bench tests that probe them are done before the coat goes on; a later probe is made through the film with a sharp probe tip, or the film is removed from the pad with the removal solvent); the resistor and capacitor pads; the fiducials FID1, FID2 and FID3 (an assembly aid, no function after assembly); the crystals Y401, Y402, Y601; the triacs T701 and T711 (their copper lands are the heat path and the film does not impair them; no heat sink is fitted to the board, and none is listed in the parts specification).
+
+Applying the coat and choosing its supplier are out of scope of the criterion. The bring-up humidity step (`DEL-HW-BRING-UP`) is the only check planned for the pollution degree 2 credit, and it reads the closed machine, coated or not.
 
 ## Mask, silkscreen and assembly
 
