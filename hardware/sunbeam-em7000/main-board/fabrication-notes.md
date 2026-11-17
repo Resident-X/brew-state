@@ -1,6 +1,6 @@
 # Fabrication notes: Sunbeam EM7000 main controller board
 
-What the board maker is asked to build, as the design records state it at the commit that adds this file, and what is still open before the board is ordered. It carries the production-side statements the graph asks of the main board (laminate, coat) and says plainly where the evidence for them is missing. Nothing here is signed or accepted by this file; the separation basis (`hardware/sunbeam-em7000/separation-basis.yaml`) is signed (2026-11-05, re-signed 2026-11-06, on the owner's written instruction entered by Claude, its 32 accepted exceptions of that day signed with it; the record holds 42 accepted exceptions today, each with its own acceptance date) and so are the ten exceptions of the derating policy (`derating-policy.yaml`).
+What the board maker is asked to build, as the design records state it at the commit that adds this file, and what is still open before the board is ordered. It carries the production-side statements the graph asks of the main board (laminate, coat) and says plainly where the evidence for them is missing. Nothing here is signed or accepted by this file; the separation basis (`hardware/sunbeam-em7000/separation-basis.yaml`) is signed (2026-11-05, re-signed 2026-11-06, on the owner's written instruction entered by Claude, its 33 accepted exceptions of that day signed with it, one of which, the C606 pad pair, was removed on 2026-11-07; the record holds 42 accepted exceptions today, each with its own acceptance date: 23 of 2026-11-06, 3 of 2026-11-07 and 16 of 2026-11-14) and so are the ten exceptions of the derating policy (`derating-policy.yaml`).
 
 Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/capabilities/pcb-capabilities), re-read on 2026-11-05 and held in `manufacturer-limits.yaml` and `docs/board-manufacturer-jlcpcb.md`. Where this file says the maker publishes nothing, that is what the pages read on 2026-11-05 held, not a statement about the maker's practice.
 
@@ -24,7 +24,7 @@ Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/
 | 0.7 mm pad, 0.3 mm drill | 6 | (0.7 - 0.3) / 2 = 0.20 mm (the maker's recommended figure) | four on `+5V`, one each on the converter nets `AMC_DCDC_OUT` and `AMC_HLDO_IN` |
 | 0.75 mm pad, 0.3 mm drill | 69 | 0.225 mm | mains-class vias (the `Mains` classes' routing default) |
 
-The board has 541 vias, read from the board file on 2026-11-15, after the four ground vias beside the tab of U302 were placed; the counts of `design-rules.md`, "Via sizes in the layout", are the same. Every drill is 0.3 mm, over the maker's 0.15 mm minimum drill, and every via pad is 0.30 mm or more over its hole. No via stands inside a surface-mount pad. The board setup's minimum annular width is 0.15 mm, the ring of the 466 vias of 0.6 mm pad; the deviation from the recommended 0.20 mm is unsigned, for the owner (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1; `owner-sign-off.md`, S-24). No 0.2 mm drill is placed, so the maker's capability charge for it and its four-wire test do not arise (`design-rules.md`, Via sizes in the layout).
+The board has 541 vias, read from the board file on 2026-11-15, after the four ground vias beside the tab of U302 were placed; the counts of `design-rules.md`, "Via sizes in the layout", are the same. Every drill is 0.3 mm, over the maker's 0.15 mm minimum drill, and every via pad is 0.30 mm or more over its hole. No via stands inside a surface-mount pad. The board setup's minimum annular width is 0.15 mm, the ring of the 466 vias of 0.6 mm pad; the deviation from the recommended 0.20 mm is signed, on the owner's behalf under his standing instruction of 2026-11-07, as S-24 of `owner-sign-off.md` (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1). No 0.2 mm drill is placed, so the maker's capability charge for it and its four-wire test do not arise (`design-rules.md`, Via sizes in the layout).
 
 ## Laminate and comparative tracking index (graph criterion C16)
 
@@ -189,10 +189,16 @@ Both are unresolved in the records and must be checked at the quote, not assumed
 1. **Finish of vias over 0.55 mm at six layers.** The maker fills and plates over vias of 0.15 to 0.55 mm diameter by default at six layers and above; the page says nothing about a via over 0.55 mm. The board has 541 vias, all with a pad over that range (466 of 0.6 mm, 6 of 0.7 mm, 69 of 0.75 mm) and a 0.3 mm hole, none of 0.55 mm or less; no via stands inside a surface-mount pad.
 2. **The six-layer engineering and board fee and the ENIG charge at 131 x 125.6 mm.** Only the quote reads them; the cost estimate carries an estimate, not a quote.
 
-## Unsigned deviations carried by this board
+## Deviations carried by this board, all signed
 
-Every one of these is a recorded draft for the owner, not an acceptance, and none changes a signed figure of the basis (signed 2026-11-06). They are held, with their measurements, in `owner-sign-off.md`; this file points to them and does not restate them.
+Every one of these is signed. None changes a signed figure of the basis (signed 2026-11-05, re-signed 2026-11-06). They are held, with their measurements, in `owner-sign-off.md`; this file points to them and does not restate them.
 
-- The 0.15 mm annular width of the 0.6 / 0.3 mm via (above).
-- The detour ratios of routed critical nets (`owner-sign-off.md`, S-48 and S-49). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's signed exceptions (33 on 2026-11-06, 32 from 2026-11-07, 42 today), not carried here as unsigned.
-- The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14) (`owner-sign-off.md`, S-32).
+- The 0.15 mm annular width of the 0.6 / 0.3 mm via (above): `owner-sign-off.md` S-24, signed on the owner's behalf under his standing instruction of 2026-11-07.
+- The detour ratios of routed critical nets: `owner-sign-off.md` S-48 and S-49, signed on the owner's behalf in the workmanship acceptance lines (`workmanship-acceptance.yaml`, sessions of 2026-11-12 and 2026-11-14; the S-49 line of the coffee pump LED anode net, 2026-11-14). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's signed exceptions (33 on 2026-11-06, of which the C606 pad pair was removed on 2026-11-07; 42 today: 23 dated 2026-11-06, 3 dated 2026-11-07 and 16 dated 2026-11-14).
+- The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14): exceptions of `hardware/sunbeam-em7000/separation-basis.yaml`, the 1.25 mm entries accepted_on 2026-11-06 and the 1.15 mm entries accepted_on 2026-11-14, each by the owner, entered by Claude on the owner's written instruction (`owner-sign-off.md`, S-32, records the hole sizes).
+
+## The board as it stands
+
+- Board file `main-board.kicad_pcb`, sha256 38eb68f21d9cf9577df23d9291782348fceb2bc139937090c323dc511d4f8e02 (the board of 2026-11-17).
+- 267 locked mains items in the `Mains` class (242 tracks and vias, 25 zones, read with `locked_copper.py record`), 541 vias, and the silkscreen title "BREW STATE" with the text "v1  2026-11".
+- The back silkscreen carries the text "JLCJLCJLCJLC" at about (100, 8) mm on B.SilkS. It is understood to be the placeholder for the maker's order number; no record read for this file says what the maker does with it or what removing it costs. The owner decides at ordering whether to pay to have it removed or to leave it.
