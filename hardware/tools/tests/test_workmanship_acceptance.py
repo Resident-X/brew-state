@@ -558,6 +558,11 @@ class TheHardwareNotesStateTheRecord(unittest.TestCase):
         for said in ("a written standing instruction that Claude sign on their behalf", "Claude may enter the signature", "owner (signed on behalf, session 2026-11-12)",
                      "the wording is the audit trail", "non-empty text value that is not a placeholder and not in angle brackets as signed"):
             self.assertIn(said, section)
+        report = notes[notes.index("\n## The report"):]
+        report = report[:report.index("\n## ", 1)]
+        table_rows = {line.split("|")[1].strip() for line in report.splitlines() if line.startswith("| `")}
+        for rule in board_check.ACCEPTABLE_WORKMANSHIP:
+            self.assertIn(f"`{rule}`", table_rows, f"the rule table has no row of its own for {rule}")
         self.assertIn("| `workmanship_acceptance` |", notes)
         self.assertIn("(`workmanship-acceptance.yaml`), read where the design's folders hold one", notes)
 
