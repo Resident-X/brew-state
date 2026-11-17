@@ -1,0 +1,25 @@
+id: EV-SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED-C3-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T11:34:43Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/separation-basis.yaml
+  artifact_version: 9ed0f876ad4b1daf45342af6c00a7f60fd005d46
+text: |
+  Inspection of the header comment of hardware/sunbeam-em7000/separation-basis.yaml, line 17, the one sentence: "The entry for the C606 pad pair (pads 1 and 2) was removed on 2026-11-07 on the owner's written instruction, because the layout rule check no longer reports a creepage shortfall for it; the removal excuses nothing and relaxes nothing, and the removal changed no signature day." Read against each part of the criterion at the commit named in the artifact version.
+  Part 1, the entry for the C606 pad pair was removed: "The entry for the C606 pad pair (pads 1 and 2) was removed". Present.
+  Part 2, on 2026-11-07: "was removed on 2026-11-07". Present.
+  Part 3, on the owner's written instruction: "on the owner's written instruction". Present.
+  Part 4, the removal excuses nothing and relaxes nothing: "the removal excuses nothing and relaxes nothing". Present.
+  Part 5, the removal changed no signature day: "and the removal changed no signature day". Present.
+  All five parts are in one sentence in the header comment. The sentence adds a reason clause ("because the layout rule check no longer reports a creepage shortfall") and states no figure or pair beyond the pad pair, consistent with the criterion's out-of-scope line. The criterion's second sentence, that the record's test fails on a header lacking any part, is a test property outside this inspection and is verified by the leaf's test evidence.
+  All clauses met.
+links:
+  - target: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C3
+    type: satisfies
