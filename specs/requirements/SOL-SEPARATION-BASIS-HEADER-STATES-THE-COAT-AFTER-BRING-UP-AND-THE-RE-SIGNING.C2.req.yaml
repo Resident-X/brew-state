@@ -1,7 +1,7 @@
 id: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C2
 type: criterion
 title: The record carries the owner's re-signing day on itself and on every exception, and the header states it
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: test
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
     type: criterion-of
+attributes:
+  deprecation_reason: 'Totals wrong: states 25, 3 and 14 where the committed record holds 23, 3 and 16 (corrected and pinned by SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD.C1). Clauses now owned elsewhere: every exception signed and dated no later than the record, SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C1; the Kinghelm entries day and header statement, .C9; the 23/3/16 split, the day-counts item .C1; the statements of the signature days in the records and documents, .C8. Held only by the verified-evidence history of this criterion and its test: top-level accepted_on 2026-11-14, per-entry day and accepted_by rule, and the header stating the 2026-11-06 re-signing and later acceptances.'
