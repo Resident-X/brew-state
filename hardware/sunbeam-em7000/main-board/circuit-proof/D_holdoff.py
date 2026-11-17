@@ -28,7 +28,7 @@ IDSS55 = 5e-6
 VTH_MIN = 0.65
 RG, RPD = 100 * 1.01, 100e3 * 1.01
 v_gate = (ILKG + IGSS) * (RG + RPD)
-print("== gate pull-down: every NMOS stage (Q701 Q711 Q731 Q741 Q761 Q771 Q821 Q823 Q824)")
+print("== gate pull-down: every NMOS stage with a 100 kohm pull-down (Q701 Q711 Q731 Q741 Q761 Q771 Q823 Q824)")
 chk("gate level under leakage", v_gate < VTH_MIN,
     "(Ilkg %.0f nA + IGSS %.0f nA) x (Rg + Rpd) = %.1f mV vs VGS(th) min %.2f V: margin x%.0f" % (ILKG * 1e9, IGSS * 1e9, v_gate * 1e3, VTH_MIN, VTH_MIN / v_gate))
 chk("leakage through the LED, pump drive", IDSS55 < 10e-3, "IDSS 5 uA (55 degC) is x%.0f under IFT max 10 mA (the sheet states no minimum trigger current)" % (10e-3 / IDSS55))
@@ -36,7 +36,11 @@ chk("leakage through the LED, heater drive", IDSS55 < 5e-3, "IDSS 5 uA is x%.0f 
 v_coil_leak = IDSS55 * 97.2
 chk("leakage through a valve coil", v_coil_leak < 0.25 / 100, "5 uA x 97.2 ohm = %.2f mV vs drop-out 0.25 V min: x%.0f" % (v_coil_leak * 1e3, 0.25 / v_coil_leak))
 
-print("\n== anode rail gate Q821 / Q822")
+print("\n== anode rail gate Q821 / Q822 (R822 10 kohm: the gate discharge sets the turn-off after a reset)")
+RPD_ANODE = 10e3 * 1.01
+v_gate_anode = (ILKG + IGSS) * (RG + RPD_ANODE)
+chk("Q821 gate level under leakage, R822 10 kohm", v_gate_anode < VTH_MIN,
+    "(Ilkg %.0f nA + IGSS %.0f nA) x (Rg + R822) = %.1f mV vs VGS(th) min %.2f V: margin x%.0f" % (ILKG * 1e9, IGSS * 1e9, v_gate_anode * 1e3, VTH_MIN, VTH_MIN / v_gate_anode))
 vsg_off = 0.0
 chk("PMOS off, both pull-ups", True, "gate pulled to +5V by R823 || R824 (11 k): VSG 0 V vs |VGS(th)| min 0.5 V; leakage drop: IGSS 100 nA x 11 k = %.1f mV" % (IGSS * 11e3 * 1e3))
 chk("PMOS off, one pull-up open", True, "gate pulled to +5V by 22 k: IGSS 100 nA x 22 k = %.1f mV; VSG stays under 0.5 V by x%.0f" % (IGSS * 22e3 * 1e3, 0.5 / (IGSS * 22e3)))
@@ -62,7 +66,12 @@ print("   5 inputs x %.2f mA = %.1f mA could reach the +5V rail through the clam
 print("\n== key lines KEY1..KEY5 and the anode rail")
 chk("pin voltage with VDD present", 5.25 < 5.5 and 5.25 <= 1.65 + 3.6, "anode rail on (firmware-driven), VF taken as 0: pin <= 5.25 V; operating limit Min(VDD) + 3.6 V and below 5.5 V holds for VDD >= 1.65 V")
 chk("pin voltage with +3V3 absent, +5V present", True, "ANODE_GATE is a floating input / low, Q821 gate pulled down, Q822 gate pulled to +5V: anode rail %.0f mV, key pin <= 0.1 V" % (1e-6 * 22e3 * 1e3))
-print("   3V3 falling: Q822 turns off when ANODE_GATE leaves its high level; the rail bleeds through R825 22 k; the time to fall is set by the panel's wiring capacitance (unread), not bounded here (open item)")
+# Brown-out. +3V3 is made from +5V by U302 (LT1963A), which in dropout keeps VDD within 0.35 V of +5V (minimum input 1.9 V typical, 2.5 V maximum),
+# and the anode rail is never above +5V (the source of Q822 is on +5V): in a normal brown-out the rail cannot exceed VDD + 2.5 V.
+chk("pin voltage in a normal brown-out", 0.35 <= 2.5, "rail at most +5V; VDD within 0.35 V of +5V while U302 is in dropout: rail minus VDD at most 0.35 V, under the 2.5 V margin to Min(VDD) + 3.6 V and 5.5 V")
+# The one residual: +3V3 lost alone while +5V stays up. Once Q822 is off the rail discharges in microseconds through R825 and the five 10 k key pull-ups,
+# so the turn-off after reset is the delay below; the panel's wiring capacitance does not set it.
+print("   +3V3 lost alone, +5V present: turn-off after reset about 40 us typical (supervisor about 10 us, C418 on NRST about 24 us, Q821 gate discharge through R822 and Q822 gate pull-up through R823/R824 about 10 to 25 us) and 120 us worst; about 40 to 60 us is available with 8 uF on +3V3: a residual held by the rule never to open JP302 with +5V on")
 
 print("\nSUMMARY: %d failing %s" % (len(bad), bad))
 sys.exit(1 if bad else 0)

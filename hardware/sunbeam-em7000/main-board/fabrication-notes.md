@@ -180,7 +180,7 @@ When the tabs and their leads are fitted by hand, support the board under the ta
 The first-power link JP101 (live, between the fuse F101 and everything it feeds) and the module feed link JP303 (between LINE and LINE_MOD) are two plated holes each, 10.0 mm apart (footprint JP101_WireLink_P10mm), with no catalogue number. They are left out of the position file (the footprint carries `exclude_from_pos_files`) and are listed in the bill of materials without an assembler part number, so the assembler's parts match leaves them unmatched and does not fit them. They are not marked "exclude from bill of materials" on the board because the pre-order check reads a board footprint with that mark as a mounting fixing and holds it to the Mains hole distance, and these two links are mains terminals. They are fitted, not left empty: the holes are not marked do-not-populate, and they are fitted by hand.
 
 1. JP101: for the first power-up, fit a lamp (60 W to 100 W, 230 V) with its two leads in JP101's two holes in place of the wire; once the first-power steps in `bring-up-provision.md` are done, replace the lamp by the 1.5 mm2 wire link. The wire's insulation rating is an open owner item (`owner-sign-off.md` S-66; `open-items.md`).
-2. JP303: fit a 1.5 mm2 wire link (or a component-lead off-cut) between the two holes; remove it if the inrush thermistor RT301 is ever fitted, never both (`open-items.md`).
+2. JP303: fit a 1.5 mm2 copper wire link between the two holes, its insulation rated for the 253 V rms working voltage and a 70 degC enclosure air (no component-lead off-cut: its insulation and cross-section are not stated); remove it if the inrush thermistor RT301 is ever fitted, never both (`open-items.md`).
 
 ## Unresolved before ordering
 
