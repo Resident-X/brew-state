@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C3
+type: criterion
+title: The brew-path pressure sensor's header carries an analogue input
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Analogue header J524's signal pin reaches the controller's PA6 pin, which the controller datasheet maps to a conversion input.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C1
+type: criterion
+title: The board provides a spare serial port on a connector for the display unit
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Header J522's two signal pins reach the controller pins PB6 and PB7, which the controller datasheet maps to the first serial port's transmit and receive (alternate function 7), at 3.3 V logic. The header supplies 3.3 V and ground.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C2
+type: criterion
+title: The steam-path pressure sensor's header carries the first I2C pair
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Header J521's two signal pins reach the controller pins PB8 and PB9, which the controller datasheet maps to the first I2C bus's clock and data.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED
+    type: criterion-of

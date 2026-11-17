@@ -279,8 +279,9 @@ criterion's own boundary, is measuring the control law's actual execution time o
 that is on-target work under a later phase, and is a different question from the declared cadence
 cited above.
 
-**Operator interface.** The machine is reached one of two ways, and this enumeration states what
-each spends without choosing between them:
+**Operator interface.** The machine was costed two ways, and this enumeration states what each
+spends. The owner has decided the second, a separate display unit (`DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT`),
+on serial header J522 of the main board (§ Allocated display and pressure channels below):
 
 - A colour panel driven from the controller directly, which spends the controller's own display
   drive and memory bandwidth.
@@ -303,6 +304,18 @@ enumeration carries that figure. The three ground-switched inputs the machine ha
 level, hot-water knob and steam knob — are additional to the thirteen and reach the board on their
 own wires.
 
+## Allocated display and pressure channels
+
+Three channels have a header and controller pins on the main board, as the owner decided them. Each row states the channel's direction, signal kind, count and origin like every other channel, and the controller hardware that serves it.
+
+| Channel | Direction | Signal kind | Count | Header and controller pins | Controller hardware | Origin |
+|---|---|---|---|---|---|---|
+| Display serial port, to the separate display unit | Bidirectional | Serial, 3.3 V logic, with 3.3 V and ground on the header | 1 | J522 pins 3 and 4 on PB6 and PB7, the first serial port's transmit and receive (alternate function 7, the controller datasheet's alternate-function table) | First serial port | `DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT` |
+| Steam-path pressure sensor | Input | Serial bus, I2C, an XDB401-class part | 1 | J521 pins 3 and 4 on PB8 and PB9 | First I2C interface | `DEC-STEAM-PRESSURE-SENSOR-ADDED` |
+| Brew-path pressure sensor | Input | Analogue, 0.5 V to 4.5 V transducer output | 1 | J524 pin 4 on PA6 | Analogue conversion | `DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT` |
+
+The nets on J522 are named BREW_SCL_X and BREW_SDA_X, retained from the schematic's drawing of J522 as the second digital I2C-or-UART header; the names do not describe the display port's function. Analogue headers J523 and J525 and pins 7 to 10 of J761 are spare.
+
 ## Channels not enumerated
 
 These are recorded as explicitly *not* fitted on the machine as found, and as not yet a row, so a
@@ -314,7 +327,7 @@ anticipates:
 
 | Channel | Status | Source |
 |---|---|---|
-| Brew-path pressure transducer | Not fitted on the machine as found; `DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT` adds one. `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred from pump drive and stays open until the sensor is fitted and read. An earlier overclaim that "pressure is still measured, on both paths" was corrected (`SOL-BREW-PRESSURE-RATIONALE-CORRECTED`). Its tap sits where it sees the pressure the block and puck get, which depends on the brew-path check-valve inspection (`DEL-BENCH-SAFETY-CHAIN-INSPECTION.C2`); the pump's damper sits upstream, so the tap reads the damped pressure, and what that hides of the pump's ripple is settled in commissioning. The drop across the tube, valve and block is estimated at hundredths of a bar at espresso flow, unmeasured. Its accuracy and resolution are not established: no declared figure bounds brew pressure measurement error, and the part's own datasheet figure is the part's, not a requirement figure. It is read once per control step | `reference-machine.md` § Already fitted ("Not fitted: pressure transducer on either path"); `DEC-STEAM-PRESSURE-SENSOR-ADDED` covers the steam side only |
+| Brew-path pressure transducer | Not fitted on the machine as found; `DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT` adds one. `REQ-MEASUREMENT-001.C7` requires brew pressure measured rather than inferred from pump drive and stays open until the sensor is fitted and read. An earlier overclaim that "pressure is still measured, on both paths" was corrected (`SOL-BREW-PRESSURE-RATIONALE-CORRECTED`). Its tap sits where it sees the pressure the block and puck get, which depends on the brew-path check-valve inspection (`DEL-BENCH-SAFETY-CHAIN-INSPECTION.C2`); the pump's damper sits upstream, so the tap reads the damped pressure, and what that hides of the pump's ripple is settled in commissioning. The drop across the tube, valve and block is estimated at hundredths of a bar at espresso flow, unmeasured. Its accuracy and resolution are not established: no declared figure bounds brew pressure measurement error, and the part's own datasheet figure is the part's, not a requirement figure. It is read once per control step. The sensor is an analogue 0.5 V to 4.5 V transducer on header J524 and the controller's PA6 conversion input (§ Allocated display and pressure channels) | `reference-machine.md` § Already fitted ("Not fitted: pressure transducer on either path"); `DEC-STEAM-PRESSURE-SENSOR-ADDED` covers the steam side only |
 | Brew-outlet and steam-outlet temperature probes (in-stream) | Anticipated, not fitted, not selected and not placed (`DEC-IN-STREAM-PROBES-ANTICIPATED`): two PT1000 probes, one in the delivered brew water at the brew outlet and one in the steam at the steam outlet, each read by an RTD-to-digital converter of the MAX31865 class on a shared serial bus with its own chip select, the converter's front end able to take a 2-wire or 3-wire probe per channel so the probe bought decides. They would sit one thermal lag nearer the water than the casting sensors in the rows above. No row exists yet. Cost to the controller: no conversion input, and about five digital pins (three shared bus lines and two chip selects). No sensing-error figure is declared for an in-stream probe: the two declared figures are accounted for the block-mounted sensors. The earlier design's rating floor for a probe in the brew water was 125 °C (150 °C preferred) and 15 bar (`controller-design/decisions.md`, `controller-design/temperature-sensing-front-end.md`), an input to the probe's selection and not a selection | `DEC-IN-STREAM-PROBES-ANTICIPATED`; `component-specification.md` § Room for the channels the graph anticipates |
 | Weight-based endpoint (drip-tray weight) | Anticipated, not fitted, not decided. Up to two load-cell channels for a drip-tray platform, read by two HX711-class amplifiers or one two-channel converter, so that one single-point platform cell, or two cells summed, serves a cup placed anywhere on the tray. An external Bluetooth scale is the alternative and belongs to the display unit. No row exists yet. Cost to the controller: about four digital pins for up to two load-cell amplifiers | `component-specification.md` § Room for the channels the graph anticipates; `DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT` |
 | Current sensing | Not fitted, no decision has added it | `reference-machine.md` § Already fitted |
