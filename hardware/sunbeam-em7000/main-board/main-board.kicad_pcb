@@ -19371,7 +19371,7 @@
 				)
 			)
 		)
-		(property "Value" "100k"
+		(property "Value" "10k"
 			(at 0 1.43 90)
 			(unlocked yes)
 			(layer "F.SilkS")
@@ -19418,7 +19418,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C25803"
+		(property "LCSC" "C25804"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
@@ -19430,7 +19430,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1003T5E"
+		(property "MPN" "0603WAF1002T5E"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)

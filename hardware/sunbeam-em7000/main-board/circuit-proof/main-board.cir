@@ -317,7 +317,7 @@ R828 +5V /Operator_panel_and_indicators/BUZZER_P 100
 D821 __D821
 R825 /ANODE_RAIL GND 22k
 JP821 __JP821
-R822 /Operator_panel_and_indicators/ANODE_LS_G GND 100k
+R822 /Operator_panel_and_indicators/ANODE_LS_G GND 10k
 R829 /LOWWATER_K /Operator_panel_and_indicators/LOWWATER_G 100
 Q824 __Q824
 R830 /Operator_panel_and_indicators/LOWWATER_G GND 100k

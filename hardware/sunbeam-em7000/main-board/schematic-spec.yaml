@@ -8709,12 +8709,12 @@ sheets:
     sim_exclude: false
   - ref: R822
     lib_id: Device:R
-    value: 100k
+    value: 10k
     rating: 1% 100mW 75V 0603
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF1003T5E
+    mpn: 0603WAF1002T5E
     maker: UNI-ROYAL
-    lcsc: C25803
+    lcsc: C25804
     class: basic
     hand: false
     function: gate pull-down of Q821

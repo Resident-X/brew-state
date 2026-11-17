@@ -2966,12 +2966,12 @@ positions:
     rating: 1% 100mW 75V 0603
     lcsc: C22775
     class: resistor
-  # R822: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
+  # R822: maker UNI-ROYAL; MPN 0603WAF1002T5E; catalogue class basic
   - reference: R822
-    value: 100k
+    value: 10k
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
-    lcsc: C25803
+    lcsc: C25804
     class: resistor
   # R823: maker UNI-ROYAL; MPN 0603WAF2202T5E; catalogue class basic
   - reference: R823
