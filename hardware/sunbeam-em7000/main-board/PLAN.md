@@ -1,5 +1,7 @@
 # Main board v2: restart of the low-voltage half (plan)
 
+**Naming note (2026-11-17).** This plan was written while the board was called v2 and its folder `main-board-v2/`. The first design never reached `main`, so the board is now called v1 and its folder is `main-board/`; `DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME` records why. The text below keeps the working names "v1" (the earlier, frozen first design) and "v2" (this board) as they were when the plan was written, and the paths in the commands now read `main-board/`.
+
 Written 2026-11-10 on branch `req/DEL-MAINTENANCE/pre-order-check-fixes` (HEAD 4b64810b plus the uncommitted U201/U203 schematic change). This is a plan, not a record the check reads. It decides the order of work, the cheap go/no-go tests that run before expensive work, and where a finding sends the work back.
 
 ## Recommendation

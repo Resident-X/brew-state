@@ -1,4 +1,4 @@
-# workmanship-acceptance.yaml  --  Sunbeam EM7000 v2 main board.  Signed on the owner's behalf in the session of 2026-11-12.
+# workmanship-acceptance.yaml  --  Sunbeam EM7000 v1 main board.  Signed on the owner's behalf in the session of 2026-11-12.
 #
 # HOW THE CHECK READS THIS FILE (hardware/tools/board_check.py, judge_workmanship; hardware/README.md "Owner-accepted workmanship lines")
 #   - One entry accepts the lines of ONE rule at ONE place (a net, a reference designator or a project text variable), up to `count`, in the

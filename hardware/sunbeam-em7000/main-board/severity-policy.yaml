@@ -1,4 +1,4 @@
-# severity-policy.yaml  --  Sunbeam EM7000 v2 main board.  Signed on the owner's behalf in the session of 2026-11-12.
+# severity-policy.yaml  --  Sunbeam EM7000 v1 main board.  Signed on the owner's behalf in the session of 2026-11-12.
 #
 # HOW THE CHECK READS THIS FILE (hardware/tools/board_check.py, judge_severity_policy; hardware/README.md "Owner-signed severity policy")
 #   - Each entry classes one KIND of line, by the rule's name, as WARNING with a COUNT. WARNING lines are printed and do not fail the check;

@@ -1,5 +1,7 @@
 # Phase 2 change list: pin map A on the main board
 
+**Naming note (2026-11-17).** This list was written while the board was called v2 in `main-board-v2/`; the board is now v1 in `main-board/` (`DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME`), and the paths below read `main-board/`. The word "v2" in the prose is the working name.
+
 Written 2026-11-10 for `PLAN.md` phase 2; the pins of seven nets (AMC_CS, AMC_DRDY, WT1_DATA, WT1_CLK, WT2_DATA, WT2_CLK, BUZZER) were moved again during v2 routing and the rows below state those final pins (the pin each had in pin map A is given beside it); the final assignment is `controller-pin-table.md`. Read-only survey of the worktree at its current commit; nothing here has been applied. Pin map A with two changes: AMC_RESET on PC8 (pin 65) and ANODE_GATE stays on PB5 (pin 91). The S-side swap of pins 81 to 88 is not adopted, so the order below is the one pin map A gives. Source of the map: a scratch file kept outside the repository and OPINION2 section 2, with the two changes applied (checked against the scratch model a scratch file kept outside the repository).
 
 ## 1. Decisions that fix the shape of the change
@@ -130,7 +132,7 @@ Pin tip coordinates (x, y), from U401's embedded symbol:
 
 ## 5. Records (script agent can do all of these; file:line from the current tree)
 
-All paths are under `hardware/sunbeam-em7000/main-board-v2/` unless a full path is given.
+All paths are under `hardware/sunbeam-em7000/main-board/` unless a full path is given.
 
 **5.1 Generated, regenerate and do not hand-edit** (`spec-tools/build_spec.py` writes `schematic-spec.yaml` from `sheets/*.yaml`; `spec-tools/build_bring_up.py` writes `bring-up-provision.md` from `bring-up/*.yaml` and `schematic-spec.yaml`).
 - `sheets/31-controller.yaml`: net pin lists. Move each moved net's `U401.<pin>` (nets block, lines 895 to 1010 hold BREW_SCL at 898 through WT1_CLK; each net is a `pins:` list with one `U401.n`). `SPI2_SCK`, `SPI2_MISO`, `SPI2_MOSI` at lines 909, 913, 917 become `SPI3_*`. `no_connect:` list (about lines 1055 to 1080): remove `U401.59`, `.60`, `.78`, `.92`, `.93` and add `U401.52`, `.53`, `.54`, `.63`, `.66` with a reason string in the same form (`PB13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection`). Line 1105 (clock note: "PC9 is MCO2 and is a load-cell clock").
@@ -138,7 +140,7 @@ All paths are under `hardware/sunbeam-em7000/main-board-v2/` unless a full path 
 - `sheets/E3-in-stream-temperature-converters.yaml`: line 2, 529, 534, 539 (net names), 568 (drawing notes).
 - Prose pin names in other sheets: `sheets/52-flow-pressure-and-spare-analogue-inputs.yaml:98` (PC6 becomes PB10), `sheets/710-valve-drives.yaml:35` (PD4 becomes PD13, PD5 becomes PB12), `sheets/720-heater-led-drive-and-wall-board-header.yaml:19, 20, 45` (PD7 becomes PB11, PD2 becomes PD11, PD3 becomes PD12), `sheets/740-operator-panel-and-indicators.yaml:58` (PE0 becomes PE12; PB5 stays), `sheets/E2-zero-crossing-detector.yaml:35` (PD7 becomes PB11).
 - `spec-tools/build_spec.py`: lines 79, 83 (PD2, PD3, PD7), 86 (SPI2), 87 (PC8, PC9, PC11, PC12 become PD3 to PD6), 96 (SPI2 on PB13 to PB15, selects PB12 and PD8), 97 (I2C2 on PB10/PB11 becomes I2C4 on PB6/PB7), 137 (SPI2), 140 (free-list sentence names PD9, PD10, PD11, which change meaning).
-- Then run `python3 spec-tools/build_spec.py`, then `python3 spec-tools/build_bring_up.py`, both from `main-board-v2/`.
+- Then run `python3 spec-tools/build_spec.py`, then `python3 spec-tools/build_bring_up.py`, both from `main-board/`.
 - `schematic-spec.yaml` lines that the generator rewrites (verify, never edit): 167, 190, 191, 195, 205, 243, 247, 380 to 545 (the controller pin table), 598, 602, 2966 to 2974, 3002, 3122 to 3134, 3171, 3198, 3722, 3730, 3872 to 3905, 4188, 4189, 5537, 6007, 6534 to 6544, 6573, 7996, 8009, 8108, 8109, 9143, 9145, 9945 to 9959, 10002.
 - `bring-up/C.yaml:20, 21` (PB10, PB11 become PB6, PB7); `bring-up/D.yaml:34 to 37` (PD4 to PD13, PD5 to PB12, PD2 to PD11, PD3 to PD12) and `:61` (PD7 to PB11); `bring-up/E.yaml:96, 97` (name and net SPI2_MISO); `bring-up/B.yaml:89` (MCO statement, section 6). `bring-up-provision.md` is regenerated from these (current lines 61, 77, 80, 81, 97, 98, 99, 100, 108, 116, 128, 234).
 - `parts-specification.yaml:1256`: `value: TP_SPI2_MISO` becomes `TP_SPI3_MISO`. Also the footprint-side test point naming in `circuit-proof/C_gen_sheets.py` if it spells the name (the sheet-generator test, section 8, shows it).
@@ -197,17 +199,17 @@ Read each with `./engine/staircase show` before any link; bump the version once 
 
 **Script agent (Haiku for the regeneration runs, Sonnet for the prose records), starting once step 2 is saved:**
 1. Edit `sheets/31-controller.yaml`, E1, E3 and the prose sheets (5.1), `spec-tools/build_spec.py`, `bring-up/*.yaml`, `parts-specification.yaml:1256`.
-2. `cd hardware/sunbeam-em7000/main-board-v2 && python3 spec-tools/build_spec.py && python3 spec-tools/build_bring_up.py`.
-3. `cd hardware/sunbeam-em7000/main-board-v2 && python3 spec-tools/check_spec.py sheets && python3 spec-tools/check_bringup.py && python3 spec-tools/check_decks.py` (each reads the sheets or the spec and prints `ISSUE` lines; run from the folder they are written for).
+2. `cd hardware/sunbeam-em7000/main-board && python3 spec-tools/build_spec.py && python3 spec-tools/build_bring_up.py`.
+3. `cd hardware/sunbeam-em7000/main-board && python3 spec-tools/check_spec.py sheets && python3 spec-tools/check_bringup.py && python3 spec-tools/check_decks.py` (each reads the sheets or the spec and prints `ISSUE` lines; run from the folder they are written for).
 4. Edit the pin records (5.2), the test constant at `test_main_board_schematic_records.py:15`, the net class entries (4), the proof and verdict rows (5.3, rows written from each source's own text) and the other records (5.4, 6).
 5. Re-run the proof scripts named in 5.3 and save their `.log` or `.out` files.
-6. `export KICAD_CLI=<path>` first when kicad-cli is off PATH, then `kicad-cli sch export netlist --format spice --output hardware/sunbeam-em7000/main-board-v2/circuit-proof/main-board.cir hardware/sunbeam-em7000/main-board-v2/main-board.kicad_sch` (plan phase 2 step 4; the method, Proving step 4, compares a second export with this one using `cmp`).
+6. `export KICAD_CLI=<path>` first when kicad-cli is off PATH, then `kicad-cli sch export netlist --format spice --output hardware/sunbeam-em7000/main-board/circuit-proof/main-board.cir hardware/sunbeam-em7000/main-board/main-board.kicad_sch` (plan phase 2 step 4; the method, Proving step 4, compares a second export with this one using `cmp`).
 
 **What proves each step.**
 
 | Step | Test | Command |
 |---|---|---|
-| Sheets and spec agree | spec checks | `cd hardware/sunbeam-em7000/main-board-v2 && python3 spec-tools/check_spec.py sheets` |
+| Sheets and spec agree | spec checks | `cd hardware/sunbeam-em7000/main-board && python3 spec-tools/check_spec.py sheets` |
 | Records agree with the drawing | schematic records tests | `python3 -m pytest hardware/tools/tests/test_main_board_schematic_records.py -q` (from the repo root) |
 | Sheet generator and proofs agree | generator tests | `python3 -m pytest hardware/tools/tests/test_circuit_proof_sheet_generator.py hardware/tools/tests/test_derating_policy_record.py -q` |
 | Net names in the project file | rules confirm (phase 5) | `task hw:rules-confirm` |
@@ -218,7 +220,7 @@ Read each with `./engine/staircase show` before any link; bump the version once 
 
 ## 9. Cheapest forward test (right after the first Konnect edit, seconds)
 
-1. Export the netlist of the sheet after the `31-controller` edit: `kicad-cli sch export netlist --format kicadxml --output <scratch>/n.xml hardware/sunbeam-em7000/main-board-v2/main-board.kicad_sch` (scratch folder outside the worktree).
+1. Export the netlist of the sheet after the `31-controller` edit: `kicad-cli sch export netlist --format kicadxml --output <scratch>/n.xml hardware/sunbeam-em7000/main-board/main-board.kicad_sch` (scratch folder outside the worktree).
 2. A throwaway scratch script (not committed, `python3 -I`) reads the XML, takes every node of `U401`, and compares `pin to net` with the block in section 2 above. Any missing pin, any extra pin on a net, and any net still named `SPI2_*` is a miss. Run it again after the rename of the other three sheets: `SPI3_SCK`, `SPI3_MISO` and `SPI3_MOSI` must each join `U401`, `U601`, `U620` and `U621` pins (no net holding U401 alone).
 3. In the same minute: `kicad-cli sch erc` on the root (one run, a few seconds); an unconnected hierarchical pin or a net with one node is the signature of a half-renamed SPI net or a label left on a stale tip.
 4. `python3 -m pytest hardware/tools/tests/test_main_board_schematic_records.py -q`: fails until `pin-allocation.yaml` and the test constant agree, which is the signal the record step was not forgotten.
