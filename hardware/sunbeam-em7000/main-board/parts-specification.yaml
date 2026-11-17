@@ -534,7 +534,7 @@ positions:
   - reference: JP303
     value: LINK_MOD
     package: JP101_WireLink_P10mm
-    rating: 'two plated holes for a wire link between LINE and LINE_MOD: 1.5 mm2 copper wire, insulation rated for the 253 V rms working voltage, 70 degC enclosure air; the link is fitted in service'
+    rating: 'two plated holes for a wire link between LINE and LINE_MOD: 1.5 mm2 copper wire, insulation rated for the mains working voltage of the LINE net (open-items.md, JP303 row), 70 degC enclosure air; the link is fitted in service'
     lcsc: none
     class: none
   # RT301: maker RUILON (Shenzhen Ruilongyuan Elec); MPN NTC 10D-9; catalogue class extended

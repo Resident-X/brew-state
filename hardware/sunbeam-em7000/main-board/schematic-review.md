@@ -8499,3 +8499,21 @@ The rows above list the findings that round 7's own text leaves open on a carrie
 | 7.78, 7.81 | quality | Closed by decision, carried for the readings | (n) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; `DEL-HW-BRING-UP.C5`, `DEL-HW-BRING-UP.C22` |
 | 7.79, 7.82 | quality | Closed by decision | (t) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; (z2), (z7) for 7.82 |
 | 7.84 | cosmetic | UNRESOLVED | round 6 finding 6.74 names no round 5 item; no change, record or decision after round 7 addresses the MAINS_PRES_C and MAINS_PRES_S port directions |
+
+## Closure after round 7: the findings left UNRESOLVED (2026-11-18)
+
+Each round 7 finding the disposition table above marks UNRESOLVED or not closed, with its closing form and where it is recorded. The carrying decision is `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER`, entry of 2026-11-18, which carries each to a criterion of `SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER`. No round is rewritten here.
+
+| Finding | Closing form | Where it is recorded |
+|---|---|---|
+| 7.12 | Carried as a requirement of the wall board's design (C2) | `open-items.md`, row 'Wall board interface limits (findings 7.12, 7.13, 7.59)' |
+| 7.13 | Part (a), the anode rail's fall: a recorded calculation with R822 at 10 kohm and no clamp, the residual (+3V3 lost alone) stated as outside the pin limit and accepted (C4); part (b), the indicator forward voltage: a requirement of the wall board's design (C2) | `open-items.md`, rows 'Brown-out timing of the anode rail' and 'Wall board interface limits'; `circuit-proof/D_holdoff.py`; S-88 of `owner-sign-off.md` |
+| 7.19 | The VCAP window, the stacking arithmetic and the carried reading of the pair (C1) | `open-items.md`, rows 'VCAP capacitor curve and the LSE crystal's C0 maximum' and M8 |
+| 7.34 | Carried open, not closed by a part: the controller fault that leaves the pump on and the conflict with REQ-ELECTRICAL-INSTALL-001.C16 are stated, no hardware bound is added (C7) | `open-items.md`, Owner risk acceptances, item (i); item (i) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.50 | The zener pulse judged by power and energy for any coil inductance up to 3.47 H, the inductance carried to bring-up (C6) | `circuit-proof/A_zener_pulse.py`; `open-items.md`, row M34; `circuit-verdicts.md`, row Z201, Z202 |
+| 7.52 | The wire requirement of JP303 and the inrush arithmetic (C3) | `open-items.md`, row 'The fitted wire of the module's inrush link JP303' and M11; `fabrication-notes.md`, item 2 |
+| 7.53 | C302's ripple current carried to bring-up with a limit that rests only on the maker's 48 mArms (C8), under `DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP` | `open-items.md`, row M36; `circuit-verdicts.md`, row C302; `bring-up/B.yaml` |
+| 7.59 | R828's buzzer: the wall board's buzzer is 36 ohm or more, a requirement of its design (C2) | `open-items.md`, row 'Wall board interface limits', limit (d) |
+| 7.61 | C792's ripple current: closed by calculation and confirmed at bring-up at 33 mVpp (C8), under `DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP` | `open-items.md`, row M35; `circuit-verdicts.md`, row C792; `bring-up/D.yaml` |
+| 7.75, 7.80 | USB is a service path, accepted for service-only use (C5) | `open-items.md`, row 'Does the ST bootloader's DFU enumerate with no VBUS sense?'; S-87 of `owner-sign-off.md` |
+| 7.84 | The root sheet pins MAINS_PRES_C and MAINS_PRES_S made outputs, and the pump sheet's two NEUTRAL labels kept by design (C5) | `open-items.md`, row 'Sheet ports and hierarchical labels agree across the sheets (finding 7.84)' |

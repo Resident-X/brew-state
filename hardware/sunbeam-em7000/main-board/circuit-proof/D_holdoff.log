@@ -26,6 +26,14 @@ PASS  input clamp current, +5V absent: worst 2.90 mA per input vs IIK 20 mA (SCL
 PASS  pin voltage with VDD present: anode rail on (firmware-driven), VF taken as 0: pin <= 5.25 V; operating limit Min(VDD) + 3.6 V and below 5.5 V holds for VDD >= 1.65 V
 PASS  pin voltage with +3V3 absent, +5V present: ANODE_GATE is a floating input / low, Q821 gate pulled down, Q822 gate pulled to +5V: anode rail 22 mV, key pin <= 0.1 V
 PASS  pin voltage in a normal brown-out: rail at most +5V; VDD within 0.35 V of +5V while U302 is in dropout: rail minus VDD at most 0.35 V, under the 2.5 V margin to Min(VDD) + 3.6 V and 5.5 V
-   +3V3 lost alone, +5V present: turn-off after reset about 40 us typical (supervisor about 10 us, C418 on NRST about 24 us, Q821 gate discharge through R822 and Q822 gate pull-up through R823/R824 about 10 to 25 us) and 120 us worst; about 40 to 60 us is available with 8 uF on +3V3: a residual held by the rule never to open JP302 with +5V on
+
+== +3V3 lost alone while +5V and the anode rail stay up (a fault-only residual)
+   turn-off after reset, typical: supervisor 10.0 + NRST (C418) 24.5 + Q821 gate to plateau 10.6 + Q821 Miller 19.1 + Q822 gate pull-up 30.8 + rail 1.9 us -> 78 us (Miller and pull-up overlap: the longer counted)
+   turn-off after reset, worst: supervisor 10.0 + NRST (C418) 27.4 + Q821 gate to plateau 20.0 + Q821 Miller 39.3 + Q822 gate pull-up 41.7 + rail 1.9 us -> 140 us
+   time available after the trip: operating limit 35 to 52 us, absolute maximum 46 to 78 us (constant-current to resistive load)
+   at the typical turn-off (78 us, constant-current load) VDD is 0.13 V: the key pin at 5.25 V is 1.12 V over the absolute maximum (VDD + 4.0 V) and 1.52 V over the operating limit, for 32 us
+   at the worst turn-off (140 us, constant-current load) VDD is 0.00 V: the key pin at 5.25 V is 1.25 V over the absolute maximum (VDD + 4.0 V) and 1.65 V over the operating limit, for 94 us
+   current per indicator element meanwhile: at most 5.25 V / 300 ohm = 17.5 mA (330 ohm element 15.9 mA), VF taken as 0 and the pin at 0 V; 35.0 mA on a two-element line
+RESIDUAL  +3V3 lost alone: NOT inside the pin limit by these figures (turn-off 78 us typical, 140 us worst, against 46 to 78 us available to the absolute maximum); a fault-only residual accepted by the owner (S-88 of owner-sign-off.md), held at bring-up by the rule not to remove +3V3 while firmware drives ANODE_GATE
 
 SUMMARY: 0 failing []

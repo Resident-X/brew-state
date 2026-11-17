@@ -451,7 +451,7 @@ Rungs 3 to 6 each need a reason a lower rung could not give. A move up is writte
 | Item | Carries over unchanged | Re-proved because position or net topology changes | Minimum delta test |
 |---|---|---|---|
 | Mains region parts, barrier column (U601, U602, U701, U711, U301, K201, K731, K741), tabs J101 to J110, reed J862 | Positions, footprints, mains copper | — | Position diff against the tag (script). `hw:copper-compare` of Mains-class copper against v1's record. |
-| `separation-basis.yaml` (signed 2026-11-06/07), MAINS-2 deviation | Yes, while the mains copper compare is clean | Exception staleness only | The v2 full check's `spacing_exception` lines. Remove stale ones without re-signing. |
+| `separation-basis.yaml` (accepted by the owner on 2026-11-18; the acceptances of 2026-11-06 and 2026-11-07 are superseded on every entry by it), MAINS-2 deviation | Yes, while the mains copper compare is clean | Exception staleness only | The v2 full check's `spacing_exception` lines. Remove stale ones without re-signing. |
 | Schematic findings 7.17, 7.35, 7.45 (part ratings of mains parts, carried to bring-up) | Yes. They are about part ratings, not positions, and nothing they name moves. | — | None. Restated in the PR summary. |
 | `derating-policy.yaml`, `parts-specification.yaml` (apart from U203, R208, C206), `catalogue-extract.yaml` | Yes | Catalogue refresh before 2026-11-13 (stock dates) | `board_check` record lines in the round 1 run. |
 | `circuit-proof.md` value rows | Yes, apart from the pin rows | Pin rows: reset/boot state of moved pins, SPI3 bootloader-slave case, PB12 5 V exposure | Rerun of the affected scripts. Netlist `cmp`. |
