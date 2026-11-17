@@ -23,3 +23,7 @@ links:
     type: derives-from
   - target: DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 888b6c6ebbe17fd673ecd5426ac35906ae281e64421348740c193cabca0f2f04
+  gating_profile: ""
