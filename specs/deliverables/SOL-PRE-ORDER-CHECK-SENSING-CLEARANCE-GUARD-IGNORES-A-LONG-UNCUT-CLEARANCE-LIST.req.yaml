@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The pre-order check's sensing-clearance guard does not read a long clearance list as a cut-short one
 status: active
-version: 3
+version: 4
 text: |
   Corrects a false failure the final run of the main board's pre-order check prints. The sensing-clearance rule reads KiCad's clearance list and, when the list holds as many entries as REPORT_LIMIT (199), fails the board as a list cut short, on the ground that a sensing item inside the clearance may have been dropped. KiCad did not cut the list: its report held 347 clearance entries, and the check consumed 553 net-pair shortfalls, so a count above 199 and below 499 is a list KiCad reported in full, not one it capped. The guard compares a count with a limit that bounds a different figure, so on a board with more clearance failures than the limit, whatever their cause, it prints one sensing_clearance violation line that is no sensing shortfall.
 
@@ -13,7 +13,7 @@ text: |
     - The guard stays for a list KiCad does cut short, and still fails the board then; it is not removed to silence the line.
     - The clearance bound of 499 is one constant, CLEARANCE_REPORT_LIMIT, that the check's mains-pair clearance lists (the capped-kinds reading of cut lists) already read; the guard reads the same constant, and the tests of those lists stay passing. The 499 figure is measured on KiCad 10.0.7 only and is stated as that where the constant is declared.
     - The tests separate counting clearance entries from counting every violation: 498 clearance entries plus several hundred violations of other kinds prints no line; 498 other clearance entries plus one real sensing shortfall prints the shortfall and not the cut message; a count of exactly REPORT_LIMIT (199) prints no line; a count of exactly 499 and one above it print the cut message.
-    - The line is a violation like every other rule's, so a test shows it in the check's text output and in its JSON output.
+    - The check has one output form, its one-line text report, and no JSON form of its own (JSON is only KiCad's report that the check reads); a test shows the sensing_clearance violation through the check's own line formatter.
     - The last clause of the criterion, the finished main board, is verified by a test that runs the check on the tracked main board and asserts every sensing_clearance line it prints names a sensing item; the clause stays in the criterion.
     - Each test carries the sentence of the criterion it verifies, and a test that exercises the older assertion-count cut says which sentence it stands for and does not claim the 499 sentence.
     - Out of scope: the sensing clearance figure, the net classes, the other REPORT_LIMIT guards that read assertion counts, and any board's records.
