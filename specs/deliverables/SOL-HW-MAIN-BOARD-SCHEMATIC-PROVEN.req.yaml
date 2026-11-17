@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The main board's schematic is drawn and reviewed and its design records are authored before layout
 status: active
-version: 7
+version: 8
 text: |
   Draws the main controller board's schematic through the board design method (docs/board-design-method.md) to the written convention, reviews it from every sheet, and authors the design records the pre-order check holds the board to, so layout starts from a reviewed schematic and records the checks can read. It draws to the figures the main board's judgements leaf settles and does not reopen them.
 
@@ -18,6 +18,7 @@ text: |
   - Wiring the firmware's pin checks to this board's records is the firmware-wiring leaf's (SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS); this leaf authors the records and the converter-input map those checks will read and changes no firmware.
   - The owner decisions the division record holds pending are drawn at the defaults recorded there; the consequence of the other way is carried.
   - Rows of the constraints record's pending marks that name an owner act (the entry fuse breaking capacity, pump emission) are not closed here.
+  - The seventh criterion was rewritten as a complete statement: its earlier wording required the pending mark on the clearing-time and let-through figure to end, which no maker sheet makes possible, so it now requires each figure to be stated with its source or to keep its pending mark and name the act that settles it.
   - A schematic change made during layout is an amendment to this leaf's schematic, re-reviewed here.
 
   Locus: hardware/sunbeam-em7000/ (the board's KiCad schematic and its records), docs/sunbeam-em7000/ records for the constraints.
