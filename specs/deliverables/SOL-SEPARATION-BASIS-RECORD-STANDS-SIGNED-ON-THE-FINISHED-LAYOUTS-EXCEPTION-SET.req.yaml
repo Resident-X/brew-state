@@ -30,3 +30,5 @@ links:
     type: justified-by
   - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER
     type: depends-on
+  - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
+    type: depends-on
