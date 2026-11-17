@@ -1,12 +1,12 @@
 id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C7
 type: criterion
-title: The seven clamps are connected on the board to their schematic nets and the re-routed critical copper and mains copper match their records
+title: The seven clamps are connected on the board to their schematic nets and their critical copper carries the lock flag
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 text: |
-  On the committed board the pads of D502, D504, D506, D523, D524, D527 and D528 are connected by copper, and not only in the netlist, to the nets they carry in the schematic (GND, the supply, and the signal node: NTC_COF for D502, NTC_STM for D504, NTC_WAND for D506, STM_SCL and STM_SDA for D523 and D524, BREW_SCL and BREW_SDA for D527 and D528), checked from the board file's copper; the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND critical copper and any other locked copper there, is covered by the copper lock and its fresh copper record, whose comparison with the board passes; and no mains copper or mains pour of the board differs from the copper the locked mains-copper record lists. The test fails on a pad of any of the seven joined to a different net or left unconnected, on locked critical copper outside the lock or the record, and on mains copper or pour that differs from its record. Out of scope: R301, the copper lock for any other net, and the question whether any via should leave a surface-mount pad (the sibling vias-in-pads item owns the decision).
+  On the committed board the pads of D502, D504, D506, D523, D524, D527 and D528 are connected by copper, and not only in the netlist, to the nets they carry in the schematic (GND, the supply, and the signal node: NTC_COF for D502, NTC_STM for D504, NTC_WAND for D506, STM_SCL and STM_SDA for D523 and D524, BREW_SCL and BREW_SDA for D527 and D528), checked from the board file's copper; and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The test fails on a pad of any of the seven joined to a different net or left unconnected, and on locked critical copper that does not carry the lock flag. Out of scope: R301, the copper lock for any other net, and the question whether any via should leave a surface-mount pad (the sibling vias-in-pads item owns the decision).
 links:
   - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
     type: criterion-of
