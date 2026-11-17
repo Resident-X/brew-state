@@ -19,6 +19,6 @@ links:
   - target: REQ-ELECTRICAL-INSTALL-001.C15
     type: targets
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 (WF-REVIEW executor)
-  fingerprint: 7766afe9e59ac1804a049413158be08103780191f30cb45cc0dded962678bc49
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 97705826d54d3c9bbcea21ab8eea328a5cd9b1e686bdde7d1e3fc8a8a5393d96
   gating_profile: ""
