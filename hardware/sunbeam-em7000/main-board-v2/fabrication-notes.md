@@ -136,5 +136,5 @@ Both are unresolved in the records and must be checked at the quote, not assumed
 Every one of these is a recorded draft for the owner, not an acceptance, and none changes a signed figure of the basis (signed 2026-11-06). They are held, with their measurements, in `owner-sign-off.md`; this file points to them and does not restate them.
 
 - The 0.15 mm annular width of the 0.6 / 0.3 mm via (above).
-- The detour ratios of routed critical nets (`owner-sign-off.md`, S-48 and S-49). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's signed exceptions (32 on 2026-11-06, 42 today), not carried here as unsigned.
+- The detour ratios of routed critical nets (`owner-sign-off.md`, S-48 and S-49). The mains-to-mains spacing shortfalls the layout check reports are excused by the basis's signed exceptions (33 on 2026-11-06, 32 from 2026-11-07, 42 today), not carried here as unsigned.
 - The plated-hole pairs at 1.25 mm (J791, J821 and J861) and at 1.15 mm (J630 and J635, drilled 0.85 mm since 2026-11-14) (`owner-sign-off.md`, S-32).

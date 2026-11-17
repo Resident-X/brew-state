@@ -1130,13 +1130,31 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
         for phrase in cls.REMOVAL_STATEMENT:
             case.assertIn(phrase, header, phrase)
 
+    @staticmethod
+    def c606_entries(data):
+        """Entries naming a C606 pad in the between, nets_a or nets_b form."""
+        return [e for e in data["accepted_exceptions"]
+                if any("C606" in str(name) for key in ("between", "nets_a", "nets_b") for name in (e.get(key) or []))]
+
+    def test_the_c606_scan_catches_the_pair_in_between_nets_a_and_nets_b(self):
+        # SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C1: The main board's separation basis record holds no accepted_exceptions entry for mains_to_mains creepage between C606.1 and C606.2. The record's test fails on a record that holds such an entry, whether the pair is named in an entry's between, nets_a or nets_b. Out of scope: every other entry and every figure of the record.
+        _, data = committed()
+        self.assertEqual(self.c606_entries(data), [])
+        for form in ({"between": ["C606.1", "C606.2"]}, {"nets_a": ["C606.1"], "nets_b": ["C606.2"]},
+                     {"nets_a": ["C606.1", "C606.2"]}, {"nets_b": ["C606.1", "C606.2"]}):
+            entry = dict(data["accepted_exceptions"][0])
+            for key in ("between", "nets_a", "nets_b"):
+                entry.pop(key, None)
+            entry.update(form, constraint="creepage", pair="mains_to_mains")
+            self.assertEqual(self.c606_entries(dict(data, accepted_exceptions=data["accepted_exceptions"] + [entry])), [entry], form)
+
     def test_the_record_holds_no_c606_entry_keeps_every_day_and_the_header_states_the_removal(self):
-        # SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C1: The main board's separation basis record holds no accepted_exceptions entry for mains_to_mains creepage between C606.1 and C606.2
-        # SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C2: Every test and every record under the repository that states the number of the record's exceptions as 33, or lists the C606 pair among them, states the number the record holds (42 since 2026-11-14) and omits the pair, and the record-reading tests pass on the committed record. The finished header item's criterion that restates 33 (SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C2) stands superseded by this item as to the count and by the later acceptances as to the days, so a test that traces it states the count the record holds and names this item as the superseding one. Out of scope: statements of the count or of this pair; wording unrelated to them stays. The record's test fails on a record whose top-level accepted_on or any entry's accepted_on differs from the day the owner last accepted it (the days the header names), and on a header that does not state the removal of the C606 entry and the owner's instruction.
-        # SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C3: The record's top-level accepted_on and the accepted_on of each of its entries read the day the owner last accepted them, as the header names each day, and the header states in one sentence that the entry for the C606 pad pair was removed on 2026-11-07 on the owner's written instruction, that the removal excuses nothing and relaxes nothing, and that the removal changed no signature day. An inspection of the record by reading it is the check; the test that fails on a changed day or a missing header statement is required by the criterion on the tests that follow the removal. Out of scope: any figure, pair or reason.
+        # SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C1: The main board's separation basis record holds no accepted_exceptions entry for mains_to_mains creepage between C606.1 and C606.2. The record's test fails on a record that holds such an entry, whether the pair is named in an entry's between, nets_a or nets_b. Out of scope: every other entry and every figure of the record.
+        # SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C2: Every test and record under the repository that states the number of the record's accepted_exceptions entries states the number the record holds, and none lists the C606 pair among them. The record's own test pins that number and fails on a record whose count differs. Out of scope: the day each entry carries, which the finished header item's criterion on the re-signing day and later acceptances governs.
+        # SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C3: The header comment of the record states in one sentence that the entry for the C606 pad pair was removed on 2026-11-07 on the owner's written instruction, that the removal excuses nothing and relaxes nothing, and that the removal changed no signature day. The record's test fails on a header lacking any part of that sentence. Out of scope: any figure, pair or reason.
         _, data = committed()
         header = self.header()
-        self.assertEqual([e for e in data["accepted_exceptions"] if "C606" in " ".join(e.get("between", []))], [])
+        self.assertEqual(self.c606_entries(data), [])
         self.assertEqual(len(data["accepted_exceptions"]), EXCEPTION_COUNT)
         self.removal_and_day_hold(self, data, header)
         sentence = [s for s in header.split(". ") if "C606" in s and "removed on 2026-11-07" in s]
