@@ -681,6 +681,16 @@ def full_check_problems(lines, accepted, warned):
     return problems
 
 
+def covered_shortfall_problems(accepted):
+    """What a full-check result shows wrongly of the covered shortfall pairs: none judged at all, or a covering line missing its ground or bound.
+    A run that judged no pair proves nothing about coverage, and a covering line must state the ground of the exception and the element bounding the fault."""
+    covered = [line for line in accepted if line.startswith("ACCEPTED") and line_rule(line) == "spacing_exception"]
+    if not covered:
+        return ["no ACCEPTED spacing_exception line: the run judged no covered shortfall pair"]
+    return [f"covering line without ground or bound: {line}" for line in covered
+            if "accepted exception:" not in line or "reason: " not in line or "bounded by: " not in line]
+
+
 def full_check_lines():
     """The lines of the repository's own pre-order check of the main board design alone, as the report prints them."""
     accepted, warned = [], []
@@ -1013,6 +1023,7 @@ class SheetFigures(Committed):
 class FullCheck(Committed):
     # SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4: The full pre-order check on the committed main board passes with no violation line other than its signed accepted lines, and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The evidence names the gate run and the commit it ran on. Out of scope: the owner's decision on vias in pads.
     def test_the_full_pre_order_check_of_the_committed_main_board_has_no_violation_line_beyond_its_accepted_ones(self):
+        # SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C1: A run of the pre-order check on the finished main board lists no mains-to-mains shortfall pair that no draft entry of the separation basis record covers, and each pair added to the record has a draft entry stating its ground and the element bounding the fault. Out of scope is signing any entry.
         lines, accepted, warned = full_check_lines()
         self.assertEqual(unsigned_violation_lines(lines), [])
         self.assertTrue(all(line.startswith("ACCEPTED") for line in accepted))
@@ -1026,6 +1037,14 @@ class FullCheck(Committed):
         self.assertTrue(any("side_fiducials" in p for p in found))
         # Self-test of the line filter only (not evidence the check can fail): it returns exactly the VIOLATION lines it is given.
         self.assertEqual(unsigned_violation_lines(lines + [extra]), [extra])
+        # The uncovered-pair half of the criterion is the VIOLATION-free assertion above: an uncovered shortfall prints as a VIOLATION.
+        # This half: at least one covered pair was judged, and every covering line states its ground and bound.
+        self.assertEqual(covered_shortfall_problems(accepted), [])
+        self.assertEqual(covered_shortfall_problems([]), ["no ACCEPTED spacing_exception line: the run judged no covered shortfall pair"])
+        covering = next(line for line in accepted if line.startswith("ACCEPTED") and line_rule(line) == "spacing_exception")
+        for token in ("bounded by: ", "reason: ", "accepted exception:"):
+            self.assertEqual(covered_shortfall_problems([covering.replace(token, "")]),
+                             [f"covering line without ground or bound: {covering.replace(token, '')}"])
 
     # SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4: The full pre-order check on the committed main board passes with no violation line other than its signed accepted lines, and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The evidence names the gate run and the commit it ran on. Out of scope: the owner's decision on vias in pads.
     def test_the_locked_critical_copper_of_the_thermistor_nets_carries_the_copper_lock_flag_on_the_committed_board(self):

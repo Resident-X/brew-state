@@ -1695,5 +1695,26 @@ class NetPairAndSamePartDrafts(unittest.TestCase):
 
 
 
+def entries_lacking_ground_or_bound(entries):
+    """The entries whose reason (ground) or bounded_by (the element bounding the fault) is not a non-empty string."""
+    return [i for i, entry in enumerate(entries)
+            if not all(isinstance(entry.get(key), str) and entry[key].strip() for key in ("reason", "bounded_by"))]
+
+
+class EveryEntryStatesItsGroundAndBound(unittest.TestCase):
+    def test_every_entry_of_the_committed_record_states_a_ground_and_a_bounding_element(self):
+        # SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C1: A run of the pre-order check on the finished main board lists no mains-to-mains shortfall pair that no draft entry of the separation basis record covers, and each pair added to the record has a draft entry stating its ground and the element bounding the fault. Out of scope is signing any entry.
+        _, data = committed()
+        entries = data["accepted_exceptions"]
+        self.assertTrue(entries)
+        self.assertEqual(entries_lacking_ground_or_bound(entries), [])
+        good = dict(entries[0])
+        for key in ("reason", "bounded_by"):
+            for bad in ("", "   \n", 7, None):
+                self.assertEqual(entries_lacking_ground_or_bound([good, dict(good, **{key: bad})]), [1], (key, bad))
+            self.assertEqual(entries_lacking_ground_or_bound([{k: v for k, v in good.items() if k != key}]), [0], key)
+        self.assertEqual(entries_lacking_ground_or_bound(entries[:3] + [dict(good, reason="")]), [3])
+
+
 if __name__ == "__main__":
     unittest.main()
