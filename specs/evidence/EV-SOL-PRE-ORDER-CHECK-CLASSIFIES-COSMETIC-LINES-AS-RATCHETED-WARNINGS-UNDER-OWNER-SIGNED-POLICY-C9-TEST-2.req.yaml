@@ -1,0 +1,22 @@
+id: EV-SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY-C9-TEST-2
+type: evidence
+title: Seeded-fault test run directly, supplementing the round-gate evidence (C9)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T10:17:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_severity_policy.py::test_every_severity_policy_failure_fails_on_its_seeded_fault_and_the_clean_design_with_a_policy_passes
+  artifact_version: c76771b46c8b21a724977085d060ad3cb4e35007
+text: |
+  Supplements EV-SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY-C9-TEST, which was elevated from the round gate (task check:round at a5ad8e93). The round gate leaves out tests that need the seeded-fault proof (hw:test:round sets BOARD_TESTS_WITHOUT_PROOF), so that gate did not run this test; this node records it run.
+
+  Run directly, outside the gate, with the proof variable unset: cd hardware/tools/tests && KICAD_CLI=<kicad-cli> python3 -m unittest test_board_check_kicad_severity_policy.EachNewFailureIsCaughtOnASeededFault. Result: Ran 1 test in 290.8 s, OK, on commit c76771b4.
+
+  Also run: task hw:prove on commit be6b6925 (the gated code a5ad8e93 plus graph-only commits). RESULT | PASS | 380 of 380 faults caught, of which 31 severity-policy faults each printed CAUGHT, the count this test asserts.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C9
+    type: satisfies
