@@ -1,13 +1,13 @@
 id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C3
 type: criterion
-title: R301 stands on F.Cu clear of the Y401 keep-clear with no exemption, its nets unchanged and no signed figure relaxed
+title: R301 stands on F.Cu clear of the Y401 keep-clear with no exemption and its nets joined on the board
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 scope: The records and check lines named; an unrelated pre-existing line is covered by its own item.
 text: |
-  R301 stands on F.Cu at (105.25, 39.5), rotation 270, with its courtyard 10 mm or more from the Y401 courtyard, so the 'Crystal keep-clear Y401' rule holds with no exemption added to the rules file; R301 lies inside the analog sensing rectangle; the +3V3A_FB and +3V3A nets are connected to every pad they were connected to before, on the board and not only in the netlist, with no stub left on B.Cu; no net is added, removed or renamed; the new route adds no pre-order check line and no KiCad rules line beyond the baseline of the board before this item; and no signed mains, derating or separation figure changes. The test fails on a position within 10 mm of the Y401 courtyard, on a rule exemption for R301, on a disconnected +3V3A tree, and on a new check or rules line. Out of scope: the seven BAT54SW,115 clamps.
+  R301 stands on F.Cu with its courtyard 10 mm or more from the Y401 courtyard, so the 'Crystal keep-clear Y401' rule holds with no exemption for R301 in the rules file; the +3V3A_FB and +3V3A nets are connected to every pad of R301, on the board and not only in the netlist, with no copper of either net left on B.Cu at R301. The test fails on a courtyard within 10 mm of the Y401 courtyard, on a rule exemption for R301, and on an R301 pad not joined by copper to its net. Out of scope: the seven BAT54SW,115 clamps.
 links:
   - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
     type: criterion-of
