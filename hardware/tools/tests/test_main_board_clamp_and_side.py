@@ -645,6 +645,42 @@ def unsigned_violation_lines(lines):
     return [line for line in lines if line.startswith("VIOLATION")]
 
 
+def line_rule(line):
+    """The rule or class a report line names: its third ' | ' field."""
+    fields = line.split(" | ")
+    return fields[2] if len(fields) > 2 else ""
+
+
+def accepted_rule(line):
+    """The rule class a signed-workmanship ACCEPTED line covers: it opens the line's fifth field, its message, before ' at '."""
+    fields = line.split(" | ")
+    if len(fields) < 5 or fields[2] != "workmanship_acceptance":
+        return ""
+    return fields[4].split(" at ", 1)[0]
+
+
+def signed_classes():
+    """The rule classes the committed workmanship-acceptance record signs, and those the severity-policy record marks WARNING."""
+    yaml = board_check.require_yaml()
+    with open(os.path.join(BOARD, board_check.WORKMANSHIP_ACCEPTANCE_NAME), encoding="utf-8") as handle:
+        accepted = {entry["rule"] for entry in yaml.safe_load(handle)["accepted_workmanship"]}
+    with open(os.path.join(BOARD, board_check.SEVERITY_POLICY_NAME), encoding="utf-8") as handle:
+        warning = {entry["class"] for entry in yaml.safe_load(handle)["severity_policy"] if entry["severity"] == "WARNING"}
+    return accepted, warning
+
+
+def full_check_problems(lines, accepted, warned):
+    """What a full-check result lacks or carries wrongly: an unsigned violation, a missing tier of signed lines, a side_fiducials line."""
+    signed, policy = signed_classes()
+    problems = [f"unsigned: {line}" for line in unsigned_violation_lines(lines)]
+    if not any(line.startswith("ACCEPTED") and accepted_rule(line) in signed for line in accepted):
+        problems.append("no ACCEPTED line of a signed workmanship class")
+    if not any(line.startswith("WARNING") and line_rule(line) in policy for line in warned):
+        problems.append("no WARNING line of a class the severity policy marks WARNING")
+    problems += [f"side_fiducials line: {line}" for line in lines if "side_fiducials" in line]
+    return problems
+
+
 def full_check_lines():
     """The lines of the repository's own pre-order check of the main board design alone, as the report prints them."""
     accepted, warned = [], []
@@ -698,6 +734,15 @@ class BoardSide(Committed):
         footprints(renamed)[back_one][1] = "main-board:R_0603_1608Metric"
         self.assertEqual(back_non_test_points(renamed), [back_one])
         self.assertIn(f"{back_one} is on B.Cu and is not a test point pad", side_problems(renamed))
+        # A back-side footprint that is smd and left out of the position file but is no test point pad is found by the non-test-point rule.
+        hidden = copy.deepcopy(self.tree)
+        back_two = next(r for r, f in footprints(hidden).items() if layer_of(f) == "B.Cu")
+        node = footprints(hidden)[back_two]
+        node[1] = "main-board:R_0603_1608Metric"
+        sexpr.child(node, "attr")[1:] = ["smd", "exclude_from_pos_files"]
+        self.assertEqual(assembled_on_back(hidden), [])
+        self.assertEqual(back_non_test_points(hidden), [back_two])
+        self.assertIn(f"{back_two} is on B.Cu and is not a test point pad", side_problems(hidden))
         # A fiducial on the back side is found.
         fiducial = copy.deepcopy(self.tree)
         front = next(r for r, f in footprints(fiducial).items() if board_check.fiducial_pads(f))
@@ -757,6 +802,31 @@ class ClampParts(Committed):
         node, other_at = sexpr.child(near, "at"), sexpr.child(footprints(crowded)["D504"], "at")
         node[1], node[2] = other_at[1], other_at[2]
         self.assertTrue(any("courtyard of D502" in p for p in courtyard_problems(crowded, ["D502"])))
+        # The board and the schematic's netlist both agree on a wrong supply for D502: only the stated constants can name it.
+        both = copy.deepcopy(self.tree)
+        agreed = copy.deepcopy(self.pin_nets)
+        for pad in sexpr.children(footprints(both)["D502"], "pad"):
+            if str(pad[1]) == "2":
+                sexpr.child(pad, "net")[1] = "+3V3"
+                agreed[("D502", "2")] = sexpr.child(pad, "net")[1]
+        named = clamp_board_problems(both, self.parts, agreed)
+        self.assertTrue(any(p.startswith("D502 pad 2") for p in named), named)
+        self.assertTrue(all(p.startswith("D502 ") for p in named), named)
+        # One clamp with a different LCSC (and one with a different value) no longer forms the one bill-of-materials line.
+        for field, value in (("LCSC", "C12345"), ("Value", "BAT54S")):
+            split = copy.deepcopy(self.tree)
+            for prop in sexpr.children(footprints(split)["D524"], "property"):
+                if str(prop[1]) == field:
+                    prop[2] = value
+            split_lines = {(properties(footprints(split)[r]).get("Value"), library_item(footprints(split)[r]),
+                            properties(footprints(split)[r]).get("LCSC")) for r in CLAMPS}
+            self.assertNotEqual(split_lines, {("BAT54SW", FOOTPRINT, NEW_NUMBER)}, field)
+            self.assertEqual(len(split_lines), 2, field)
+        # A courtyard overlap on a clamp other than D502.
+        stacked = copy.deepcopy(self.tree)
+        node, other_at = sexpr.child(footprints(stacked)["D528"], "at"), sexpr.child(footprints(stacked)["D527"], "at")
+        node[1], node[2] = other_at[1], other_at[2]
+        self.assertTrue(any("courtyard of D528" in p for p in courtyard_problems(stacked, ["D528"])))
 
 
 class RStandsClear(Committed):
@@ -945,12 +1015,16 @@ class FullCheck(Committed):
     def test_the_full_pre_order_check_of_the_committed_main_board_has_no_violation_line_beyond_its_accepted_ones(self):
         lines, accepted, warned = full_check_lines()
         self.assertEqual(unsigned_violation_lines(lines), [])
-        # The signed records are in use: the check printed accepted and warning lines of its own, so a pass is not an empty run.
-        self.assertTrue(accepted)
-        self.assertTrue(warned)
         self.assertTrue(all(line.startswith("ACCEPTED") for line in accepted))
-        # Fault: the same assertion fed a result with one extra violation line sees it.
+        # The tiers ran: accepted lines of a class the workmanship record signs, warning lines of a class the severity policy marks, and no side_fiducials line.
+        self.assertEqual(full_check_problems(lines, accepted, warned), [])
+        # Faults for that assertion: a result whose ACCEPTED list is emptied (a skipped tier), one whose WARNING lines are dropped, one with a side_fiducials line.
+        self.assertIn("no ACCEPTED line of a signed workmanship class", full_check_problems(lines, [], warned))
+        self.assertIn("no WARNING line of a class the severity policy marks WARNING", full_check_problems(lines, accepted, []))
         extra = board_check.Violation("main-board", "side_fiducials", "B.Cu", "a synthetic fault").line()
+        found = full_check_problems(lines + [extra], accepted, warned)
+        self.assertTrue(any("side_fiducials" in p for p in found))
+        # Self-test of the line filter only (not evidence the check can fail): it returns exactly the VIOLATION lines it is given.
         self.assertEqual(unsigned_violation_lines(lines + [extra]), [extra])
 
     # SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4: The full pre-order check on the committed main board passes with no violation line other than its signed accepted lines, and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The evidence names the gate run and the commit it ran on. Out of scope: the owner's decision on vias in pads.
