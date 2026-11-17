@@ -220,6 +220,78 @@ class SeparationBasisRecord(unittest.TestCase):
             self.assertTrue(any(key in p.message for p in problems), key)
 
 
+BOARD = os.path.join("hardware", "sunbeam-em7000", "main-board", "main-board.kicad_pcb")
+#: The pump triacs, whose two-lead land the main board draws.
+TRIAC_REFS = ("T701", "T711")
+#: How close the recorded figure must be to the land's measured edge-to-edge distance, in mm.
+LAND_TOLERANCE_MM = 0.01
+
+
+def triac_pads():
+    """The numbered pads of each pump triac as the main board draws them, by reference (the unnumbered paste pads are no lead or tab)."""
+    import board_geometry
+    import sexpr
+    with open(os.path.join(ROOT, BOARD), encoding="utf-8") as handle:
+        tree = sexpr.parse_one(handle.read())
+    table = board_geometry.net_table(tree)
+    footprints = board_check.board_footprints(tree)
+    return {ref: [pad for pad in board_geometry.footprint_pads(footprints[ref], table) if pad.number] for ref in TRIAC_REFS}
+
+
+def check_triac_entries(case, data, pads):
+    """The record's entries for the pump triacs against the land: `pads` maps each reference to the numbered Pad objects of its land."""
+    import board_geometry
+    held = data["mains_to_mains"]
+    record_day = board_check.iso_date(data["accepted_on"])
+    case.assertIsNotNone(record_day)
+    for ref, land in pads.items():
+        numbers = {pad.number: pad for pad in land}
+        case.assertEqual(sorted(numbers), ["1", "2", "3"], ref)
+        entries = [e for e in data["accepted_exceptions"] if "between" in e and any(pad.split(".")[0] == ref for pad in e["between"])]
+        for entry in entries:
+            case.assertEqual(len(entry["between"]), 2, entry["between"])
+            for pad in entry["between"]:
+                case.assertEqual(pad.split(".")[0], ref, entry["between"])
+                case.assertIn(pad.split(".")[1], numbers, entry["between"])
+        pairs = [frozenset(e["between"]) for e in entries]
+        case.assertEqual(len(pairs), len(set(pairs)), ref)
+        # every pair of the land: measured, and an entry if and only if the measure is under the signed creepage
+        measured = {}
+        for one, other in ((a, b) for a in sorted(numbers) for b in sorted(numbers) if a < b):
+            measured[frozenset((f"{ref}.{one}", f"{ref}.{other}"))] = board_geometry.polygon_distance(numbers[one].outline(), numbers[other].outline())
+        for pair, distance in measured.items():
+            if distance >= held["creepage_mm"]:
+                case.assertNotIn(pair, pairs, (sorted(pair), distance))
+            else:
+                case.assertIn(pair, pairs, (sorted(pair), distance))
+        # the entries are the tab pad against each outer lead pad
+        case.assertEqual(set(pairs), {frozenset((f"{ref}.2", f"{ref}.1")), frozenset((f"{ref}.2", f"{ref}.3"))}, ref)
+        for entry in entries:
+            label = entry["between"]
+            case.assertEqual(entry["pair"], "mains_to_mains", label)
+            case.assertEqual(entry["constraint"], "creepage", label)
+            case.assertEqual(entry["accepted_mm"], 2.0, label)
+            distance = measured[frozenset(entry["between"])]
+            case.assertLessEqual(abs(entry["accepted_mm"] - distance), LAND_TOLERANCE_MM, label)
+            case.assertGreaterEqual(distance + LAND_TOLERANCE_MM / 10, held["terminal_clearance_mm"], label)
+            case.assertLess(distance, held["creepage_mm"], label)
+            for key in ("reason", "bounded_by"):
+                case.assertIsInstance(entry.get(key), str, (label, key))
+                case.assertTrue(entry[key].strip(), (label, key))
+            case.assertIn("tab pad", entry["reason"], label)
+            case.assertIn("lead pad", entry["reason"], label)
+            lead = next(pad.split(".")[1] for pad in entry["between"] if not pad.endswith(".2"))
+            case.assertIn(f"lead pad of pin {lead}", entry["reason"], label)
+            case.assertIn(f"lead pad {lead}", entry["bounded_by"], label)
+            acceptor = entry.get("accepted_by")
+            case.assertIsInstance(acceptor, str, label)
+            case.assertTrue(acceptor.strip(), label)
+            day = board_check.iso_date(entry.get("accepted_on"))
+            case.assertIsNotNone(day, label)
+            case.assertLessEqual(day, record_day, label)
+
+
+
 class MainsToMainsRecord(unittest.TestCase):
     """The committed record's mains_to_mains figures, table rows and accepted exceptions, read through the check's own reader."""
 
@@ -299,6 +371,7 @@ class MainsToMainsRecord(unittest.TestCase):
                 self.assertTrue(found and all("no table row" in p.message for p in found), position)
 
     def test_the_four_triac_entries_are_signed_creepage_entries_and_the_twelve_clearance_entries_each_name_two_pads_of_one_part(self):
+        # SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN.C1: accepted_exceptions holds four mains_to_mains creepage entries for the pump triacs, one for each of T701 and T711 for the tab pad (pad 2) against each outer lead pad (pads 1 and 3) of the two-lead land the main board draws for it, which has no middle-lead pad, each with accepted_mm 2.0, and holds no entry naming a pad the land lacks, so none for a pair of lead pads of one triac. Each such entry's accepted_mm equals the edge-to-edge distance between its two pads read from that land, to 0.01 mm, which is at or above the signed terminal clearance and under the signed creepage; it names the one pair of pads it excuses in between; its reason and bounding element are each non-empty and name the tab pad and the lead pad; and it carries the owner's accepted_by and accepted_on, dated no later than the record. A pair at or above the signed creepage has no entry. Out of scope: choosing a different triac, the owner's acceptance, the entries for R105 and the 1206 series resistors that their own leaves hold, and the mains-to-low-voltage entries.
         # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C2: The committed record's accepted_exceptions holds 42 entries: 4 pump-triac tab-to-lead creepage entries at 2.0 mm, 5 same-connector hole_to_hole entries, 3 at 1.25 mm for J791, J821 and J861 and 2 at 1.15 mm for J630 and J635, 7 net-pair entries, 6 same-part creepage entries, 12 same-part clearance entries, 4 opto-triac pin-5 creepage entries at 0.76 mm for U701 and U711, and 4 gate-resistor creepage entries. The test states why the count is 42 and not the 98 drafted before the layout was finished: 29 entries were used by a shortfall of the finished layout and the other 69 are removed, the 4 gate-resistor entries were added to the 29, the C606 pad-pair entry was removed on 2026-11-07 (SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED), the 2 R105 creepage entries the re-laid mains side no longer reports short were removed on 2026-11-14, and the 12 same-part clearance entries that layout reports short were added on 2026-11-14. Every entry's pair is mains_to_mains or same_connector_pins, every entry has a non-empty reason and bounding element, and each between entry names two pads of one part. Out of scope is any figure not named here.
         # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4: The committed record holds six same-part creepage entries, for the two sense-pad pairs of R105 (pad 1 with pad 2 and pad 4 with pad 3) and R605 to R608, and none for C606 or for the R105 pairs pad 1 with pad 3 and pad 4 with pad 2, whose entries were removed as stale on 2026-11-07 (C606, SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED) and on 2026-11-14 (R105), each with accepted_mm equal to the pair's edge-to-edge pad gap in the layout, each below 1.5 mm and below the signed creepage, each of pair mains_to_mains, naming the part and the set N of neutral-referenced nets with a working voltage under 10 V in its reason and the entry fuse and branch fuses in its bounding element. It also holds twelve same-part clearance entries, each between two pads of one part, for R101 to R104, R704, R705, R714 and R715 at 1.8 mm and for pad 5 of U701 and of U711 with pads 4 and 6 at 0.76 mm, each of pair mains_to_mains, each with accepted_mm equal to the pair's gap in the layout and below the signed terminal clearance of 2.0 mm, each stating in its reason that the gap is the part's own pad gap and the entry excuses only that pair. It holds no same-part entry for a pair under 1.5 mm that the finished layout reports no shortfall for, the C606 pair and the two R105 pairs named above included. Out of scope is a pair of 1.5 mm or more.
         # The layout rule check on the re-laid mains side reports twelve pairs of pads of one part short of the 2.0 mm pad-to-pad terminal clearance, so the record holds twelve clearance entries, each for the one pair it names.
@@ -345,6 +418,72 @@ class MainsToMainsRecord(unittest.TestCase):
             self.assertTrue(any(key in p.message for p in problems), key)
         _, problems = reading(dict(data, accepted_exceptions=[dict(first, between=["T701.2"])] + data["accepted_exceptions"][1:]))
         self.assertTrue(any("between" in p.location for p in problems))
+
+    def test_the_pump_triac_entries_equal_the_land_the_board_draws_and_a_fault_in_either_is_refused(self):
+        # SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN.C1: accepted_exceptions holds four mains_to_mains creepage entries for the pump triacs, one for each of T701 and T711 for the tab pad (pad 2) against each outer lead pad (pads 1 and 3) of the two-lead land the main board draws for it, which has no middle-lead pad, each with accepted_mm 2.0, and holds no entry naming a pad the land lacks, so none for a pair of lead pads of one triac. Each such entry's accepted_mm equals the edge-to-edge distance between its two pads read from that land, to 0.01 mm, which is at or above the signed terminal clearance and under the signed creepage; it names the one pair of pads it excuses in between; its reason and bounding element are each non-empty and name the tab pad and the lead pad; and it carries the owner's accepted_by and accepted_on, dated no later than the record. A pair at or above the signed creepage has no entry. Out of scope: choosing a different triac, the owner's acceptance, the entries for R105 and the 1206 series resistors that their own leaves hold, and the mains-to-low-voltage entries.
+        _, data = committed()
+        pads = triac_pads()
+        check_triac_entries(self, data, pads)
+        # the land's own distances: the tab pad stands 2.00 mm from each outer lead pad
+        import board_geometry
+        for ref, land in pads.items():
+            by = {pad.number: pad for pad in land}
+            self.assertAlmostEqual(board_geometry.polygon_distance(by["2"].outline(), by["1"].outline()), 2.0, delta=0.01, msg=ref)
+            self.assertAlmostEqual(board_geometry.polygon_distance(by["2"].outline(), by["3"].outline()), 2.0, delta=0.01, msg=ref)
+
+        import copy
+
+        def entries_of(changed):
+            return dict(data, accepted_exceptions=changed)
+
+        def edit(ref, other, **fields):
+            """The record with the entry for the tab pad and `other` of `ref` changed."""
+            target = frozenset((f"{ref}.2", f"{ref}.{other}"))
+            return entries_of([dict(e, **fields) if "between" in e and frozenset(e["between"]) == target else e for e in data["accepted_exceptions"]])
+
+        def added(between):
+            entry = next(e for e in data["accepted_exceptions"] if e.get("between") and e["between"][0] == "T701.2")
+            return entries_of(data["accepted_exceptions"] + [dict(entry, between=between)])
+
+        def removed(ref, other):
+            target = frozenset((f"{ref}.2", f"{ref}.{other}"))
+            return entries_of([e for e in data["accepted_exceptions"] if not ("between" in e and frozenset(e["between"]) == target)])
+
+        def moved(ref, gap):
+            """The land of `ref` with its pad 1 moved along x so that its gap to the tab pad is `gap` mm."""
+            land = []
+            for pad in pads[ref]:
+                pad = copy.copy(pad)
+                if pad.number == "1":
+                    pad.centre = (pad.centre[0] + gap - 2.0, pad.centre[1])
+                land.append(pad)
+            return dict(pads, **{ref: land})
+
+        faults = [
+            ("accepted_mm 2.05, over 0.01 off the land", edit("T701", "1", accepted_mm=2.05), pads),
+            ("accepted_mm 1.9", edit("T711", "3", accepted_mm=1.9), pads),
+            ("lead-pair entry for T711", added(["T711.1", "T711.3"]), pads),
+            ("lead-pair entry for T701", added(["T701.1", "T701.3"]), pads),
+            ("entry removed", removed("T701", "3"), pads),
+            ("entry removed for T711", removed("T711", "1"), pads),
+            ("entry for a pad the land lacks", added(["T701.2", "T701.4"]), pads),
+            ("entry for the middle lead pad against a lead", added(["T701.4", "T701.1"]), pads),
+            ("constraint changed to clearance", edit("T701", "1", constraint="clearance"), pads),
+            ("reason without the tab pad", edit("T701", "3", reason="The lead pad of pin 3 stands 2.00 mm from pin 2."), pads),
+            ("reason without the lead pad", edit("T711", "3", reason="The tab pad stands 2.00 mm from pin 3."), pads),
+            ("empty bounded_by", edit("T711", "1", bounded_by=""), pads),
+            ("bounded_by of the other lead pad", edit("T711", "1", bounded_by=next(e for e in data["accepted_exceptions"] if e.get("between") == ["T711.2", "T711.3"])["bounded_by"]), pads),
+            ("no accepted_by", edit("T711", "1", accepted_by=""), pads),
+            ("accepted after the record", edit("T701", "1", accepted_on="2099-01-01"), pads),
+            ("land gap 1.5 mm, under the terminal clearance and the entry understating", data, moved("T701", 1.5)),
+            ("land gap 2.7 mm, at or above the creepage with an entry still present", data, moved("T701", 2.7)),
+            ("land gap 1.5 mm on T711", data, moved("T711", 1.5)),
+        ]
+        for label, record, land in faults:
+            with self.assertRaises(AssertionError, msg=label):
+                check_triac_entries(self, record, land)
+        # a land gap of 2.005 mm is within 0.01 mm of the entry and is read as the same land
+        check_triac_entries(self, data, moved("T701", 2.005))
 
     def test_the_record_holds_no_mains_to_low_voltage_entry_and_names_none_of_the_bought_parts(self):
         # SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C6: The committed record holds no accepted_exceptions entry of pair mains_to_low_voltage and no entry naming a pad of U601, U602, K201, K731 or K741, because the slots between their pad rows hold the gaps at the signed figure and the check reports no shortfall for them. The check's own reader still reads a mains_to_low_voltage creepage entry in the check's form with no problem and refuses a pair kind outside its vocabulary. The division record's judgement of the four parts is unchanged: the figures inside the parts the board's gaps do not measure stay recorded there against the signed figure and are not excused by an entry. Out of scope is the owner's decision on those figures.
