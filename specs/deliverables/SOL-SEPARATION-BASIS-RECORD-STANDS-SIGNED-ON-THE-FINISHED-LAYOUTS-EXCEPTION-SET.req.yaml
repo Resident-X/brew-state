@@ -38,6 +38,6 @@ links:
   - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: 9a350b50571e400190dbaaa390855c9e4ab239a9de7add0ea2c0ca047783dda3
+  confirmer: claude-sonnet-5-5 reviewer executor
+  fingerprint: 2a2c36f9298ce1db06934ba47fad76a4365fe61881da1e463cf900a4e03d1add
   gating_profile: ""

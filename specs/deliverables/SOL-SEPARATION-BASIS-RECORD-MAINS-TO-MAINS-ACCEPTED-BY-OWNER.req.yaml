@@ -45,6 +45,6 @@ links:
   - target: DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: 1dd0fca9a0448c5f3bccc09d93da45f763eeeb2dd36a0cc00d01ffaaa30880d7
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 16da503be2ddbde19717b2cc74740bdb03f029d941932eb475011925a6119a50
   gating_profile: ""
