@@ -2,7 +2,7 @@ id: EV-SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED-
 type: evidence
 title: inspection evidence for SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C3
 status: active
-version: 1
+version: 2
 result: pass
 method: inspection
 observed_at: "2026-11-17T11:15:00Z"
@@ -10,11 +10,11 @@ valid_until: until-superseded
 artifact:
   kind: external
   reference: hardware/sunbeam-em7000/main-board/main-board.kicad_pcb
-  artifact_version: 0de500cbd0f88772790040d00a5b876011e4a8cd
+  artifact_version: 923d3d75bd2e1fc91c0b318fc3f3197e89bfd4d4
   verifier: claude (AI agent)
 text: |-
-  Read the pad nets of hardware/sunbeam-em7000/main-board/main-board.kicad_pcb (sha256 26aaca07efb25a5db9a062c41bd09023ad70f26cd9f51740de86eabfd4d507a1) at commit 0de500cbd0f88772790040d00a5b876011e4a8cd. J524 pad 4 is net BREWA_RAW; R534 joins it to net BREWA_DIV and R536 joins that to net BREW_AN, which is the controller's pin 30. The controller pin table names pin 30 as PA6 with ADC12_INP3, against DS12110 Table 9.
-   This is the reading of the board after its folder was renamed from main-board-v2 to main-board and its title silk was replaced (DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME). The earlier reading, at sha256 9bcc3ebdd8a3c3f7e6d080947431c5375577251747638e63996a7dbebbad506e, read the same pads and nets. Between the two files only F.SilkS items differ (the old title text items are gone and the new title text and the logo polygons are added; a comparison of the two files shows no changed footprint, pad, track, via or zone), and the locked-copper comparison of the four Mains classes passes on all 266 recorded items, so every pad net stated above holds on this board; the pad nets were carried over on that ground and not read again pad by pad.
+  Read the pad nets of hardware/sunbeam-em7000/main-board/main-board.kicad_pcb (sha256 b36b950ac2737d64f7b2e15742923e3163507bc7427bc0c925cb0c74c84f12f8) at commit 923d3d75bd2e1fc91c0b318fc3f3197e89bfd4d4. J524 pad 4 is net BREWA_RAW; R534 joins it to net BREWA_DIV and R536 joins that to net BREW_AN, which is the controller's pin 30. The controller pin table names pin 30 as PA6 with ADC12_INP3, against DS12110 Table 9.
+   This is the reading of the board after its folder was renamed from main-board-v2 to main-board and its title silk was replaced (DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME). The earlier reading, at sha256 9bcc3ebdd8a3c3f7e6d080947431c5375577251747638e63996a7dbebbad506e, read the same pads and nets. Between the two files only F.SilkS items differ (the old title text items are gone and the new title text and the logo polygons and lines are added; a comparison of the two files shows no changed footprint, pad, track, via or zone), and the locked-copper comparison of the four Mains classes passes on all 266 recorded items, so every pad net stated above holds on this board; the pad nets were carried over on that ground and not read again pad by pad.
 links:
   - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C3
     type: satisfies
