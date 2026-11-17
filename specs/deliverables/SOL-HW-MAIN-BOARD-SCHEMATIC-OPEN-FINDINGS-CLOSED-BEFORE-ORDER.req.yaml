@@ -31,3 +31,7 @@ links:
     type: justified-by
   - target: DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 06eed6f3e19eee9242fb2337d26be1b891845addc72672ef749f043b19bbd57d
+  gating_profile: ""
