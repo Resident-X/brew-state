@@ -1,12 +1,12 @@
 id: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C2
 type: criterion
-title: Every entry added is unsigned and the record stays unsigned
+title: Every entry the record holds is signed by the owner and the record stands signed
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  Every entry this change adds has accepted_by and accepted_on empty, the record's own acceptance fields are unchanged, and the entries the record held before this change are unchanged. Out of scope is signing any entry.
+  Every entry the separation basis record holds names the owner in accepted_by and carries a valid accepted_on dated no later than the record's own, the record's own accepted_by and accepted_on are present, none is empty or a placeholder, and the check's reader finds no problem with the record. Inspection of the committed record against the check's reader. Out of scope is the owner's instruction itself.
 links:
   - target: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR
     type: criterion-of
