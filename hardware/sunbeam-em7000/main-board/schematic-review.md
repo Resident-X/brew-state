@@ -8429,3 +8429,73 @@ Round 7's text and the findings above are not altered. This index states, for ea
 | 7.76 circuit-proof.md B row cites JP403, which the netlist does not have | Closed by a change to the record. The row now cites JP301: the cable's VBUS reaches the board only through the cable position of JP301 (pins 2-3), and with the jumper on pins 1-2 as drawn, or absent, the cable's supply stays on the nets USB_VBUS and USB_VBUS_F (D401.5, D402, F401, TP413, JP301.3) and reaches no rail. Checked against the sheet record (sheets/30-logic-supply.yaml: JP301.1 +5V_MOD, JP301.2 +5V, JP301.3 USB_VBUS_F) and circuit-verdicts.md row JP301. No other file in the main-board folder names JP403 except this review's frozen rows. | circuit-proof.md, row 'USB panel port: back-feed, J402, D401' | none needed | not applicable |
 | 8.3 R545 carries 99.7 % of its power share in bootloader contention | Closed by a recorded reason. The state exists only while BOOT0 is held high for loading firmware on the bench; the current is at most 3.6 V / 216.8 ohm = 16.6 mA against the pin's 20 mA, and R545 was added on the owner's decision of 2026-11-10 for that case (circuit-verdicts.md row R545 and net FLOW_IN; circuit-proof.md row 'FLOW_IN on PB10'). The bootloader version is still read at bring-up. | circuit-verdicts.md R545; circuit-proof.md 'FLOW_IN on PB10' | none: a stated bound, not a failure | The bootloader version read at bring-up differs from the one the row assumes |
 
+
+
+#### Remaining round 7 findings (2026-11-18)
+
+The rows above list the findings that round 7's own text leaves open on a carried figure or a recorded decision. This table states the disposition of every other round 7 finding, from `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` (lettered acceptances, read as of 2026-11-18), `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` (its items are round 5 numbers; the owner re-affirmed it on 2026-11-06 for the round 6 and round 7 findings that continue them, so a finding carries by the item its round 6 parent continues), and the two amendments after round 7. A finding whose closure cannot be established from these records is marked UNRESOLVED and is not marked closed.
+
+| Finding | Class | Disposition | Where recorded |
+|---|---|---|---|
+| 7.1 | safety | Closed by decision, and by a change for F101's clip | (c), (c2) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; F101 is a soldered pigtail fuse since commit c74bf1e6 (amendment after round 7, 2026-11-07 to 2026-11-15); carried item 5.4, 5.24 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C3` |
+| 7.2(a) | function | Answered in part by a change, carried for the measurement | clamps D701, D711 (commit 71c492c5) hold turn-off to at most 527 V; (d) names the unfitted snubbers; carried item 5.21 to `DEL-HW-BRING-UP.C15` (TP702, TP712 against 600 V) |
+| 7.3 | function | Closed by decision | (f) for the 17 V at 5 A residue, (q) for the 23 V at 24 A figure, of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.2 to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` |
+| 7.4 | function | Closed by decision | (k) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` covers it (round 7 acceptance table) |
+| 7.5 | function | Closed by a change | R522 is `dnp yes` (commits 0a03876e, d3ed3135); amendment after round 7 'Closed by these changes' |
+| 7.6 | function | Closed by decision | (k) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` covers it (round 7 acceptance table) |
+| 7.7 | function | Closed by decision | (s) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.8 | function | Carried | item 5.3 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` (+5V read at the HX711 supply pins); (k) for the module-trip state |
+| 7.9 | function | Closed by a change | the seven-resistor change (schematic commit 7ba6398c, records e6b8d86e); section 'Change after round 7', finding 7.9 closed; the clamp-level limitation is carried in open-items.md row 11 |
+| 7.10 | function | Closed by decision | (r) and (k) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.1 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` |
+| 7.11 | function | Closed by a change and by decision | U791 half closed by the seven-resistor change; the driver half accepted in (z5), the change's re-judgement not run in (z2), of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.12 | function | UNRESOLVED | no acceptance, change or carried item names the wall board's drive level into MAINS_PRES_C and MAINS_PRES_S; open-items.md 'Wall-board levels on the mains-presence confirms' states the levels to be set by the wall board leaf but names no criterion that asks for it |
+| 7.13 | function | UNRESOLVED | part (b), the indicator forward voltage, is in item 5.8 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` (to `DEL-HW-BRING-UP.C15`); part (a), the anode rail's brown-out fall, is read at bring-up per open-items.md 'Brown-out timing of the anode rail' but no criterion is named for it |
+| 7.14 | function | Closed by decision | (s) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.15 | function | Closed by decision | (k) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` covers it (round 7 acceptance table) |
+| 7.16 | function | Closed by decision, carried for the rest | (r), (k), (b) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried items 5.1, 5.3 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` and `DEL-HW-BRING-UP.C15` |
+| 7.18 | function | Closed by a change | R522 `dnp yes` and U520, C521 fitted (commits 0a03876e, d3ed3135); amendment after round 7 'Closed by these changes'; the 99.7 % state is finding 8.3 above |
+| 7.19 | function | UNRESOLVED | round 6 finding 6.17 'continues as 7.19' and names no round 5 item; the same parts C412 and C413 are in 7.21, carried under item 5.7, but that identity is not recorded |
+| 7.20 | function | Carried | item 5.6 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15`, limit 2.58 pF |
+| 7.21 | function | Carried | item 5.7 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.22 | function | Carried | item 5.7 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.23 | function | Carried | item 5.8 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.24 | function | Carried | item 5.8 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.25 | function | Carried | item 5.8 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.26 | function | Carried | item 5.9 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.27 | function | Closed by decision, carried for the reading | (q) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.11 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.28 | function | Carried | item 5.12 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15`; (d) covers the snubber rows |
+| 7.29 | safety | Closed by decision, carried for the reading | (d) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` as to leaving RT301 unfitted until measured; carried item 5.10 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` and `DEL-HW-BRING-UP.C4`; open-items.md M11 |
+| 7.30 | function | Closed by decision, carried for the dip | (z), (z6) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.13 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.31 | function | Carried | item 5.14 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` (C302 reverse voltage); open-items.md M17 |
+| 7.33 | safety | Closed by decision | (a) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` as extended on 2026-11-06 to a shorted D205 or D206; carried item 5.15 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C4` and `DEL-HW-BRING-UP.C14` |
+| 7.36 | safety | Closed by decision, carried for the figures | (g), (z3) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; (z8) carries the impulse withstand (named under 7.17) to `DEL-HW-BRING-UP.C15` |
+| 7.37 | function | Closed by decision | (v) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.18 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` |
+| 7.38 | function | Closed by decision | (f) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried items 5.18, 5.2 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` |
+| 7.39 | function | Closed by decision | (v) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.18 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` |
+| 7.40 | safety | Closed by decision, carried for the reading | (z4) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.19 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C4` |
+| 7.41 | quality | Carried | item 5.20 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` and `.C4` |
+| 7.42 | quality | Closed by decision, carried for the measurement | (d) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.21 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.43 | quality | Carried | item 5.22 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` |
+| 7.46 | quality | Carried | item 5.23 (pulse ratings of R704, R705, R714, R715) of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15`; open-items.md row M14 |
+| 7.47 | quality | Carried, revisit recorded | item 5.23 (T701) of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7`; T701 row of 'Revisits of graded figures' in docs/sunbeam-em7000/controller-board-design-constraints.md, entry S-40 of owner-sign-off.md |
+| 7.49 | quality | Closed by decision | (u) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; revisit row in docs/sunbeam-em7000/controller-board-design-constraints.md |
+| 7.50 | quality | UNRESOLVED | round 6 finding 6.46 names no round 5 item; (a) covers a shorted Z201 or Z202 and the removal time, not the zener's pulse rating (round 7 text); no later record carries it |
+| 7.51 | quality | Closed by decision | (u) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.52 | safety | UNRESOLVED | JP303 is a mains-side wire link (LINE to LINE_MOD) carrying the module's input current and its 40 A typical cold-start inrush, whose maximum is unsourced (open-items.md M11); no record states a rating source for the wire, so no reason is recorded here and no acceptance names it; open-items.md line 64 states a requirement for the wire and says it does not close the rating |
+| 7.53 | quality | UNRESOLVED | round 6 finding 6.48 names no round 5 item; item 5.14 carries C302's reverse voltage, not its ripple current, and the ripple current is in no carried item |
+| 7.54 | quality | Carried | item 5.23 (drive levels of Y401, Y402) of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15`; open-items.md M4, M5 |
+| 7.55 | quality | Closed by decision | (u) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.56 | quality | Closed by decision | (t) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.57 | quality | Closed by decision, carried for the reading | (k), (r) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; carried item 5.3 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `DEL-HW-BRING-UP.C15` |
+| 7.58 | quality | Closed by decision | (t) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.59 | quality | UNRESOLVED | R828: no acceptance, change or carried item names it (the buzzer type is pending in open-items.md, 'Buzzer type and impedance'); (u) does not list R828 and derating-policy.yaml has no entry for it |
+| 7.60 | quality | Closed by decision | (u) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; revisit row in docs/sunbeam-em7000/controller-board-design-constraints.md |
+| 7.61 | quality | Closed by decision in part; UNRESOLVED for the ripple current | the 10.3 V level by (r) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` and the reverse voltage by item 5.14 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` (to `DEL-HW-BRING-UP.C15`); C792's ripple current is in no carried item |
+| 7.62 | quality | Closed by a change and by decision | harness-short half closed by the seven-resistor change (section 'Change after round 7', 7.62 closed); cable-position half by (b), (r) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER` |
+| 7.64 to 7.68, 7.72 to 7.74 | cosmetic | Carried | items 5.25 to 5.28 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7` (the sheets are rendered again there) |
+| 7.69, 7.70, 7.71 | cosmetic | Carried, by class | round 6 findings 6.63 to 6.65 name no round 5 item; the defects are overprinted text and net labels where wires would do, the class items 5.27 and 5.28 of `DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER` carry to `SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C7`; the lineage is by class and not stated |
+| 7.75, 7.80 | quality | UNRESOLVED | the controller has no VBUS sense; round 6 finding 6.69 names no round 5 item and round 7 states no acceptance names it; the port is a bench state under (b) but no record carries the bootloader enumeration question to a criterion |
+| 7.77, 7.83 | quality | Closed by a change | R522, R572, R576, R643, R648 carry native `dnp yes` (commits 0a03876e, d3ed3135); amendment after round 7 'Closed by these changes' |
+| 7.78, 7.81 | quality | Closed by decision, carried for the readings | (n) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; `DEL-HW-BRING-UP.C5`, `DEL-HW-BRING-UP.C22` |
+| 7.79, 7.82 | quality | Closed by decision | (t) of `DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER`; (z2), (z7) for 7.82 |
+| 7.84 | cosmetic | UNRESOLVED | round 6 finding 6.74 names no round 5 item; no change, record or decision after round 7 addresses the MAINS_PRES_C and MAINS_PRES_S port directions |
