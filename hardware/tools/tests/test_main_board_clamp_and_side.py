@@ -377,8 +377,14 @@ def unresolved_clamps(limits, placed, netlist_pins):
     return found
 
 
-def uncommented(name, text):
-    """The lines of a record that are not whole-line comments, for the formats that have them."""
+def uncommented(name, text, folder=None):
+    """The lines of a record that are not whole-line comments, for the formats that have them.
+
+    The circuit-proof decks and generators are read whole, comments included, so no comment there may still name the old part. The yaml
+    records keep their comment exemption: pin-limits.yaml and catalogue-extract.yaml each carry one historical comment explaining the replaced part.
+    """
+    if folder == "circuit-proof":
+        return text.split("\n")
     if name.endswith((".yaml", ".py", ".cir")):
         return [line for line in text.split("\n") if not line.lstrip().startswith(("#", "*"))]
     return text.split("\n")
@@ -395,7 +401,7 @@ def old_number_lines(files=None):
     """Every non-comment line of the records that names the old number, as file:line."""
     found = []
     for path in files or RECORD_FILES:
-        for number, line in enumerate(uncommented(path[-1], read_text(*path)), 1):
+        for number, line in enumerate(uncommented(path[-1], read_text(*path), path[0] if len(path) > 1 else None), 1):
             if OLD_NUMBER in line:
                 found.append(f"{'/'.join(path)}:{number}")
     return found
@@ -848,6 +854,11 @@ class RecordsNameTheSwappedPart(Committed):
         self.assertEqual(uncommented("x.yaml", "# C47546 history\nlcsc: C78606"), ["lcsc: C78606"])
         self.assertEqual(len(uncommented("x.yaml", "lcsc: C47546")), 1)
         self.assertEqual(len(uncommented("x.md", "# heading naming C47546")), 1)
+        deck = "* clamp deck\n# generator comment still naming C47546\n.model D"
+        self.assertEqual(sum(OLD_NUMBER in line for line in uncommented("C_x.py", deck, "circuit-proof")), 1)
+        self.assertEqual(sum(OLD_NUMBER in line for line in uncommented("C_x.cir", "* deck naming C47546", "circuit-proof")), 1)
+        self.assertEqual(sum(OLD_NUMBER in line for line in uncommented("pin-limits.yaml", "# SOT-23 BAT54S (C47546) to this part", None)), 0)
+        self.assertEqual(sum(OLD_NUMBER in line for line in uncommented("pin-limits.yaml", "# SOT-23 BAT54S (C47546) to this part", "sheets")), 0)
 
 
 class SheetFigures(Committed):
