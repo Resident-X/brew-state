@@ -60,7 +60,7 @@ No record holds an idle current figure. The estimate below is derived here and i
 | Source, all outputs off | Estimate |
 |---|---|
 | IRM-20 supply module (about 0.3 to 0.5 A of 5 V load: controller, interlock coil, indicators; 78 % efficient; the rms current of a capacitor-input front end about twice its real component) | 20 to 40 mA |
-| C101, 0.1 uF across line and neutral, 253 V at 50 Hz (7.2 mA at 230 V; 9.5 mA at 60 Hz and 230 V) | 7.9 mA, in quadrature with the voltage |
+| C101, 0.1 uF across line and neutral, 253 V at 50 Hz (7.2 mA at 230 V; 8.7 mA at 60 Hz and 230 V, 9.5 mA at 60 Hz and 253 V) | 7.9 mA, in quadrature with the voltage |
 | Zero-crossing detector, about 143 kohm | 1.8 mA |
 | Voltage divider, 253 V over 0.9 Mohm | 0.28 mA |
 | Discharge strings R101 to R104, 1 Mohm | 0.25 mA |
