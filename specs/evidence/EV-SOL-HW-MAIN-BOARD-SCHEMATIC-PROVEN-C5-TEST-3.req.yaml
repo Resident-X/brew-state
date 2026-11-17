@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C5-TEST-3
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T14:25:50.974038Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_main_board_schematic_records.py::test_the_four_design_records_and_the_catalogue_extract_exist_and_the_extract_states_its_read_date_and_age_limit
+  artifact_version: 83938560b5bbae372eeca04f2011b04655286708
+attested_by: crun-6c364a3e2ae1007e
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C5
+    type: satisfies
