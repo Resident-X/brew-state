@@ -3,16 +3,16 @@ type: deliverable
 category: solution
 title: The re-signing item's day counts for the record's 42 exceptions are corrected to 23, 3 and 16 and a test pins them
 status: active
-version: 1
+version: 2
 text: |
-  Corrects the day counts that the re-signing item states for the signed separation basis record. The sealed item's second criterion says the record's 42 exceptions read 2026-11-06 for 25, 2026-11-07 for 3 and 2026-11-14 for 14; the committed record holds 23 on 2026-11-06, 3 on 2026-11-07 and 16 on 2026-11-14, because the 14 November acceptance dated 16 entries, not 14. The record is right and the criterion's counts are wrong; the record's own test checks each entry's day against the rule that governs it, not the totals, so the wrong totals were never caught.
+  Corrects the day counts that the re-signing item states for the signed separation basis record. The re-signing item's second criterion said the record's 42 exceptions read 2026-11-06 for 25, 2026-11-07 for 3 and 2026-11-14 for 14; the committed record holds 23 on 2026-11-06, 3 on 2026-11-07 and 16 on 2026-11-14, because the 14 November acceptance dated 16 entries, not 14. The record is right and the criterion's counts were wrong; the record's own test checked each entry's day against the rule that governs it, not the totals, so the wrong totals were never caught.
 
   Settled for the build:
   - A test of the separation basis record reads the committed record and asserts the 42 entries split 23, 3 and 16 across 2026-11-06, 2026-11-07 and 2026-11-14, and fails on any other split.
-  - The sealed item's second criterion is not edited; it is frozen with its evidence. This item's criterion governs the totals, and the record is not changed.
+  - The re-signing item's second criterion carried evidence and was therefore frozen against in-place edits, so it was not corrected in place. It has since been deprecated with the wrong totals named, and the criterion of this item governs the totals. The record is not changed.
   - Out of scope: any figure, pair, distance, reason or signer of the record, and the days themselves.
 rationale: |
-  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks of the signed record: the day each exception was accepted is stated as it is. A criterion that states 25 and 14 where the record holds 23 and 16 misleads a reader who checks the record against it; the criterion said the wrong thing and is left as what was verified, while the totals that govern are pinned by a test here.
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks of the signed record: the day each exception was accepted is stated as it is. A criterion that stated 25 and 14 where the record holds 23 and 16 misleads a reader who checks the record against it; that criterion said the wrong thing and has been deprecated, naming the wrong totals, while the totals that govern are pinned by a test here.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
