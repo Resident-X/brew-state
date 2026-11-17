@@ -21,8 +21,8 @@ key_signals:
   - {name: "Coil high end (+5V at the relay)", net: "+5V", test_point: TP206, block: "interlock: the supply the coil sees (must stay at or above 4.75 V under the coil's load)"}
   - {name: "Neutral on the plug side of the shunt", net: NEUTRAL_IN, test_point: TP105, block: "mains entry / shunt"}
   - {name: "Neutral pour above the shunt", net: NEUTRAL, test_point: TP106, block: "mains entry / shunt: every load's return and the measurement reference"}
-  - {name: "Neutral on the plug side of the shunt, voltage pad", net: NEUTRAL_IN, test_point: TP107, block: "mains entry / shunt: second pad on the plug side of R105, read with TP108 for the voltage across the shunt (TP105 and TP106 carry the current)"}
-  - {name: "Neutral pour above the shunt, voltage pad", net: NEUTRAL, test_point: TP108, block: "mains entry / shunt: second pad on the neutral pour beside R105, read with TP107 for the voltage across the shunt"}
+  - {name: "Neutral on the plug side of the shunt, voltage pad", net: NEUTRAL_IN, test_point: TP107, block: "mains entry / shunt: second pad on the plug side of R105, position check in the NEUTRAL_IN pour, not the shunt's own voltage; the shunt is calibrated through the sense channel (TP604, AMC_AIN1P) or from the shunt's own pads, not through TP105 to TP108 (layout plan TEST-4)"}
+  - {name: "Neutral pour above the shunt, voltage pad", net: NEUTRAL, test_point: TP108, block: "mains entry / shunt: second pad on the neutral pour beside R105, position check in the NEUTRAL pour, not the shunt's own voltage; the shunt is calibrated through the sense channel (TP604, AMC_AIN1P) or from the shunt's own pads, not through TP105 to TP108 (layout plan TEST-4)"}
 supply_inputs:
   - {pin: "J102.1", net: LINE_IN, class: supply_input, why: "tab 2: the retained mains lead's live conductor (brown, from the plug); powers the module, the controller and every load through F101 and JP101"}
   - {pin: "J103.1", net: NEUTRAL_IN, class: supply_input, why: "tab 3: the retained mains lead's neutral (blue, from the plug); the return of the same supply, through the shunt R105 to NEUTRAL"}
