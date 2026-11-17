@@ -1,6 +1,6 @@
 # Phase 2 change list: pin map A on the main board
 
-Written 2026-11-10 for `PLAN.md` phase 2; the pins of seven nets (AMC_CS, AMC_DRDY, WT1_DATA, WT1_CLK, WT2_DATA, WT2_CLK, BUZZER) were moved again during v2 routing and the rows below state those final pins (the pin each had in pin map A is given beside it); the final assignment is `controller-pin-table.md`. Read-only survey of the worktree at its current commit; nothing here has been applied. Pin map A with two changes: AMC_RESET on PC8 (pin 65) and ANODE_GATE stays on PB5 (pin 91). The S-side swap of pins 81 to 88 is not adopted, so the order below is the one pin map A gives. Source of the map: `/Users/david/real5/layoutopinion/pinmap_a.json` and OPINION2 section 2, with the two changes applied (checked against the scratch model `/Users/david/real5/v2go/place2.py`).
+Written 2026-11-10 for `PLAN.md` phase 2; the pins of seven nets (AMC_CS, AMC_DRDY, WT1_DATA, WT1_CLK, WT2_DATA, WT2_CLK, BUZZER) were moved again during v2 routing and the rows below state those final pins (the pin each had in pin map A is given beside it); the final assignment is `controller-pin-table.md`. Read-only survey of the worktree at its current commit; nothing here has been applied. Pin map A with two changes: AMC_RESET on PC8 (pin 65) and ANODE_GATE stays on PB5 (pin 91). The S-side swap of pins 81 to 88 is not adopted, so the order below is the one pin map A gives. Source of the map: a scratch file kept outside the repository and OPINION2 section 2, with the two changes applied (checked against the scratch model a scratch file kept outside the repository).
 
 ## 1. Decisions that fix the shape of the change
 
@@ -13,7 +13,7 @@ Written 2026-11-10 for `PLAN.md` phase 2; the pins of seven nets (AMC_CS, AMC_DR
 
 ## 2. The moved pins (25 nets)
 
-Pin number is the LQFP100 pin. Evidence: DS12110 Rev 11 Table 9 (LQFP100 column) and Table 10, local text copy `/Users/david/real5/schemrev7/ds/stm32h743.txt` (Table 9 rows from line 4070, Table 10 from line 6216), parsed to `/Users/david/real5/layoutopinion/af.json`. A plain GPIO needs no alternate function: every port pin offers GPIO, and every pin below lists EVENTOUT as AF15 in Table 9.
+Pin number is the LQFP100 pin. Evidence: DS12110 Rev 11 Table 9 (LQFP100 column) and Table 10, local text copy kept outside the repository (Table 9 rows from line 4070, Table 10 from line 6216), parsed to a scratch file kept outside the repository. A plain GPIO needs no alternate function: every port pin offers GPIO, and every pin below lists EVENTOUT as AF15 in Table 9.
 
 | Net | Old pin | New pin | Function on the new pin | Evidence |
 |---|---|---|---|---|

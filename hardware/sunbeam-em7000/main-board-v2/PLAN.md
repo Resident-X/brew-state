@@ -16,7 +16,7 @@ Written 2026-11-10 on branch `req/DEL-MAINTENANCE/pre-order-check-fixes` (HEAD 4
 | Folder | `hardware/sunbeam-em7000/main-board-v2/`, permanent. The KiCad file stem stays `main-board` (`main-board.kicad_pro`, `.kicad_sch`, `.kicad_pcb`, `circuit-proof/main-board.cir`). | `task hw:history` (`hardware/tools/board_history.py`) reads every version of the board file at its path and judges the placement section against the first commit with a footprint and the first commit with copper. At the old path those are v1 commits from weeks ago, so a re-placed board at `main-board/` can never pass. A new path starts a clean history. Renaming v2 back to `main-board/` at the end would merge the two histories again and fail the same way, so v2 keeps its folder. |
 | v1 at the end | Removed from the tree on this branch (in the seed phase, not at the end), frozen as the local tag `main-board-v1-final` on the commit just before removal. | `board_check.py` checks every tracked `.kicad_pro` (`discover()`), so two tracked boards double every full check (about 2.5 h to about 5 h). v1 also cannot pass parity once U203, R208 and C206 are in the shared schematic. A worktree of the tag gives read access for comparisons. Pushing the tag needs David's go-ahead. |
 | Pin map | Pin map A with the two changes above. | See the next section. |
-| Layer count | Six, same stack-up, same In1 ground and In2 mains pours; amended 2026-11-12: In2 also carries a `+3V3` pour over the low-voltage digital area (`layout-plan.md` Stack). | Safety first: no separation re-proof, no change to the signed basis. The pilot (`/Users/david/real5/trialroute/pilot/REPORT.md`) put 1 to 3% of routed length on inner layers, so six layers gives margin, not cost risk. |
+| Layer count | Six, same stack-up, same In1 ground and In2 mains pours; amended 2026-11-12: In2 also carries a `+3V3` pour over the low-voltage digital area (`layout-plan.md` Stack). | Safety first: no separation re-proof, no change to the signed basis. The pilot (a scratch report kept outside the repository) put 1 to 3% of routed length on inner layers, so six layers gives margin, not cost risk. |
 | Via drill (0.2 vs 0.3 mm, quote pending) | A parameter. Every ordinary via is 0.3/0.6 mm whatever the quote says. Only the vias inside exposed pads (U620, U621 and any other exposed pad) wait on the quote. | A larger drill never costs more and the pilot never needed 0.2 mm. At six layers JLC fills vias up to 0.55 mm across by default, so 0.3/0.6 vias are left open, which is fine away from pads. Exposed-pad vias must be filled or tented: 0.2/0.5 (filled by default) if the quote shows 0.2 mm is free, otherwise 0.3/0.6 with paid filling, otherwise moved out of the pad. That is a late, local swap of about 18 vias, applied in phase 6 before those parts are locked. |
 | Vias in SMD pads | None, except exposed thermal pads. | v1 needed an owner acceptance for six. v2 designs them out. It becomes a board item (below). |
 | Via drill update (owner, 2026-11-10) | The quote shows 0.2 mm drills add about $50 and force the 4-wire test, as a capability price, not per hole. Once chosen, 0.2 mm is usable anywhere it helps. Filled vias must have a pad of at most 0.5 mm (JLCPCB leaves larger ones open). | Owner's live quote. Whether 0.2 mm is chosen at all is decided in phase 3 on the escape evidence; the 0.5 mm limit is read as the pad, the safe reading. |
@@ -29,7 +29,7 @@ Written 2026-11-10 on branch `req/DEL-MAINTENANCE/pre-order-check-fixes` (HEAD 4
 
 ## Pin map A: adopt now
 
-**What it buys.** OPINION2's scoring (straight-line, today's destinations): at (95, 60) rotated 180, wrong-side pins go from 19 to 15, length from 2145 to 1964 mm, and crossings from 276 to 191. At the best grid point (100, 75) it reaches 5 wrong-side pins and 147 crossings. The pilot was run on pin map A with the MCU at (100, 75) rot 180 (`/Users/david/real5/trialroute/plan_A.json`). Where nets completed, they came out at 20 to 40% of as-built length (for example PT1_CS 36.8 mm and 0 vias, against 175 mm and 7 vias). So pin map A is already the evidence base. Keeping today's pins would mean re-running the probe on a placement nobody has tested.
+**What it buys.** OPINION2's scoring (straight-line, today's destinations): at (95, 60) rotated 180, wrong-side pins go from 19 to 15, length from 2145 to 1964 mm, and crossings from 276 to 191. At the best grid point (100, 75) it reaches 5 wrong-side pins and 147 crossings. The pilot was run on pin map A with the MCU at (100, 75) rot 180 (a scratch file kept outside the repository). Where nets completed, they came out at 20 to 40% of as-built length (for example PT1_CS 36.8 mm and 0 vias, against 175 mm and 7 vias). So pin map A is already the evidence base. Keeping today's pins would mean re-running the probe on a placement nobody has tested.
 
 **What it reopens.** All of this is bounded, and most of it is owed anyway:
 - **Schematic.** `31-controller.kicad_sch` (the labels sit on the MCU pins, so every moved net is a label and no-connect move there), and the rename SPI2 to SPI3 of three nets in `main-board.kicad_sch`, E1 and E3. The other label sheets keep their net names and are not touched. Then `schematic-spec.yaml` and `sheets/*.yaml`. `PHASE2-CHANGE-LIST.md` lists every item.
@@ -53,7 +53,7 @@ Written 2026-11-10 on branch `req/DEL-MAINTENANCE/pre-order-check-fixes` (HEAD 4
 ## Folder and tooling facts this plan relies on
 
 - `task hw:verify` runs `board_check.py --root .`, which finds designs from git's tracked `.kicad_pro` files. There are no subset flags. A tracked schematic or layout with no project beside it fails `design_discovery`.
-- The round gate's board tier (`BOARD_READS` in `firmware/tools/round_gate.py` covers `hardware/`) runs on any change under `hardware/`. A KiCad file in the working tree that git does not track fails the round. So every scratch copy lives outside the worktree (under `/Users/david/real5/`).
+- The round gate's board tier (`BOARD_READS` in `firmware/tools/round_gate.py` covers `hardware/`) runs on any change under `hardware/`. A KiCad file in the working tree that git does not track fails the round. So every scratch copy lives outside the worktree (outside the repository).
 - `separation-basis.yaml` and `controller-part.yaml` sit in the machine folder `hardware/sunbeam-em7000/` and apply to every design under it. The design-folder records (`pin-allocation.yaml`, `parts-specification.yaml`, `catalogue-extract.yaml`, `derating-policy.yaml`, `pin-limits.yaml`, `board-rules.yaml`, `manufacturer-limits.yaml`, `schematic-spec.yaml`, `controller-input-map.yaml`) are found by the nearest-folder rule, so v2 carries its own copies.
 - `task hw:history -- --board main-board.kicad_pcb` (run from the v2 folder) needs, in this order of commits:
   1. `layout-plan.md` floorplan and plan, `circuit-proof.md`, its netlist and inputs, and `bring-up-provision.md`, all before the first commit whose board holds a footprint;
@@ -103,7 +103,7 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 
 ### Phase 1: scratch go/no-go on the re-placed hardest area (about 6 to 10 h, mostly agent time)
 
-**Purpose.** Prove, before any committed design work, that the re-placed low-voltage half routes cleanly on six layers. Everything here runs in `/Users/david/real5/trialroute/` on copies.
+**Purpose.** Prove, before any committed design work, that the re-placed low-voltage half routes cleanly on six layers. Everything here runs outside the repository, on copies.
 
 **Inputs.**
 - `placed_A06` with pin map A;
@@ -133,7 +133,7 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 4. Sub-agent: write the proof rows (reset/boot state of each moved pin, the SPI3 bootloader-slave case, PB12 5 V exposure), then re-export the netlist (`circuit-proof/main-board.cir`).
 5. Run schematic review round 8 as one full round over the pin map and U201/U203 delta, and the whole checklist, because it must close the schematic review. Use fresh reviewers in hand-built group sessions, since the review kit refuses this board.
 
-**Inputs.** The phase 1 pass, the AF table check (`/Users/david/real5/layoutopinion/af.py` against DS12110 Table 9), and AN2606.
+**Inputs.** The phase 1 pass, the AF table check (a scratch script kept outside the repository, run against DS12110 Table 9), and AN2606.
 
 **Output.** The committed schematic and records. Round 8 is recorded in `schematic-review.md`, which is copied into v2 with rounds 1 to 7 intact.
 
@@ -325,7 +325,7 @@ Tier names follow CLAUDE.md. "Skill would pick" is what `/stage0-build`, `/stair
 **Purpose.** Close the layout review on a full round, with the pre-order check passing.
 
 **Steps.**
-1. Round 1, full. Run `task hw:views`, then the full `task hw:verify` in a scratch clone of the committed branch: detached, nice, with a Monitor on exit, using the pattern in `/Users/david/real5/final3/run.sh`. Then fresh reviewers judge every checklist item from the views.
+1. Round 1, full. Run `task hw:views`, then the full `task hw:verify` in a scratch clone of the committed branch: detached, nice, with a Monitor on exit, using the pattern of a scratch script kept outside the repository. Then fresh reviewers judge every checklist item from the views.
 2. Fix by class sweep, not by instance (SOL-BOARD-REVIEW-LOOP-PROPORTIONATE).
 3. Round 2, narrow, over the changed regions. It needs another full check run.
 4. Round 3, full, the closing round, on the final design files.
@@ -402,7 +402,7 @@ The scope is the hardest area: the MCU ring, the measurement cell (U620, U621, U
 
 ## Phase 1 outcome (2026-11-10): accepted as a conditional go
 
-Evidence: `/Users/david/real5/v2go/FINAL/HANDOFF.md` and `README.txt` (scratch, never committed). Pin map A with AMC_RESET on PC8 (pin 65) and ANODE_GATE on PB5 (pin 91), MCU at (100, 75) rotated 180, U203, R208 and C206 beside U201, the router with in-search own-net crossing avoidance.
+Evidence: a scratch handoff note and README kept outside the repository (never committed). Pin map A with AMC_RESET on PC8 (pin 65) and ANODE_GATE on PB5 (pin 91), MCU at (100, 75) rotated 180, U203, R208 and C206 beside U201, the router with in-search own-net crossing avoidance.
 
 | Criterion | Result | Reading |
 |---|---|---|
@@ -551,7 +551,7 @@ Rungs 3 to 6 each need a reason a lower rung could not give. A move up is writte
 
 ## Phase 1b outcome (2026-11-10): the Phase 1 placement re-run with the four carried board items as hard constraints
 
-Evidence: `/Users/david/real5/v2go2/HANDOFF.md` (scratch, never committed). The annealer carried (a) to (d) as distance and keep-out constraints, and an independent script (`check_abcd.py`, real courtyards, not the optimiser's inflated ones) measured them afterwards. Pin map A as adopted, MCU rotated 180 degrees, MCU position free (grid of (106..112, 70..80) tried; (108, 79) chosen), the north band (y 4 to 34) opened to the annealer and the router, the reed box and its two pad exits modelled as router obstacles. Sensing set = the 121 parts the committed `analog sensing region parts` rule lists, minus the isolated-converter cell (U601, Y601, C609 to C612, R609, R613 to R615, which are held to D4 only); the test points TP602 and TP609 stay in the set. Controller block = U401, C401 to C407, C412, C413, Y401, Y402. Bodies: the module's fab outline (29.6, 48.75)-(82.0, 75.95), K201's courtyard (19.8, 96.4)-(60.6, 107.5).
+Evidence: a scratch handoff note kept outside the repository (never committed). The annealer carried (a) to (d) as distance and keep-out constraints, and an independent script (`check_abcd.py`, real courtyards, not the optimiser's inflated ones) measured them afterwards. Pin map A as adopted, MCU rotated 180 degrees, MCU position free (grid of (106..112, 70..80) tried; (108, 79) chosen), the north band (y 4 to 34) opened to the annealer and the router, the reed box and its two pad exits modelled as router obstacles. Sensing set = the 121 parts the committed `analog sensing region parts` rule lists, minus the isolated-converter cell (U601, Y601, C609 to C612, R609, R613 to R615, which are held to D4 only); the test points TP602 and TP609 stay in the set. Controller block = U401, C401 to C407, C412, C413, Y401, Y402. Bodies: the module's fab outline (29.6, 48.75)-(82.0, 75.95), K201's courtyard (19.8, 96.4)-(60.6, 107.5).
 
 **Result in one line.** The four items cannot all hold inside the plan's floorplan rectangles. Two further rules collide with them and one is a plan inconsistency. The strict placement routes worse than Phase 1 and the relaxed one routes at parity with the Phase 1 placement re-run on the same router. Neither meets criterion 6.
 
@@ -596,7 +596,7 @@ The failing sets are noisy by about plus or minus 8 connections between ordering
 
 ## Phase 1c outcome (2026-11-10): the Phase 1b relaxed placement re-run with the controller moved west and the low-voltage connectors freed
 
-Evidence: `/Users/david/real5/v2go3/HANDOFF.md` (scratch, never committed); same annealer, router, window and recipe as Phase 1b, so the routing rows compare like for like. Owner decisions modelled: sensing distance from the module and relay 17.5 mm (the annealer asks 17.6 so the independent measurement lands at or above 17.5); U401 centred at (104, 79) turned 180 degrees; J791 and J821 free in the box x 104 to 129, y 2 to 34.5 for their pin 1, rotation free; every other low-voltage connector, harness header and link position (J401, J402, J501 to J503, J520 to J525, J570, J571, J620 to J635, J761, J861, JP302, JP401, JP402, JP761, JP791, JP821) free on the board part x 66.3 and up that the router window covers; the mains tab pads, mains-region and barrier-column parts, JP301 and the reed J862 fixed; reed box, U302 cell, D401 and D402 near J402 as Phase 1b; crystals held 10 mm from every part the rules file does not exempt, J761 and J862 included; Q821, Q822 and R821 within 8 mm of J821 (R821's anchor to U401 pin 91 removed). U520 is an SN74LVC1G17 Schmitt buffer between `FLOW_F` and `FLOW_IN` (the flow input), so it follows J520, not J791.
+Evidence: a scratch handoff note kept outside the repository (never committed); same annealer, router, window and recipe as Phase 1b, so the routing rows compare like for like. Owner decisions modelled: sensing distance from the module and relay 17.5 mm (the annealer asks 17.6 so the independent measurement lands at or above 17.5); U401 centred at (104, 79) turned 180 degrees; J791 and J821 free in the box x 104 to 129, y 2 to 34.5 for their pin 1, rotation free; every other low-voltage connector, harness header and link position (J401, J402, J501 to J503, J520 to J525, J570, J571, J620 to J635, J761, J861, JP302, JP401, JP402, JP761, JP791, JP821) free on the board part x 66.3 and up that the router window covers; the mains tab pads, mains-region and barrier-column parts, JP301 and the reed J862 fixed; reed box, U302 cell, D401 and D402 near J402 as Phase 1b; crystals held 10 mm from every part the rules file does not exempt, J761 and J862 included; Q821, Q822 and R821 within 8 mm of J821 (R821's anchor to U401 pin 91 removed). U520 is an SN74LVC1G17 Schmitt buffer between `FLOW_F` and `FLOW_IN` (the flow input), so it follows J520, not J791.
 
 **Result in one line.** All the owner's constraints hold together in one overlap-free placement (`pl_a2s5`, variant A), the CLOCK-4 10 mm to J761 is met without an exemption, and the route is at parity with Phase 1b R (66, 67 and 73 connections failed of 351 on the main window over three net orders, against R's 66 to 85) with cleaner DRC lines. Criterion 6 (SPI3 trunk) still fails. Freeing the connectors helped feasibility, not the route count.
 

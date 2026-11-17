@@ -42,3 +42,6 @@ __pycache__/
 /.staircase/stage0-metrics.jsonl
 hardware/tools/tests/fixtures/review_baselines/*.lock
 hardware/**/3d-cache/
+# KiCad per-machine files: the editor's local history and the project's window state
+hardware/**/.history/
+*.kicad_prl
