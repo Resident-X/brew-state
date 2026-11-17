@@ -1,0 +1,14 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C3
+type: criterion
+title: The fitted wire of the module's inrush link carries a stated rating and the inrush arithmetic
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: 'Out of scope: measuring the inrush, fitting the inrush thermistor and the tab and link rating of the first-power link.'
+text: |
+  The inrush link's rating field in the parts specification states the wire requirement of 1.5 mm2 copper, insulation rated for 253 V rms and a 70 degC enclosure air. The board's record shows the inrush arithmetic: the entry fuse's 500 A2s melting integral against the supply module's 40 A typical inrush, the 50 A2s limit bring-up holds the measured integral to, and the 0.31 s a flat 40 A would take to use the fuse's 500 A2s. The measurement itself stays with bring-up.
+  Out of scope: measuring the inrush, fitting the inrush thermistor and the tab and link rating of the first-power link.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
+    type: criterion-of

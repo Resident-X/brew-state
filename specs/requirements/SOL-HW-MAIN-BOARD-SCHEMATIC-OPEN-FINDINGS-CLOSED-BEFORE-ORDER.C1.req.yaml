@@ -1,0 +1,14 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C1
+type: criterion
+title: The controller's core-supply capacitor pair meets the maker's stated effective-capacitance floor at worst case
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+scope: 'Out of scope: the other ceramics that set a filter, a stability or a reference, the layout and any bring-up measurement.'
+text: |
+  The two capacitors on the controller's core-regulator output pin hold an effective capacitance at or above the floor the controller's datasheet states (1.76 uF in the board's record), at the worst case of tolerance, temperature and DC bias read from the capacitor maker's own bias curve, with the arithmetic shown. The part chosen is in stock in the JLCPCB catalogue and fits the footprint the board already draws, so no copper changes; the value change is made in the schematic, the parts specification and the catalogue extract. The present part's 1.68 uF before bias loss is below the floor and is replaced. This replaces, for these two parts, the carry of the ceramics' bias and tolerance curves to bring-up measurement. The other ceramics that set a filter, a stability or a reference stay with the carried measurement.
+  Out of scope: the other ceramics that set a filter, a stability or a reference, the layout and any bring-up measurement.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
+    type: criterion-of

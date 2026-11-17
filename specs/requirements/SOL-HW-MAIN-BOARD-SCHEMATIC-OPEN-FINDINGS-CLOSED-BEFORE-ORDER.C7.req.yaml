@@ -1,0 +1,14 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C7
+type: criterion
+title: A pump left on by a fault is carried as the owner's decision against the independent-element requirement
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: 'Out of scope: adding any hardware bound, and changing the series relay or its drive.'
+text: |
+  The record states that a controller fault can leave the pump on, that this conflicts with the requirement that a spacing shortfall's fault be bounded by an independent element (REQ-ELECTRICAL-INSTALL-001.C16) where the bound is the pump's series relay, and that this relay is not independent of the controller because the controller commands it. The owner's decision carrying it is cited. No hardware bound is added by this solution.
+  Out of scope: adding any hardware bound, and changing the series relay or its drive.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
+    type: criterion-of
