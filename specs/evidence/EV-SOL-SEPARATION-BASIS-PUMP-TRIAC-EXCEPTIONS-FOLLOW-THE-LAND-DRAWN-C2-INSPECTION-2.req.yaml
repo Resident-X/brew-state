@@ -1,0 +1,23 @@
+id: EV-SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN-C2-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T15:19:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-board-division.md, hardware/sunbeam-em7000/separation-basis.yaml, hardware/tools/tests/test_separation_basis_record.py
+  artifact_version: 085a2e7c166a65dc7451567f3280a09f49dc1c20
+text: |
+  Inspection of the board division record, its verification script's expected-output block and the separation basis record's header comment, read against each clause of the criterion at the commit named in the artifact version. The criterion's inspection sentence is: read each place against the record's four triac entries and find none that gives the superseded three-lead gap or a middle lead. The four entries read from the committed record are T701.2 with T701.1, T701.2 with T701.3, T711.2 with T711.1 and T711.2 with T711.3, each a creepage entry at accepted_mm 2.0 dated 2026-11-06.
+  1. The tests that pinned the superseded figure read the entries of the first criterion. hardware/tools/tests/test_separation_basis_record.py, the pump-triac tests (the pair set at line 435 holds the four tab-to-lead pairs at 2.0, line 441 asserts the lead-pad pair T701.1 with T701.3 is absent, line 506 refuses an entry for a middle lead pad). `git grep -n "1\.08 mm"` outside specs, the board-design method document and the proof designs returns nothing, and a search for 1.08 within 200 characters of T701, T711 or triac in any tracked file outside specs returns only unrelated figures (a 1.08 safety margin on a rating, clock and timing figures). Met.
+  2. The division record's finding on mains-to-mains spacing, docs/sunbeam-em7000/controller-board-division.md. Its row A3 states "the pump triacs T701 and T711 at 2.0 mm of creepage between the tab and each lead pad of their two-lead land"; its Reported item 3 states "the pump triacs (2.0 mm, tab to lead pad)". No sentence of the file gives a middle lead, a three-lead land or the superseded gap (`git grep -n -i -E "middle[- ]lead|three-lead|3-lead"` over docs, hardware/sunbeam-em7000 and hardware/tools returns no line of this file). Met.
+  3. The verification script's expected-output strings, the fenced expected-main and expected-wall blocks of the same file. Neither block restates the triacs' exception; the blocks' mains-to-mains line reads "mains copper of different nets, from different parts: least straight 3.0 mm of 1.5, 11 pairs under the basic creepage of 2.6 mm by straight line, all held by distance or slots" and names no triac pair, middle lead or 1.08 figure; the blocks' other triac mentions are the commutation rate, heat and joint-count lines. The script carries no prose.present or required string for the triac exception. The criterion's clause that none states the superseded figure or a middle-lead gap is met; there is no restatement to bring to the land. Met.
+  4. The record's header comment, hardware/sunbeam-em7000/separation-basis.yaml, the comment above the accepted_exceptions list. It states "the board's own two-lead DPAK land TO-252-2_TabPin2_Triac for T701 and T711, its middle lead cut and given no pad", and "on the triacs' two-lead land the tab pad stands 2.00 mm from each lead pad, which meets the 2.0 mm terminal clearance and falls short of the 2.6 mm creepage; the land has no middle-lead pad, so no lead-pad to lead-pad gap is excused", and, in the comment above the same-part entries, "each triac's tab pad stands 2.00 mm from each of its lead pads, which the first four accepted_exceptions entries excuse at 2.0 mm of creepage". The four entries' reasons name the tab pad (pin 2, MT2) and the lead pad. Every mention of a middle lead is the statement that the land has none. Met.
+  5. Out of scope, the other restatements of the record's figures: none read. All clauses met.
+links:
+  - target: SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN.C2
+    type: satisfies
