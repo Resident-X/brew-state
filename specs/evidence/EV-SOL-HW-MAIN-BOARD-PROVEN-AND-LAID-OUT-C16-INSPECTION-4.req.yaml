@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C16-INSPECTION-4
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T11:15:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/fabrication-notes.md::Laminate and comparative tracking index
+  artifact_version: 0de500cbd0f88772790040d00a5b876011e4a8cd
+  verifier: claude (AI agent)
+text: |
+  Read hardware/sunbeam-em7000/main-board/fabrication-notes.md, section "Laminate and comparative tracking index" with its status lines, at the commit stated in the artifact version (the board file there has sha256 26aaca07efb25a5db9a062c41bd09023ad70f26cd9f51740de86eabfd4d507a1), against each clause of the criterion at its current version. The notes specify two laminate families whose maker publishes the index as a class and range of at least 175 with the method named: Shengyi S1000-2M (class PLC3, specification 175 to 250) and S1000-2 (PLC 3, 175 to 249), each citing the maker's document and the revision as printed (S1000-2M "data sheet (20120321)"; S1000-2 no revision printed) and the distributor copy read. They state the order note that requires the families ("laminate: Shengyi S1000-2M or S1000-2, comparative tracking index class PLC 3 (175 V or more) per IEC 60112; report any substitution before production") and the written request the owner makes of the manufacturer's support for the shipped laminate's identity, the fixing of the family at order time and a certificate of its index. Shengyi S1141 (175 as a typical value with no specification limit) and Kingboard KB-6165F (175 V with no test method printed) are listed as such and not specified; KB-6165, the Nan Ya NP-140 family and KB-6160 and KB-6164 are listed as having no index in the documents read and not specified. The notes state the pollution degree 2 position: the material group III column covers IIIa and IIIb alike, so a published index below 175 changes no figure of the basis and is not a precondition, and the order stops only for a laminate published below 100 or a pollution degree 3 fallback without an index of 175 or more recorded. Not claimed: that any document read is the maker's current one (the makers' sites could not be reached), the shipped laminate's identity or index, and that the maker's order form can fix a laminate; the notes state these as a pre-order action carried by the order leaf. This is the reading of the folder now named main-board, renamed from the working name main-board-v2 (DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME). The section read is identical, line for line, to the one the previous reading of it read at commit 0cb6e81cb021517202300bc01cddf656ebb0774b; the file differs from that commit only in a count in a later bullet.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C16
+    type: satisfies

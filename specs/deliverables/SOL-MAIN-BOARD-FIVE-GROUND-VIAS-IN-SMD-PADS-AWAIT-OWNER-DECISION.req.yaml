@@ -1,13 +1,13 @@
 id: SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION
 type: deliverable
 category: solution
-title: The main board's six ground vias inside surface-mount pads are 0.5 mm pad and 0.2 mm drill, the size the maker fills, on the owner's decision
+title: The main board has no ground via inside a surface-mount pad, and the owner's acceptance of the earlier survey's six vias in pads and agreement to shrink them is recorded
 status: active
-version: 1
+version: 2
 text: |
-  Records the owner's decision on the main board's ground vias inside surface-mount pads, and its outcome. The via-in-pad survey (the owner-requested run of 2026-11-07 on the main board) listed same-net ground vias of 0.75 mm whose centre lies inside an SMD pad: C302 pad 2 (two vias), D523 pad 1, Q823 pad 2 and Q824 pad 2, and, once D506 moved to the front, a sixth beside D506 pad 1. The maker leaves vias over 0.55 mm unfilled at six layers or more, so solder may wick down them, an assembly-yield risk for those pads with no safety or function impact.
+  Records the owner's decision on the main board's ground vias inside surface-mount pads, and its outcome. The via-in-pad survey (the owner-requested run of 2026-11-07 on the main board) listed same-net ground vias of 0.75 mm whose centre lay inside an SMD pad: C302 pad 2 (two vias), D523 pad 1, Q823 pad 2 and Q824 pad 2, and, once D506 moved to the front, a sixth beside D506 pad 1. The maker leaves vias over 0.55 mm unfilled at six layers or more, so solder may wick down them, an assembly-yield risk for those pads with no safety or function impact.
 
-  The owner decided on 2026-11-07, in session, in his own words: "Accept vias" (the six vias in pads are accepted), and then "Ok" to shrinking them. The outcome: the six vias are now 0.5 mm pad and 0.2 mm drill, the same centres, net GND, locked, inside the 0.15 to 0.55 mm range the maker fills and plates over by default at six layers and above (fabrication-notes.md, quote item 1). No exception is written and no via moved out of its pad; the vias stay where they were, smaller. This is a board change made by the placement leaf SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD, not by this item, which holds the decision and its record.
+  The owner decided on 2026-11-07, in session, in his own words: "Accept vias" (the six vias in pads are accepted), and then "Ok" to shrinking them. The outcome in the committed board is that no via has its centre inside a surface-mount pad: the placement later moved the vias out of the pads rather than shrinking them, and every via on the board is 0.6, 0.7 or 0.75 mm pad on a 0.3 mm drill, none the 0.5 mm pad and 0.2 mm drill the shrink would have made. The owner's acceptance and agreement to shrink are recorded here as the decision made then; the layout that followed made both moot, and no exception is written. The board change was made by the placement leaf SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD and the later layout, not by this item, which holds the decision and its record.
 rationale: |
   Honours the judgement REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of a layout by keeping the via-in-pad survey hits as a recorded item, and records the owner's resolution of them: accepted, then shrunk to the maker's filled-via size so the wicking risk the survey named does not stand.
 links:

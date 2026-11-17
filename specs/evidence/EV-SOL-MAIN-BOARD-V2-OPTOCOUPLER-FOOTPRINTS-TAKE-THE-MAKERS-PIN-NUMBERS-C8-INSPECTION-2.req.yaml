@@ -1,0 +1,19 @@
+id: EV-SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS-C8-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C8
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T11:15:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At 0de500cbd0f88772790040d00a5b876011e4a8cd, read against each clause of the criterion. Schematic: the symbol instances of R522 (52-flow-pressure-and-spare-analogue-inputs.kicad_sch), R572 and R576 (57-current-sensing-inputs.kicad_sch) each carry (dnp yes), with in_bom yes and on_board yes. Board: main-board.kicad_pcb footprints R522, R572 and R576 each carry (attr smd dnp) and a text property dnp set to true. Parts specification: parts-specification.yaml positions R522, R572 and R576 each carry fitted: "no". Agreement: the hw:verify run at this commit (the pre-order check over the renamed folder) reports DESIGN | hardware/sunbeam-em7000/main-board/main-board.kicad_pro | PASS | 265 warnings, a run that includes the dnp_agreement rule, which fails any disagreement between the three sources. Board file sha256 26aaca07efb25a5db9a062c41bd09023ad70f26cd9f51740de86eabfd4d507a1. No mark is missing on any of the three. The folder was renamed from main-board-v2 to main-board (DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME); the earlier reading of the same marks was at the same count of 265 warnings.'
+  artifact_version: 0de500cbd0f88772790040d00a5b876011e4a8cd
+  verifier: claude (AI agent)
+text: |-
+  Re-read of the do-not-populate marks of R522, R572 and R576 in the folder renamed from main-board-v2 to main-board (DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME); the reading is in the artifact reference.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C8
+    type: satisfies
