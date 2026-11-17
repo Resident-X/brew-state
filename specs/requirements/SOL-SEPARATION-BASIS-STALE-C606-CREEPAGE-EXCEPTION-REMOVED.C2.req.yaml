@@ -2,12 +2,12 @@ id: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C2
 type: criterion
 title: The tests and records that restate the record's entry count or the pair agree with it
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
 scope: Statements of the count or of this pair; wording unrelated to them stays.
 text: |-
-  Every test and every record under the repository that states the number of the record's exceptions as 33, or lists the C606 pair among them, states the number the record holds (42 since 2026-11-14) and omits the pair, and the record-reading tests pass on the committed record. The finished header item's criterion that restates 33 (SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C2) stands superseded by this item as to the count and by the later acceptances as to the days, so a test that traces it states the count the record holds and names this item as the superseding one. Out of scope: statements of the count or of this pair; wording unrelated to them stays. The record's test fails on a record whose top-level accepted_on or any entry's accepted_on differs from the day the owner last accepted it (the days the header names), and on a header that does not state the removal of the C606 entry and the owner's instruction.
+  Every test and record under the repository that states the number of the record's accepted_exceptions entries states the number the record holds, and none lists the C606 pair among them. The record's own test pins that number and fails on a record whose count differs. Out of scope: the day each entry carries, which the finished header item's criterion on the re-signing day and later acceptances governs.
 links:
   - target: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED
     type: criterion-of

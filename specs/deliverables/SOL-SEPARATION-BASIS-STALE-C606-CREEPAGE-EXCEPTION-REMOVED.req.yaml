@@ -3,14 +3,14 @@ type: deliverable
 category: solution
 title: The separation basis record no longer holds the C606 creepage exception the layout does not need
 status: active
-version: 1
+version: 2
 text: |
-  Removes the accepted_exceptions entry at index 16 of the main board's separation basis record, a creepage exception for the C606 pad pair (0.65 mm accepted) that the layout rule check no longer reports a shortfall for. The pre-order check reports it as stale and fails the board until it is removed or the geometry it excused is restored. The pair is not restored; the entry goes.
+  The main board's separation basis record no longer holds the accepted_exceptions entry for mains_to_mains creepage between C606.1 and C606.2 (0.65 mm accepted), which the layout rule check no longer reports a shortfall for. The pair is not restored; the entry goes.
 
   Settled for the build:
-  - Only that entry is removed; the 32 others and every figure stay. The record's own tests and the records that restate the count of 33 follow in the same change.
-  - The owner has authorised re-signing on his word only: a signature day is entered only as he states it, as the sibling re-signing item records, and the build never picks one.
-  - Out of scope: any other entry, figure, or the derating policy.
+  - The entry was removed on the owner's written instruction of 2026-11-07, and the owner's later acceptances dated entries that were then changed or added. The count and day figures the record holds are those the record's own test pins.
+  - The records and tests that restate the record's entry count state the number the record holds.
+  - Out of scope: any other entry, figure, or the derating policy, and the day each entry carries, which the finished header item's criterion on the re-signing day governs.
 rationale: |
   Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks of the record: a pair is held below the full figure only where the record lists it with its derivation and the layout needs it; an exception the layout does not need excuses nothing and leaves a signed claim that the pair is short. Found by the pre-order check on the finished board.
 links:

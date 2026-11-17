@@ -1,13 +1,13 @@
 id: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C3
 type: criterion
-title: The record's signature day is entered only on the owner's written instruction
+title: The header states that the C606 entry was removed on the owner's instruction and excuses nothing
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: inspection
 scope: Signature day and its header statement only; no figure, pair or reason changes.
 text: |-
-  The record's top-level accepted_on and the accepted_on of each of its entries read the day the owner last accepted them, as the header names each day, and the header states in one sentence that the entry for the C606 pad pair was removed on 2026-11-07 on the owner's written instruction, that the removal excuses nothing and relaxes nothing, and that the removal changed no signature day. An inspection of the record by reading it is the check; the test that fails on a changed day or a missing header statement is required by the criterion on the tests that follow the removal. Out of scope: any figure, pair or reason.
+  The header comment of the record states in one sentence that the entry for the C606 pad pair was removed on 2026-11-07 on the owner's written instruction, that the removal excuses nothing and relaxes nothing, and that the removal changed no signature day. The record's test fails on a header lacking any part of that sentence. Out of scope: any figure, pair or reason.
 links:
   - target: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED
     type: criterion-of
