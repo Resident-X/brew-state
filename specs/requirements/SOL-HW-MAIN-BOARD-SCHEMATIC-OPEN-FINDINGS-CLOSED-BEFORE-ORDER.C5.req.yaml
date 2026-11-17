@@ -2,12 +2,12 @@ id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C5
 type: criterion
 title: USB is recorded as a service path, and the sheet ports and hierarchical labels agree across the sheets
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 scope: 'Out of scope: removing the USB connection, and any change to a net.'
 text: |
-  The schematic's record states that the USB connection is a service path only, because the serial-wire header carrying SWDIO and SWCLK programs the controller, so a fault on USB does not stop a programming route. The two mains-presence ports, MAINS_PRES_C and MAINS_PRES_S, have the same direction on the root sheet and the sub-sheet. The two NEUTRAL hierarchical labels on the pump drives sheet are against one sheet pin, or the extra label is removed, and the sheet's net list is unchanged by that.
+  The schematic's record states that the USB connection is a service path only, because the serial-wire header carrying SWDIO and SWCLK programs the controller, so a fault on USB does not stop a programming route. The two mains-presence ports, MAINS_PRES_C and MAINS_PRES_S, have the same direction on the root sheet and the sub-sheet. The two NEUTRAL hierarchical labels on the pump drives sheet are against one sheet pin and are kept, each carrying one pump branch's neutral wire, with that reason and the finding that removing one drops a branch off the net recorded, and the sheet's net list is unchanged.
   Out of scope: removing the USB connection, and any change to a net.
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
