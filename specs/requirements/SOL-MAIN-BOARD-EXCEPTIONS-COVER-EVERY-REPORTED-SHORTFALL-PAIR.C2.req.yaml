@@ -1,7 +1,7 @@
 id: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C2
 type: criterion
 title: Every entry the record holds is signed by the owner and the record stands signed
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR
     type: criterion-of
+attributes:
+  deprecation_reason: absorbed by the signed-record leaf and the owner-acceptance leaf

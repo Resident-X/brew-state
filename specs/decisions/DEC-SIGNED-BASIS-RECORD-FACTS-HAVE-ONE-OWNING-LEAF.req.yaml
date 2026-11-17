@@ -1,0 +1,34 @@
+id: DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF
+type: decision
+title: Each fact about the signed separation basis record has one owning leaf
+status: active
+version: 1
+text: |
+  Several leaves plan work on the signed separation basis record, and without a stated division two leaves can each claim, or each wait on, the same fact. The record's facts have one owning leaf each, and a leaf states only the facts it owns:
+  - The check's report of every mains pair under its signed figure, as a violation or as accepted by a named entry, and the check's reading of a surface-mount pad in KiCad's report, belong to SOL-PRE-ORDER-CHECK-PRINTS-A-LINE-FOR-EVERY-MAINS-PAIR-UNDER-ITS-SIGNED-FIGURE and SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT.
+  - SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR owns only that the check, run on the finished main board, lists no shortfall pair that no entry of the record covers. It states no signing.
+  - SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET owns the committed record's contents on the finished layout: the 42 entries and the forms that make them up, the signer and day on the record and on each entry, the exception set the layout uses, and the tests of them. Its inspection of the records' stated counts and dates restates the split by day; it does not pin it by test.
+  - SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER owns the owner's in-session acceptance and the commit that enters accepted_by and accepted_on.
+  - SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN owns that the four pump-triac tab-to-lead entries (T701 and T711, each tab pad against the two outer lead pads, creepage at 2.0 mm) follow the land drawn, with the test that pins them.
+  - SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD owns the test that pins the day split of the 42 entries at 23, 3 and 16.
+  - SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C18 owns that the pump triacs' land has no middle-lead pad.
+  A leaf that needs another's fact reads it from the committed record or the check's output and does not restate it as a criterion of its own.
+rationale: |
+  Context: Leaves for the signed record were authored at different times, each stating the signature, the entry set or the day split it touched, so brief reviews found the same act planned by two or three leaves with no statement of who owns it. The overlap is of content, not of order: a leaf can wait for another's work and still restate its fact.
+
+  Trade-offs: One division decision, cited by each leaf, states the owner of each fact once and costs one node. Depends-on edges between the leaves state order only, leave the content overlap standing, and cannot be added everywhere: the signed-record leaf already depends on the owner-acceptance leaf, so the reverse edge would be a cycle. Merging the leaves would put frozen criteria and criteria that already carry evidence into one node, which a frozen criterion cannot take. The division follows where each fact is produced: the check's output by the check, the entries by the record, the signature by the owner's act, the land by the layout.
+
+  Reversibility: The decision names owners and changes no node's criteria, so it is superseded by a successor that states a different division, and a leaf's citation of it is one link.
+
+  Consequences: Each leaf that touches the record cites this decision and states only the facts it owns. A leaf authored later that restates a fact another leaf owns is a finding against this division, not a new overlap to settle.
+options_considered:
+  - option: One division decision that each leaf cites
+    reason_rejected: ""
+  - option: Depends-on edges between the sibling leaves
+    reason_rejected: They state order not content, the signed-record leaf already depends on the owner-acceptance leaf so the reverse edge would cycle, and several overlaps are of content
+  - option: Merge the overlapping leaves
+    reason_rejected: Some leaves are frozen or carry evidence and cannot take another leaf's criteria
+chosen: One division decision that each leaf cites
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: addresses

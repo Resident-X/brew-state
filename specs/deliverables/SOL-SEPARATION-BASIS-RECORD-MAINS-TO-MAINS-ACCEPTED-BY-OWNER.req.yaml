@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The owner accepts the separation basis record's mains-to-mains figures and exceptions under their own identity, on their explicit instruction
 status: active
-version: 3
+version: 4
 text: |
   Enters the owner's acceptance of the separation basis record, with the exceptions it holds, after the record's leaf has delivered the record drafted and unsigned, so the check's reader finds it signed and every leaf that waits on a signed record can proceed. The acceptance is the owner's act. This leaf is a request to the owner and an entry made on the owner's instruction; a drafter or a build cannot complete it alone, and does not.
 
@@ -12,6 +12,7 @@ text: |
   - Acceptance is entered only when the owner, in the session, explicitly instructs it in words that name the record. An earlier acceptance, silence, or approval of the presentation alone is not that instruction, and the acceptance entered on 2026-10-23 for the earlier figures does not stand for these, nor does any acceptance given before the pollution degree 2 redraft.
   - The entry is its own commit. It changes only accepted_by and accepted_on of the record and of each exception entry: accepted_by is the owner's actor identity, the one the graph's events use, and accepted_on is the day the instruction was given. The commit message quotes the owner's instruction verbatim.
   - The owner's acceptance includes the three readings above. A reading the owner corrects returns to the record's leaf as an amendment and the record is shown again before any acceptance is entered; this leaf changes no figure, row or exception.
+  - By DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF this leaf owns the owner's in-session acceptance and the commit that enters accepted_by and accepted_on; the record's contents and tests on the finished layout belong to the signed-record leaf and the check's reports to the pre-order check's own leaves.
   - Out of scope: drafting or changing any figure, table row or exception, judging a bought part, the board layout, and the mains-to-low-voltage figures beyond showing them as the record holds them.
 rationale: |
   Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 and .C16 ask of a signed basis: the mains-to-mains figures are signed with the basis and every accepted shortfall is the owner's signed exception, not the drafter's. A build cannot enter the owner's acceptance, so the acceptance is its own leaf, closed only by the owner's explicit instruction, and the record's leaf closes on the drafted record.
@@ -39,4 +40,6 @@ links:
   - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
     type: depends-on
   - target: DEC-MAINS-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
+    type: justified-by
+  - target: DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF
     type: justified-by
