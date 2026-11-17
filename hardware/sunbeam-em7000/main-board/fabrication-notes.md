@@ -93,7 +93,7 @@ What remains unverified, and is a pre-order action for the owner: the identity a
 
 The requirement: the notes name the coat that supports the basis's pollution degree 2 credit (which rests on the enclosure), with its type and the maker's current datasheet, and state that it is applied after bring-up, once the machine is deemed functional from a hardware perspective, and covers the gaps between the board's mains pads, except keep-outs for contacts listed by reference designator.
 
-Status: criterion C17 is **met on paper** (read 2026-11-17). The coat is a supporting measure and earns no part of the pollution degree 2 credit, which stands on the enclosure (`separation-basis.yaml` conditions 1 and 2). No coating test is planned and none is claimed (`layout-plan.md` ENV-1 row).
+Status: criterion C17 is **met on paper** (read 2026-11-17). The coat is a supporting measure and earns no part of the pollution degree 2 credit, which stands on the enclosure (`separation-basis.yaml` conditions 1 and 2). No coating test is planned and none is claimed (`separation-basis.yaml` condition 2).
 
 ### Coat chosen
 
