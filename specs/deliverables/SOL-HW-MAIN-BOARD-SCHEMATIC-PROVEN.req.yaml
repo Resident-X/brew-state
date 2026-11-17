@@ -84,6 +84,6 @@ links:
   - target: DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: 50ac453a80183e321302103c5f22b49a5409f9007818cb46aca0dbeb6cb597a4
+  confirmer: claude-sonnet-5-5 (blind brief reviewer)
+  fingerprint: b74d619039f13697d9e4a53c713116b9b88d7a239739a856a334a081d49261ad
   gating_profile: ""
