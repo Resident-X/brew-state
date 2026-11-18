@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C14
+type: criterion
+title: The board-mount holes' overlap with the standing leg is resolved with every mains copper item 13.25 mm or more from each hole centre
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The two board-mount holes (3.1 mm, at u = -12.5 and 69.5) reach 0.55 mm under the ends of the bracket's standing leg (u = -11.5 to 68.5). The drawing resolves that by a notch or a mount position, stated with the figure drawn, and keeps every mains copper item 13.25 mm or more from each mount hole's centre. Making the bracket is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

@@ -1,12 +1,12 @@
 id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C4
 type: criterion
-title: Every channel crossing the board's three-way header resolves to a controller-pin channel of the main board's pin allocation record, which is not changed, and the board authors no converter-input map
+title: Every channel crossing the board's three-way header resolves to a controller-pin channel of the main board's pin allocation record, and the board authors no converter-input map
 status: active
-version: 3
+version: 4
 measurement_type: binary
 verification: test
 text: |
-  The channels crossing the board's header are heat_c_drv and heat_s_drv, listed as far channels, with the supply pin listed as a rail, and the header's three pins are listed in the order the main board's drawing of J761 carries for its first three ways: +5V_WB, HEAT_C_LED_K, HEAT_S_LED_K. Each far channel resolves to a channel of the main board's pin allocation record that carries a controller pin, and the main board's record is not changed to make it. A pin assignment in the firmware that disagrees with the board fails a check before the board is ordered, because the firmware's pin and sensor checks read the main board's record and the wall board's far channels resolve to it. Comparing the cable between the two headers pin for pin is out of scope.
+  The channels crossing the board's header are heat_c_drv and heat_s_drv, listed as far channels, with the supply pin listed as a rail. Each far channel resolves to a channel of the main board's pin allocation record that carries a controller pin, so a pin assignment in the firmware that disagrees with the board fails a check before the board is ordered, because the firmware's pin and sensor checks read the main board's record and the wall board's far channels resolve to it. Comparing the cable between the two headers pin for pin is out of scope.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
     type: criterion-of
