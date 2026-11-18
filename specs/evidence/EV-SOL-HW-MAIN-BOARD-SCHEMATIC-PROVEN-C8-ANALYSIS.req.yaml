@@ -1,0 +1,30 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C8-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C8
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-18T02:32:03.549787Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/derating-policy.yaml, open-items.md (M35, M36, Wall board interface limits), circuit-verdicts.md, docs/sunbeam-em7000/controller-board-design-constraints.md, /Users/david/real5/close9/ev4/leaf2-C8.txt
+  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  verifier: claude (AI agent)
+attested_by: crun-46790d4aac660687
+text: |-
+  EVIDENCE BODY: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C8 (analysis, v1), re-run at HEAD 123d64ad
+  Records: hardware/sunbeam-em7000/main-board/derating-policy.yaml; docs/sunbeam-em7000/controller-board-design-constraints.md ('Revisits of graded figures', lines 160-194); open-items.md; circuit-verdicts.md.
+
+  1. Grading stated: derating-policy.yaml has 15 classes with voltage/power/temperature shares and sources; 70 degC enclosure air assumed. Every part in parts-specification.yaml carries a class. PASS.
+  2. R828 (resistor 0.6 x 250 mW = 150 mW): open-items 'Wall board interface limits' (d). Recomputed: 5.25^2/100 = 0.2756 W shorted; (100+Rb)^2 >= 5.25^2 x 100/0.15 = 18,375; Rb >= 35.55 ohm (35.87 ohm at 99 ohm). Requirement: buzzer >= 36 ohm. Covered.
+  3. C792 (33 mArms at 105 degC, 120 Hz): M35 calculation, margins 33/1.6 = 20.6, 33/5.4 = 6.1, 33/18 = 1.83 (record: >=20x smooth, 1.8x chopped). M35 (no longer labelled 'closed'; bounded by calculation and carried to bring-up) changed at 0e8b061d: the fixed 33 mVpp limit is dropped because the 0.5 ohm ESR is not a maker figure (DF 0.20 at 120 Hz = about 5.6 ohm there, nothing at 100 kHz); the limit is now Vpp / (2 x Z) <= 33 mArms, i.e. Vpp <= 66 mA x Z (recomputed 2 x 33 = 66), with Z read on a spare part at the ripple frequency (LCR at 100 kHz, or generator through 10 ohm: Z = Vcap/(Vres/10 ohm)). Same form as M36, rests on the maker's 33 mArms and two readings; open-items, circuit-verdicts C792 row, bring-up/D.yaml and bring-up-provision.md all agree (diff checked); fallback polymer part, same footprint. Covered.
+  4. C302 (48 mArms at 105 degC, 120 Hz, Samyoung BDS(MVK); 1.08 at 100 kHz not used): M36 carried under DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP; limit Vpp <= 96 mA x Z (recomputed 2 x 48 = 96; e.g. 48 mVpp at 0.5 ohm = 48 mArms); limit rests only on the maker's figure and two readings; failing reading changes part, same footprint; circuit-verdicts.md C302 row states it; bring-up/B.yaml step TP301. Covered.
+  5. No fail without closing form. Round 7 DERATE findings: 7.44/F101 current/T701/U701,U711/R763,R773 have constraints-record rows (U701/U711 and R763/R773 now also carry acceptance (u)'s revisit condition: a maker rating withdrawn, a measured level over the stated figures, or the check gaining a rule that judges the position; U701/U711 and R763/R773 now also carry acceptance (u)'s revisit condition: a maker rating withdrawn, a measured level over the stated figures, or the check gaining a rule that judges the position; recomputed 10 x 0.92 = 9.2 A, 70 + 70 x 0.642 = 114.9 degC, 100 - 1.33 x 45 = 40.2 mW x 0.75 = 30.1 mW, 29.5 mA^2 x 178.2 = 155 mW vs 150). Unpublished-figure findings (7.45, 7.46, 7.54, 7.57) carried with limits (M18, M14, M4/M5, 5.3).
+  6. Stand-off shares: constraints record lines 182-194 now has rows for D401, D402, D520, D529, D530, D531, D570, D571, D701, D711, each with graded figure, what the design reaches, why no part holds (D701/D711: next stand-off 440 V clamps up to 543 V at 1 mA against 527 V, so it is the 600 V opto-triac that limits), owner acceptance, revisit conditions; rating not stretched. Recomputed 5.25/0.75 = 7.0 V; 5.5/0.75 = 7.33 V; 357.8/400 = 0.894. Note (not a defect): for D401, D402 and the PESD clamps the rows say no catalogue search is recorded, so 'no part holds' is not proven; the row makes the catalogue read at ordering a revisit condition, which is the recorded revisit C8 asks for.
+  RESULT: PASS.
+
+  Checked against the committed records at commit 123d64ad (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C8
+    type: satisfies
