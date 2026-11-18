@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T10:14:51.571754Z"
+artifact:
+  kind: external
+  reference: 'inspection: hardware/README.md (far_channel entry and controller: none paragraph) and docs/board-design-method.md state a controller pin, connector not required; grep for ''controller pin and a connector'' finds none'
+  artifact_version: 481acb79af3c3ebc2823dc363cd1c4db7d201ad0
+attested_by: crun-4b496aff6b599efa
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C2
+    type: satisfies
