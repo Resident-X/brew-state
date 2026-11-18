@@ -9,15 +9,15 @@ observed_at: "2026-11-18T04:30:48.343205Z"
 artifact:
   kind: external
   reference: hardware/sunbeam-em7000/main-board/fabrication-notes.md, hardware/sunbeam-em7000/separation-basis.yaml
-  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  artifact_version: da0f08b30af4569443ff0d9b2328b05dbc80948f
   verifier: claude (AI agent)
 attested_by: crun-53ff47a01c39164b
 text: |-
-  SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT C17 (inspection) - evidence body, checked at commit 123d64ad
+  SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT C17 (inspection) - evidence body, checked at commit 123d64ad, headings re-read at HEAD da0f08b3
   Records: hardware/sunbeam-em7000/main-board/fabrication-notes.md (FN), hardware/sunbeam-em7000/separation-basis.yaml (SB), layout-plan.md, main-board.kicad_pcb (sha256 8ca1288b..., unchanged). C17 version 4 re-shown. Since 94ffd973 FN changed only at line 96 (ENV-1 citation) and in the copper-layers row; since 0b3712a6 FN is unchanged and SB changed one body comment line (accepted_on wording), no figure or condition.
   Verdict: PASS.
 
-  1 Names the coat that supports the pollution degree 2 credit, which rests on the enclosure: FN 92-96 section "Conformal coat (graph criterion C17)": the coat "is a supporting measure and earns no part of the pollution degree 2 credit, which stands on the enclosure". SB 59-72 conditions 1 and 2 state the same; SB 192 pollution_degree: 2. PASS.
+  1 Names the coat that supports the pollution degree 2 credit, which rests on the enclosure: FN 92-96 section "Conformal coat" (heading at line 92; the heading carried "(graph criterion C17)" until commit 6b0a65f7 removed it): the coat "is a supporting measure and earns no part of the pollution degree 2 credit, which stands on the enclosure". SB 59-72 conditions 1 and 2 state the same; SB 192 pollution_degree: 2. PASS.
   2 With its type: FN 100 "one-part acrylic conformal coating in an aerosol can"; product FN 102 MG Chemicals 419D Acrylic Conformal Coating, aerosol, 419D-340G; fallback FN 103 Techspray Turbo-Coat Acrylic 2108-12S. PASS.
   3 And the maker's current datasheet: FN 108 "419D Aerosol, Acrylic Conformal Coating", technical data sheet, 3 pages, 31 July 2025, Ver. 4.0, https://mgchemicals.com/downloads/tds/tds-419d-a.pdf, fetched 2026-11-17; fallback FN 110 Techspray 2108 Rev. D (3/21), URL given. Printed figures relied on tabulated FN 113-125 (dielectric strength, -65 to 125 C, cure, 25-75 um); FN 127 states the sheet gives no creepage or pollution-degree credit and none is taken. PASS.
   4 Applied after bring-up, once the machine is deemed functional from a hardware perspective: FN 131 "After bring-up, once the machine is deemed functional from a hardware perspective (owner, 2026-11-06)"; SB 61-64. PASS.
