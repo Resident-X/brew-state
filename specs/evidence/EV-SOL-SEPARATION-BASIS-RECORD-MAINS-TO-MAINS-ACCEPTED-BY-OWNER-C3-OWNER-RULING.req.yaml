@@ -1,0 +1,23 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER-C3-OWNER-RULING
+type: evidence
+title: 'The owner''s ruling on C3: the whole-record acceptance is the answer the criterion requires'
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T07:15:54Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: the owner's instruction in the working session of 2026-11-18, quoted in this node's text
+text: |
+  The owner's ruling on this criterion, given in the working session on 2026-11-18.
+
+  Context the owner had been given: C3 asks that the session record the owner's answer to each reading the record marks for the owner's check, as accepted or corrected, before acceptance is entered. The owner gave one acceptance of the whole record after every reading had been presented, in the words 'I accept the separation basis record as signed.' on 2026-11-17, and again on 2026-11-18 after a plain-words restatement of what signing covers; no reading was corrected and none was answered singly. The earlier evidence node EV-SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER-C3-INSPECTION states those facts and reads C3 as met in substance and not literally, leaving the strict reading to the owner, and the assistant asked the owner for it.
+
+  The owner's answer, verbatim: 'C3 is signed off'.
+
+  This node records that ruling and no more: the owner accepts the single whole-record acceptance as the answer C3 requires. It does not state that any reading was answered singly, and none was.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C3
+    type: satisfies
