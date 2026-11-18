@@ -136,7 +136,7 @@ sheets:
   - ref: R911
     lib_id: Device:R
     value: '200'
-    rating: 1% 250mW 200V 1206
+    rating: 1% 250mW RCWV 7.07V 1206
     footprint: Resistor_SMD:R_1206_3216Metric
     mpn: 1206W4F2000T5E
     maker: UNI-ROYAL
@@ -149,7 +149,7 @@ sheets:
   - ref: R912
     lib_id: Device:R
     value: '200'
-    rating: 1% 250mW 200V 1206
+    rating: 1% 250mW RCWV 7.07V 1206
     footprint: Resistor_SMD:R_1206_3216Metric
     mpn: 1206W4F2000T5E
     maker: UNI-ROYAL
@@ -300,7 +300,7 @@ sheets:
   - ref: R921
     lib_id: Device:R
     value: '200'
-    rating: 1% 250mW 200V 1206
+    rating: 1% 250mW RCWV 7.07V 1206
     footprint: Resistor_SMD:R_1206_3216Metric
     mpn: 1206W4F2000T5E
     maker: UNI-ROYAL
@@ -313,7 +313,7 @@ sheets:
   - ref: R922
     lib_id: Device:R
     value: '200'
-    rating: 1% 250mW 200V 1206
+    rating: 1% 250mW RCWV 7.07V 1206
     footprint: Resistor_SMD:R_1206_3216Metric
     mpn: 1206W4F2000T5E
     maker: UNI-ROYAL

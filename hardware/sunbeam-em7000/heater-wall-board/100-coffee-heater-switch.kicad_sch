@@ -1540,7 +1540,7 @@
 				)
 			)
 		)
-		(property "Rating" "1% 250mW 200V 1206"
+		(property "Rating" "1% 250mW RCWV 7.07V 1206"
 			(at 127 107.95 0)
 			(hide yes)
 			(effects
@@ -1636,7 +1636,7 @@
 				)
 			)
 		)
-		(property "Rating" "1% 250mW 200V 1206"
+		(property "Rating" "1% 250mW RCWV 7.07V 1206"
 			(at 165.1 107.95 0)
 			(hide yes)
 			(effects

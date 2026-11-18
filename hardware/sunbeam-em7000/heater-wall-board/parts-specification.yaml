@@ -69,14 +69,14 @@ positions:
   - reference: R911
     value: "200"
     package: R_1206_3216Metric
-    rating: "1% 250mW 200V 1206"
+    rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
   # R912: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
   - reference: R912
     value: "200"
     package: R_1206_3216Metric
-    rating: "1% 250mW 200V 1206"
+    rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
   # RV911: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
@@ -115,14 +115,14 @@ positions:
   - reference: R921
     value: "200"
     package: R_1206_3216Metric
-    rating: "1% 250mW 200V 1206"
+    rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
   # R922: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
   - reference: R922
     value: "200"
     package: R_1206_3216Metric
-    rating: "1% 250mW 200V 1206"
+    rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
   # RV921: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
