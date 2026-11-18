@@ -2,14 +2,14 @@ id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C8-ANALYSIS
 type: evidence
 title: analysis evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C8
 status: active
-version: 1
+version: 2
 result: pass
 method: analysis
 observed_at: "2026-11-18T02:32:03.549787Z"
 artifact:
   kind: external
-  reference: hardware/sunbeam-em7000/main-board/derating-policy.yaml, open-items.md (M35, M36, Wall board interface limits), circuit-verdicts.md, docs/sunbeam-em7000/controller-board-design-constraints.md, /Users/david/real5/close9/ev4/leaf2-C8.txt
-  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  reference: hardware/sunbeam-em7000/main-board/derating-policy.yaml, open-items.md (M35, M36, Wall board interface limits), circuit-verdicts.md, docs/sunbeam-em7000/controller-board-design-constraints.md
+  artifact_version: ae25e6378002dc77cd80be2c4dbebbef7a8e7b37
   verifier: claude (AI agent)
 attested_by: crun-46790d4aac660687
 text: |-
@@ -25,6 +25,8 @@ text: |-
   RESULT: PASS.
 
   Checked against the committed records at commit 123d64ad (round gate passed on that commit).
+
+  Re-pinned to ae25e637: the records this reads (derating-policy.yaml, M35, M36, the constraints rows) are unchanged since 123d64ad.
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C8
     type: satisfies

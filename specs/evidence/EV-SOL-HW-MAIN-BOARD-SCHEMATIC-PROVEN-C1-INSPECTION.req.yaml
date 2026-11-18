@@ -2,19 +2,19 @@ id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C1-INSPECTION
 type: evidence
 title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C1
 status: active
-version: 1
+version: 2
 result: pass
 method: inspection
 observed_at: "2026-11-18T02:32:03.470577Z"
 artifact:
   kind: external
-  reference: hardware/sunbeam-em7000/main-board/schematic-review.md (lines 8413-8519), open-items.md, circuit-verdicts.md, bring-up/B.yaml, bring-up/D.yaml, /Users/david/real5/close9/ev4/leaf2-C1.txt
-  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  reference: hardware/sunbeam-em7000/main-board/schematic-review.md (lines 8413-8519), open-items.md, circuit-verdicts.md, bring-up/B.yaml, bring-up/D.yaml, hardware/sunbeam-em7000/main-board/circuit-proof.md, hardware/tools/schematic_sheets.py
+  artifact_version: ae25e6378002dc77cd80be2c4dbebbef7a8e7b37
   verifier: claude (AI agent)
 attested_by: crun-46790d4aac660687
 text: |-
-  EVIDENCE BODY: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C1 (inspection, v2), re-run at HEAD 123d64ad
-  Method: staircase show of C1, DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER (v7, entry of 2026-11-18), DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP, the OPEN-FINDINGS leaf C1..C8 texts; hardware/sunbeam-em7000/main-board/schematic-review.md (8519 lines).
+  EVIDENCE BODY: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C1 (inspection, v2), re-run at HEAD 123d64ad and ae25e637
+  Method: staircase show of C1, DEC-SCHEMATIC-REVIEW-FINDINGS-CARRIED-BY-OWNER (v7, entry of 2026-11-18), DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP, the OPEN-FINDINGS leaf C1..C8 texts; hardware/sunbeam-em7000/main-board/schematic-review.md .
   Open set: every row marked UNRESOLVED / Not closed in the round 7 tables (lines 8413, 8434): 7.12, 7.13, 7.19, 7.34, 7.50, 7.52, 7.53, 7.59, 7.61, 7.75/7.80, 7.84. Rounds 1-6: their findings are re-judged in round 7 ("Continues 6.n", line 7016), and grep finds no other UNRESOLVED or open-closure row in earlier rounds (Y402 'unresolved' in rounds 4/5 is item 5.6, carried to DEL-HW-BRING-UP.C15, 7.20). Round 7 amendment findings 8.1, 8.2, 8.3 checked closed/stated. 7.11 driver half closed by (z5).
   Closure table now in the review record: 'Closure after round 7: the findings left UNRESOLVED (2026-11-18)', line 8503.
 
@@ -33,11 +33,19 @@ text: |-
   7.84 | owner decision; root sheet pins made output; two NEUTRAL labels kept by design | DEC v7; open-items.md row 'Sheet ports and hierarchical labels...'; checked: 720 sheet hierarchical labels MAINS_PRES_C/S are output and the root pins for that sheet are output (main-board.kicad_sch lines 3810, 3814) | OPEN-FINDINGS.C5
   F16 / 7.48 | owner acceptance (w); no carry | review line 8425 row | none needed (closed by decision, not carried)
 
-  Other clauses of C1 (evidenced elsewhere, not re-verified): verdict for every net and part (circuit-verdicts.md, circuit-proof.md); circuit practice applied; every sheet renderable (hw:sheets); layout out of scope.
+  Other clauses of C1, checked in this evidence (no other evidence node covers them):
+  (a) Every net and part has a recorded verdict. Command: `kicad-cli sch export netlist --format kicadsexpr -o <scratch>/main.net hardware/sunbeam-em7000/main-board/main-board.kicad_sch` (KiCad 10.0.7), then a read-only counting script that names each netlist component reference and net in the verdict records. The repository has no test that counts verdict rows against the netlist; the count was made by this check. The netlist at HEAD holds 446 parts (446 distinct references) and 283 nets. Records read: hardware/sunbeam-em7000/main-board/circuit-verdicts.md (584 table rows; the specification-stage verdict, parts and nets by group A to E) and the closing full round (round 7, `- **Round kind**: full`, Verdicts table from the line `### Verdicts` of round 7) of hardware/sunbeam-em7000/main-board/schematic-review.md (about 1,240 rows, which judge the 24 catalogue items BARRIER-1 through TOUCH-1 against the drawn schematic and its netlist). Result: 446 of 446 parts are named by a verdict row (414 in circuit-verdicts.md, 440 in round 7; six parts, C206, D701, D711, R208, R545 and U203, were added after the commit round 7 judged and are judged in circuit-verdicts.md only). 275 of 283 nets are named by a verdict row (228 in circuit-verdicts.md, 270 in round 7, either 275). The 8 remaining are tool-named single-pin no-connect nets, unconnected-(U203-NC-Pad1) and unconnected-(U401-PB13-Pad52, PB14-Pad53, PB15-Pad54, PC9-Pad66, PD4-Pad85, PD7-Pad88, PE1-Pad98); each belongs to U203 or U401, which carry verdict rows. The record's own totals for circuit-verdicts.md are 427 PASS, 115 FINDING and 6 N/A rows, 548 in all.
+
+  (b) The method's circuit practice is applied to this board. Method: docs/board-design-method.md, Circuit practice catalogue (24 items) and Schematic review. Commands, run read-only from hardware/tools with PYTHONDONTWRITEBYTECODE=1: `python3 -m unittest tests.test_main_board_schematic_records tests.test_circuit_proof_sheet_generator` gave Ran 9 tests, OK (the drawn wall-board header, the design records and catalogue extract, the panel cable and USB protection path, the generated sheets identical to the committed ones, the parts table naming only parts on the committed sheets, no deck carrying a do-not-populate part). In a scratch copy of hardware/sunbeam-em7000/main-board/sheets and circuit-proof, `python3 A_check_sheets.py` and `python3 C_check_sheets.py` exit 0 (C: 'problems: 0', sheets 50, 52 and 57 identical to the generator's output; A: sheets 101 and 102 hold 32 and 32 parts with no pin in two nets). `python3 E_check_sheets.py` exits 1 with three lines naming NT601 (a net tie: 'unknown pin count for Device:NetTie_2'); this is a limit of that script's symbol table, outside every gate, and not a drawing fault. Records: hardware/sunbeam-em7000/main-board/circuit-proof.md (its own summary: 128 rows, 78 yes, 46 NO, 4 n/a, with the section 'Rows that are not met, with what closes each') and the 239 files in hardware/sunbeam-em7000/main-board/circuit-proof/. Round 7 of schematic-review.md holds verdict rows for all 24 catalogue items. The test module tests.test_main_board_clamp_and_side was started and abandoned after 10 minutes without finishing, so it is not evidence here.
+
+  (c) A reader with the repository can render every sheet. Command: `python3 hardware/tools/schematic_sheets.py --root . --kicad-cli kicad-cli --out <empty folder>` (the repository's own renderer, behind `task hw:sheets`; it draws from the tracked files). Result: exit 0, 'DESIGN | hardware/sunbeam-em7000/main-board/main-board.kicad_pro | PASS | 18 sheets', and 18 SVG files written for the main board (RESULT PASS, all 6 designs; the five proof designs hold one sheet each). A direct `kicad-cli sch export svg -o <folder> hardware/sunbeam-em7000/main-board/main-board.kicad_sch` also wrote 18 SVG files (the root and 17 sub-sheets, each 276 KB or larger; the 17 sub-sheet .kicad_sch files sit beside the root in hardware/sunbeam-em7000/main-board/). `python3 -m unittest tests.test_schematic_sheets` (hardware/tools/tests/test_schematic_sheets.py) gave Ran 27 tests, OK, including the test that a tool exiting 0 with fewer images than the design has sheets fails the design by name. kicad-cli printed 'schematic has annotation errors' as a warning on the export.
+  Limits stated: no repository test counts verdict rows against the netlist (the count in (a) was made by this check); the circuit-proof sheet check E_check_sheets.py exits 1 on NT601, a net tie whose pin count the script's symbol table lacks, so (b) rests on the A and C checks and the unit modules that ran, not on E; layout is out of scope.
   Note: the line-8434 table in the review keeps its original UNRESOLVED labels by design ('No round is rewritten'); the appended table at line 8503 states the closing forms.
   RESULT: PASS. No finding without a closing form; each carry names a criterion whose text asks for it.
 
   Checked against the committed records at commit 123d64ad (round gate passed on that commit).
+
+  The findings table was checked at 123d64ad; the one records change after it (ae25e637, the 7.61 closure row, now stating M35 as it reads) was re-read and matches the table above. The check of the other clauses was run at ae25e637.
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C1
     type: satisfies

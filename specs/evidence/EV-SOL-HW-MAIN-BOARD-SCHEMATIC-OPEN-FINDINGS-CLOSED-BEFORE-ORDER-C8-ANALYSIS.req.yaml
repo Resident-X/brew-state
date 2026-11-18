@@ -2,14 +2,14 @@ id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C8-ANALYSIS
 type: evidence
 title: analysis evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C8
 status: active
-version: 1
+version: 2
 result: pass
 method: analysis
 observed_at: "2026-11-18T02:32:49.636664Z"
 artifact:
   kind: external
   reference: 'hardware/sunbeam-em7000/main-board/open-items.md (rows M35, M36), hardware/sunbeam-em7000/main-board/circuit-verdicts.md (rows C302, C792), hardware/sunbeam-em7000/main-board/bring-up/B.yaml, bring-up/D.yaml and bring-up-provision.md (rows "Carried: C302 ripple current", "Carried: C792 ripple current")'
-  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  artifact_version: ae25e6378002dc77cd80be2c4dbebbef7a8e7b37
   verifier: claude (AI agent)
 attested_by: crun-835fae660c6adc31
 text: |-
@@ -26,6 +26,8 @@ text: |-
   Overall C8: PASS.
 
   Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+
+  Re-read at ae25e637: M35 (smooth drive closed by calculation; chopped drive 1.8 times margin and not proven; limit Vpp <= 2 x 33 mA x Z read on a spare part), M36 (C302) and the C792 and C302 verdict rows are as stated above and unchanged since 123d64ad; the one later records change (the 7.61 closure row of the review record, ae25e637) states M35 the same way.
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C8
     type: satisfies

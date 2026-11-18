@@ -2,19 +2,19 @@ id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C8-TEST
 type: evidence
 title: test evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8
 status: active
-version: 1
+version: 2
 result: pass
 method: test
 observed_at: "2026-11-18T04:30:48.262349Z"
 artifact:
   kind: external
   reference: hardware/tools/tests/test_main_board_clamp_and_side.py::test_the_full_pre_order_check_of_the_committed_main_board_has_no_violation_line_beyond_its_accepted_ones
-  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  artifact_version: ae25e6378002dc77cd80be2c4dbebbef7a8e7b37
   verifier: claude (AI agent)
 attested_by: crun-53ff47a01c39164b
 text: |-
   SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8 (version 4, verification: test) - clause map by reading, no test run.
-  Files: /Users/david/repos/coffee-wt-checkfix/hardware/tools/tests/test_main_board_clamp_and_side.py (class FullCheck). Two tests carry the C8 trace comment (lines 1179 and 1204):
+  File: hardware/tools/tests/test_main_board_clamp_and_side.py (class FullCheck). Two tests carry the C8 trace comment (lines 1179 and 1204):
    T1 test_the_full_pre_order_check_of_the_committed_main_board_has_no_violation_line_beyond_its_accepted_ones (def line 1180)
    T2 test_the_84_test_points_use_the_small_footprint_that_clears_the_courtyard_rule_and_each_same_connector_header_pair_is_accepted_once (def line 1205)
   Both run the real pre-order check on the committed main board through full_check_lines() (board_check.check_design, the function hw:verify drives, Taskfile.yml hw:verify).
@@ -23,10 +23,12 @@ text: |-
   (2) Failing rule resolved by a change, never judged unimportant: the check has no waiver except signed records (board_check.py hole_to_hole accepted only by a same_connector_pins entry; the workmanship record never accepts hole_to_hole, proved in board_prove.py). T1 shows the end state. The process half is not a test property.
   (3) No hole_to_hole violation outside same_connector_pins entries: T2 plated_hole_problems(lines, tree) == [] and a synthetic hole_to_hole line is found (T2 final assertions). Covered.
   (4) Each same_connector_pins entry confirmed against the finished layout: T2 loops the five headers (J630, J635, J791, J821, J861) and asserts the number of accepted lines equals plated_pairs_at_pitch(tree, header) read from the board, at least 2, with faults for a missing and a repeated line. Covered, traced to C8. (judge_same_connector in board_check.py also fails an entry whose connector or pitch is absent from the layout.)
-  (5) Each mains exception entry confirmed against the finished layout: only through T1's run. judge_net_pair and the same-part judging run inside check_design, so an entry that no longer matches the layout prints as a VIOLATION and fails T1; T1 also asserts at least one covered spacing_exception line states ground and bound. Direct layout measurement exists only for the pump triac entries (test_separation_basis_record.py triac_pads/check_triac_entries, traced to SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C2, not C8). Remaining gap: no test asserts that every mains entry (net-pair, R105 same-part, bought-part entries) is matched one-to-one by a reported shortfall pair on the layout, nor that an entry covering no shortfall is flagged; unused-entry detection rests on the check's own judging, unproved here.
+  (5) Each mains exception entry confirmed against the finished layout: met by the check itself, run inside T1 (and T2). board_check.check_design judges every entry of the record's accepted_exceptions against the shortfalls the layout rule check reports on the committed board, and fails the entry, naming it, when it covers no shortfall that another entry has not already taken: judge_net_pair (hardware/tools/board_check.py, the 'covers mains_to_mains ... where the layout rule check reports no shortfall' failure at line 8414), the named-pad entries in judge_exceptions (line 8561, same wording), and judge_same_connector (line 8486). The same judging fails an entry that names a pad or net the layout lacks, that is unsigned, that accepts a smaller distance than the layout leaves, or that relaxes a held figure. T1 runs this check on the committed board and asserts no VIOLATION line, so an entry that no longer matches the layout fails T1; T1 also asserts that at least one covered spacing_exception line states ground and bound. The clause is therefore met by the check's own per-entry judging inside the traced test; the pump triac entries are in addition measured directly from the layout by test_separation_basis_record.py (check_triac_entries), a test traced to another criterion.
   (6) Test-point courtyard rule, 84 test points on the board's small footprint: T2 asserts every TP uses the small footprint (pad_footprint_problems, 83-count and renamed-footprint faults), count 84, courtyard arithmetic (rule 1.0 mm, courtyard gap 1.0, pad gap 1.25, clear pitch 2.25 mm under the 2.5 mm library pitch), the measured board pairs against S-80 in owner-sign-off.md, and that every courtyard line the check reports is a signed pair. Covered.
 
   Checked against the committed records and tests at commit 123d64ad (round gate passed on that commit).
+
+  Re-pinned to the commit the final round gate ran on; the tests and board_check.py judging cited here are unchanged since 123d64ad.
 links:
   - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8
     type: satisfies
