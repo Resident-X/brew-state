@@ -1,0 +1,140 @@
+# Parts specification of the Sunbeam EM7000 heater wall board: one position for every part
+# schematic-spec.yaml lists (14), in sheet order, the sheet named above each group.
+#
+# Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
+# and no others, as the main board's record (main-board/parts-specification.yaml) states. So the figures
+# the schema has no key for (maker, MPN, catalogue class, hand-fitted) sit in the comment above each
+# position, from schematic-spec.yaml. The fields mean what they mean there: package is the footprint's
+# library item name; rating is the drawn symbol's Rating field exactly as the drawn schematic carries it (shorter than the sheet specification's text where a comment says so), leading
+# with the part's maximum rated voltage where it has one (the drawn fields are shorter than the ratings of schematic-spec.yaml, whose fuller text sits in the comment above each position where they differ) (the derated-voltage rule reads the first
+# figure in V, VDC or VAC as the rated maximum); class is a class of derating-policy.yaml for a part
+# whose rating states a figure in V, VDC or VAC and none for a part whose rating states none.
+#
+# Classes used: triac (the two BTA16 triacs: the shares the assembly judgements carry, see
+# derating-policy.yaml), integrated circuit (the two opto-triacs, as the main board classes its
+# MOC3052SVM), resistor (the four 1206 gate resistors), varistor (the two 07D471K). The three blade
+# terminals and the three-way header state no voltage in their rating, so they take none; their current
+# ratings are not stated by the maker's drawing (unsourced), see open-items.md.
+#
+# Sources of the rated figures (datasheet, revision, address that opened it):
+#   ST BTA16-600BRG, Doc ID 7471 Rev 9: the revision the schematic's Rating field cites. The assembly
+#     judgements (docs/sunbeam-em7000/controller-board-division.md, The heater wall assembly, judged)
+#     read the same family as DS2114 Rev 11, May 2018 (P3); the two revisions are not reconciled here.
+#   Lite-On MOC3083 series, DS70-2001-027 Rev B (page 6 of 8 of the sheet, 9 PDF pages): the LCSC-hosted copy
+#     for C10797, https://datasheet.lcsc.com/datasheet/pdf/79a9fbf489164b818fbd18454ca1712e.pdf, read 2026-11-18
+#   UNI-ROYAL 1206W4F2000T5E (C18002): the catalogue part page figures, 250 mW and 200 V; the maker's
+#     datasheet (overload voltage, pulse rating) was not opened (main-board/circuit-proof.md, pump gate
+#     resistor pulse rating row)
+#   Zhuhai Hongjiacheng 07D series Rev 1.2 (C49072860), as the schematic cites it
+#   TE Connectivity 63849-1 drawing C-63849 rev F1: datasheet.lcsc.com d78aaa5668ef44d19432bad6ab97dbf2.pdf
+#   XFCN PZ254V-11-03P (C2937625): the main board's JP301 part; the maker's drawing is not read here
+positions:
+  # ---- sheet: Coffee heater switch
+  # T101: maker STMicroelectronics; MPN BTA16-600BRG; catalogue class extended; hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9 (VDRM/VRRM 600 V (Table 1 p.1); IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, VDSM VDRM+100 V, Tj -40 to +125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III and 100 mA IV, VGT 1.3 V max, IH 50 mA max, dV/dt 400 V/us min, (dV/dt)c 10 V/us min, 'B' column (Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 6 p.3); insulated tab rated 2500 Vrms (features p.1))
+  - reference: T101
+    value: "BTA16-600BRG"
+    package: TO-220-3_Vertical
+    rating: "600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9; insulated tab 2500 Vrms"
+    lcsc: C9100
+    class: triac
+  # U101: maker Lite-On (stocked equivalent of onsemi MOC3083M); MPN MOC3083; catalogue class extended; hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, Lite-On MOC3083 series DS70-2001-027 Rev B (VDRM 800 V min, ITSM 1 A at 100 us 120 pps, VISO 5000 Vrms, TA -40 to +100 degC (p.5); VF 1.4 V max at IF 20 mA, IFT 5 mA max, inhibit voltage 20 V max, IDRM2 500 uA max (p.6); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 substrate, 6 main terminal (p.2))
+  - reference: U101
+    value: "MOC3083"
+    package: DIP-6_W7.62mm
+    rating: "800 V zero-cross opto-triac driver, DIP-6, Lite-On DS70-2001-027 Rev B; VF 1.4 V max at 20 mA, IFT 5 mA max, TA -40 to +100 degC"
+    lcsc: C10797
+    class: integrated circuit
+  # R101: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R101
+    value: "200"
+    package: R_1206_3216Metric
+    rating: "1% 250mW 200V 1206"
+    lcsc: C18002
+    class: resistor
+  # R102: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R102
+    value: "200"
+    package: R_1206_3216Metric
+    rating: "1% 250mW 200V 1206"
+    lcsc: C18002
+    class: resistor
+  # RV101: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (p.1-2); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
+  - reference: RV101
+    value: "07D471K"
+    package: RV_Disc_D9mm_W5.2mm_P5mm
+    rating: "07D471K 470 V disc varistor, 5 mm lead pitch, 300 VAC / 385 VDC max, clamp 775 V at 10 A 8/20 us, non-polar"
+    lcsc: C49072860
+    class: varistor
+  # J101: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  - reference: J101
+    value: "TAB_OUT_C"
+    package: Tab_TE_63849-1
+    rating: "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced)"
+    lcsc: C86469
+    class: none
+  # ---- sheet: Steam heater switch
+  # T201: maker STMicroelectronics; MPN BTA16-600BRG; catalogue class extended; hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9 (VDRM/VRRM 600 V (Table 1 p.1); IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, VDSM VDRM+100 V, Tj -40 to +125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III and 100 mA IV, VGT 1.3 V max, IH 50 mA max, dV/dt 400 V/us min, (dV/dt)c 10 V/us min, 'B' column (Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 6 p.3); insulated tab rated 2500 Vrms (features p.1))
+  - reference: T201
+    value: "BTA16-600BRG"
+    package: TO-220-3_Vertical
+    rating: "600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9; insulated tab 2500 Vrms"
+    lcsc: C9100
+    class: triac
+  # U201: maker Lite-On (stocked equivalent of onsemi MOC3083M); MPN MOC3083; catalogue class extended; hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, Lite-On MOC3083 series DS70-2001-027 Rev B (VDRM 800 V min, ITSM 1 A at 100 us 120 pps, VISO 5000 Vrms, TA -40 to +100 degC (p.5); VF 1.4 V max at IF 20 mA, IFT 5 mA max, inhibit voltage 20 V max, IDRM2 500 uA max (p.6); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 substrate, 6 main terminal (p.2))
+  - reference: U201
+    value: "MOC3083"
+    package: DIP-6_W7.62mm
+    rating: "800 V zero-cross opto-triac driver, DIP-6, Lite-On DS70-2001-027 Rev B; VF 1.4 V max at 20 mA, IFT 5 mA max, TA -40 to +100 degC"
+    lcsc: C10797
+    class: integrated circuit
+  # R201: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R201
+    value: "200"
+    package: R_1206_3216Metric
+    rating: "1% 250mW 200V 1206"
+    lcsc: C18002
+    class: resistor
+  # R202: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R202
+    value: "200"
+    package: R_1206_3216Metric
+    rating: "1% 250mW 200V 1206"
+    lcsc: C18002
+    class: resistor
+  # RV201: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (p.1-2); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
+  - reference: RV201
+    value: "07D471K"
+    package: RV_Disc_D9mm_W5.2mm_P5mm
+    rating: "07D471K 470 V disc varistor, 5 mm lead pitch, 300 VAC / 385 VDC max, clamp 775 V at 10 A 8/20 us, non-polar"
+    lcsc: C49072860
+    class: varistor
+  # J201: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  - reference: J201
+    value: "TAB_OUT_S"
+    package: Tab_TE_63849-1
+    rating: "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced)"
+    lcsc: C86469
+    class: none
+  # ---- sheet: Low-voltage header
+  # J301: maker XFCN; MPN PZ254V-11-03P; catalogue class extended
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 1x3 2.54 mm pin header, 3 A, vertical (the main board's JP301 part)
+  - reference: J301
+    value: "WB_LV3"
+    package: PinHeader_1x03_P2.54mm_Vertical
+    rating: "1x3 2.54 mm pin header, 3 A, vertical"
+    lcsc: C2937625
+    class: none
+  # ---- sheet: Return landing
+  # J401: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  - reference: J401
+    value: "TAB_RET"
+    package: Tab_TE_63849-1
+    rating: "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced); carries the heater return current, 5.38 A steam plus 4.80 A coffee at most together"
+    lcsc: C86469
+    class: none

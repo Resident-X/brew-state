@@ -1,0 +1,78 @@
+# The derating policy of the Sunbeam EM7000 heater wall board, read by the pre-order board check
+# (the derated-voltage rule reads each class's voltage share) and by the schematic review.
+#
+# The main board's policy (main-board/derating-policy.yaml) is the template: the resistor, integrated
+# circuit and varistor classes are copied from it with every share unchanged, and its relaxations
+# adopted by the owner on 2026-10-29 apply as it states them. Two classes are this board's:
+#   triac. The temperature and current shares the heater wall assembly judgements carry unchanged into
+#     this policy (SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED; the leaf SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+#     says they are carried unchanged): temperature share 0.8 of the junction limit, 0.8 x 125 = 100 degC;
+#     current share 0.5 of rated current at the case temperature, 0.5 x 16 A = 8 A. The voltage share 0.75 is
+#     the main board's semiconductor class.
+#   blade terminal and joiner. The 15 A the judgement carries for a connector or joiner against a maker
+#     rating once one is read; none is read, so the figure is carried and unsourced.
+# The shares are fractions of the part's rating, as in the main board's policy: 'power' is the share of
+# rated power, or of rated current for a class whose row states current.
+#
+# Enclosure air: graded at 70 degC at every part, the constraints record's assumption until bring-up measures
+# the real enclosure air (docs/sunbeam-em7000/controller-board-design-constraints.md, Enclosure air temperature;
+# DEL-HW-BRING-UP.C13). The wall board is not in the controller's air: the owner's working figure for the air at
+# the wall board is 45 degC (stated 2026-10-28, not measured), so 70 degC is this board's conservative case. The
+# part-by-part grading at 70 degC and at the 100 degC triac ceiling is in circuit-proof.md, "Grading every part
+# against the enclosure air", and in constraints-figures.md.
+#
+# No accepted_exceptions are entered: every position's working voltage is inside its class limit by the pin-limit
+# record's reading (the gate resistors carry half the 357.8 V peak, 178.9 V, against 200 V). An exception is the owner's
+# to sign and none is drafted here.
+source: NASA Goddard Space Flight Center, EEE Parts Derating, Preferred Reliability Practice PD-ED-1201, Table 1 (https://klabs.org/DEI/References/design_guidelines/design_series/1201.pdf, no date printed, read 2026-10-29), as the main board policy adopts it (main-board/derating-policy.yaml, adopted by the owner on 2026-10-29 with the relaxations stated there) for the resistor, integrated circuit and varistor classes, carried here unchanged in every share; the triac class carries unchanged the temperature share 0.8 (0.8 x 125 = 100 degC) and the current share 0.5 (8 A for the triac) that the heater wall assembly judgements state (docs/sunbeam-em7000/controller-board-division.md, The heater wall assembly judged), which are stated reasons and not read from any document; enclosure air graded at 70 degC, assumed until the bring-up measurement of the machine real enclosure air (DEL-HW-BRING-UP.C13), the conservative case for this board whose own working figure is 45 degC (owner statement 2026-10-28)
+classes:
+- class: resistor
+  voltage:
+    share: 1
+    source: PD-ED-1201 Table 1 states no voltage factor for resistors, so the maker's rated working voltage is the limit
+  power:
+    share: 0.6
+    source: PD-ED-1201 Table 1, Resistors, max of 60 % of rated power
+  temperature:
+    share: 1
+    source: PD-ED-1201 Table 1 states no temperature factor for resistors, so the maker's power-versus-temperature curve at the 70 degC enclosure air is the limit
+- class: integrated circuit
+  voltage:
+    share: 1
+    source: PD-ED-1201 Table 1, Microcircuits, states max supply voltage of 80 % of rated voltage; the owner relaxed it on 2026-10-29 (hobbyist project, 'adopt'), so an integrated circuit run within its maker's recommended supply range needs no further voltage derating and the check compares the applied voltage to the maker's absolute maximum at share 1
+  power:
+    share: 0.75
+    source: PD-ED-1201 Table 1, Microcircuits, max of 75 % of rated power
+  temperature:
+    share: 0.88
+    source: PD-ED-1201 Table 1, Microcircuits, states a max junction temperature of 100 degC; the owner adopted 110 degC on 2026-10-29 (hobbyist project, 'adopt'), carried as 110/125 of the lowest rated junction maximum on the board
+- class: triac
+  voltage:
+    share: 0.75
+    source: 'PD-ED-1201 Table 1, Semiconductor Devices, max of 75 % of rated voltage, the main board policy semiconductor class carried unchanged (the heater wall assembly judgements state no voltage share; they state two others, the temperature and current shares below). Applied to the maker VDRM/VRRM 600 V: 450 V against the 357.8 V peak of the 253 V rms top of the declared span.'
+  power:
+    share: 0.5
+    source: 'The current share the heater wall assembly judgement carries unchanged (docs/sunbeam-em7000/controller-board-division.md, The heater wall assembly judged, The shares this judgement is made against): 0.5 of the maker rated current at its case temperature, 8 A for the BTA16-600BRG (IT(RMS) 16 A at Tc 86 degC). A stated reason and not a figure read from any document, as that record says; PD-ED-1201 Table 1 gives 50 % of rated power for semiconductor devices, the same fraction.'
+  temperature:
+    share: 0.8
+    source: 'The temperature share the heater wall assembly judgement carries unchanged (same section): 0.8 of the maker junction limit, 0.8 x 125 = 100 degC, a conventional 25 K margin for an ambient and a wall nobody has measured. A stated reason and not read from any document. It differs from the semiconductor class share 0.88 (110 degC) the main board carries; the triac is held to the judged 100 degC.'
+- class: varistor
+  voltage:
+    share: 1
+    source: PD-ED-1201 Table 1 has no row for varistors, so the maker's maximum continuous voltage is the limit; the owner accepted that on 2026-10-29
+  power:
+    share: 1
+    source: PD-ED-1201 Table 1 has no row for varistors, so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+  temperature:
+    share: 1
+    source: PD-ED-1201 Table 1 has no row for varistors, so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+- class: blade terminal and joiner
+  voltage:
+    share: 1
+    source: 'PD-ED-1201 Table 1 has no row for blade terminals or in-line joiners, and the TE 63849-1 drawing (C-63849 rev F1) states no voltage, so no voltage figure is held; the class is documentary: the board three blade positions and its header take the class none because their rating states no voltage figure'
+  power:
+    share: 1
+    source: The assembly judgement carries 15 A for a connector or joiner against the maker rating once a maker rating is read; none is read (the TE drawing and the joiner listings state none), so 15 A stays the carried figure, unmet by any source, and open-items.md holds the act that settles it
+  temperature:
+    share: 1
+    source: No temperature factor is stated for blade terminals or joiners; the maker rated temperature would be the limit and the TE drawing states none (unsourced)

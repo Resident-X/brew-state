@@ -1,0 +1,25 @@
+== (a) heater LED stage: main board R763/R773 = 180 ohm, Q761/Q771, +5V_WB, wall board Lite-On MOC3083 LED
+PASS  heater LED IF_min (cable resistance 0): IF_min 18.42 mA vs needed 9.00 mA (5 mA x1.5 x1.2): margin 9.42 mA (x2.05). Main board with the onsemi figures: 17.87 mA vs 9.0 mA (x1.99)
+PASS  heater LED cable allowance: loop resistance the cable may add (+5V_WB conductor and LED-return conductor together) = 190 ohm at the lowest rail (main board: 179 ohm)
+PASS  Fig. 3 sensitivity (no cold factor): Fig. 3 reading 6.7 mA x1.2 = 8.04 mA: margin x2.29; with the carried cold factor 1.5 on top 12.06 mA: margin x1.53, cable allowance 96 ohm
+PASS  heater LED upper limits: IF bound (VF=0) 29.5 mA vs 50 mA, and vs 37.2 mA at 70 degC air by Fig. 1 (x1.26); emitter power at VF 1.4 V 30.2 mW vs 89.3 mW (120 mW scaled by Fig. 1's derating: the sheet states no power derating)
+NOTE  IF bound 29.5 mA against 18 mA at 100 degC by Fig. 1: over; the opto-triac stands in 45 degC (owner) or 70 degC (conservative) air, not 100 degC
+
+== (b) gate network R101+R102 / R201+R202 = 2 x 200 ohm 1206 (UNI-ROYAL C18002) in series
+PASS  opto-triac surge limit: R = VPK / ITSM: minimum 357.8 ohm; fitted 400 ohm (-1% = 396): peak 0.904 A <= 1 A (x1.11)
+PASS  gate drive reaches IGT: line voltage that drives IGT max through 404 ohm = 24.5 V (4.6 deg after the crossing at 216 V rms); the opto fires below 20 V, its gate current then keeps rising with the line (the opto stays latched, IH typ 0.4 mA); peak gate current 0.90 A <= IGM
+PASS  working voltage per 1206: each resistor carries half of the peak: 178.9 V vs 200 V rated (C18002 catalogue page): margin 21.1 V (10.6 %); class share 1
+   power: during the firing ramp each resistor passes at most IGT 50 mA: 0.505 W for the ramp from the opto's turn-on (<= 20 V) to the triac's latch (24.5 V), (24.5 - 20) V at the line's slope 2 pi f VPK = 112 V/ms gives 0.040 ms, 2.02 mW average at 100 firings a second (250 mW rated; the share 0.6 gives 150 mW)
+   gate-to-MT1 short fault (a shorted triac gate): 0.62 A rms through the 400 ohm, peak 0.89 A, 156 W in the two resistors: they open; the heater stays off (fails off); the opto-triac's 1 A is a 100 us rating and its single-cycle rating is not stated by the sheet
+
+== (c) hold-off in reset, unpowered and with the cable loose; no gate-MT1 resistor
+PASS  leakage x gate network against VGT: IDRM2 500 uA x 404 ohm = 0.202 V vs VGT 1.3 V max: margin x6.44; gate current 0.5 mA vs IGT 50 mA (x100). With the LED off the sheet's figure is IDRM1 500 nA: 0.202 mV
+   LED current in reset / unpowered: at most 5 uA (main board row), 1000 times under IFT max 5 mA; cable loose: +5V_WB or HEAT_x_LED_K open gives 0 A
+
+== (d) varistor 07D471K (Zhuhai Hongjiacheng Rev 1.2) across each triac
+PASS  stays off in service: V1mA min 423 V vs peak 357.8 V: x1.18; 300 VAC vs 253 V: x1.19
+   clamp 775 V at 10 A vs triac VDRM 600 V: x1.29 over (VDSM 700 V for 10 ms: x1.11 over); vs opto-triac VDRM 800 V: 25 V under (3.1 %)
+   2.5 kV surge (separation-basis overvoltage category II basic): current (2500 - 775) / Z; 1200 A is met for Z >= 1.44 ohm; at 2 ohm (not read) 862 A
+   opto-triac through the 396 ohm gate network at the clamp voltage: 1.96 A against ITSM 1 A (100 us rating, microsecond withstand not stated)
+
+exit 0
