@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C10-INSPECTION-3
+type: evidence
+title: inspection evidence correcting the controller pins quoted for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T10:30:24Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/pin-allocation.yaml (heat_c_drv, heat_s_drv, mains_pres_c, mains_pres_s entries)
+  artifact_version: b68e061df747be4ed65719f009adfc2818b96329
+text: |
+  Correction of the controller pins that the earlier test evidence of this criterion (EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C10-TEST and EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C10-TEST-2) quotes in its text. Those nodes state the channels that cross the header as heat_c_drv (PD2), heat_s_drv (PD3), mains_pres_c (PE15) and mains_pres_s (PD7). Read at commit b68e061df747be4ed65719f009adfc2818b96329, hardware/sunbeam-em7000/main-board/pin-allocation.yaml lists the four channels with these controller pins: heat_c_drv PD11, heat_s_drv PD12, mains_pres_c PE15 and mains_pres_s PB11. PE15 agrees; PD2, PD3 and PD7 are stale names from an earlier pin assignment (the main board's phase-2 change list moved the drive pins to PD11 and PD12). The criterion asks that every channel crossing the header be listed with its controller pin, which holds at the pins above; this node supersedes only the pin names in the earlier nodes' text and does not re-judge their tests. Clause check against the criterion: every channel crossing the header is listed in the pin allocation record with its controller pin (met, four of four, quoted above); the record places the header and its channels as the division record fixes (unchanged by this node).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+    type: satisfies
