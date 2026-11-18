@@ -1,0 +1,48 @@
+# acceptance-reasons.yaml  --  the reasons the acceptance-entry generator gives, by kind of net, for this board.
+#
+# Read by `python3 hardware/tools/acceptance_entries.py --table`. The generator writes one signed entry of
+# workmanship-acceptance.yaml for each rule and net of a failing neatness line of the pre-order check, with the reason of the
+# net's kind below. It writes no entry for a line on a net of a Mains class or at a position inside the `mains` region of the
+# layout, and none for a net that is in no kind here or a kind with no reason for the rule: those lines it names and holds back.
+# A reason is the engineering ground an owner signs; changing one changes what every entry written afterwards says.
+#
+# A net is matched by pattern against its whole name and against its last path part (the name without its sheet prefix).
+# accepted_by is the identity every written entry carries; the entry's date is the day the generator runs.
+accepted_by: "owner (signed on behalf, session 2026-11-14)"
+net_kinds:
+  - kind: supply and ground
+    nets: ["+3V3", "+3V3A", "+3V3A_FB", "+3V3_REG", "+5V", "+5V_MOD", "VREF+", "VCAP", "USB_VBUS", "USB_VBUS_F", "DBG_VTREF", "GND"]
+    bounded_by: "the lines on the net, in its net class; the track's width, clearance and every separation rule still judge this copper, and the pad's connection is unchanged"
+    reasons:
+      workmanship_pad_corner: "At a pad of this net two tracks leave closer together than a bend asks. The net is a supply, ground or test point stub: it carries one load's current, tens of milliamps against a track of the plan width, as DC plus decoupling edges of nanoseconds whose wavelength on the board is metres, so a corner a millimetre long changes no impedance that matters."
+      workmanship_pad_entry: "A track enters a long pad of this net off its long axis. The net is a supply, ground or test point stub carrying one load's current as DC plus decoupling edges of nanoseconds whose wavelength on the board is metres, so an off-axis entry a millimetre long changes no impedance that matters."
+      workmanship_detour: "The net's tracks are longer than the allowed multiple of the shortest tree. The net carries DC at one load's current, so a longer path costs tens of milliohms at most, not timing."
+      decoupling_via: "A via stands in the box between a decoupling capacitor pad and the supply pin it serves. A via adds about 1 nH; at the edge of a slow part (1 nH x 10 mA / 20 ns = 0.5 mV) that is small against the tolerance of the rail, and the capacitor stays within a few millimetres of its pin."
+  - kind: slow analogue
+    nets: ["CURR?_SIG", "CURR?_DIV", "CURR?_AN", "SPAN?_RAW", "SPAN?_DIV", "SPAN?_AN", "SPAN?_3V3_SRC", "BREWA_RAW", "BREWA_DIV", "BREW_AN", "PT?_FORCEP", "PT?_FORCEN", "PT?_FORCE?", "PT?_RTDINP", "PT?_RTDINN", "PT?_BIAS", "PT?_FORCEN_SRC", "PT?_FORCEP_SRC", "NTC_*", "STMP_AN", "STMD_3V3_SRC", "FLOW_RAW", "FLOW_BUF", "WT?_INA_P", "WT?_INA_N", "TANK_LEVEL", "SPARE_AN?"]
+    bounded_by: "the lines on the net, in its net class; the track's width, the sensing clearance rule and every separation rule still judge this copper, and the pad's connection is unchanged"
+    reasons:
+      workmanship_pad_corner: "At a pad of this net two tracks leave closer together than a bend asks. The net is a slow analogue line (thermistor, RTD, pressure, flow, bridge or current sense after its filter): millivolt to 3.3 V signals below 1 kHz, where a pad corner adds no measurable resistance or coupling. The defence of such a net is the sensing clearance rule and its filter, not the corner."
+      workmanship_pad_entry: "A track enters a long pad of this net off its long axis. The net is a slow analogue line (thermistor, RTD, pressure, flow, bridge or current sense after its filter): millivolt to 3.3 V signals below 1 kHz, where an off-centre entry adds no measurable resistance or coupling. The defence of such a net is the sensing clearance rule and its filter, not the entry."
+      workmanship_detour: "The net's tracks are longer than the allowed multiple of the shortest tree. The net is a slow analogue line below 1 kHz: a longer path adds resistance of tens of milliohms at most and no measurable delay or coupling."
+  - kind: slow drive
+    nets: ["GAUGE_*", "POL_*", "ANODE_*", "VALVE_*", "PUMP_C_GATE_G", "PUMP_S_GATE_G", "LOWWATER_*", "BUZZER*", "HEAT_*_DRV", "HEAT_*_G", "HEAT_C_DRV"]
+    bounded_by: "the lines on the net, in its net class; the track's width, clearance and every separation rule still judge this copper, and the pad's connection is unchanged"
+    reasons:
+      workmanship_pad_corner: "At a pad of this net two tracks leave closer together than a bend asks. The net is a slow drive: a gate, relay, coil, LED or opto-coupler line switching a few times a second; the edges are set by the gate resistor to microseconds, so a corner costs nothing."
+      workmanship_pad_entry: "A track enters a long pad of this net off its long axis. The net is a slow drive: a gate, relay, coil, LED or opto-coupler line switching a few times a second; the edges are set by the gate resistor to microseconds, so an off-axis entry costs nothing."
+      workmanship_detour: "The net's tracks are longer than the allowed multiple of the shortest tree. The net is a slow drive at DC to about 100 Hz: a longer path costs no timing and tens of milliohms at most."
+  - kind: slow digital
+    nets: ["NRST", "SWCLK", "SWDIO", "SWO", "STM_SCL", "STM_SCK", "STM_SDA", "BREW_SCL", "BREW_SCK", "BREW_SCL_X", "BREW_SCK_X", "BREW_SDA", "WT?_CLK", "WT?_DATA", "SPI3_SCK", "SPI3_MISO", "SPI3_MOSI", "KEY?", "MAINS_PRES_?", "MAINS_PRES_?_J", "*_CS"]
+    bounded_by: "the lines on the net, in its net class; the track's width, clearance and every separation rule still judge this copper, and the pad's connection is unchanged"
+    reasons:
+      workmanship_pad_corner: "At a pad of this net two tracks leave closer together than a bend asks. The net is a slow digital line (key, strap, reset, I2C, SWD, SPI or load-cell clock and data, at the bus rate the pin map records): edge times are several nanoseconds or more, so a corner is a few femtofarads and brings no reflection or crosstalk that the 0.3 mm sensing clearance and the separation rules do not already judge."
+      workmanship_pad_entry: "A track enters a long pad of this net off its long axis. The net is a slow digital line (key, strap, reset, I2C, SWD, SPI or load-cell clock and data, at the bus rate the pin map records): edge times are several nanoseconds or more, so an off-axis entry is a few femtofarads and brings no reflection or crosstalk that the 0.3 mm sensing clearance and the separation rules do not already judge."
+      workmanship_detour: "The net's tracks are longer than the allowed multiple of the shortest tree. The net is a slow digital line: a few millimetres more copper is a fraction of a picofarad."
+  - kind: crystal
+    nets: ["LSE_IN", "LSE_OUT", "HSE_IN", "HSE_OUT"]
+    bounded_by: "the lines on the net, in its net class; the load capacitors stay within a few millimetres of the pins, and clearance and every separation rule still judge this copper"
+    reasons:
+      workmanship_pad_corner: "At a pad of this net two tracks leave closer together than a bend asks. The net is a crystal pin (32.768 kHz or 8 MHz, load capacitors within a few millimetres of the pins): a corner adds well under 1 pF to a node that the load capacitors already set at several pF."
+      workmanship_pad_entry: "A track enters a long pad of this net off its long axis. The net is a crystal pin (32.768 kHz or 8 MHz, load capacitors within a few millimetres of the pins): an off-axis entry adds well under 1 pF to a node that the load capacitors already set at several pF."
+      workmanship_detour: "The net's tracks are longer than the allowed multiple of the shortest tree. The net is a crystal pin: a few millimetres more copper is a fraction of a picofarad against the load capacitors."
