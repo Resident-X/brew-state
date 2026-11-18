@@ -1,0 +1,27 @@
+id: EV-SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY-C10-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C10
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T11:34:42Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/README.md
+  artifact_version: 9ed0f876ad4b1daf45342af6c00a7f60fd005d46
+text: |
+  Inspection of hardware/README.md, section "## Owner-signed severity policy" (read against each clause of the criterion at the commit named in the artifact version).
+  1. Entry form with each key: the section lists the record keys `severity_policy` and `synthetic`, then each entry key as a bullet: `class`, `severity`, `count`, `reason`, `accepted_by`, `accepted_on`, with the rule for each (for example "an `ERROR` entry carries no `count`"). Present.
+  2. The WARNING line: the bullet beginning "`WARNING | <design> | <class> | <place> | ...; the owner's severity policy marks <class> WARNING with a recorded count of <n> ...`, one for each warning line". Present.
+  3. The count line: the bullet beginning "`COUNT | <design> | <class> | <record> severity_policy[<k>] | found <f> of recorded <n>`", with "A count at or below the record passes". Present.
+  4. Each failure of the policy: the paragraph "A class whose found count is above its recorded count fails the check as `severity_policy`", the report-cap case ("reported as `found at least 199`"), and the paragraph beginning "Fail closed." listing an entry that is not a mapping, lacks or adds a key, repeats a class, gives another severity, a WARNING entry with no or a bad count, an ERROR entry with a count, an unsigned entry, an entry naming a class outside the list, a record lacking `severity_policy` or holding another key, and a synthetic record on a design not marked not for manufacture. Present.
+  5. The classes the policy can never mark WARNING: "The policy can never mark a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other manufacturing, paste, solder, courtyard overlap or separation basis finding", plus "`silk_over_copper` is not in the list" and "`courtyards_overlap` and `items_not_allowed` stay errors". Present.
+  6. An unnamed class and an unsigned policy fail closed: "A line of a class the policy does not name, and every line of every class when the policy is absent, unreadable or not tracked, stands as a violation", and "an unsigned entry (an `accepted_by` that is empty, a placeholder or in angle brackets ...)" voids the whole policy; also "The check fails closed on it meanwhile". Present.
+  7. The policy is the owner's to sign: "the policy is the owner's to sign and no one else's, and a drafter, a tool or this repository's own files never sign it for the owner". Present.
+  8. Out of scope (any board's own policy): the section says "This repository ships no such record for any board" and states no board's policy. Consistent.
+  All clauses met.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C10
+    type: satisfies

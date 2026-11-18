@@ -12,7 +12,7 @@
   the 33 ohm series resistors drop 33.0 uV at 1 uA: negligible
 
 == bus clock: the slowest receiver sets it
-  MAX31865 SCLK <= 5.0 MHz (tCL = tCH = 100 ns min); AMC131M02 tc(SC) >= 40 ns (25 MHz); H743 SPI2 master <= 133 MHz: bus set to <= 5.0 MHz
+  MAX31865 SCLK <= 5.0 MHz (tCL = tCH = 100 ns min); AMC131M02 tc(SC) >= 40 ns (25 MHz); H743 SPI3 master <= 133 MHz: bus set to <= 5.0 MHz
   at 5 MHz: half period 100 ns
 
 == data timing at 5 MHz, mode 1 (SCLK idles low; the transmitter changes data on the rising edge, the receiver latches on the falling edge)

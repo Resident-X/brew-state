@@ -1,5 +1,5 @@
 sheet: In-stream temperature converters
-function: Two RTD-to-digital converters on the shared SPI2 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
+function: Two RTD-to-digital converters on the shared SPI3 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
 parts:
 - ref: C640
   lib_id: Device:C
@@ -17,12 +17,12 @@ parts:
 - ref: C641
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
   mains: false
@@ -30,12 +30,12 @@ parts:
 - ref: C642
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
   mains: false
@@ -56,12 +56,12 @@ parts:
 - ref: C646
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
   mains: false
@@ -69,12 +69,12 @@ parts:
 - ref: C647
   lib_id: Device:C
   value: 100n
-  rating: X7R 50V 10% 0603
+  rating: X7R 50 V 10 % 0603
   footprint: Capacitor_SMD:C_0603_1608Metric
-  mpn: CL10B104KB8NNNC
-  maker: Samsung Electro-Mechanics
-  lcsc: C1591
-  class: extended
+  mpn: CC0603KRX7R9BB104
+  maker: YAGEO
+  lcsc: C14663
+  class: basic
   hand: false
   function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
   mains: false
@@ -95,11 +95,11 @@ parts:
 - ref: J622
   lib_id: Connector_Generic:Conn_01x02
   value: PT1_2W_P
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -108,11 +108,11 @@ parts:
 - ref: J623
   lib_id: Connector_Generic:Conn_01x02
   value: PT1_23W_N
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
@@ -134,11 +134,11 @@ parts:
 - ref: J627
   lib_id: Connector_Generic:Conn_01x02
   value: PT2_2W_P
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -147,11 +147,11 @@ parts:
 - ref: J628
   lib_id: Connector_Generic:Conn_01x02
   value: PT2_23W_N
-  rating: 2.54 mm header with jumper cap
+  rating: 1x2 2.54 mm header with jumper cap
   footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-  mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-  maker: BOOMELE
-  lcsc: C2337
+  mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+  maker: XFCN + BOOMELE
+  lcsc: C492401
   class: extended
   hand: true
   function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
@@ -526,17 +526,17 @@ nets:
     - C647.2
     - R642.2
     - R647.2
-  SPI2_SCK:
+  SPI3_SCK:
     scope: global
     pins:
     - U620.12
     - U621.12
-  SPI2_MOSI:
+  SPI3_MOSI:
     scope: global
     pins:
     - U620.11
     - U621.11
-  SPI2_MISO:
+  SPI3_MISO:
     scope: global
     pins:
     - U620.14
@@ -565,7 +565,7 @@ no_connect:
 custom_symbols: []
 custom_footprints: []
 power_flags: []
-notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI2_SCK, SPI2_MOSI, SPI2_MISO global
+notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI3_SCK, SPI3_MOSI, SPI3_MISO global
   labels shared by both blocks, its own chip-select label). The reference resistor sits above the converter between BIAS/REFIN+ and REFIN-/ISENSOR/FORCE+; the filter capacitor sits across RTDIN+ and RTDIN- beside the header;
   the configuration parts sit between the converter and the probe header with a legend table: 4-wire = R642 fitted (FORCE2 to GND), R643 not fitted, J622 and J623 open; 3-wire = R642 removed, R643 fitted (FORCE2 to FORCE+),
   the FORCE-/RTDIN- link (J623) fitted, the FORCE+/RTDIN+ link (J622) open; 2-wire = R642 fitted, R643 not fitted, both links J622 and J623 fitted. (Probe 2: R647, R648, J627, J628.) R643 and R648 carry the field dnp: true.

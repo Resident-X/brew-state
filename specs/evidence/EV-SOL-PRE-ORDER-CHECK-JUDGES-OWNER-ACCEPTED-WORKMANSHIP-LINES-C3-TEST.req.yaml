@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES-C3-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:46:58.20564Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_workmanship_acceptance.py::test_a_fourth_line_a_line_of_another_rule_and_a_line_at_another_place_fail_as_before
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-ddb434eadcb72114
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C3
+    type: satisfies

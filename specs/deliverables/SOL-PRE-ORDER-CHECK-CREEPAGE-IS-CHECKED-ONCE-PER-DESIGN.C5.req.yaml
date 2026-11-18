@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C5
+type: criterion
+title: A ground pour is left out of the creepage test only where it stands at least the creepage limit in a straight line from every Mains-class conductor, or is judged by the check itself
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A test builds synthetic layouts with a Mains-class conductor and ground pours on each copper layer, and requires the guard to clear a ground pour as standing apart only where its straight-line distance to every Mains-class conductor, and to every net a creepage rule's condition names, is at least the largest creepage figure of the rules, the pour exactly at the figure clear and a pour just under it not; to judge a pour nearer than that to Mains-class copper alone on the layers it shares with that copper, round the barrier slots, so that a pour on the Mains layer under the figure is a creepage finding, one at it and one cut off by a slot are not, and a pour on another layer is the cross-layer rule's; to keep in, naming it with its distance, a pour nearer than that to a conductor of a net a rule names; and to leave every pour in where a creepage rule's condition names neither a Mains class nor a net, its figure is not read in millimetres in the form the check reads, or the rules text does not balance. A pour of a net that is not a ground net class and a rule area are never cleared. Which pours a design has is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
+    type: criterion-of

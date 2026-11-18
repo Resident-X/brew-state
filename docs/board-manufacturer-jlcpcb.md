@@ -115,7 +115,7 @@ Each is a minimum the manufacturer will make unless the entry says otherwise. A 
 | Soldermask bridge, minimum pad spacing | 0.20 mm, any colour | 2 oz | published unverified, read at source | https://jlcpcb.com/capabilities/pcb-capabilities, *Soldermask*, "Soldermask bridge" | 2026-10-13 |
 | Soldermask opening to neighbouring trace | At least 0.09 mm; openings may be 1:1 with the pad | Any board | published unverified, read at source | https://jlcpcb.com/capabilities/pcb-capabilities, *Soldermask*, "Soldermask Expansion" | 2026-10-13 |
 | Silkscreen minimum line width | 0.15 mm | Any board; narrower characters are unreadable | published unverified, read at source | https://jlcpcb.com/capabilities/pcb-capabilities, *Legend*, "Minimum Line Width" | 2026-10-13 |
-| Silkscreen minimum text height | 1.0 mm (40 mil) | Any board | published unverified, read at source | https://jlcpcb.com/capabilities/pcb-capabilities, *Legend*, "Minimum text height" | 2026-10-13 |
+| Silkscreen minimum text height | 1.0 mm (40 mil) | Any board | published unverified, read at source | https://jlcpcb.com/capabilities/pcb-capabilities, *Legend*, "Minimum text height": "Characters height less than 40 mil (1.0 mm) will be unidentifiable", a legibility statement; read again unchanged on 2026-11-14 | 2026-11-14 |
 | Silkscreen character width to height | 1:6 preferred | Any board | published unverified, read at source | https://jlcpcb.com/capabilities/pcb-capabilities, *Legend* | 2026-10-13 |
 | Pad to silkscreen | 0.15 mm | Any board | published unverified, read at source | https://jlcpcb.com/capabilities/pcb-capabilities, *Legend*, "Pad To Silkscreen" | 2026-10-13 |
 

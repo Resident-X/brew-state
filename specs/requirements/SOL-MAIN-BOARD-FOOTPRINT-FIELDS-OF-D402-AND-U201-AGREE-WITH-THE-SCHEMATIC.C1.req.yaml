@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-FOOTPRINT-FIELDS-OF-D402-AND-U201-AGREE-WITH-THE-SCHEMATIC.C1
+type: criterion
+title: D402's Description reads identically in the board and the schematic and states the polarity of the part fitted
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The Description field of D402 only.
+text: |-
+  Footprint D402's Description field on the board and its symbol's Description field in the schematic are the same text, and that text states the polarity of the part number the bill selects (the board reads 'Bidirectional transient-voltage-suppression diode', the schematic 'Unidirectional TVS, cathode (pin 1) on USB_VBUS'), checked against that part's datasheet. The pre-order check reports no footprint_symbol_field_mismatch line for D402. Out of scope: the Description field of D402 only.
+links:
+  - target: SOL-MAIN-BOARD-FOOTPRINT-FIELDS-OF-D402-AND-U201-AGREE-WITH-THE-SCHEMATIC
+    type: criterion-of

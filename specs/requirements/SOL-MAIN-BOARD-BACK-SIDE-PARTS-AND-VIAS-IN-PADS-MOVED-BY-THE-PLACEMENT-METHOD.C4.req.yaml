@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4
+type: criterion
+title: The full pre-order check passes on the committed main board and the clamps' locked copper carries the lock flag
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+scope: The closing steps for this change; one round may serve this item and the pour, decoupling-via, thermal-relief and silkscreen item together when both are built on one branch.
+text: |-
+  The full pre-order check on the committed main board passes with no violation line other than its signed accepted lines, and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The evidence names the gate run and the commit it ran on. Out of scope: the owner's decision on vias in pads.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

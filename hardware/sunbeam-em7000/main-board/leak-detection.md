@@ -30,7 +30,7 @@ R105 is a 1 mohm Kelvin shunt. Its pin 1 is the plug-side neutral tab (`NEUTRAL_
 - The heater wall board's return lands on the `NEUTRAL` pour (sheet 101 puts that landing above the shunt), so heater on and off is also seen.
 - The logic supply module U301 (IRM-20), the zero-crossing optocoupler U602, the X2 capacitor C101 across line and neutral, the varistor RV101, the discharge strings R101 to R104 and the voltage divider return are all downstream of R105 and flow in the shunt.
 - Not through R105: current that leaves by protective earth, and any wire a harness joins to the plug neutral outside the board. The netlist shows none on the board; the plug-side neutral tab carries only R105 and test points.
-- The pump snubbers (R706 with C701, R716 with C711) are not fitted. Fitted, each would add 100 nF x 253 V x 2 pi x 50 Hz = 7.9 mA to the off-state baseline of its pump. Not fitted, they add nothing. A triac's own off-state leakage (BTA204S, 0.1 mA typical and 0.5 mA at most at 600 V and 125 degC) is below anything resolved here and harmless.
+- The pump triacs carry no snubber (the unfitted positions R706 with C701 and R716 with C711 were removed on 2026-11-14). The TVS clamp across each triac (D701, D711, Littelfuse SMCJ400CA) passes 1 uA at most at its 400 V stand-off, above the 358 V peak of the supply, so it adds nothing the channel can see to the off-state baseline of its pump. A triac's own off-state leakage (T835-800B, DS2114 Table 4 p.3: 5 uA at most at 25 degC and 1 mA at most at VDRM and 125 degC; no typical figure is stated) is, at the 1 mA maximum, above the noise-only 3-sigma of one 20 ms estimate (0.59 mA, below) but a tenth of the 10 mA the channel calls marginal and far under the 50 mA it resolves with every output off, because the idle baseline does not repeat to 1 mA; it is not resolved in practice and is harmless.
 
 ## What the channel can resolve
 
@@ -60,7 +60,7 @@ No record holds an idle current figure. The estimate below is derived here and i
 | Source, all outputs off | Estimate |
 |---|---|
 | IRM-20 supply module (about 0.3 to 0.5 A of 5 V load: controller, interlock coil, indicators; 78 % efficient; the rms current of a capacitor-input front end about twice its real component) | 20 to 40 mA |
-| C101, 0.1 uF across line and neutral, 253 V at 50 Hz (7.2 mA at 230 V; 9.5 mA at 60 Hz and 230 V) | 7.9 mA, in quadrature with the voltage |
+| C101, 0.1 uF across line and neutral, 253 V at 50 Hz (7.2 mA at 230 V; 8.7 mA at 60 Hz and 230 V, 9.5 mA at 60 Hz and 253 V) | 7.9 mA, in quadrature with the voltage |
 | Zero-crossing detector, about 143 kohm | 1.8 mA |
 | Voltage divider, 253 V over 0.9 Mohm | 0.28 mA |
 | Discharge strings R101 to R104, 1 Mohm | 0.25 mA |
@@ -92,4 +92,4 @@ Other stages:
 - The converter's noise is typical, for channel 0 with shorted inputs at 25 degC. Channel 1 and in-circuit noise are not stated or measured. The Kelvin pair's pickup, bounded in `signal-study.md` at 8.4 uV rms at 11 A, is proportional to the current and in quadrature with it, so it is not a noise floor.
 - The sample rate, chop mode, gain and clock are firmware and part choices that no record fixes beyond gain 32.
 - The pump's and valve's current figures (460 mA, 190 mA) are the owner's; their waveforms are not recorded.
-- The sources are the board's sheets and records (`error-budget.md`, `signal-study.md`, `circuit-proof.md`, `traceability.md`), the AMC131M02 datasheet (SBASA56, Table 7-1, section 6.8 and Table 8-1), the IRM-20 datasheet and the BTA204S datasheet.
+- The sources are the board's sheets and records (`error-budget.md`, `signal-study.md`, `circuit-proof.md`, `traceability.md`), the AMC131M02 datasheet (SBASA56, Table 7-1, section 6.8 and Table 8-1), the IRM-20 datasheet and the T835-800B datasheet (ST DS2114 Rev 15).

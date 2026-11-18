@@ -1,0 +1,23 @@
+id: EV-SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE-C5-INSPECTION-2
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C5
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T11:34:42Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/README.md
+  artifact_version: 9ed0f876ad4b1daf45342af6c00a7f60fd005d46
+text: |
+  Inspection of hardware/README.md, the "mounting holes" paragraph (the paragraph opening "The **mounting holes** (`mounting_hole`) are held to the larger of the signed clearance and the signed creepage") and the `mounting_hole` row of the rule table (the row beginning "| `mounting_hole` | A non-plated hole or the pad it is drilled through"), read against each clause at the commit named in the artifact version. The first criterion of the leaf (C1) gives the four marks as: every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net.
+  Clause A, the four marks as C1 gives them. Paragraph: "has at least one of four marks: every pad is non-plated; it carries KiCad's `exclude_from_bom` attribute ...; its library item name ... begins with `MountingHole`; or it has exactly one pad that is plated and on no net". Row: "one of four marks: every pad non-plated, the `exclude_from_bom` attribute, a library item name beginning `MountingHole`, or exactly one pad that is plated and on no net". Both match C1.
+  Clause B, a plated pad on a net is a terminal and not a fixing by being alone. Paragraph: "A plated pad on a net is an electrical terminal and not a fixing by being the footprint's only pad". Row: "a plated pad on a net is a terminal and not a fixing by being the footprint's only pad". Both present.
+  Clause C, a plated fixing on a net carries the bill-of-materials exclusion or the name "MountingHole" to be measured by its courtyard. Paragraph: "A plated fixing that sits on a net, a bonded mounting pad on protective earth for one, carries the `exclude_from_bom` attribute or the name `MountingHole` to be measured by its courtyard." Row: "a plated fixing on a net carries `exclude_from_bom` or the name `MountingHole` to be measured by its courtyard". Both present.
+  Clause D, they no longer say a single pad is a mark of a fixing or that a one-pin through-hole part such as a test point on a net is held to the larger distance as a fixing. The only single-pad mark stated is "exactly one pad that is plated and on no net"; the paragraph says a one-pin blade-tab terminal or "a one-pin through-hole part such as a test point, on a `Mains` net or any other, is a part, held to the signed spacing of its own pair by the other rules and not to the fixing's distance". A search of hardware/README.md for "single pad", "one-pin" and "only pad" finds only these two places. No superseded wording remains.
+  All clauses present in both places.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C5
+    type: satisfies

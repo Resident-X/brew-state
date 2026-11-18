@@ -1,0 +1,32 @@
+id: DEC-MAIN-BOARD-SOUTH-EDGE-IS-ONE-STRAIGHT-LINE-AND-THE-OUTLINE-IS-131-BY-125-6-MM
+type: decision
+category: tactical
+title: The v2 main board's south edge is one straight line and its outline is 131.0 by 125.6 mm
+status: active
+version: 1
+decided_by: owner, 2026-11-14
+text: |
+  The v2 main board's south edge is one straight line at board y 127.6 mm, so the outline is 131.0 by 125.6 mm. The earlier outline had the south edge at 127.0 mm with a 0.6 mm step at x 19 to 37 mm under the interlock relay K201. The relay and the mounting tabs are not moved. This is the owner's own decision of 2026-11-14.
+
+  The straight edge fits the enclosure: the south wall is 1.4 mm away, 0.9 mm at the worst tolerance, and nothing in the cavity floor or the lid rim is in the way. The board maker prices a board by its bounding rectangle, so the extra 0.6 mm costs nothing.
+
+  Proof on the board: only the 7 outline lines changed; the copper fills are identical on refill; the mains copper is identical, 266 of 266 items; the locked-copper check and the placement history check pass.
+rationale: |
+  Context: a board whose outline has a small step reads as an accident, and the step existed only to save 0.6 mm along 18 mm of edge. A plain rectangle looks intended and is the shape a reviewer or maintainer expects.
+
+  Trade-offs: keeping the step was rejected because it saves nothing the maker prices and the enclosure has room for the rectangle. Moving the relay or the tabs to avoid the change was rejected because it would disturb mains copper that was proven against the baseline. The cost is 0.6 mm less clearance to the south wall along the stepped stretch, which still leaves 0.9 mm at the worst tolerance.
+
+  Reversibility: cheap before the boards are ordered, since the outline is seven lines in the board file; after ordering, a board revision.
+
+  Consequences: the board size in the fabrication notes and the manufacturer limits record reads 131.0 by 125.6 mm, and any check or review that cites the outline reads that figure. No node of the graph stated the earlier outline.
+options_considered:
+  - option: Straighten the south edge to y 127.6 mm, giving a 131.0 by 125.6 mm outline
+    reason_rejected: ""
+  - option: Keep the 0.6 mm step under the relay
+    reason_rejected: saves nothing the maker prices and reads as an accident
+  - option: Move the relay or the tabs to keep the shorter edge
+    reason_rejected: disturbs mains copper proven against the baseline
+chosen: Straighten the south edge to y 127.6 mm, giving a 131.0 by 125.6 mm outline
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: addresses

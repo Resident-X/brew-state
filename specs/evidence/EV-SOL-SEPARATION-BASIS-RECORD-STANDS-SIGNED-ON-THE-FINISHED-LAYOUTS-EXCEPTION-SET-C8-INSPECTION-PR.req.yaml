@@ -1,0 +1,25 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET-C8-INSPECTION-PR
+type: evidence
+title: Inspection of the pull request text against C8 of the signed-record leaf
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T07:49:54Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/pull/248
+  artifact_version: sha256:579e1574d2c02399127b12b8395b6fef3c02b617c511c3dfd37b62acffd231ef
+text: |
+  Stated check of the pull request text clause of SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C8, made at HEAD 57954c88. This node supersedes the statement of the earlier C8 inspection evidence (EV-...-C8-INSPECTION) that the pull request clause was not yet checked; that node's folder scan stands for the documents.
+
+  Subject: the body of pull request 248 (Resident-X/brew-state) as fetched with gh pr view 248 --json body, 7297 bytes, sha256 579e1574d2c02399127b12b8395b6fef3c02b617c511c3dfd37b62acffd231ef. The body was read in full.
+
+  Signing statements. The body states the signature state of the basis in one sentence: 'Owner acceptance of the separation basis record: entered in the record and in each of its 42 accepted exceptions on 2026-11-18 (commit 771eba09, which changes only those 86 lines and quotes the owner's words verbatim).' It states 2026-11-17 and 2026-11-18 once more, in the acceptance-leaf limit: 'one acceptance of the whole record after every reading was presented (2026-11-17 and again 2026-11-18); no reading was answered singly', and the owner's ruling of 2026-11-18. Each day is named as an acceptance day; no sentence gives an earlier day (2026-11-05, 06, 07, 14) as the day the record or an entry now carries; the body names no earlier signing day. No sentence says the record is unsigned or a draft; the word 'draft' does not occur. No sentence says the coat is applied before energising; the body does not mention the coat.
+  Counts and figures checked against the repository at HEAD: 42 accepted exceptions (git show HEAD:hardware/sunbeam-em7000/separation-basis.yaml holds 42 pair entries and 43 accepted_on 2026-11-18 lines, the record and 42 entries); 771eba09 changes 86 lines, accepted_by and accepted_on only (checked earlier by git diff); board sha256 8ca1288bd3e4d5fbf16af303c8d23dbb6cdd28eb96487a8ed85945ce4e1062fc equals the sha256 of hardware/sunbeam-em7000/main-board/main-board.kicad_pcb at HEAD; 267 locked mains items equals fabrication-notes.md line 203 (242 tracks and vias, 25 zones); 'Later commits are graph-only' after the gated commit ae25e637: git diff --name-only ae25e637 HEAD lists only paths under specs/.
+  Coverage figures checked against the engine at HEAD: whole-board leaf 10 of 10, schematic leaf 12 of 12, follow-up leaf 8 of 8, acceptance leaf 4 of 4, this leaf 9 of 9, header leaf 3 of 3, day-count leaf 1 of 1, each finished; the body's figures equal them. The statement of an owner ruling evidence node '...-C3-OWNER-RULING' names a node that exists.
+  Not checked: statements of the body outside C8's clauses (the seven property lines, the round 8 view count, the S-numbered sign-offs, the R822 arithmetic) were not verified here. The clause covers the pull request text as it stood at the sha256 above; a later edit of the body is not covered.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C8
+    type: satisfies

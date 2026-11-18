@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C4
+type: criterion
+title: The full pre-order check passes on the corrected board with the pad numbering rule in force
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The full pre-order check run over every board design in the repository, with the pad numbering rule in force, passes with no violation on the corrected main board, the one new workmanship line being covered by its signed entry. A violation on any design, a clockwise-numbered footprint on the board, or a warning line no signed entry covers, fails. Out of scope: the confirmation by the owner of the entry signed on his behalf, and any layout review from rendered views.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of

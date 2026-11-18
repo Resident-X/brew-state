@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C10
+type: criterion
+title: The full pre-order check passes every design with no violation on the main board and every warning under a signed entry
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The full pre-order check run over every board design in the repository passes, and on the main board it reports no violation and 265 warning lines, each covered by an entry in the severity policy or the workmanship acceptance record. A violation on any design, or a warning line that no signed entry covers, fails. Out of scope: the confirmation by the owner of the entries signed on his behalf, and any layout review from rendered views.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

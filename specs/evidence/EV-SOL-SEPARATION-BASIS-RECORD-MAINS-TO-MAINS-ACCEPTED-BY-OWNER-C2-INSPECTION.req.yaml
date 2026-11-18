@@ -1,0 +1,23 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C2
+status: active
+version: 2
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:31:49.814384Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/separation-basis.yaml
+  artifact_version: 123d64ad
+attested_by: crun-fd60ac5c15996e07
+text: |-
+  Stated check of SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C2, made at commit 123d64ad by git commands on the committed history.
+
+  Clause 1: the commit that enters accepted_by and accepted_on in the record and in each accepted_exceptions entry changes no other line of the record. Commit 771eba09 (2026-11-18, 'feat(separation-basis): the owner accepts the separation basis record as signed, entered in the record and in each of its 42 exceptions') changes one file, hardware/sunbeam-em7000/separation-basis.yaml: 86 insertions and 86 deletions. git diff 771eba09^ 771eba09, filtered to changed lines, has 172 lines and none is other than an accepted_by or accepted_on line: the record's own pair and the pair of each of the 42 entries (43 pairs). At 123d64ad the record reads accepted_on 2026-11-18 on 43 lines (the record and 42 entries).
+  Clause 2: its message quotes verbatim the owner's instruction that named the record: 'The owner's instruction in the session, verbatim: "I accept the separation basis record as signed."'. The earlier empty commit 532cbc7d (2026-11-17) quotes 'I accept the separation basis record as signed' and changes no line; it enters nothing and is the record of the first answer.
+  Clause 3: no such commit exists on the drafter's initiative, from silence, from approval of the presentation alone or from the earlier acceptance of 2026-10-23. The commits that touched an accepted_by or accepted_on line of the record before 771eba09 (git log -G on the file) are: 916c8b7c (2026-10-24, 'record the owner's acceptance of the separation basis', the acceptance of the earlier figures, which this leaf's text says does not stand for these); 4523f559 (2026-10-30, the redrafted record, 'unsigned'); 5841a9bb (2026-11-05, entered on the owner's written instruction in the working session, message states it); 10ee57f7 (2026-11-06, the re-signing on the owner's written instruction, 'Accept all and resign'); 49d35654 (2026-11-07, the owner's acceptance of the 59 kohm zero-cross feed in session, 'Accept'); 917002ae (2026-11-14, the record following the re-laid mains side, accepted by the owner in writing as its header states). All were superseded on every entry by 771eba09; none is the commit under this criterion, and the commit under this criterion follows the owner's instruction, given on 2026-11-17 and repeated on 2026-11-18 after the restatement, not silence or the presentation alone.
+  Out of scope per the criterion: the commit's authorship (771eba09 is authored under the owner's git identity with Claude as co-author).
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C2
+    type: satisfies

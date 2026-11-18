@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-FOOTPRINT-FIELDS-OF-D402-AND-U201-AGREE-WITH-THE-SCHEMATIC.C2
+type: criterion
+title: U201's Datasheet reads identically in the board and the schematic and is the datasheet of the part number the bill selects
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The Datasheet field of U201 only.
+text: |-
+  Footprint U201's Datasheet field on the board and its symbol's Datasheet field in the schematic are the same address (the board reads the Texas Instruments sn74lvc1g17 document, the schematic the Nexperia 74AHC_AHCT1G17 document), and that address is the published datasheet of the part number the bill selects for U201. Where the two addresses name different logic families, the part number and its parameters are checked against the circuit before the field is chosen, and a part found to differ is a finding for its own item, not changed here. The pre-order check reports no footprint_symbol_field_mismatch line for U201. Out of scope: the Datasheet field of U201 only.
+links:
+  - target: SOL-MAIN-BOARD-FOOTPRINT-FIELDS-OF-D402-AND-U201-AGREE-WITH-THE-SCHEMATIC
+    type: criterion-of

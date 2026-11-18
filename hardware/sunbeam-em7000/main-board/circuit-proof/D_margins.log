@@ -13,15 +13,15 @@ PASS  pump LED upper limits: IF_max bound (VF=0) 29.5 mA vs 60 mA; emitter power
 
 == 2. pump gate network R704+R705 / R714+R715 = 2 x 200 ohm 1206 in series (MOC3052M pin 6 to MT2, pin 4 to gate)
 PASS  R704+R705 opto-triac surge limit: R = VPAC / ITSM (sheet Fig. 7): VPK 357.8 V / 396.0 ohm (R-1%) = 0.904 A <= 1 A; minimum R = 357.8 ohm
-PASS  gate drive reaches IGT: line voltage needed to push IGT max (50 mA) = 23.7 V (4.4 deg after the zero crossing at 216 V); peak gate current 0.90 A <= IGM 2 A
-   BTA204S latching current max 30 mA; IH max 30 mA: the pump current at the firing instant must reach IL: pump sizing 0.46 A / 0.19 A are rms; see open item on pulse timing
+PASS  gate drive reaches IGT: line voltage needed to push IGT max (35 mA) = 17.8 V (3.3 deg after the zero crossing at 216 V); peak gate current 0.90 A <= IGM 4 A
+   T835-800B latching current max 50 mA (quadrants I and III; 60 mA in quadrant II, not used); IH max 35 mA (DS2114 Table 2 p.2): the pump current at the firing instant must reach IL: pump sizing 0.46 A / 0.19 A are rms; see open item on pulse timing
 
-== 3. pump triac T701/T711 BTA204S-600B (WeEn Rev.02, 19 Mar 2025)
-   coffee full sine                I_rms 0.46 A  I_av 0.414 A  P <= 0.70 W  Tj = 122.8 degC (typical Rth(j-a); limit 125)
-   coffee half wave (series diode) I_rms 0.46 A  I_av 0.293 A  P <= 0.50 W  Tj = 107.3 degC (typical Rth(j-a); limit 125)
-   steam  full sine                I_rms 0.19 A  I_av 0.171 A  P <= 0.29 W  Tj = 91.8 degC (typical Rth(j-a); limit 125)
-   steam  half wave (series diode) I_rms 0.19 A  I_av 0.121 A  P <= 0.21 W  Tj = 85.4 degC (typical Rth(j-a); limit 125)
-   IT(RMS) 4 A at Tmb <= 107 degC: 8.7x and 21.1x the sizing currents
+== 3. pump triac T701/T711 T835-800B (ST DS2114 Rev 15, Aug 2018)
+   coffee full sine                I_rms 0.46 A  I_av 0.414 A  P <= 0.64 W  Tj = 114.9 degC (typical Rth(j-a); limit 125)
+   coffee half wave (series diode) I_rms 0.46 A  I_av 0.293 A  P <= 0.45 W  Tj = 101.8 degC (typical Rth(j-a); limit 125)
+   steam  full sine                I_rms 0.19 A  I_av 0.171 A  P <= 0.27 W  Tj = 88.6 degC (typical Rth(j-a); limit 125)
+   steam  half wave (series diode) I_rms 0.19 A  I_av 0.121 A  P <= 0.19 W  Tj = 83.1 degC (typical Rth(j-a); limit 125)
+   IT(RMS) 8 A at Tc <= 110 degC: 17.4x and 42.1x the sizing currents
 
 == 4. valve coil drivers Q731/Q741 AO3400A, K731/K741 HF32FA-G/005-HSL1 (Hongfa 2026 Rev.1.00)
 PASS  valve coil current bound: coil current at 5.25 V, 97.2 ohm, 23 degC = 54.0 mA (record: 51.4 mA at 5.0 V)

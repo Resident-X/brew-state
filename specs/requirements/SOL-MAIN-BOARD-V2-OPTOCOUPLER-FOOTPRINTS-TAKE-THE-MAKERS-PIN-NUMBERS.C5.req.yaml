@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C5
+type: criterion
+title: The placement history check passes on the corrected board in its plain and its routed mode
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The layout's recorded history check passes on the corrected board in plain mode and in routed mode, 22 checks in each. A failing check in either mode fails. Out of scope: the rules of the pre-order check.
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+    type: criterion-of

@@ -3,9 +3,11 @@ type: deliverable
 category: solution
 title: The owner accepts the separation basis record's mains-to-mains figures and exceptions under their own identity, on their explicit instruction
 status: active
-version: 3
+version: 5
 text: |
   Enters the owner's acceptance of the separation basis record, with the exceptions it holds, after the record's leaf has delivered the record drafted and unsigned, so the check's reader finds it signed and every leaf that waits on a signed record can proceed. The acceptance is the owner's act. This leaf is a request to the owner and an entry made on the owner's instruction; a drafter or a build cannot complete it alone, and does not.
+
+  State when this item is built: the owner was shown, in the session on 2026-11-17, each signed figure with its table row, every exception entry and each reading the record marks for the owner's check, and the nets on each pin of J630, J635, J791, J821 and J861 with class and speed, and answered "I accept the separation basis record as signed." (recorded in the empty commit 532cbc7d). On 2026-11-18, after the coverage of signing was restated in plain words (the 42 exceptions, the two pump-triac exceptions bounded by an element that is not independent of the controller, and the single-sourced residual risk accepted on 2026-10-31), the owner gave the same words again, and commit 771eba09 entered accepted_by and accepted_on on the record and on each of its 42 exceptions, changing only those lines and quoting the owner's words. The owner answered the readings together, as one acceptance of the whole record after each had been presented, and corrected none; no reading was answered singly. The acceptance is not entered again: this build enters nothing and changes no file, and records as evidence of each criterion what those commits and the committed record show.
 
   Settled for the build:
   - Before any acceptance is entered, the owner is shown in plain words, in the session: each signed figure, mains to mains and mains to low voltage, with the table row it rests on and the margin over the standard's own result where there is one; every exception entry with its pair, the distance it accepts, the figure it falls short of, the owner's reason and the element that bounds the fault; and the readings the record marks for the owner's check, which are the household-appliance standard's position on interpolating its creepage table with the 3.2 mm fallback figure at pollution degree 2, the 0.5 mm terminal allowance, the pollution degree 2 material group III column of the Table F.4 rows used, the six conditions of the pollution degree 2 credit (the enclosure being the ground and the coat a supporting measure, including the fall back to pollution degree 3 if the bring-up reading of board temperature against dew point shows condensation), the single-sourced, unread-standards residual risk the owner accepted on 2026-10-31, and, for each net-pair entry, its two lists of nets, its working voltage with the derivation, its band figure and its single-fault table row.
@@ -40,3 +42,9 @@ links:
     type: depends-on
   - target: DEC-MAINS-BASIS-TAKES-POLLUTION-DEGREE-2-ON-A-COATED-BOARD
     type: justified-by
+  - target: DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 16da503be2ddbde19717b2cc74740bdb03f029d941932eb475011925a6119a50
+  gating_profile: ""

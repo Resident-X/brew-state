@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-14T17:40:24Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_measured_spacing.py::SamePartPairsAreMeasured.test_a_pair_under_the_pad_to_pad_figure_is_found_with_no_line_from_kicad
+  artifact_version: d61c853072db143dac194761042558f41cf25846
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C1
+    type: satisfies

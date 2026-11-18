@@ -1,0 +1,22 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C3
+status: active
+version: 2
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:31:49.902938Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/separation-basis.yaml
+  artifact_version: 123d64ad
+attested_by: crun-fd60ac5c15996e07
+text: |-
+  Stated check of SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C3, made at commit 123d64ad. The session cannot be reread; the facts below are the operator's account, recorded in commits 532cbc7d and 771eba09 and in the presentation text (outside the repository).
+
+  What happened, exactly: on 2026-11-17 the owner was shown each reading the record marks for his check (interpolation with the 3.2 mm fallback; the 0.5 mm terminal allowance; the PD2 material group III column of the 250 V and 320 V rows; the six conditions of the PD2 credit with the enclosure as ground and the coat as support; the single-sourced, unread-standards residual risk accepted 2026-10-31; and each net-pair entry's working voltage, derivation and single-fault table row) and answered once, for the whole record: 'I accept the separation basis record as signed.' (empty commit 532cbc7d). On 2026-11-18, after the assistant restated in plain words what signing covers (the 42 exceptions, that two pump-triac exceptions are bounded by an element that is not independent of the controller, and the 2026-10-31 residual risk), the owner again answered verbatim 'I accept the separation basis record as signed.' (quoted in 771eba09). No reading was corrected at any point. No reading was answered singly.
+
+  Result: C3 asks that for each of the readings the session records the owner's answer before acceptance is entered, as accepted or corrected. Each reading was presented before the answer, none was corrected, and the answer accepted the whole record, which includes each reading; so each reading stands accepted, and no correction exists to return to the record's leaf. That is a whole-record acceptance after every reading was presented, not a recorded answer to each reading singly. C3 is therefore met in substance and not literally. The strict reading, whether a single acceptance of the whole counts as the answer 'accepted' for each reading, is left to the owner. The check also finds that the acceptance was entered only after the answer (771eba09 follows), and that the repository changed no figure, row or exception.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C3
+    type: satisfies

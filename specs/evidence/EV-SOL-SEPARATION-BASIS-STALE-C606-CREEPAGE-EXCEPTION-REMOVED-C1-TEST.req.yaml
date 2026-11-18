@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED-C1-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:49:05.658004Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_c606_scan_catches_the_pair_in_between_nets_a_and_nets_b
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-00b786698461a95e
+links:
+  - target: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C1
+    type: satisfies

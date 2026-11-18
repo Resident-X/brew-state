@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-RESULT-IS-THE-SAME-ON-EVERY-RUN.C2
+type: criterion
+title: A run of the check that cannot show its creepage result is complete fails, naming why
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A test makes the creepage result of a run incomplete in the way the cause was found to do, and the check fails that run with a line that says why, and does not pass it. Out of scope: other ways a KiCad run can fail, which the check already fails.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-RESULT-IS-THE-SAME-ON-EVERY-RUN
+    type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES-C5-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:46:58.350099Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_workmanship_acceptance.py::test_every_acceptance_failure_fails_on_its_seeded_fault_and_the_clean_design_passes
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-ddb434eadcb72114
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C5
+    type: satisfies

@@ -22,7 +22,7 @@ S1, S2, S3 = G.S1, G.S2, G.S3
 R_HI, R_LO = 1.0145, 0.9855      # 1 % and 100 ppm/K over 25..70 degC (UNI-ROYAL data sheet, Feb.12 2019 V.3, section 11)
 C_HI, C_LO = 1.10 * 1.15, 0.90 * 0.85   # +-10 % and X7R +-15 % (Samsung MLCC catalogue Nov 2015)
 LSB_X1000 = 3.3 / 65536 / 2 * 1000      # half an LSB at VREF+ = 3.3 V, times the 1000 of the error vector
-BAT_MODEL = "* BAT54S as two diodes, fitted to the forward-voltage MAXIMA of Nexperia BAT54S 1 July 2022 Table 7 (0.24 V at 0.1 mA, 0.32 at 1, 0.40 at 10, 0.50 at 30, 0.80 at 100 mA)\n.model DSCH D(IS=7.793e-9 N=1.04 RS=3.6)"
+BAT_MODEL = "* BAT54SW as two diodes, fitted to the forward-voltage MAXIMA of Nexperia BAT54W series Rev. 3 (20 November 2012) Table 7 (0.24 V at 0.1 mA, 0.32 at 1, 0.40 at 10, 0.50 at 30, 0.80 at 100 mA; the BAT54S 1 July 2022 sheet Table 7 states the same figures)\n.model DSCH D(IS=7.793e-9 N=1.04 RS=3.6)"
 SW_MODEL = ".model SWM SW(Ron=1m Roff=1e12 Vt=0.5 Vh=0.2)"
 HEADER = ("* Source of every value: the sheet fragment of this block (generated from the same table).\n"
           "* Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.\n"
@@ -152,7 +152,7 @@ for tag, hdr, pre, rs_c, rs_d, rp_c, rp_d, scl, sda in (("stm_i2c", "J521", "STM
          "%s %s +3V3 %s" % (rp_c, scl, num(S2, rp_c)),
          "%s %s_X %s %s" % (rs_c, scl, scl, num(S2, rs_c)),
          "* SDA has the same parts; only SCL is simulated, SDA is its twin with %s %s" % (rp_d, rs_d),
-         "* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54S)",
+         "* bus capacitance: UM10204 Rev 7.0 Table 11, Cb max 400 pF, of which the pins take 31.1 pF (sensor, controller pin, TVS, BAT54SW)",
          "CSIM_CABLE %s_X 0 368.9p" % scl,
          "CSIM_BOARD %s 0 31.1p" % scl,
          "* sensor open-drain pull-down, low level at the UM10204 Table 10 maximum VOL of 0.4 V",
@@ -171,7 +171,7 @@ for tag, hdr, pre, rs_c, rs_d, rp_c, rp_d, scl, sda in (("stm_i2c", "J521", "STM
     decks.append(("C_%s.cir" % tag, "\n".join(t) + "\n", ["tr_mcu_hi_cable", "tr_sensor_hi_cable", "tr_mcu_hi_board", "tr_sensor_hi_board", "vlow_mcu_hi_cable"]))
 
 # ---------------------------------------------------------------- flow input
-# As built: U520 (SN74LVC1G17) is fitted and carries FLOW_F to FLOW_IN with C521 at its supply; the link position R522 is not fitted,
+# As built: U520 (SN74LVC1G17) is fitted and carries FLOW_F to FLOW_BUF with C521 at its supply, and the fitted R545 carries FLOW_BUF to FLOW_IN; the link position R522 is not fitted,
 # so the sheet's R522 has no element here. The buffer is modelled from SCES351Y Table 5-1: input leakage +-5 uA (II, VI = 5.5 V or GND),
 # input capacitance 4.5 pF, and worst-case Schmitt thresholds (VT+ at most 2.74 V, the 4.5 V row, a bound above the 3.6 V rail's own;
 # VT- at least 0.89 V, the 3 V row) switching an output of about 30 ohm (VOH 2.3 V at 24 mA and 3 V, VOL 0.55 V at 24 mA).
@@ -182,23 +182,24 @@ U520_MODEL = [".model SWSCHP SW(Ron=30 Roff=1e12 Vt=%.4f Vh=%.4f)" % ((VT_HI + V
 
 def u520_lines(leak_amps):
     """The fitted buffer and its supply capacitor: its input leakage at the worst sign (leak_amps > 0 is drawn out of FLOW_F)."""
-    return ["* U520 (%s) fitted: input FLOW_F pin 2, output FLOW_IN pin 4, supply +3V3 pin 5; C521 decouples it; the link R522 is not fitted" % num(S2, "U520"),
+    return ["* U520 (%s) fitted: input FLOW_F pin 2, output FLOW_BUF pin 4, supply +3V3 pin 5; C521 decouples it; R545 joins FLOW_BUF to FLOW_IN; the link R522 is not fitted" % num(S2, "U520"),
             "C521 +3V3 0 %s" % num(S2, "C521"),
+            "R545 FLOW_BUF FLOW_IN %s" % num(S2, "R545"),
             "CSIM_U520IN FLOW_F 0 4.5p",
             "ISIM_U520IN FLOW_F 0 %s" % leak_amps,
-            "SSIM_U520H +3V3 FLOW_IN FLOW_F 0 SWSCHP",
+            "SSIM_U520H +3V3 FLOW_BUF FLOW_F 0 SWSCHP",
             "ESIM_U520N U520NEG 0 FLOW_F 0 -1",
-            "SSIM_U520L FLOW_IN 0 U520NEG 0 SWSCHN"] + U520_MODEL
+            "SSIM_U520L FLOW_BUF 0 U520NEG 0 SWSCHN"] + U520_MODEL
 
 
-t = ["Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PC6 it drives",
+t = ["Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PB10 it drives",
      HEADER.rstrip(), SW_MODEL,
      "VSIM_V3V3 +3V3 0 3.3",
      "R520 FLOW_RAW +3V3 %s" % num(S2, "R520"),
      "R521 FLOW_RAW FLOW_F %s" % num(S2, "R521"),
      "C520 FLOW_F 0 %s" % num(S2, "C520")]
 t += u520_lines("5u")
-t += ["* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
+t += ["* PB10 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
       "ISIM_PAD FLOW_IN 0 1.5u",
       "* meter output stage: open-drain = switch to ground, 100 Hz square wave",
       "SSIM_OD FLOW_RAW 0 CTLA 0 SWM",
@@ -230,7 +231,7 @@ t += ["SSIM_HI SIM_5V PP_OUT CTLH 0 SWM",
       "RSIM_PP PP_OUT FLOW_RAW 25",
       "VSIM_CTLH CTLH 0 PULSE(0 1 100u 1n 1n 4.9m 10m)",
       "ESIM_INV CTLL 0 VALUE={1-v(CTLH)}",
-      "* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
+      "* PB10 pad leakage, DS12110 Table 50, 1.5 uA above VDD",
       "ISIM_PAD FLOW_IN 0 1.5u",
       ".tran 5u 20m",
       ".control",

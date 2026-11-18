@@ -1,7 +1,7 @@
 id: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C3
 type: criterion
 title: The records that restate the basis's signature day or the coat's timing agree with the record
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
     type: criterion-of
+attributes:
+  deprecation_reason: It names 2026-11-05 and 2026-11-06 as the record's signing days; the owner's acceptance of 2026-11-18 is now the day every entry carries; the successor C5 states the agreement of the records with it.

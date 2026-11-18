@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-
 type: criterion
 title: A plated hole of a part on a net outside Mains is held to the signed distance of Mains copper by the creepage route round the barrier slots
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class pad, where the straight-line distance between them is under the larger of the signed clearance and creepage and the shortest route round the slot is at or above it, the check gives no mounting_hole violation for the pair; the same pair with the slot absent, and a pair whose route round the slot is under the distance, each fail naming the hole and the Mains item and the distance measured. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+text: |
+  On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
 links:
   - target: SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS
     type: criterion-of

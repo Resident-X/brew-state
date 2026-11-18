@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD.C2
+type: criterion
+title: The committed record and all 42 of its exception entries read accepted_on 2026-11-18
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The committed separation basis record holds 42 accepted_exceptions entries, each reading accepted_on 2026-11-18, and the record's own accepted_on reads 2026-11-18, the day the owner accepted the whole record in the working session. A test of the record reads the committed record and fails on any other count, on any entry reading another day, and on a record reading another day. Out of scope is every other field of the record and the days of the earlier acceptances, which are history.
+links:
+  - target: SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD
+    type: criterion-of

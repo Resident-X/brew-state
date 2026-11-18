@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C6
+type: criterion
+title: The hardware notes state the rule, what it judges and what it leaves unjudged
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The hardware notes state the rule, the test it makes, the footprints it judges and those it leaves unjudged and why, the back-side sense, that no acceptance record waives it, and a row for it in the table of the check's rule names. Out of scope is any board's own records.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE
+    type: criterion-of

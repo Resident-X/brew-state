@@ -1003,6 +1003,8 @@ class Detours:
     def blocks(self, a: Point, b: Point) -> bool:
         """Whether the straight line from a to b passes through the inside of any slot, running along or touching a wall being open.
 
+        A line that meets a slot's corner exactly crosses no wall properly there, so it is cut at every corner it meets and
+        the middle of each piece is asked about, and a line that enters a slot at one corner and leaves at another is held.
         The few walls that last stopped a line are tried first, since the lines
         asked about one after another run alike and are stopped by the same walls.
         """
@@ -1011,16 +1013,28 @@ class Detours:
                 self.remember(wall)
                 return True
         low_x, high_x, low_y, high_y = min(a[0], b[0]), max(a[0], b[0]), min(a[1], b[1]), max(a[1], b[1])
-        middle = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        run = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2
         for slot, ring, walls in zip(self.slots, self.rings, self.walls):
             if slot.bounds[0] > high_x or slot.bounds[2] < low_x or slot.bounds[1] > high_y or slot.bounds[3] < low_y:
                 continue
+            cuts = [0.0]
             for c, d, box in walls:
-                if box[0] <= high_x and box[2] >= low_x and box[1] <= high_y and box[3] >= low_y and crosses(a, b, c, d):
-                    self.remember((c, d))
+                if box[0] <= high_x and box[2] >= low_x and box[1] <= high_y and box[3] >= low_y:
+                    if crosses(a, b, c, d):
+                        self.remember((c, d))
+                        return True
+                    for corner in (c, d):
+                        if run > 0 and abs(orientation(a, b, corner)) <= STRAIGHT:
+                            along = ((corner[0] - a[0]) * (b[0] - a[0]) + (corner[1] - a[1]) * (b[1] - a[1])) / run
+                            if 0.0 < along < 1.0:
+                                cuts.append(along)
+            cuts.append(1.0)
+            cuts.sort()
+            for before, after in zip(cuts, cuts[1:]):
+                half = (before + after) / 2
+                middle = (a[0] + (b[0] - a[0]) * half, a[1] + (b[1] - a[1]) * half)
+                if within(middle, ring) and min(distance_to_segment(middle, c, d) for c, d, _ in walls) > 1e-7:
                     return True
-            if within(middle, ring) and min(distance_to_segment(middle, c, d) for c, d, _ in walls) > 1e-7:
-                return True
         return False
 
 

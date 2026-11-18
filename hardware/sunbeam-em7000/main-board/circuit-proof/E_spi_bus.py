@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shared SPI2 bus (U601 AMC131M02, U620 and U621 MAX31865) and the converter's clock: logic levels, timing and clock figures.
+"""Shared SPI3 bus (U601 AMC131M02, U620 and U621 MAX31865) and the converter's clock: logic levels, timing and clock figures.
 Run: python3 -I E_spi_bus.py
 Sources (all read 2026-10-29)
   AMC131M02, Texas Instruments SBASA56 (September 2023), https://www.ti.com/lit/ds/symlink/amc131m02.pdf: 6.3 (digital input VIL/VIH, clock range, NDIV, duty),
@@ -43,7 +43,7 @@ print("  the 33 ohm series resistors drop %.1f uV at 1 uA: negligible" % (33 * 1
 print()
 print("== bus clock: the slowest receiver sets it")
 f_max = 5.0e6                                   # MAX31865 tCLK 5.0 MHz; tCL = tCH = 100 ns
-print(f"  MAX31865 SCLK <= 5.0 MHz (tCL = tCH = 100 ns min); AMC131M02 tc(SC) >= 40 ns (25 MHz); H743 SPI2 master <= 133 MHz: bus set to <= {f_max/1e6:.1f} MHz")
+print(f"  MAX31865 SCLK <= 5.0 MHz (tCL = tCH = 100 ns min); AMC131M02 tc(SC) >= 40 ns (25 MHz); H743 SPI3 master <= 133 MHz: bus set to <= {f_max/1e6:.1f} MHz")
 half = 0.5 / f_max
 print(f"  at {f_max/1e6:.0f} MHz: half period {half*1e9:.0f} ns")
 print()

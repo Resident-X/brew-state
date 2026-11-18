@@ -2,7 +2,7 @@ Clamp of NTC_COF: lead cross-shorted to a 5 V supply lead, node NTC_COF_SENS dri
 * Source of every value: the sheet fragment of this block (generated from the same table).
 * Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
 * Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
-* BAT54S as two diodes, fitted to the forward-voltage MAXIMA of Nexperia BAT54S 1 July 2022 Table 7 (0.24 V at 0.1 mA, 0.32 at 1, 0.40 at 10, 0.50 at 30, 0.80 at 100 mA)
+* BAT54SW as two diodes, fitted to the forward-voltage MAXIMA of Nexperia BAT54W series Rev. 3 (20 November 2012) Table 7 (0.24 V at 0.1 mA, 0.32 at 1, 0.40 at 10, 0.50 at 30, 0.80 at 100 mA; the BAT54S 1 July 2022 sheet Table 7 states the same figures)
 .model DSCH D(IS=7.793e-9 N=1.04 RS=3.6)
 VSIM_V3A +3V3A 0 3.3
 R501 +3V3A NTC_COF_SENS 10k

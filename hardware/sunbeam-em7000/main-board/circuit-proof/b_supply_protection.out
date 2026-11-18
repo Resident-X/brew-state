@@ -6,9 +6,9 @@
     LT1963AEST-3.3: IN 20 V absolute maximum -> margin 13.25 V over 6.75 V, 9.7 V over the USB path's 10.3 V clamp level
     other parts on +5V, +5V_WB and +5V_GAUGE at 6.75 V (module trip, on the module's cable position the D402 level is 10.3 V):
       U302 LT1963A input                     limit  20.0 V  margin  13.25 V  holds  (IN +/-20 V (LT1963A absolute maximum ratings))
-      U201 74AHCT1G17 VCC                    limit   7.0 V  margin   0.25 V  holds  (Nexperia 74AHC1G17/74AHCT1G17 Rev. 4 (15 Sep 2023) Table 5 limiting values, VCC -0.5 to +7.0 V)
+      U201 SN74AHCT1G14 VCC                  limit   7.0 V  margin   0.25 V  holds  (Texas Instruments SN74AHCT1G14 SCLS322P (June 2013) absolute maximum ratings, VCC -0.5 to +7 V)
       U791 SN74HCT541 VCC                    limit   7.0 V  margin   0.25 V  holds  (Texas Instruments SCLS306C absolute maximum 7 V)
-      K201 coil, HF115F-Q/005                limit   7.5 V  margin   0.75 V  holds  (Hongfa HF115F-Q coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm)
+      K201 coil, HF115F-I/005                limit   7.5 V  margin   0.75 V  holds  (Hongfa HF115F-I coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm)
       K731 K741 coils, HF32FA-G/005          limit   8.5 V  margin   1.75 V  holds  (Hongfa HF32FA-G 2026 Rev 1.00 coil data (circuit-proof.md valve coil row))
       Q822 AO3401A gate to source            limit  12.0 V  margin   5.25 V  holds  (AO3401A Rev 3.1: VGS +/-12 V; gate swings 0 to 5.25 V against a source on +5V, 6.75 V at most)
       C303 10 uF X5R                         limit  10.0 V  margin   3.25 V  holds  (rated voltage)
@@ -34,7 +34,7 @@
     reset timing: asserted while VDD < VIT- and for 120 to 280 ms after VDD >= VIT- + 0.2 V; with the controller's NRST pull-up and C418 the release adds at most 7.6 ms (circuit-proof.md, Reset row)
     NRST level held: VOL 0.4 V at 2 mA; the controller's pull-up is 3.4 V / 30 kohm = 113 uA, so VOL <= 0.2 V (500 uA row) against VIL 0.3 VDD = 0.99 V (3.3 V)
     pull-up limits of the supervisor sheet: 10 kohm to 1 Mohm; the controller's 30 to 50 kohm is inside; leakage IOH 100 nA x 50 kohm = 5.0 mV
-(4) mains-presence inputs PE15 and PD7 (FT_h), series R764/R774 27 kohm and pull-down R765/R775 82 kohm
+(4) mains-presence inputs PE15 (FT_h) and PB11 (FT_f), series R764/R774 27 kohm and pull-down R765/R775 82 kohm
     divider 0.7523 (0.7485 to 0.7560 with 1 % parts)
     wall board high at the top of +5V_WB 5.125 V: pin 3.86 V (3.87 V at the 1 % extreme) against the 4.0 V limit with VDD absent (Table 109: min(VDD+4.0, 6)): margin 0.13 V
     with VDD present the limit is 6 V: a wall board driving up to 6.75 V (module trip) gives 5.10 V; positive injection does not occur below the maximum (Table 110), so no clamp current flows
@@ -48,9 +48,14 @@
     clamp: level 4 15 kV air and 8 kV contact in the features (Table 1 prints 15 kV contact: contradiction, either meets level 4); VCL 12 V at 1 A and 17 V at 5 A (8/20 us); 3.5 pF maximum
     residue at PA11 and PA12: the clamp's own table gives 17 V at 5 A, against the controller's 6 V DC limit (4 V with VDD absent): 11 V over; the controller sheet states no pulse withstand, so the residue is not bounded by it
     8 kV contact through 330 ohm is 24 A: DS4260 2.1 gives 31.2 V with pin 5 open, about 23.0 V with D402 on the VBUS node (b_usb_power.py (e)); the 8/20 us table figure does not cover 24 A at 1 ns
-(6) pump snubber (R706 C701, R716 C711) and module inrush thermistor RT301, both not fitted
-    snubber 100 ohm + 100 nF X2 (C101's part, 310 VAC): leakage with the triac off 7.95 mA at 50 Hz, 9.54 mA at 60 Hz; R dissipates 9.1 mW; at turn-on from 358 V crest: 3.6 A peak, 6.4 mJ
-    the triac's VDRM is 600 V against the 358 V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up)
+(6) pump triac clamps (D701, D711: Littelfuse SMCJ400CA across each triac, MT2 to NEUTRAL) and module inrush thermistor RT301, not fitted
+    idle: the 358 V crest of the supply is 0.895 of the 400 V stand-off and 1.25 times under the 447 V minimum breakdown; the clamp conducts from 316 V rms and leaks 1 uA at most at the stand-off
+    turn-off kick at 45 mA, hot: (494 + (648 - 494) x 0.045 / 2.3) x 1.06 = 527 V; opto-triac 600 V is 1.14 times it, triac 800 V is 1.52 times it
+    surge through the coil's capacitance at 0.45 A, hot (interpolated between the 1 mA and 2.3 A points): (494 + (648 - 494) x 0.45 / 2.3) x 1.06 = 556 V; opto-triac 600 V is 1.08 times it
+    dissipation, the kick energy 50 times a second: 0.05 W (coffee, 1.5 H at 35 mA), 0.11 W (steam, 3.7 H), 0.43 W at the bound (8.5 H at 45 mA, 8.6 mJ); the coil inductance, iron loss and series diode are unmeasured
+    entry varistor alone, a mains surge at the pump parts before the clamp: the triac's VDRM is 800 V and the opto-triac driver's (U701, U711) is 600 V, on the same MT2 node through 400 ohm
+    1 kV, clamp 800 to 805 V: triac 800 V over by 0 to 5 V; opto-triac 600 V over by 200 to 205 V
+    2 kV, clamp 867 to 887 V: triac 800 V over by 67 to 87 V; opto-triac 600 V over by 267 to 287 V
     thermistor NTC10D-9: module 40 A typical at 230 Vac implies 8.1 ohm; at 358 V crest 44.0 A bare, 19.7 A with 10 ohm added (-55 %)
     steady state: 0.46 ohm residual at 0.4 A (typical, 230 Vac) is 0.18 V and 0.07 W; the sheet's 2 A maximum steady current is 5x the module's 0.4 A; its 150 uF limit at 240 V against the module's input capacitance, which the module sheet does not state
     link position: 1206 0 ohm chip rated 2 A with 10 A overload (UNI-ROYAL sheet, duration not stated) against 40 A typical inrush: a wire link is drawn instead

@@ -8,6 +8,8 @@ needs that proof are in board_kicad_fixtures.py.
 
 from __future__ import annotations
 
+import glob
+import io
 import json
 import os
 import re
@@ -15,6 +17,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import unittest.mock
 
 import yaml
 
@@ -137,6 +140,68 @@ class MainsToMainsRunDirectly(Copy):
         self.assertFalse([f for f in found if "Track" in f[1]], found)
         self.assertEqual([f for f in self.spacing(lines, M2M) if "Track" in f[1]], [], lines)
 
+    def recorded_runs(self, extra=None):
+        """The check run in this process on the copy: each KiCad layout run as (flags, rules text it ran under, its report), and the check's lines.
+
+        `extra` maps a run's position among the layout runs to the clearance lines added to that run's report.
+        """
+        board_prove.git(self.seed, "add", "-A")
+        board_prove.git(self.seed, "commit", "-q", "--allow-empty", "-m", "seeded copy")
+        runs, real = [], board_check.run_report
+
+        def record(command, cwd):
+            if command[1:3] != ["pcb", "drc"]:
+                return real(command, cwd)
+            with open(glob.glob(os.path.join(cwd, "*.kicad_dru"))[0], encoding="utf-8") as handle:
+                rules = handle.read()
+            report, why = real(command, cwd)
+            if report is not None and extra and len(runs) in extra:
+                report["violations"] = report["violations"] + extra[len(runs)]
+            runs.append((command, rules, report))
+            return report, why
+
+        out = io.StringIO()
+        with unittest.mock.patch.object(board_check, "run_report", record):
+            board_check.run(self.seed.root, KICAD_CLI, out=out)
+        return runs, out.getvalue().splitlines()
+
+    def test_the_first_run_leaves_pairs_of_mains_pads_to_a_second_run_that_refills_nothing(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C6: The mains clearance findings of the first pass are gathered in runs that each stay under the rule engine's cap, and each finding is reported once
+        runs, lines = self.recorded_runs()
+        first, second = runs[0], runs[1]
+        self.assertIn("--refill-zones", first[0])
+        self.assertIn(board_check.PAD_PAIRS_SILENCED_RULE, first[1])
+        self.assertNotIn(board_check.OTHER_PAIRS_SILENCED_RULE, first[1])
+        self.assertNotIn("--refill-zones", second[0])
+        self.assertNotIn("--save-board", second[0])
+        self.assertIn(board_check.OTHER_PAIRS_SILENCED_RULE, second[1])
+        self.assertNotIn(board_check.PAD_PAIRS_SILENCED_RULE, second[1])
+        for command, rules, report in (first, second):
+            nonce = re.search(r"pre-order check ([0-9a-f]+): rules loaded", rules).group(1)
+            self.assertTrue(board_check.fired(report, board_check.marker_rule(nonce)), "the run loaded its rules")
+            self.assertLess(len([v for v in report["violations"] if v["type"] == "clearance"]), board_check.CLEARANCE_REPORT_LIMIT)
+        # the second run's lines under the check's own rules are all between two pads
+        for line in second[2]["violations"]:
+            if line["type"] == "clearance" and board_check.RESERVED in line["description"]:
+                self.assertEqual(len(line["items"]), 2)
+                self.assertTrue(all("ad " in item["description"] for item in line["items"]), line)
+        self.assertEqual([v for v in lines if "report_cut_short" in v], [])
+
+    def test_a_list_at_the_cap_in_either_run_fails_naming_the_run_and_the_count(self):
+        # SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C5: A rule engine list cut at its cap on a pass that carries a Mains rule fails the design
+        padding = [{"type": "clearance", "severity": "error", "description": "Clearance violation (rule 'x'; actual 0.1 mm)",
+                    "items": [{"description": f"Track on F.Cu #{index}", "pos": {"x": 0, "y": 0}}]}
+                   for index in range(board_check.CLEARANCE_REPORT_LIMIT)]
+        for position, which in ((0, "first run"), (1, "pad-pair run")):
+            with self.subTest(run=which):
+                self.setUp()
+                _, lines = self.recorded_runs({position: padding})
+                cut = [v.split(" | ") for v in lines if v.startswith("VIOLATION | ") and "report_cut_short" in v]
+                self.assertTrue(cut, lines)
+                self.assertIn(f"list of clearance lines in the {which} holds", cut[0][4])
+                self.assertIn("a cut list is not a verdict", cut[0][4])
+                self.assertGreaterEqual(int(re.search(r"holds (\d+),", cut[0][4]).group(1)), board_check.CLEARANCE_REPORT_LIMIT)
+
     def test_the_terminal_pairs_of_the_clean_design_pass_at_the_signed_terminal_clearance(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C5: A seeded layout with a Mains_Entry net and a Mains net at a creepage between the downstream and the ahead-of-fuse figures fails; the same distance between two nets outside Mains_Entry passes. Terminal-to-terminal pairs closer than terminal_clearance_mm fail, and conductor pairs between it and clearance_mm pass. Pairs between two nets that are both outside Mains_Entry are out of scope for the ahead-of-fuse figure.
         status, lines = self.check()
@@ -250,8 +315,9 @@ class EveryTrackedDesignPassesTheMainsToMainsRules(unittest.TestCase):
 
     def test_every_tracked_design_passes_and_the_mains_present_ones_state_the_new_keys(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C7: Every tracked design passes the check, the throwaway ones passing as fixtures without the mains_to_mains mapping and MAINS_ENTRY, bar those kept to exercise the rules, which carry synthetic figures and MAINS_ENTRY, in the build round for board changes and nightly on main. The hardware notes' record-key list, text-variable list, checks table and adopter section state mains_to_mains, MAINS_ENTRY, Mains_Entry and the floor reading. The signed record of the machine is out of scope; its leaf adds the real figures.
-        tracked = set(subprocess.run(["git", "ls-files", "*.kicad_pro"], cwd=board_prove.REPO, capture_output=True,
-                                     text=True, check=True).stdout.split())
+        # the machine's own design is held by the whole-repository check and its own tests, not by this list of proof designs
+        tracked = {path for path in subprocess.run(["git", "ls-files", "*.kicad_pro"], cwd=board_prove.REPO, capture_output=True,
+                                                   text=True, check=True).stdout.split() if path.startswith("hardware/proof/")}
         self.assertEqual(tracked, {f"hardware/proof/{name}/{name}.kicad_pro" for name in self.DESIGNS})
         for name in self.DESIGNS:
             with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:

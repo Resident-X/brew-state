@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD-C1-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T14:11:04.226419Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_committed_exceptions_split_across_the_three_acceptance_days_as_stated
+  artifact_version: 83938560b5bbae372eeca04f2011b04655286708
+attested_by: crun-8fbcd330b4c43f3f
+links:
+  - target: SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD.C1
+    type: satisfies

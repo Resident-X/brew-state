@@ -1,8 +1,12 @@
 # Reads the interlock deck logs (run ./A_run_all.sh first) and prints the removal-time budget, the timeout margin and the pick-up margin.
 import re, math
-def val(log, name):
+def val(log, name, default=None):
     t = open(log).read()
     m = re.search(rf"^{name}\s*=\s*([-\d.e+]+)", t, re.M | re.I)
+    if m is None:
+        if default is None:
+            raise SystemExit(f"{log}: no {name}")
+        return default                       # a measure that never triggered: the level was never reached
     return float(m.group(1))
 rail_start   = val("A_removal_gate_rail.log", "tr06") * 1e3          # ms, gate from 5.25 V (no diode drop) to 0.6 V
 rail_start05 = val("A_removal_gate_rail.log", "tr05") * 1e3          # ms, to 0.5 V (the record's end point)
@@ -31,3 +35,24 @@ for c in ("L0_fix","L1_fix","L2_fix","L3_fix","L0_rec"):
 for T in ("25C","70C"):
     v = val(f"A_pickup_{T}.log","vcoil"); p = val(f"A_pickup_{T}.log","vpickup_limit")
     print("pick-up %s: coil voltage %.3f V against %.2f V : margin %.3f V (%.1f %%)" % (T, v, p, v-p, 100*(v-p)/p))
+
+rest = {k: val(f"A_rest_{k}_fix.log", "tdeca") * 1e3 for k in ("high", "low", "float")}
+print("rest states, drawn circuit, gate decay from the last pump to 0.6 V: " + ", ".join("%s %.2f ms" % (k, v) for k, v in rest.items()) + " (budget term %.2f ms)" % rail_start)
+print("buffer peak current: %.1f mA at 87.5 ohm, %.1f mA at the sheet's 77.5 ohm (against +-25 mA continuous, no transient figure stated)" % (-val("A_buffer_peak.log", "ipeak") * 1e3, -val("A_buffer_peak_sheet.log", "ipeak") * 1e3))
+print("supply ramps, controller output undriven (reset): rail ramp / gate peak / time above 0.6 V / above 0.73 V / coil current peak, time at or above the 51.3 mA pick-up current (FETs at 0.6 V, coil 68.2 ohm)")
+for tr in ("1", "5", "10", "20", "50", "200"):
+    n = f"A_powerup_float_{tr}ms.log"; c = f"A_powerup_coil_{tr}ms.log"
+    print("  %4s ms: %.3f V, %.1f ms, %.1f ms ; coil %.1f mA, %.1f ms at or above pick-up current" % (tr, val(n, "vgmaxa"), val(n, "tabove06a", 0) * 1e3, val(n, "tabove073a", 0) * 1e3, val(c, "icoilmax") * 1e3, val(c, "tcoil35", 0) * 1e3))
+print("  with the pump diodes at VF 0.71 V (sensitivity, not a sheet figure):")
+for tr in ("1", "5", "10"):
+    n = f"A_powerup_float_{tr}ms_vf71.log"; c = f"A_powerup_coil_{tr}ms_vf71.log"
+    print("  %4s ms: %.3f V, %.1f ms above 0.6 V ; coil %.1f mA, %.2f ms at or above pick-up current" % (tr, val(n, "vgmaxa"), val(n, "tabove06a", 0) * 1e3, val(c, "icoilmax") * 1e3, val(c, "tcoil35", 0) * 1e3))
+print("  without R208 (1 T ohm): " + "; ".join("%s ms %.3f V, %.1f ms above 0.6 V" % (tr, val(f"A_powerup_float_{tr}ms_nor208.log", "vgmaxa"), val(f"A_powerup_float_{tr}ms_nor208.log", "tabove06a", 0) * 1e3) for tr in ("1", "20")))
+print("supply ramps, controller output driven LOW: " + "; ".join("%s ms gate %.3f V" % (tr, val(f"A_powerup_low_{tr}ms.log", "vgmaxa")) for tr in ("1", "20")) + " ; driven HIGH: " + "; ".join("%s ms gate %.3f V, %.1f ms above 0.6 V" % (tr, val(f"A_powerup_high_{tr}ms.log", "vgmaxa"), val(f"A_powerup_high_{tr}ms.log", "tabove06a", 0) * 1e3) for tr in ("1", "20")))
+print("1 ms dips to 0 / 2 / 3 / 4 V and back: output held low gate peak " + ", ".join("%.3f V" % val(f"A_dip_low_{d}V.log", "vgmaxa") for d in ("0", "2", "3", "4")) + " ; output held high " + ", ".join("%.3f V" % val(f"A_dip_high_{d}V.log", "vgmaxa") for d in ("0", "2", "3", "4")))
+print("ramps down, output undriven: gate peak " + ", ".join("%s ms %.1e V" % (tr, val(f"A_powerdown_float_{tr}ms.log", "vgmaxa")) for tr in ("1", "20", "200")))
+print("faults while the controller toggles, fault at 50 ms, gate decay to 0.6 V from the fault, gate at 0.5 s or later:")
+for f in ("u201_high", "u201_low", "u203_high", "u203_low", "interstage_open"):
+    n = f"A_fault_{f}.log"
+    print("  %-16s %.2f ms, %.1e V" % (f, val(n, "tdeca") * 1e3, max(val(n, "vlatea"), val(n, "vlateb"))))
+print("delay from POL_OUT to POL_BUF (50 %% of POL_OUT to 2.6 V of the buffer output, into the pump network): rising %.0f ns, falling %.0f ns, plus the sheet's 2 x 9 ns propagation (SN74AHCT1G14 tPLH/tPHL max, 50 pF, -40..85 C) not in the switch model" % (val("A_delay.log", "tdelay_rise") * 1e9, val("A_delay.log", "tdelay_fall") * 1e9))

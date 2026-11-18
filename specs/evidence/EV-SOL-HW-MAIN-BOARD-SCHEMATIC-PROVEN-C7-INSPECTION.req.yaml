@@ -1,0 +1,26 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C7-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C7
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T15:02:23Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'docs/sunbeam-em7000/controller-board-design-constraints.md::Rail budgets; Upstream protection and fault current; Mains entry: fuse, surge clamp and suppression judged; Pending marks'
+  artifact_version: c265f904b2a9e802297ff52728768b7f3dccccab
+text: |
+  Inspection of docs/sunbeam-em7000/controller-board-design-constraints.md (the constraints record), read in the working tree and unmodified against the commit named in the artifact version, against each clause of the criterion. Measuring the figures on a built board is out of scope and was not inspected or claimed.
+
+  Clause (a) "a rail's budget": section 'Rail budgets', row 'Rail budget, every rail', is marked Ended and states the figure with its source. +3V3 carries 0.293 A of loads against the regulator U302 (LT1963A-3.3) limit of 0.450 A at 70 degC air, ratio 1.54; +5V carries 1.070 A against 2.0 A (the IRM-20-5's 4 A at the 50 % its derating curve gives at 70 degC air), ratio 1.87. The source cell names circuit-proof.md 'Rail budget (logic supply and 3.3 V regulator)', the Mean Well IRM-20-SPEC 2025-11-21 and the LT1963A datasheet, and the row's grade is stated as inferred (sums of datasheet maxima, derating curve read off a chart). The row also states two open items against the figure (480 MHz configuration has no stable junction temperature at 70 degC; the three analogue headers' PTC hold currents would exceed the 3.3 V limit if loaded) and does not hide them. Matches.
+
+  Clause (b) "a branch fuse's rating": section 'Upstream protection and fault current'. Pump branches: both fuses stated Ended, F701 0.8 A (SCT520T0.8A250V) on the coffee pump and F711 0.5 A (SCT520T0.5A250V) on the steam pump, against 0.46 A and 0.19 A at 253 V, with the source 'SETfuse SCT520(P) cartridge fuse-link datasheet, document V1.0 2024-2026 (read 2026-11-05), Technical parameters table', the rated-current series, average melting I2t (0.14 and 0.96 A2s), breaking capacity (UL 10 kA, CQC/TUV 5 kA at 250 V AC for 0.4 A to 8 A) and the derated carrying figures 0.736 A and 0.460 A. Valve branch: F731 0.4 A (SCT520T0.4A250V) on the common valve feed, Ended, same source, I2t 0.06 A2s, against 0.203 A rms inrush. Entry: F101 10 A slow-blow (section 'Mains entry: fuse, surge clamp and suppression judged', row 'Entry fuse F101, SETfuse SCT520PT10A250V ... 10 A slow-blow', source 'SETfuse SCT520(P) sheet, V1.0, 2024-2026'). The heater branches state that they carry no fuse of their own and are behind the 10 A entry fuse, and the low-voltage supply's feed states the entry fuse protects it and the supply form gives no branch fuse. Every branch row names its fuse and rating or states there is none. Matches.
+
+  Clause (c) "the time a protective device takes to clear with the energy it lets through at the declared fault current": the declared fault current is 'Up to 6 kA (project assumption)' in the same section; the row 'Time each protective device takes to clear, and the energy it lets through, at that fault current' is marked 'Pending, narrowed to the figure no maker sheet prints'. It states what the SETfuse sheet does print (melting time at 10 times the rating, 5 ms to 150 ms for 0.4 A to 0.8 A and 10 ms to 150 ms for 1 A to 30 A; average melting I2t 0.06, 0.14, 0.96 and 500 A2s for 0.4, 0.5, 0.8 and 10 A, a pre-arcing figure) and that the sheet prints no clearing time and no let-through energy at 6 kA. It keeps the pending mark and names the act that settles it: SETfuse's let-through I2t and clearing time for the 10 A, 0.8 A, 0.5 A and 0.4 A ratings at 6 kA and 250 V AC (open-items.md, the SETfuse enquiry) together with the board laminate's maximum operating temperature. The section 'Pending marks' repeats the mark with the same act and a node (SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT). The criterion's alternative (keeps its pending mark and names the act) is the one this figure takes, because no maker's sheet prints it. Matches.
+
+  Result: all three figures are stated with their source or keep their pending mark and name the act. Not claimed: that the pending figure is ended (the criterion does not ask it), that any fuse clears 6 kA within a conductor's withstand, or any measurement.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C7
+    type: satisfies

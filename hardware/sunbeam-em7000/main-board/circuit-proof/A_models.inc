@@ -1,14 +1,16 @@
 * Device models for the interlock decks. Every parameter is a datasheet LIMIT or a fit to datasheet limits,
 * never a typical figure; the source of each is in circuit-proof.md and circuit-verdicts.md.
-* 74AHCT1G17 (Nexperia, Rev. 4, 15 September 2023, Table 8 and Table 7): Schmitt input, VT+ at most 2.0 V,
-* VT- at least 0.5 V (VCC 4.5-5.5 V, -40..85 C). Output: VOH >= 3.8 V at -8 mA (VCC 4.5 V, -40..85 C), i.e. a
-* drop of at most 0.7 V at 8 mA, taken as a resistance of 87.5 ohm (the drop of a driver is convex in its
-* current through the origin, so 87.5 ohm bounds the drop at any current below 8 mA); VOL <= 0.44 V at 8 mA, 55 ohm.
-.model SWH SW(vt=1.25 vh=0.75 ron=87.5 roff=1e9)
-.model SWL SW(vt=-1.25 vh=0.75 ron=55 roff=1e9)
-.subckt AHCT1G17 a y vcc gnd
-S1 vcc y a gnd SWH
-S2 y gnd gnd a SWL
+* SN74AHCT1G14 (Texas Instruments SCLS322P, June 2013, Electrical characteristics), used twice in series (U201, U203): INVERTING Schmitt input, VT+ at most
+* 2.0 V and VT- at least 0.5 V (VCC 4.5-5.5 V, -40..85 C): the output goes high when the input is under 0.5 V and low when
+* it is over 2.0 V, the widest band the sheet allows, held at any VCC (the sheet gives no threshold under 4.5 V; holding the
+* limit there is a deliberate bound, not a sheet figure). Output: VOH >= 3.88 V at -8 mA (VCC 4.5 V, -40..85 C) is a drop
+* of at most 0.62 V, 77.5 ohm; the decks keep 87.5 ohm, the figure of the part this one replaces (13 % above the sheet's, the
+* conservative end for the pump), and the peak-current deck alters it to the sheet's 77.5 ohm. VOL <= 0.44 V at 8 mA, 55 ohm.
+.model SWHI SW(vt=-1.25 vh=0.75 ron=87.5 roff=1e9)
+.model SWLO SW(vt=1.25 vh=0.75 ron=55 roff=1e9)
+.subckt AHCT1G14 a y vcc gnd
+S1 vcc y gnd a SWHI
+S2 y gnd a gnd SWLO
 .ends
 * Schottky, onsemi BAT54HT1G (Rev. 3, Oct 2005): VF max 0.32 V at 1 mA, 0.40 V at 10 mA, 0.80 V at 100 mA, 25 C.
 .model DSCH D(IS=4.2e-9 N=1 RS=2.3 CJO=0 BV=30)

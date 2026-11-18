@@ -146,7 +146,7 @@ print("   with 0.1 %% / 25 ppm resistors the front end is +%.3f %% FS, supportin
 print("\n== thermistor front end: temperature error of the front end alone")
 RD = val(S1, "R501")
 RSER = val(S1, "R502")
-ILEAK = 2e-6 + 0.1e-6 + 0.25e-6   # BAT54S IR max 2 uA (VR 25 V, 25 degC), TVS IRM max 100 nA (VRWM 5 V), pad leakage 250 nA (DS12110 Table 50)
+ILEAK = 2e-6 + 0.1e-6 + 0.25e-6   # BAT54SW IR max 2 uA (VR 25 V, 25 degC; Nexperia BAT54W series Rev. 3 Table 7, the figure the BAT54S sheet states too), TVS IRM max 100 nA (VRWM 5 V), pad leakage 250 nA (DS12110 Table 50)
 VDD = 3.3
 R25 = 100e3   # consistent with the three measured values 95.8..98.3 kOhm at 25.4 degC (connector-pinouts.md)
 T25 = 298.15
@@ -193,15 +193,15 @@ print("   25 LSB typ = %.2f mV = %.3f degC at 88 degC, beta 3950 K" % (25 * 3.3 
 print("  This row does not close: beta and the element tolerance are pending in the records; the ADC accuracy is typical only.")
 
 # ================================================================= flow input
-print("\n== flow input level (U520 input; PC6, FT_h, sees U520's output)")
+print("\n== flow input level (U520 input; PB10, FT_f, sees U520's output)")
 # SN74LVC1G17 SCES351Y (TI, October 2025): recommended input VI 0 to 5.5 V (section 5.3), absolute maximum VI 6.5 V (section 5.1),
 # II +-5 uA at VI = 5.5 V or GND (Table 5-1), output VOH at least VCC - 0.1 V at 100 uA.
 U520_VI_REC, U520_VI_ABS, U520_II = 5.5, 6.5, 5e-6
 for lab, v in (("push-pull meter output at 5 V rail high (+2.5 %)", 5.125), ("push-pull at 5.25 V", 5.25), ("open-drain with the 3.3 V pull-up", 3.6)):
     print("  %s: U520 input %.3f V ; recommended limit 5.5 V margin %.3f V ; absolute maximum 6.5 V margin %.3f V" % (lab, v, U520_VI_REC - v, U520_VI_ABS - v))
     check("flow buffer input below 5.5 V: %s" % lab, v < U520_VI_REC)
-print("  PC6 sees the buffer's output, at most the +3V3 rail (3.6 V) against its 5.5 V limit (Table 14): margin %.3f V" % (5.5 - 3.6))
-check("flow pin PC6 below 5.5 V with the buffer's output at 3.6 V", 3.6 < 5.5)
+print("  PB10 sees the buffer's output, at most the +3V3 rail (3.6 V) against its 5.5 V limit (Table 14): margin %.3f V" % (5.5 - 3.6))
+check("flow pin PB10 below 5.5 V with the buffer's output at 3.6 V", 3.6 < 5.5)
 print("  buffer input leakage %.0f uA through R521 (%.4g Ohm at +1.45 %%) shifts the filter node by %.1f mV" % (U520_II * 1e6, val(S2, "R521") * R_HI, U520_II * val(S2, "R521") * R_HI * 1e3))
 RP, RS_, CF = val(S2, "R520"), val(S2, "R521"), val(S2, "C520")
 tau = (RP * R_HI + RS_ * R_HI) * CF * C_HI
@@ -231,8 +231,8 @@ check("Cb allowed by tr >= 400 pF", cb_allowed >= CB_MAX)
 check("Rp at its highest <= Rp(max) at 400 pF", (rp_hi + rs_hi) <= TR_MAX / (0.8473 * CB_MAX))
 # bus capacitance budget the cable may use
 c_pins = 10e-12 + 10e-12 + 2 * 0.55e-12 + 10e-12    # sensor Ci (UM10204 Table 10, 10 pF max), controller pin (10 pF, UM10204 limit; DS12110 CIO 5 pF typ),
-                                                    # TVS Cd 0.55 pF max, BAT54S Cd 10 pF max (VR 1 V)
-print("  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54S 10 pF = %.1f pF ; left for pads, header and cable within 400 pF = %.1f pF" % (c_pins * 1e12, (CB_MAX - c_pins) * 1e12))
+                                                    # TVS Cd 0.55 pF max, BAT54SW Cd 10 pF max (VR 1 V)
+print("  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54SW 10 pF = %.1f pF ; left for pads, header and cable within 400 pF = %.1f pF" % (c_pins * 1e12, (CB_MAX - c_pins) * 1e12))
 # low-level margin through Rs
 for vdd in (3.0, 3.3, 3.6):
     il = (vdd - VOL_SPEC) / (rp * R_LO)

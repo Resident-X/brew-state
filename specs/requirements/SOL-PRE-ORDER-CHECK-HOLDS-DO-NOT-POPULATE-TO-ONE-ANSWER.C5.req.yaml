@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C5
+type: criterion
+title: No acceptance record waives a do-not-populate disagreement
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A do-not-populate disagreement fails the design whatever the acceptance records beside the design say. The rule is in neither the set of workmanship rules an acceptance record may cover nor the set of classes the owner may mark as warnings. Out of scope: any other rule of the check and the acceptance of its lines.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+    type: criterion-of

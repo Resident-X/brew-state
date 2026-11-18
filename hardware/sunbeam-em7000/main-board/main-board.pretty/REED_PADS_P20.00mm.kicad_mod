@@ -3,7 +3,7 @@
   (generator "konnect")
   (layer "F.Cu")
   (descr "Tank reed element, two through-hole pads 20.0 mm apart along Y")
-  (attr through_hole)
+  (attr through_hole exclude_from_pos_files exclude_from_bom)
   (pad "1" thru_hole circle (at 0 0) (size 2 2) (layers "*.Cu" "*.Mask") (drill 1) )
   (pad "2" thru_hole circle (at 0 20) (size 2 2) (layers "*.Cu" "*.Mask") (drill 1) )
   (fp_rect (start -1.5000 -1.5000) (end 1.5000 21.5000) (stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))

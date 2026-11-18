@@ -1,4 +1,4 @@
-Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PC6 it drives
+Flow input as built (U520 fitted, link R522 not fitted): edges through R521 and C520 into the buffer U520 for an open-drain meter (3.3 V pull-up R520), and the pin PB10 it drives
 * Source of every value: the sheet fragment of this block (generated from the same table).
 * Sim-only elements (names with SIM_) stand for the sensor, the converter's sample and hold and the supply.
 * Converter: DS12110 Rev 11 Table 77 / Table 174: CADC 4 pF (typ), tS 810.5 cycles, 16 bit, fADC 10 MHz.
@@ -7,16 +7,17 @@ VSIM_V3V3 +3V3 0 3.3
 R520 FLOW_RAW +3V3 10k
 R521 FLOW_RAW FLOW_F 1k
 C520 FLOW_F 0 47n
-* U520 (SN74LVC1G17) fitted: input FLOW_F pin 2, output FLOW_IN pin 4, supply +3V3 pin 5; C521 decouples it; the link R522 is not fitted
+* U520 (SN74LVC1G17) fitted: input FLOW_F pin 2, output FLOW_BUF pin 4, supply +3V3 pin 5; C521 decouples it; R545 joins FLOW_BUF to FLOW_IN; the link R522 is not fitted
 C521 +3V3 0 100n
+R545 FLOW_BUF FLOW_IN 220
 CSIM_U520IN FLOW_F 0 4.5p
 ISIM_U520IN FLOW_F 0 5u
-SSIM_U520H +3V3 FLOW_IN FLOW_F 0 SWSCHP
+SSIM_U520H +3V3 FLOW_BUF FLOW_F 0 SWSCHP
 ESIM_U520N U520NEG 0 FLOW_F 0 -1
-SSIM_U520L FLOW_IN 0 U520NEG 0 SWSCHN
+SSIM_U520L FLOW_BUF 0 U520NEG 0 SWSCHN
 .model SWSCHP SW(Ron=30 Roff=1e12 Vt=1.8150 Vh=0.9250)
 .model SWSCHN SW(Ron=30 Roff=1e12 Vt=-1.8150 Vh=0.9250)
-* PC6 pad leakage, DS12110 Table 50, 1.5 uA above VDD
+* PB10 pad leakage, DS12110 Table 50, 1.5 uA above VDD
 ISIM_PAD FLOW_IN 0 1.5u
 * meter output stage: open-drain = switch to ground, 100 Hz square wave
 SSIM_OD FLOW_RAW 0 CTLA 0 SWM

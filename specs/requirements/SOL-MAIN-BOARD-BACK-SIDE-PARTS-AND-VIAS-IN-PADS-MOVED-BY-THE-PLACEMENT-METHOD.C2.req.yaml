@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C2
+type: criterion
+title: D502, D504, D506, D523, D524, D527 and D528 are the SOT-323 BAT54SW,115 with the schematic's connections, D502 and D506 standing on F.Cu
+status: active
+version: 3
+measurement_type: binary
+verification: test
+scope: 'The seven BAT54S clamps D502, D504, D506, D523, D524, D527 and D528: their swap to the SOT-323 BAT54SW,115, fields, bill line, footprint, placement and pin mapping.'
+text: |
+  D502, D504, D506, D523, D524, D527 and D528 carry the Nexperia BAT54SW,115 (LCSC C78606) in a SOT-323 footprint in both the schematic symbol and the board, with matching footprint, LCSC, MPN and description fields; the bill of materials holds that one line for the seven parts; D502 and D506 stand on F.Cu, D504, D523, D524, D527 and D528 stay on F.Cu, and each of the seven has its courtyard clear of every other courtyard; and on the board pad 1 is on GND, pad 2 on its supply (+3V3A for D502, D504 and D506, +3V3 for the others) and pad 3 on its signal node (NTC_COF for D502, NTC_STM for D504, NTC_WAND for D506, STM_SCL and STM_SDA for D523 and D524, BREW_SCL and BREW_SDA for D527 and D528), each the net the schematic symbol's pin of the same number carries. The test fails on a swapped pad 1 and 2, on a footprint field that disagrees with the schematic, on any of the seven still carrying C47546 in the symbol, board or bill of materials, and on a pad on a net other than the schematic's. Out of scope: the records that name the part (the part-records criterion covers them), the electrical-equivalence reading, the routing of the moved parts, R301 and the vias.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

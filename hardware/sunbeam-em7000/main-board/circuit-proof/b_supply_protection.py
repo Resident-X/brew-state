@@ -1,6 +1,6 @@
 """Round-1 schematic review fixes on the logic supply and the wall-board inputs: +5V over-voltage (finding 1.1), regulator output
 capacitor bias (1.6), 3.3 V supervisor (1.13), mains-presence input network (1.2, 1.4, 1.9), USB discharge residue (owner level 4),
-and the unfitted pump snubbers and module inrush thermistor (owner decision b).
+the pump triac clamps D701 and D711 (owner decision of 2026-11-14) and the unfitted module inrush thermistor (owner decision b).
 
 Sources (each read 2026-10-29; maxima unless the line says typical):
   IRM-20     Mean Well IRM-20 series specification IRM-20-SPEC 2025-11-21 (https://www.meanwell.com/Upload/PDF/IRM-20/IRM-20-SPEC.PDF): 5 V 4 A,
@@ -17,12 +17,15 @@ Sources (each read 2026-10-29; maxima unless the line says typical):
   DS12110    STMicroelectronics DS12110 Rev 11 (January 2026): Table 109 (VIN on FT pins: min(min(VDD, VDDA, VDD33USB, VBAT) + 4.0, 6) V),
              Table 110 (IINJ(PIN) -5 / +0 mA, positive injection "not possible and does not occur below the maximum value"), Table 116 (BOR3
              falling 2.54 / 2.61 / 2.68 V, PVD6 falling 2.69 / 2.76 / 2.83 V), Table 147 (VIL 0.3 VDD, VIH 0.7 VDD, FT leakage +/-250 nA, 1500 nA
-             above VDD up to 5.5 V; PE15 and PD7 are FT_h).
+             above VDD up to 5.5 V; PE15 is FT_h and PB11 is FT_f, both FT_xx).
   DS4260     STMicroelectronics USBLC6-2 DS4260 Rev 7 (December 2021), web.archive.org/web/20251214101807/https://www.st.com/resource/en/datasheet/usblc6-2.pdf:
              IEC 61000-4-2 level 4, 15 kV air and 8 kV contact in the features (Table 1 prints 15 kV for contact: a contradiction; either meets level 4),
              VCL 12 V at 1 A and 17 V at 5 A (8/20 us), 3.5 pF maximum between I/O and GND.
   Ruilon     NTC series sheet, version A6, revised 2023-10-16 (LCSC C3790): NTC10D-9 10 ohm at 25 degC, 2 A, 0.46 ohm residual, 150 uF at 240 V.
-  WeEn       BTA204S-600B Rev.02: VDRM 600 V (the record's sheet; sheets/700-pump-drives.yaml).
+  ST         T835-800B DS2114 Rev 15 (August 2018), T701 and T711: VDRM 800 V (features p.1, 600 V to 800 V by type; ordering table p.19 gives T835-800B; sheets/700-pump-drives.yaml).
+  Littelfuse SMCJ series sheet revised 11/20/15 (LCSC C151285), D701 and D711 (SMCJ400CA, bidirectional): VR 400 V, VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR,
+             1500 W at 10/1000 us, VBR temperature coefficient 0.1 percent per degC typical.
+  onsemi     MOC3052M/D Rev. 4 (September 2022), U701 and U711 (MOC3052SVM): detector off-state output terminal voltage VDRM 600 V, absolute maximum (Maximum Ratings table, p.3).
 Run: python3 -I b_supply_protection.py
 """
 
@@ -43,9 +46,9 @@ print("    LT1963AEST-3.3: IN %.0f V absolute maximum -> margin %.2f V over %.2f
 print("    other parts on +5V, +5V_WB and +5V_GAUGE at %.2f V (module trip, on the module's cable position the D402 level is 10.3 V):" % ovp_hi)
 parts = [
     ("U302 LT1963A input", 20.0, "IN +/-20 V (LT1963A absolute maximum ratings)"),
-    ("U201 74AHCT1G17 VCC", 7.0, "Nexperia 74AHC1G17/74AHCT1G17 Rev. 4 (15 Sep 2023) Table 5 limiting values, VCC -0.5 to +7.0 V"),
+    ("U201 SN74AHCT1G14 VCC", 7.0, "Texas Instruments SN74AHCT1G14 SCLS322P (June 2013) absolute maximum ratings, VCC -0.5 to +7 V"),
     ("U791 SN74HCT541 VCC", 7.0, "Texas Instruments SCLS306C absolute maximum 7 V"),
-    ("K201 coil, HF115F-Q/005", 7.5, "Hongfa HF115F-Q coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm"),
+    ("K201 coil, HF115F-I/005", 7.5, "Hongfa HF115F-I coil data: 5 V coil, maximum voltage 7.5 V for a short period, 62 ohm"),
     ("K731 K741 coils, HF32FA-G/005", 8.5, "Hongfa HF32FA-G 2026 Rev 1.00 coil data (circuit-proof.md valve coil row)"),
     ("Q822 AO3401A gate to source", 12.0, "AO3401A Rev 3.1: VGS +/-12 V; gate swings 0 to 5.25 V against a source on +5V, 6.75 V at most"),
     ("C303 10 uF X5R", 10.0, "rated voltage"),
@@ -87,7 +90,7 @@ print("    NRST level held: VOL 0.4 V at 2 mA; the controller's pull-up is 3.4 V
 print("    pull-up limits of the supervisor sheet: 10 kohm to 1 Mohm; the controller's 30 to 50 kohm is inside; leakage IOH 100 nA x 50 kohm = %.1f mV" % (100e-9 * 50e3 * 1e3))
 
 # ---- (4) mains-presence inputs, findings 1.2, 1.4, 1.9 ----------------------------------------
-print("(4) mains-presence inputs PE15 and PD7 (FT_h), series R764/R774 27 kohm and pull-down R765/R775 82 kohm")
+print("(4) mains-presence inputs PE15 (FT_h) and PB11 (FT_f), series R764/R774 27 kohm and pull-down R765/R775 82 kohm")
 rs, rp = 27e3, 82e3
 k = rp / (rs + rp)
 k_hi = rp * 1.01 / (rs * 0.99 + rp * 1.01)
@@ -113,14 +116,27 @@ print("    residue at PA11 and PA12: the clamp's own table gives %.0f V at 5 A, 
 print("    8 kV contact through 330 ohm is 24 A: DS4260 2.1 gives 31.2 V with pin 5 open, about 23.0 V with D402 on the VBUS node (b_usb_power.py (e)); the 8/20 us table figure does not cover 24 A at 1 ns")
 
 # ---- (6) unfitted options on the mains side ------------------------------------------------------
-print("(6) pump snubber (R706 C701, R716 C711) and module inrush thermistor RT301, both not fitted")
-v_rms, v_pk, f_lo, f_hi, c_sn, r_sn = 253.0, 253.0 * 2 ** 0.5, 50.0, 60.0, 100e-9, 100.0
+print("(6) pump triac clamps (D701, D711: Littelfuse SMCJ400CA across each triac, MT2 to NEUTRAL) and module inrush thermistor RT301, not fitted")
 import math
-i_50 = v_rms * 2 * math.pi * f_lo * c_sn
-i_60 = v_rms * 2 * math.pi * f_hi * c_sn
-print("    snubber 100 ohm + 100 nF X2 (C101's part, 310 VAC): leakage with the triac off %.2f mA at 50 Hz, %.2f mA at 60 Hz; R dissipates %.1f mW; at turn-on from %.0f V crest: %.1f A peak, %.1f mJ"
-      % (i_50 * 1e3, i_60 * 1e3, i_60 ** 2 * r_sn * 1e3, v_pk, v_pk / r_sn, 0.5 * c_sn * v_pk ** 2 * 1e3))
-print("    the triac's VDRM is 600 V against the %.0f V crest of the supply: the rule is to fit the snubber only if the scope reads over 600 V at turn-off (bring-up)" % v_pk)
+v_rms = 253.0
+v_pk = v_rms * 2 ** 0.5
+vr, vbr_lo, vbr_hi, vc, i_vc, hot = 400.0, 447.0, 494.0, 648.0, 2.3, 1.06   # SMCJ400CA: stand-off, breakdown at 1 mA, clamp at 2.3 A, +6 % at 85 degC (0.1 %/degC typical)
+vdrm_triac, vdrm_opto = 800.0, 600.0   # T835-800B, and MOC3052SVM on the same MT2 node through 400 ohm
+i_kick, i_surge = 0.045, 0.45          # holding current taken as 45 mA cold; surge current through the coil's capacitance
+v_kick = (vbr_hi + (vc - vbr_hi) * i_kick / i_vc) * hot
+v_surge = (vbr_hi + (vc - vbr_hi) * i_surge / i_vc) * hot
+print("    idle: the %.0f V crest of the supply is %.3f of the %.0f V stand-off and %.2f times under the %.0f V minimum breakdown; the clamp conducts from %.0f V rms and leaks 1 uA at most at the stand-off"
+      % (v_pk, round(v_pk) / vr, vr, vbr_lo / v_pk, vbr_lo, vbr_lo / 2 ** 0.5))
+print("    turn-off kick at %.0f mA, hot: (%.0f + (%.0f - %.0f) x %.3f / %.1f) x %.2f = %.0f V; opto-triac %.0f V is %.2f times it, triac %.0f V is %.2f times it"
+      % (i_kick * 1e3, vbr_hi, vc, vbr_hi, i_kick, i_vc, hot, v_kick, vdrm_opto, vdrm_opto / v_kick, vdrm_triac, vdrm_triac / v_kick))
+print("    surge through the coil's capacitance at %.2f A, hot (interpolated between the 1 mA and 2.3 A points): (%.0f + (%.0f - %.0f) x %.2f / %.1f) x %.2f = %.0f V; opto-triac %.0f V is %.2f times it"
+      % (i_surge, vbr_hi, vc, vbr_hi, i_surge, i_vc, hot, v_surge, vdrm_opto, vdrm_opto / v_surge))
+e_coffee, e_steam, e_bound = 0.5 * 1.5 * 0.035 ** 2, 0.5 * 3.7 * 0.035 ** 2, 0.5 * 8.5 * 0.045 ** 2
+print("    dissipation, the kick energy 50 times a second: %.2f W (coffee, 1.5 H at 35 mA), %.2f W (steam, 3.7 H), %.2f W at the bound (8.5 H at 45 mA, %.1f mJ); the coil inductance, iron loss and series diode are unmeasured"
+      % (e_coffee * 50, e_steam * 50, e_bound * 50, e_bound * 1e3))
+print("    entry varistor alone, a mains surge at the pump parts before the clamp: the triac's VDRM is %.0f V and the opto-triac driver's (U701, U711) is %.0f V, on the same MT2 node through 400 ohm" % (vdrm_triac, vdrm_opto))
+for lab, lo, hi in (("1 kV, clamp 800 to 805 V", 800, 805), ("2 kV, clamp 867 to 887 V", 867, 887)):
+    print("    %s: triac 800 V over by %d to %d V; opto-triac 600 V over by %d to %d V" % (lab, max(lo - 800, 0), max(hi - 800, 0), lo - 600, hi - 600))
 r_src = 230 * 2 ** 0.5 / 40.0
 print("    thermistor NTC10D-9: module 40 A typical at 230 Vac implies %.1f ohm; at %.0f V crest %.1f A bare, %.1f A with 10 ohm added (-%.0f %%)"
       % (r_src, v_pk, v_pk / r_src, v_pk / (r_src + 10), 100 * (1 - (r_src) / (r_src + 10))))

@@ -5776,179 +5776,177 @@
 			)
 			(embedded_fonts no)
 		)
-	
-		(symbol
-		  "Device:D_Zener"
-		  (pin_numbers
-		    (hide yes)
-		  )
-		  (pin_names
-		    (offset 1.016)
-		    (hide yes)
-		  )
-		  (exclude_from_sim no)
-		  (in_bom yes)
-		  (on_board yes)
-		  (in_pos_files yes)
-		  (duplicate_pin_numbers_are_jumpers no)
-		  (property "Reference" "D"
-		    (at 0 2.54 0)
-		    (show_name no)
-		    (do_not_autoplace no)
-		    (effects
-		      (font
-		        (size 1.27 1.27)
-		      )
-		    )
-		  )
-		  (property "Value" "D_Zener"
-		    (at 0 -2.54 0)
-		    (show_name no)
-		    (do_not_autoplace no)
-		    (effects
-		      (font
-		        (size 1.27 1.27)
-		      )
-		    )
-		  )
-		  (property "Footprint" ""
-		    (at 0 0 0)
-		    (show_name no)
-		    (do_not_autoplace no)
-		    (hide yes)
-		    (effects
-		      (font
-		        (size 1.27 1.27)
-		      )
-		    )
-		  )
-		  (property "Datasheet" ""
-		    (at 0 0 0)
-		    (show_name no)
-		    (do_not_autoplace no)
-		    (hide yes)
-		    (effects
-		      (font
-		        (size 1.27 1.27)
-		      )
-		    )
-		  )
-		  (property "Description" "Zener diode"
-		    (at 0 0 0)
-		    (show_name no)
-		    (do_not_autoplace no)
-		    (hide yes)
-		    (effects
-		      (font
-		        (size 1.27 1.27)
-		      )
-		    )
-		  )
-		  (property "ki_keywords" "diode"
-		    (at 0 0 0)
-		    (show_name no)
-		    (do_not_autoplace no)
-		    (hide yes)
-		    (effects
-		      (font
-		        (size 1.27 1.27)
-		      )
-		    )
-		  )
-		  (property "ki_fp_filters" "TO-???* *_Diode_* *SingleDiode* D_*"
-		    (at 0 0 0)
-		    (show_name no)
-		    (do_not_autoplace no)
-		    (hide yes)
-		    (effects
-		      (font
-		        (size 1.27 1.27)
-		      )
-		    )
-		  )
-		  (symbol "D_Zener_0_1"
-		    (polyline
-		      (pts
-		        (xy -1.27 -1.27)
-		        (xy -1.27 1.27)
-		        (xy -0.762 1.27)
-		      )
-		      (stroke
-		        (width 0.254)
-		        (type default)
-		      )
-		      (fill
-		        (type none)
-		      )
-		    )
-		    (polyline
-		      (pts
-		        (xy 1.27 0)
-		        (xy -1.27 0)
-		      )
-		      (stroke
-		        (width 0)
-		        (type default)
-		      )
-		      (fill
-		        (type none)
-		      )
-		    )
-		    (polyline
-		      (pts
-		        (xy 1.27 -1.27)
-		        (xy 1.27 1.27)
-		        (xy -1.27 0)
-		        (xy 1.27 -1.27)
-		      )
-		      (stroke
-		        (width 0.254)
-		        (type default)
-		      )
-		      (fill
-		        (type none)
-		      )
-		    )
-		  )
-		  (symbol "D_Zener_1_1"
-		    (pin passive line
-		      (at -3.81 0 0)
-		      (length 2.54)
-		      (name "K"
-		        (effects
-		          (font
-		            (size 1.27 1.27)
-		          )
-		        )
-		      )
-		      (number "1"
-		        (effects
-		          (font
-		            (size 1.27 1.27)
-		          )
-		        )
-		      )
-		    )
-		    (pin passive line
-		      (at 3.81 0 180)
-		      (length 2.54)
-		      (name "A"
-		        (effects
-		          (font
-		            (size 1.27 1.27)
-		          )
-		        )
-		      )
-		      (number "2"
-		        (effects
-		          (font
-		            (size 1.27 1.27)
-		          )
-		        )
-		      )
-		    )
-		  )
-		  (embedded_fonts no)
+		(symbol "Device:D_Zener"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 1.016)
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "D_Zener"
+				(at 0 -2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" "Zener diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_keywords" "diode"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "ki_fp_filters" "TO-???* *_Diode_* *SingleDiode* D_*"
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_Zener_0_1"
+				(polyline
+					(pts
+						(xy -1.27 -1.27)
+						(xy -1.27 1.27)
+						(xy -0.762 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0)
+						(xy -1.27 0)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.27)
+						(xy 1.27 1.27)
+						(xy -1.27 0)
+						(xy 1.27 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_Zener_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
 		)
 	)
 	(junction
@@ -5997,14 +5995,6 @@
 		(uuid "b8456bc5-fc3d-49f3-9eca-ddf30c0f21b9")
 	)
 	(no_connect
-		(at 275.59 242.57)
-		(uuid "219c0137-730c-4ed1-8aeb-0512ed80c03f")
-	)
-	(no_connect
-		(at 275.59 245.11)
-		(uuid "4319d324-0134-4619-adea-14b28c045478")
-	)
-	(no_connect
 		(at 321.31 265.43)
 		(uuid "d8c73406-7d74-4ae2-ab32-9caf4fb318d2")
 	)
@@ -6041,28 +6031,8 @@
 		(uuid "ad00858a-a916-45c4-909a-8d55b3044c7b")
 	)
 	(no_connect
-		(at 321.31 194.31)
-		(uuid "137c589f-0633-4237-8196-6bdb1c7fffb3")
-	)
-	(no_connect
-		(at 321.31 184.15)
-		(uuid "97484852-8c5d-4240-a6d8-227f7c5bb0a8")
-	)
-	(no_connect
-		(at 321.31 257.81)
-		(uuid "abfd12aa-bc32-4cd6-bd55-8de8ee66c4e8")
-	)
-	(no_connect
 		(at 321.31 199.39)
 		(uuid "dd63b9bc-e546-46fa-be40-25f24fd3d3e5")
-	)
-	(no_connect
-		(at 321.31 204.47)
-		(uuid "b739bde4-321a-4f45-860a-9d9c459b32b4")
-	)
-	(no_connect
-		(at 321.31 207.01)
-		(uuid "939c424b-6405-4d68-b95e-43c2f0575cc4")
 	)
 	(no_connect
 		(at 459.74 152.4)
@@ -6071,6 +6041,34 @@
 	(no_connect
 		(at 482.6 157.48)
 		(uuid "8bade205-65d3-4c7e-af8e-3ca425b116ab")
+	)
+	(no_connect
+		(at 321.31 222.25)
+		(uuid "dfc70b0e-10b5-4827-9e5a-0ebbe3967b16")
+	)
+	(no_connect
+		(at 321.31 224.79)
+		(uuid "b9158259-0d3f-493d-9406-e1f983428a93")
+	)
+	(no_connect
+		(at 321.31 227.33)
+		(uuid "5c7d9340-4632-489f-9dc1-677bcfd96406")
+	)
+	(no_connect
+		(at 321.31 255.27)
+		(uuid "c82a5f7b-0d24-49ed-b840-331242cd9e2f")
+	)
+	(no_connect
+		(at 275.59 222.25)
+		(uuid "fca477f6-7bbd-4002-b76f-1ca1da45c410")
+	)
+	(no_connect
+		(at 275.59 171.45)
+		(uuid "f5a7466c-9f57-4545-b003-a1e2b05bc0ed")
+	)
+	(no_connect
+		(at 275.59 229.87)
+		(uuid "6454a392-605d-4407-9026-1a88182ceefb")
 	)
 	(wire
 		(pts
@@ -7427,17 +7425,6 @@
 		)
 		(uuid "e14a73d2-7431-44a6-930e-073243d1421b")
 	)
-	(hierarchical_label "TANK_LEVEL"
-		(shape bidirectional)
-		(at 275.59 199.39 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "630cf68e-700e-4841-9885-a9db9f60f941")
-	)
 	(hierarchical_label "KNOB_HOT"
 		(shape bidirectional)
 		(at 275.59 201.93 180)
@@ -7471,50 +7458,6 @@
 		)
 		(uuid "9b996283-d7ff-4db0-a6b5-79b1b26d64b2")
 	)
-	(hierarchical_label "PT2_CS"
-		(shape bidirectional)
-		(at 275.59 232.41 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "7437a04e-59ef-4213-a454-23429dfa6469")
-	)
-	(hierarchical_label "AMC_CS"
-		(shape bidirectional)
-		(at 275.59 234.95 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "54c96e9f-a188-4b8c-bbaf-bbce603fed9f")
-	)
-	(hierarchical_label "AMC_DRDY"
-		(shape bidirectional)
-		(at 275.59 237.49 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "36bb5ca6-7c3d-4089-9aa6-386f05a202e3")
-	)
-	(hierarchical_label "AMC_RESET"
-		(shape bidirectional)
-		(at 275.59 240.03 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "6283d509-f549-4f06-95f8-2aee61d091b2")
-	)
 	(hierarchical_label "GAUGE_STEP1"
 		(shape bidirectional)
 		(at 275.59 247.65 180)
@@ -7537,113 +7480,14 @@
 		)
 		(uuid "b3f9ccbe-3ac2-4148-a92c-46f1f290e33a")
 	)
-	(hierarchical_label "GAUGE_DIR1"
-		(shape bidirectional)
-		(at 275.59 212.09 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "25529317-9a69-4246-be91-f4d4c8fa319e")
-	)
-	(hierarchical_label "GAUGE_DIR2"
-		(shape bidirectional)
-		(at 275.59 214.63 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "99373f36-a98f-4578-97d1-5366bf80e146")
-	)
-	(hierarchical_label "HEAT_C_DRV"
-		(shape bidirectional)
-		(at 275.59 217.17 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "0420c4e7-bd24-4a89-9d8b-ddf425ebfcde")
-	)
-	(hierarchical_label "HEAT_S_DRV"
-		(shape bidirectional)
-		(at 275.59 219.71 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "e1f7fb3e-22ed-4c16-aebd-c8f88638982c")
-	)
-	(hierarchical_label "VALVE_2W_DRV"
-		(shape bidirectional)
-		(at 275.59 222.25 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "e9f04b13-2720-47aa-9eea-aee184541917")
-	)
-	(hierarchical_label "VALVE_3W_DRV"
-		(shape bidirectional)
-		(at 275.59 224.79 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "5707630c-8164-45d1-89c5-1082538c2b79")
-	)
-	(hierarchical_label "GAUGE_RST"
-		(shape bidirectional)
-		(at 275.59 227.33 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "4edfa888-d297-4327-94f2-aff2c9e6c0a5")
-	)
-	(hierarchical_label "MAINS_PRES_S"
-		(shape bidirectional)
-		(at 275.59 229.87 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "98da928f-49f3-4f74-9392-c6e3406723e5")
-	)
-	(hierarchical_label "LOWWATER_K"
-		(shape bidirectional)
-		(at 275.59 168.91 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "4517711b-fb4f-46d3-a106-8b6bb8addbcc")
-	)
 	(hierarchical_label "BUZZER"
 		(shape bidirectional)
-		(at 275.59 171.45 180)
+		(at 321.31 194.31 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify left)
 		)
 		(uuid "2905133c-4dfb-4d44-8ebf-96010ffc737a")
 	)
@@ -7735,83 +7579,6 @@
 		)
 		(uuid "8a6f0eb3-3e22-43ee-8e4e-6fa6bc34d9ed")
 	)
-	(hierarchical_label "BREW_SCL"
-		(shape bidirectional)
-		(at 321.31 214.63 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "cffdf6cd-2a1e-4fb3-9851-3636063f5afe")
-	)
-	(hierarchical_label "BREW_SDA"
-		(shape bidirectional)
-		(at 321.31 217.17 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "dfa7c667-93f4-49c8-a542-966e8c8fa329")
-	)
-	(hierarchical_label "PT1_CS"
-		(shape bidirectional)
-		(at 321.31 219.71 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "472f3c8d-88b7-4a15-91c3-39254bd43684")
-	)
-	(hierarchical_label "SPI2_SCK"
-		(shape bidirectional)
-		(at 321.31 222.25 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "cd291819-70df-4d62-aedc-4eb63296e418")
-	)
-	(hierarchical_label "SPI2_MISO"
-		(shape bidirectional)
-		(at 321.31 224.79 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "a6f3ed7b-9938-474e-b2c2-077503ac473d")
-	)
-	(hierarchical_label "SPI2_MOSI"
-		(shape bidirectional)
-		(at 321.31 227.33 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "a3a38e32-e3df-49ff-938b-179fdd50826c")
-	)
-	(hierarchical_label "FLOW_IN"
-		(shape bidirectional)
-		(at 321.31 247.65 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "8a654ab1-3942-42db-b297-ad0a17f6209f")
-	)
 	(hierarchical_label "POL_OUT"
 		(shape bidirectional)
 		(at 321.31 250.19 0)
@@ -7822,28 +7589,6 @@
 			(justify left)
 		)
 		(uuid "29d29643-57ae-453c-bc42-de62f63748a5")
-	)
-	(hierarchical_label "WT1_DATA"
-		(shape bidirectional)
-		(at 321.31 252.73 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "c90250c5-5203-4249-91eb-709063a14900")
-	)
-	(hierarchical_label "WT1_CLK"
-		(shape bidirectional)
-		(at 321.31 255.27 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "517ee8eb-bec0-46bc-be45-03c47d7f8486")
 	)
 	(hierarchical_label "PUMP_S_GATE"
 		(shape bidirectional)
@@ -7877,28 +7622,6 @@
 			(justify left)
 		)
 		(uuid "13d36bf1-87a9-4cfc-9d51-1f7f5dace5e0")
-	)
-	(hierarchical_label "WT2_DATA"
-		(shape bidirectional)
-		(at 321.31 260.35 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "a964b8ae-ba1a-484e-a9d0-f5ab564ffced")
-	)
-	(hierarchical_label "WT2_CLK"
-		(shape bidirectional)
-		(at 321.31 262.89 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "a45cb515-d377-41b9-a574-5924ed4da69d")
 	)
 	(hierarchical_label "ANODE_GATE"
 		(shape bidirectional)
@@ -7943,6 +7666,281 @@
 			(justify right)
 		)
 		(uuid "85db0c52-cf88-488c-91de-004ede302ae3")
+	)
+	(hierarchical_label "LOWWATER_K"
+		(shape bidirectional)
+		(at 275.59 199.39 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "ad740608-df8e-4cf5-b3e1-53b168b2676a")
+	)
+	(hierarchical_label "PT1_CS"
+		(shape bidirectional)
+		(at 275.59 212.09 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "44ad93e8-9c27-4cee-a1ba-3720b7228312")
+	)
+	(hierarchical_label "PT2_CS"
+		(shape bidirectional)
+		(at 275.59 214.63 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "b2ef8e79-e232-454e-a9b9-467d970a114e")
+	)
+	(hierarchical_label "AMC_CS"
+		(shape bidirectional)
+		(at 321.31 184.15 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "9ad270d4-6ca7-487b-9433-78a95ec8b2ca")
+	)
+	(hierarchical_label "WT1_DATA"
+		(shape bidirectional)
+		(at 275.59 224.79 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "efcc5801-d1da-408a-a4d8-36b308f7367e")
+	)
+	(hierarchical_label "WT1_CLK"
+		(shape bidirectional)
+		(at 275.59 227.33 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "5569b535-3205-4afc-b909-0b289b9c75ac")
+	)
+	(hierarchical_label "WT2_DATA"
+		(shape bidirectional)
+		(at 275.59 217.17 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "234197e2-da83-4e28-be36-b1789f2f1f6d")
+	)
+	(hierarchical_label "WT2_CLK"
+		(shape bidirectional)
+		(at 275.59 219.71 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "ef22304f-f191-41ed-8334-937a1af39bf2")
+	)
+	(hierarchical_label "AMC_DRDY"
+		(shape bidirectional)
+		(at 321.31 247.65 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "02da74d3-ec27-4041-a30c-327bf952638e")
+	)
+	(hierarchical_label "GAUGE_DIR1"
+		(shape bidirectional)
+		(at 275.59 232.41 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "4a947501-e882-4698-8338-96067eaf63e2")
+	)
+	(hierarchical_label "GAUGE_DIR2"
+		(shape bidirectional)
+		(at 275.59 234.95 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "66d111b3-7372-4f56-b7ae-e16d52a29df9")
+	)
+	(hierarchical_label "GAUGE_RST"
+		(shape bidirectional)
+		(at 275.59 237.49 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "222a1042-79ea-4cfa-833a-509264289627")
+	)
+	(hierarchical_label "HEAT_C_DRV"
+		(shape bidirectional)
+		(at 275.59 240.03 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "2b88ee62-0b86-41fb-8eef-894e570693c6")
+	)
+	(hierarchical_label "HEAT_S_DRV"
+		(shape bidirectional)
+		(at 275.59 242.57 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "559e2296-bd27-433e-ac56-b353ac382043")
+	)
+	(hierarchical_label "VALVE_2W_DRV"
+		(shape bidirectional)
+		(at 275.59 245.11 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "1107ad87-70fe-4b1d-9549-1b07a04a170a")
+	)
+	(hierarchical_label "TANK_LEVEL"
+		(shape bidirectional)
+		(at 275.59 168.91 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "5210ee89-a201-49fb-87a4-04d90059759a")
+	)
+	(hierarchical_label "BREW_SCL"
+		(shape bidirectional)
+		(at 321.31 204.47 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "50d88fe7-ddcb-4328-b676-9dd438d28a8b")
+	)
+	(hierarchical_label "BREW_SDA"
+		(shape bidirectional)
+		(at 321.31 207.01 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "bd83721c-924d-48f9-8b54-ceed0f33a5ad")
+	)
+	(hierarchical_label "FLOW_IN"
+		(shape bidirectional)
+		(at 321.31 214.63 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "ad9f10e3-07d3-4f49-9bda-db0990e2bba6")
+	)
+	(hierarchical_label "MAINS_PRES_S"
+		(shape bidirectional)
+		(at 321.31 217.17 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "49a26c31-5061-4dbb-8397-31141c0cea99")
+	)
+	(hierarchical_label "VALVE_3W_DRV"
+		(shape bidirectional)
+		(at 321.31 219.71 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "fa589e97-9933-4227-a238-f7ae51c8b4b7")
+	)
+	(hierarchical_label "AMC_RESET"
+		(shape bidirectional)
+		(at 321.31 252.73 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "86ce0ae8-6fa8-4c45-bbfe-988e4eb218ba")
+	)
+	(hierarchical_label "SPI3_SCK"
+		(shape bidirectional)
+		(at 321.31 257.81 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "7292e5c4-5bc2-48e4-b4b1-2e5eb6ecff60")
+	)
+	(hierarchical_label "SPI3_MISO"
+		(shape bidirectional)
+		(at 321.31 260.35 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "45bce811-6f08-4a04-853a-75eff0844334")
+	)
+	(hierarchical_label "SPI3_MOSI"
+		(shape bidirectional)
+		(at 321.31 262.89 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "c8346034-d750-4a7e-b1bc-1f8236e751f3")
 	)
 	(symbol
 		(lib_id "MCU_ST_STM32H7:STM32H743VITx")

@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C1
+type: criterion
+title: No assembled surface-mount part stands on B.Cu, the back side carries no fiducial and the check prints no side_fiducials line
+status: active
+version: 2
+measurement_type: binary
+verification: test
+scope: The side of the three named footprints and the side_fiducials line only; adding fiducials to B.Cu is out of scope, as the order is single-sided assembly.
+text: |
+  On the committed main board no assembled surface-mount part stands on B.Cu, D502, D506 and R301 stand on F.Cu, the back side carries no fiducial, and the pre-order check on the main board prints no side_fiducials line. The test fails on a board with any assembled surface-mount part on B.Cu, and on a synthetic board with an assembled surface-mount part on B.Cu and no fiducial there. Out of scope: any other rule's line.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C14
+type: criterion
+title: The J630 and J635 holes are 0.85 mm with a signed hole spacing of 1.15 mm
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The holes of the headers J630 and J635 are 0.85 mm, the header maker's own figure, on a project footprint, and the separation basis record's signed hole spacing for the two is 1.15 mm. A hole of another size or a signed spacing of another figure fails. Out of scope: the other connectors' holes.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

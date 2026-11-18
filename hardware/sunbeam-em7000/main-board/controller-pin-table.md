@@ -43,37 +43,37 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 33 | PC5 | STMP_AN | ADC12_INP8 | TT_a | floating input (analog mode per RM0433) |  |
 | 34 | PB0 | no connect | unused (ADC12_INP9) | FT_a | floating input (analog mode per RM0433) |  |
 | 35 | PB1 | no connect | unused (ADC12_INP5) | TT_a | floating input (analog mode per RM0433) |  |
-| 36 | PB2 | no connect | unused | FT_ha | floating input (analog mode per RM0433) |  |
+| 36 | PB2 | BUZZER | GPIO output | FT_ha | floating input (analog mode per RM0433) |  |
 | 37 | PE7 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
 | 38 | PE8 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
 | 39 | PE9 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
 | 40 | PE10 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
 | 41 | PE11 | no connect | unused | TT_ha | floating input (analog mode per RM0433) | 3.3 V-tolerant only (TT): never a 5 V user |
-| 42 | PE12 | TANK_LEVEL | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
+| 42 | PE12 | LOWWATER_K | GPIO output (open-drain use, owner D) | FT_h | floating input (analog mode per RM0433) |  |
 | 43 | PE13 | KNOB_HOT | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
 | 44 | PE14 | KNOB_STEAM | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
 | 45 | PE15 | MAINS_PRES_C | GPIO input (wall-board mains-presence confirm through R764, 27 kohm, with R765, 82 kohm, to GND) | FT_h | analog mode at reset (RM0433); firmware sets a plain floating input, no pull (DS12110 Table 109 note 4) |  |
-| 46 | PB10 | BREW_SCL | I2C2_SCL AF4 (also USART3_TX AF7) | FT_f | floating input (analog mode per RM0433) |  |
-| 47 | PB11 | BREW_SDA | I2C2_SDA AF4 (also USART3_RX AF7) | FT_f | floating input (analog mode per RM0433) |  |
+| 46 | PB10 | FLOW_IN | TIM2_CH3 AF1 (32-bit timer input capture; also USART3_TX AF7) | FT_f | floating input (analog mode per RM0433) | USART3_TX in the ST bootloader (AN2606 Rev 70, Table 135) |
+| 47 | PB11 | MAINS_PRES_S | GPIO input (wall-board mains-presence confirm through R774, 27 kohm, with R775, 82 kohm, to GND) | FT_f | analog mode at reset (RM0433); firmware sets a plain floating input, no pull (DS12110 Table 109 note 4) | USART3_RX in the ST bootloader (AN2606 Rev 70, Table 135) |
 | 48 | VCAP | VCAP | core regulator output (VCAP1) | S | - |  |
 | 49 | VSS | GND | supply | S | - |  |
 | 50 | VDD | +3V3 | supply | S | - |  |
-| 51 | PB12 | PT1_CS | GPIO output (SPI2_NSS AF5 not used) | FT_u | floating input (analog mode per RM0433) | supplied by VDD33USB, tied to VDD in this package; Table 9 note 7 |
-| 52 | PB13 | SPI2_SCK | SPI2_SCK AF5 | FT_u | floating input (analog mode per RM0433) | as PB12 |
-| 53 | PB14 | SPI2_MISO | SPI2_MISO AF5 | FT_u | floating input (analog mode per RM0433) | as PB12 |
-| 54 | PB15 | SPI2_MOSI | SPI2_MOSI AF5 | FT_u | floating input (analog mode per RM0433) | as PB12 |
-| 55 | PD8 | PT2_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 56 | PD9 | AMC_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 57 | PD10 | AMC_DRDY | GPIO input (EXTI) | FT_h | floating input (analog mode per RM0433) |  |
-| 58 | PD11 | AMC_RESET | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 59 | PD12 | no connect | unused (I2C4_SCL, LPTIM1_IN1) | FT_fh | floating input (analog mode per RM0433) |  |
-| 60 | PD13 | no connect | unused (I2C4_SDA) | FT_fh | floating input (analog mode per RM0433) |  |
+| 51 | PB12 | VALVE_3W_DRV | GPIO output (SPI2_NSS AF5 not used) | FT_u | floating input (analog mode per RM0433) | supplied by VDD33USB, tied to VDD in this package; Table 9 note 7 |
+| 52 | PB13 | no connect | unused | FT_u | floating input (analog mode per RM0433) | as PB12 |
+| 53 | PB14 | no connect | unused | FT_u | floating input (analog mode per RM0433) | as PB12 |
+| 54 | PB15 | no connect | unused | FT_u | floating input (analog mode per RM0433) | as PB12 |
+| 55 | PD8 | GAUGE_DIR1 | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 56 | PD9 | GAUGE_DIR2 | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 57 | PD10 | GAUGE_RST | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 58 | PD11 | HEAT_C_DRV | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 59 | PD12 | HEAT_S_DRV | GPIO output (I2C4_SCL, LPTIM1_IN1 not used) | FT_fh | floating input (analog mode per RM0433) |  |
+| 60 | PD13 | VALVE_2W_DRV | GPIO output (I2C4_SDA not used) | FT_fh | floating input (analog mode per RM0433) |  |
 | 61 | PD14 | GAUGE_STEP1 | TIM4_CH3 AF2 | FT_h | floating input (analog mode per RM0433) |  |
 | 62 | PD15 | GAUGE_STEP2 | TIM4_CH4 AF2 | FT_h | floating input (analog mode per RM0433) |  |
-| 63 | PC6 | FLOW_IN | TIM8_CH1 AF3 | FT_h | floating input (analog mode per RM0433) |  |
+| 63 | PC6 | AMC_DRDY | GPIO input (EXTI line 6) | FT_h | floating input (analog mode per RM0433) |  |
 | 64 | PC7 | POL_OUT | GPIO output, push-pull (proof of life) | FT_h | floating input (analog mode per RM0433) |  |
-| 65 | PC8 | WT1_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
-| 66 | PC9 | WT1_CLK | GPIO output (MCO2 AF0 not used) | FT_fh | floating input (analog mode per RM0433) |  |
+| 65 | PC8 | AMC_RESET | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 66 | PC9 | no connect | unused (MCO2) | FT_fh | floating input (analog mode per RM0433) |  |
 | 67 | PA8 | PUMP_S_GATE | TIM1_CH1 AF1 (MCO1 is AF0) | FT_fha | floating input (analog mode per RM0433) | I2C3_SCL in the ST bootloader: open-drain, no pull (AN2606 Rev 70, Table 135); never driven high |
 | 68 | PA9 | PUMP_C_GATE | TIM1_CH2 AF1 | FT_u | floating input (analog mode per RM0433) | USART1_TX in the ST bootloader: alternate push-pull with pull-up, an input until USART1 is detected in bootloader 0x91 (AN2606 Rev 70, Table 135). Its OTG_FS_VBUS function is not used: USB runs with VBUS detection off (`circuit-proof.md`, USB rows) |
 | 69 | PA10 | ZC_IN | TIM1_CH3 AF1 | FT_u | floating input (analog mode per RM0433) | USART1_RX in the ST bootloader |
@@ -84,28 +84,28 @@ Counts: 100 pins = 5 VDD + 5 VSS + VBAT + VDDA + VSSA + VREF+ + 2 VCAP + NRST + 
 | 74 | VSS | GND | supply | S | - |  |
 | 75 | VDD | +3V3 | supply | S | - |  |
 | 76 | PA14 | SWCLK | JTCK/SWCLK AF0 | FT | AF0 debug, internal pull-down |  |
-| 77 | PA15 | no connect | unused (JTDI) | FT | AF0 JTDI, internal pull-up, until firmware releases it |  |
-| 78 | PC10 | no connect | unused | FT_ha | floating input (analog mode per RM0433) |  |
-| 79 | PC11 | WT2_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
-| 80 | PC12 | WT2_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 81 | PD0 | GAUGE_DIR1 | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 82 | PD1 | GAUGE_DIR2 | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 83 | PD2 | HEAT_C_DRV | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 84 | PD3 | HEAT_S_DRV | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 85 | PD4 | VALVE_2W_DRV | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 86 | PD5 | VALVE_3W_DRV | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 87 | PD6 | GAUGE_RST | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
-| 88 | PD7 | MAINS_PRES_S | GPIO input (wall-board mains-presence confirm through R774, 27 kohm, with R775, 82 kohm, to GND) | FT_h | analog mode at reset (RM0433); firmware sets a plain floating input, no pull (DS12110 Table 109 note 4) |  |
+| 77 | PA15 | AMC_CS | GPIO output (JTDI AF0 at reset, internal pull-up, until firmware releases it) | FT | AF0 JTDI, internal pull-up, until firmware releases it |  |
+| 78 | PC10 | SPI3_SCK | SPI3_SCK AF6 | FT_ha | floating input (analog mode per RM0433) |  |
+| 79 | PC11 | SPI3_MISO | SPI3_MISO AF6 | FT_h | floating input (analog mode per RM0433) |  |
+| 80 | PC12 | SPI3_MOSI | SPI3_MOSI AF6 | FT_h | floating input (analog mode per RM0433) |  |
+| 81 | PD0 | PT1_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 82 | PD1 | PT2_CS | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 83 | PD2 | WT2_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
+| 84 | PD3 | WT2_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 85 | PD4 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
+| 86 | PD5 | WT1_DATA | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
+| 87 | PD6 | WT1_CLK | GPIO output | FT_h | floating input (analog mode per RM0433) |  |
+| 88 | PD7 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
 | 89 | PB3 | SWO | JTDO/TRACESWO AF0 (serial-wire output, optional) | FT | AF0 debug, floating (no pull) per RM0433 11.3.1 |  |
 | 90 | PB4 | no connect | unused (NJTRST) | FT | AF0 NJTRST, internal pull-up, until firmware releases it |  |
 | 91 | PB5 | ANODE_GATE | TIM3_CH2 AF2 | FT | floating input (analog mode per RM0433) |  |
-| 92 | PB6 | no connect | unused (I2C1/I2C4 SCL, USART1_TX) | FT_f | floating input (analog mode per RM0433) |  |
-| 93 | PB7 | no connect | unused (I2C1/I2C4 SDA, USART1_RX) | FT_fa | floating input (analog mode per RM0433) |  |
+| 92 | PB6 | BREW_SCL | USART1_TX AF7 (display link, header J522 pin 3); also I2C4_SCL AF6, I2C1_SCL AF4 | FT_f | floating input (analog mode per RM0433) | I2C1_SCL in the ST bootloader: open-drain, no pull (AN2606 Rev 70, Table 135) |
+| 93 | PB7 | BREW_SDA | USART1_RX AF7 (display link, header J522 pin 4); also I2C4_SDA AF6, I2C1_SDA AF4 | FT_fa | floating input (analog mode per RM0433) | I2C1_SDA in the ST bootloader: open-drain, no pull (AN2606 Rev 70, Table 135) |
 | 94 | BOOT0 | BOOT0 | boot mode select | B | sampled 4th SYSCLK rising edge after reset release |  |
 | 95 | PB8 | STM_SCL | I2C1_SCL AF4 (also UART4_RX AF8) | FT_fh | floating input (analog mode per RM0433) |  |
 | 96 | PB9 | STM_SDA | I2C1_SDA AF4 (also UART4_TX AF8) | FT_fh | floating input (analog mode per RM0433) |  |
-| 97 | PE0 | LOWWATER_K | GPIO output (open-drain use, owner D) | FT_h | floating input (analog mode per RM0433) |  |
-| 98 | PE1 | BUZZER | GPIO output (open-drain use, owner D) | FT_h | floating input (analog mode per RM0433) |  |
+| 97 | PE0 | TANK_LEVEL | GPIO input | FT_h | floating input (analog mode per RM0433) |  |
+| 98 | PE1 | no connect | unused | FT_h | floating input (analog mode per RM0433) |  |
 | 99 | VSS | GND | supply | S | - |  |
 | 100 | VDD | +3V3 | supply | S | - |  |
 
@@ -113,11 +113,12 @@ Class key (Table 8): FT is 5 V tolerant, TT is 3.3 V tolerant only, B is the ded
 
 ## Differences from the record's allocation
 
-- Every function the allocation table (`component-specification.md`, Where each function lands) and the net dictionary place is on the pin they give. The dictionary adds POL_OUT on PC7, the AMC131M02's AMC_CS, AMC_DRDY and AMC_RESET on PD9, PD10 and PD11, SPARE_AN2 on PA0, CURR1_AN and CURR2_AN on PA2 and PA3, BREW_AN on PA6, and the two reserved mains-presence inputs on PE15 and PD7; each of those pins is FT_h or FT_a in Table 9.
+- Every function the allocation table (`component-specification.md`, Where each function lands) and the net dictionary place is on the pin they give. The dictionary adds POL_OUT on PC7, the AMC131M02's AMC_CS, AMC_DRDY and AMC_RESET on PA15, PC6 and PC8, SPARE_AN2 on PA0, CURR1_AN and CURR2_AN on PA2 and PA3, BREW_AN on PA6, and the two reserved mains-presence inputs on PE15 and PB11; each of those pins is FT, FT_h, FT_f or FT_a in Table 9. Seven signals sit on a different pin from the allocation table's first assignment, moved during routing and carried by this table, the net dictionary and the schematic alike: AMC_CS (PD2 to PA15), AMC_DRDY (PD7 to PC6, EXTI line 7 to line 6), WT2_DATA and WT2_CLK (to PD2 and PD3), WT1_DATA and WT1_CLK (to PD5 and PD6), BUZZER (PE1 to PB2). The load-cell signals no longer follow the channel order along the pins.
 - PB3 is wired to the debug header's SWO pin (JTDO/TRACESWO, AF0). The allocation record lists PB3 among the 20 free 5 V-rated pins; it is no longer free. PB3 has no pull in reset (RM0433 11.3.1).
-- The pins the dictionary does not use stay unconnected: PA1, PA4, PA5, PA7, PB0, PB1, PB2 (conversion or general), PB4, PB6, PB7, PA15, PC10, PC13, PD12, PD13, PE7 to PE11, PC2_C, PC3_C. Of the record's 20 free pins rated for 5 V (PA0, PA1, PA11, PA12, PA15, PB2, PB3, PB4, PB6, PB7, PC7, PC10, PC13, PD9, PD10, PD11, PD12, PD13, PE10, PE11), PA0, PA11, PA12, PB3, PC7, PD9, PD10 and PD11 are now placed, which leaves 12. The lead restates the free list.
-- The PB12 to PB15 pins are *_u* pins: no USB is used, so they run from VDD (Table 9 note 7; AN4938 2.1.2). Their FT_u leakage limit is 5 000 nA above Max(VDDXXX) (Table 147) and they take no 5 V.
-- No MCO pin is free for a clock observation point: MCO1 is PA8 (the steam pump gate) and MCO2 is PC9 (a load-cell clock).
+- The pins the dictionary does not use stay unconnected: PA1, PA4, PA5, PA7, PB0, PB1 (conversion or general), PB4, PC13, PB13 to PB15, PC9, PD4, PD7, PE1, PE7 to PE11, PC2_C, PC3_C. Of the record's 20 free pins rated for 5 V (PA0, PA1, PA11, PA12, PA15, PB2, PB3, PB4, PB13, PB14, PB15, PC6, PC7, PC8, PC9, PC13, PD2, PD7, PE10, PE11), PA0, PA11, PA12, PA15, PB2, PB3, PC6, PC7, PC8 and PD2 are now placed, which leaves 10. The lead restates the free list.
+- The firmware rules from the pin audit of the routed board (polled keys, EXTI lines 6, 5 and 2 shared, VREF+ buffer, PA15 reset state, I2C1 mapping, USB device-only) are in `open-items.md`, section "Pin audit of the routed board".
+- PB12 is a *_u* pin and carries VALVE_3W_DRV (PB13 to PB15 are unconnected): no USB is used, so it runs from VDD (Table 9 note 7; AN4938 2.1.2). Its FT_u leakage limit is 5 000 nA above Max(VDDXXX) (Table 147) and it takes no 5 V, so the valve stage must see no 5 V pull-up on it.
+- MCO1 is PA8 (the steam pump gate); MCO2 is PC9, unconnected, and could carry a clock observation point, which TP406 does not need today.
 
 ## Converter-input map
 

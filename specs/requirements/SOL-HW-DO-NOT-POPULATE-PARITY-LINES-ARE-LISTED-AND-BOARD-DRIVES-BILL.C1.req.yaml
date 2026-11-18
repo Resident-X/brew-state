@@ -1,12 +1,12 @@
 id: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C1
 type: criterion
-title: The production bill of materials omits each part the board marks do-not-populate
+title: The production parts list omits each part whose schematic symbol is marked do-not-populate
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  On a synthetic board with a footprint marked do-not-populate whose schematic symbol is not, the bill of materials the production seed builds lists no row for that part and lists the fitted parts. Out of scope is the schematic symbol's own flag.
+text: |
+  On a synthetic schematic with one symbol marked do-not-populate by attribute and one fitted, the parts list the production seed builds lists no row for the marked part and lists the fitted one. Out of scope is a symbol marked only by a text field, which the parts list does not read.
 links:
   - target: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL
     type: criterion-of

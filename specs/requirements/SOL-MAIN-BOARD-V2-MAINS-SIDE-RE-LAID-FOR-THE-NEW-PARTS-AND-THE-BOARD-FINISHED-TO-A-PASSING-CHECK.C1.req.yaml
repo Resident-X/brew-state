@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C1
+type: criterion
+title: The mains parts the main board carries are the relay, fuse, tabs, varistor and clamps the records name, with no snubber position left
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The schematic, the parts list and the footprints of the v2 main board name the interlock relay K201 as the Hongfa HF115F-I/005-1HS3A, the entry fuse F101 as a soldered SCT520PT pigtail fuse, the receptacle tabs as TE 63849-1, the varistor RV101 drawn to its maker's disc drawing, and the pump-triac clamps D701 and D711 from main terminal 2 to neutral, and the positions R706, C701, R716 and C711 and their nets are absent from all three. A part named differently in any of the three, or a snubber position still present, fails. Out of scope: the low-voltage parts and the part numbers of the other mains parts.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

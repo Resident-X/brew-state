@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C3
+type: criterion
+title: R301 stands on F.Cu clear of the Y401 keep-clear with no exemption and its nets joined on the board
+status: active
+version: 3
+measurement_type: binary
+verification: test
+scope: The records and check lines named; an unrelated pre-existing line is covered by its own item.
+text: |
+  R301 stands on F.Cu with its courtyard 10 mm or more from the Y401 courtyard, so the 'Crystal keep-clear Y401' rule holds with no exemption for R301 in the rules file; the +3V3A_FB and +3V3A nets are connected to every pad of R301, on the board and not only in the netlist, with no B.Cu track of either net ending on a pad of R301. The test fails on a courtyard within 10 mm of the Y401 courtyard, on a rule exemption for R301, and on an R301 pad not joined by copper to its net, and on a B.Cu track of either net ending on an R301 pad. Out of scope: the seven BAT54SW,115 clamps.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

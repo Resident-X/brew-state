@@ -106,11 +106,20 @@ PLACEHOLDERS = {"unsigned", "tbd", "todo", "none", "placeholder"}
 #: past it fails the design rather than the check waiting forever.
 KICAD_TIMEOUT_S = 7200
 
-#: The most failures of one kind KiCad's command-line layout check reports, as
-#: KiCad 10.0.7 is observed to do. Past it KiCad reports that many and drops the
-#: rest, and which it drops changes from run to run, so a report holding this
-#: many failures of one kind cannot be read as holding them all.
+#: The most assertion failures, and the most of any class or marker report,
+#: KiCad's command-line layout check reports, as KiCad 10.0.7 is observed to do.
+#: Past it KiCad reports that many and drops the rest, and which it drops changes
+#: from run to run, so a report holding this many of them cannot be read as
+#: holding them all. Clearance failures have their own, larger limit,
+#: CLEARANCE_REPORT_LIMIT.
 REPORT_LIMIT = 199
+
+#: The most clearance failures KiCad 10.0.7's command-line layout check reports.
+#: Measured on the main board: one report held exactly 499 clearance entries,
+#: 199 track_angle and 199 track_segment_length entries. A clearance list of
+#: fewer entries is a list KiCad reported in full; one of exactly this many was
+#: cut short.
+CLEARANCE_REPORT_LIMIT = 499
 
 #: Characters a name cannot hold and still be written into a rule's condition
 #: or a rule's name.
@@ -1497,7 +1506,134 @@ def fixing_gaps(design: Design, tree: list, fills, holes: Sequence[str], mains: 
     return found
 
 
+def drilled_hole(pad: list, at: Tuple[float, float, float], what: str) -> board_geometry.Shape:
+    """The drilled hole of a pad as a shape on the board: a disc for a round drill, a capsule for an oval one."""
+    drill = sexpr.child(pad, "drill")
+    own = sexpr.child(pad, "at")
+    centre = board_geometry.placed(board_geometry.xy(own, what), at)
+    angle = board_geometry.number(own, 3, what) if len(own) > 3 else 0.0
+    sizes = [board_geometry.number(drill, index, what) for index in range(1, len(drill))
+             if not isinstance(drill[index], list) and str(drill[index]) != "oval"]
+    if not sizes or min(sizes) <= 0:
+        raise board_geometry.Unreadable(f"{what} has a drill the check cannot size from the board file")
+    width, height = sizes[0], sizes[-1]
+    if width == height:
+        return board_geometry.Shape([board_geometry.disc(centre, width / 2)])
+    half = abs(width - height) / 2
+    along = board_geometry.turned((half, 0.0) if width > height else (0.0, half), angle)
+    ends = [(centre[0] - along[0], centre[1] - along[1]), (centre[0] + along[0], centre[1] + along[1])]
+    return board_geometry.Shape(board_geometry.swept(ends, min(width, height)))
+
+
+class HoleGap:
+    """A plated hole of a part, a piece of Mains copper near it, and the two distances measured between them."""
+
+    def __init__(self, reference: str, number: str, net: str, piece: Piece, straight: float, route: float, rounds: int):
+        self.reference, self.number, self.net, self.piece = reference, number, net, piece
+        self.straight, self.route, self.rounds = straight, route, rounds
+
+
+def part_plated_holes(tree: list, fixings: Sequence[str], mains: Set[str]) -> List[Tuple[str, str, str, board_geometry.Shape]]:
+    """The plated holes of the parts, a fixing's left out, on a net outside Mains: (reference, pad number, net, the hole)."""
+    table = board_geometry.net_table(tree)
+    held = set(fixings)
+    found = []
+    for reference, footprint in board_footprints(tree).items():
+        if reference in held:
+            continue
+        what = f"a pad of the footprint {reference}"
+        at = board_geometry.placement(footprint, what)
+        for node in sexpr.children(footprint, "pad"):
+            if not drilled(node) or str(node[2]) != "thru_hole":
+                continue
+            net = board_geometry.item_net(node, table, what)
+            if net in mains:
+                continue
+            found.append((reference, str(node[1]) if len(node) > 1 else "", net, drilled_hole(node, at, what)))
+    return found
+
+
+def plated_hole_gaps(tree: list, fills, mains: Set[str], clearance: float, creepage: float) -> List[HoleGap]:
+    """Every plated hole of a part on a net outside Mains that stands too near Mains copper, at its nearest piece by the way round.
+
+    A part's plated hole is held to `clearance` by the straight distance from
+    its edge to the Mains copper, and to `creepage` by the shortest way between
+    them that crosses no barrier slot, as the cross-layer rule holds a pair; a
+    pair with no slot between is held to the larger figure by either. The hole
+    goes through the board, so Mains copper on every layer counts. A fixing's
+    plated hole is left to the straight measure of the rule KiCad is given.
+    """
+    stack = copper_layers(tree)
+    holes = part_plated_holes(tree, hole_footprints(tree), mains)
+    if not holes:
+        return []
+    reach = max(clearance, creepage)
+    ways = board_geometry.Detours(board_geometry.barrier_slots(tree))
+    pieces = [piece for piece in copper_pieces(tree, stack, board_geometry.pads(tree), fills) if piece.net in mains and piece.polygons]
+    shapes: Dict[int, board_geometry.Shape] = {}
+    found = []
+    for reference, number, net, hole in holes:
+        nearest: Optional[HoleGap] = None
+        for piece in pieces:
+            left, top, right, bottom = piece.bounds
+            if (left > hole.bounds[2] + reach or right < hole.bounds[0] - reach
+                    or top > hole.bounds[3] + reach or bottom < hole.bounds[1] - reach):
+                continue
+            shape = shapes.setdefault(id(piece), board_geometry.Shape(piece.polygons))
+            straight = board_geometry.shape_distance(hole, shape, reach)
+            if straight >= reach - ROUNDING:
+                continue
+            route, rounds = straight, 0
+            if straight >= clearance - ROUNDING:
+                route, rounds = board_geometry.route_length(hole, shape, ways, creepage, straight)
+                if route >= creepage - ROUNDING:
+                    continue
+            if nearest is None or route < nearest.route:
+                nearest = HoleGap(reference, number, net, piece, straight, route, rounds)
+        if nearest is not None:
+            found.append(nearest)
+    return found
+
+
+#: A pad as KiCad's report describes it: a through-hole pad as "PTH pad 2 [/net] of J1", one of no name by its net alone.
+REPORTED_HOLE = re.compile(r"\bpad (?:(\S+) (?:\[.*\] )?|\[.*\] )of (\S+)\s*$", re.IGNORECASE)
 DISTANCE_REPORTED = re.compile(r"actual ([0-9.]+) mm")
+
+
+def measured_pad_keys(tree: list, holes: Sequence[Tuple[str, str, str, board_geometry.Shape]]) -> Set[Tuple[str, str]]:
+    """The (pad number, reference) of each plated hole in `holes` that names exactly one pad of the whole layout.
+
+    A reference two footprints share, or a pad number a footprint repeats, names no one hole: KiCad's line for such a
+    key cannot be told from the line of a hole nothing measured, so the key is left out and its line is kept.
+    """
+    count: Dict[Tuple[str, str], int] = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        for pad in sexpr.children(footprint, "pad"):
+            key = (str(pad[1]) if len(pad) > 1 else "", board_geometry.reference(footprint))
+            count[key] = count.get(key, 0) + 1
+    return {(number, reference) for reference, number, _, _ in holes if count.get((number, reference)) == 1}
+
+
+def held_by_route(item: dict, parts: Set[Tuple[str, str]]) -> bool:
+    """Whether an item of KiCad's report is the plated hole of a part, which plated_hole_gaps measures from the layout instead."""
+    named = REPORTED_HOLE.search(str(item.get("description", "")))
+    return bool(named) and ((named.group(1) or "", named.group(2)) in parts)
+
+
+def plated_hole_violations(design: Design, gaps: Sequence[HoleGap], signed: Signed) -> List[Violation]:
+    """One failure for each part's plated hole, at the nearest Mains item: the hole, the item and both distances measured."""
+    found = []
+    for gap in gaps:
+        hole = f"pad {gap.number or '(unnumbered)'} [{gap.net or NO_NET}] of {gap.reference}"
+        item = f"{gap.piece.kind} of {gap.piece.net} on {', '.join(gap.piece.layers)}"
+        way = f" and {gap.route:.3f} mm by the shortest way round the barrier slots" if gap.straight >= signed[0] else ""
+        found.append(Violation(
+            design.project, "mounting_hole", f"{design.layout} {hole}; {item}",
+            f"a plated hole on a net outside Mains stands {gap.straight:.3f} mm in a straight line{way} "
+            f"from a {item}, the hole of {hole}, inside the signed clearance of {signed[0]:g} mm in a straight line or the signed "
+            f"creepage of {signed[1]:g} mm by the shortest way that crosses no barrier slot; move the hole or the Mains copper "
+            "apart, or revise the signed basis"))
+    return found
 
 
 def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, existing: str,
@@ -1512,17 +1648,31 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
     hole_rules writes after them, with a probe for each kind of pad the layout
     has, which must fire for the rules' pad-type conditions to be known to
     match; only the rules' own findings are read. A design with no hole is held
-    to nothing for that: its rules fire on nothing.
+    to nothing for that: its rules fire on nothing. The rules text is handed to
+    KiCad without its creepage constraints, which this pass never reads and
+    which are the slow part of a KiCad run on a poured board; the creepage
+    pass judges the creepage.
+
+    A plated hole of a part, a fixing's left out, is not held by the straight
+    distance KiCad reports: plated_hole_gaps measures it from the layout, the
+    straight distance to the signed clearance and the shortest way round the
+    barrier slots to the signed creepage, and KiCad's line for such a hole is
+    dropped only when it is the line of a hole measured there that its reference
+    and pad number name alone in the layout, KiCad's plated rule naming the hole
+    as the one item that is not Mains. A fixing's plated hole and every
+    non-plated hole keep the straight measure at the larger figure.
     """
     distance = max(signed[0], signed[1])
     try:
         measured = fixing_gaps(design, tree, fills, hole_footprints(tree), mains, distance)
+        measured += plated_hole_violations(design, plated_hole_gaps(tree, fills, mains, signed[0], signed[1]), signed)
+        parts = measured_pad_keys(tree, part_plated_holes(tree, hole_footprints(tree), mains))
     except board_geometry.Unreadable as unread:
         return [Violation(design.project, "design_unreadable", design.layout,
                           f"the layout's copper cannot be read for the distance of its mounting holes from Mains ({unread})")]
     probes, expected = hole_probes(nonce, tree)
     with open(rules_copy, "w", encoding="utf-8") as handle:
-        handle.write(existing + appended_rules(signed, nonce, net) + hole_rules(distance) + probes)
+        handle.write(without_creepage(existing + appended_rules(signed, nonce, net) + hole_rules(distance) + probes))
     report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
     if report is None:
         return measured + [Violation(design.project, "mounting_hole", design.layout,
@@ -1534,6 +1684,7 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
         return measured + [Violation(design.project, "mounting_hole", design.layout,
                                      f"KiCad's report was cut short at {REPORT_LIMIT} assertion failures, so a hole inside the "
                                      "distance may have been dropped from it; correct the design's own assertion failures first")]
+    measured = measured + cut_lists(design, report, "mounting-hole pass")
     unmatched = [rule for rule in expected if not fired(report, rule)]
     if unmatched:
         return measured + [Violation(design.project, "mounting_hole", design.layout,
@@ -1548,6 +1699,8 @@ def mounting_holes(kicad_cli: str, design: Design, copy: str, layout: str, rules
         if not any(mark in description for mark in ours):
             continue
         items = entry.get("items") or []
+        if PLATED_RULE in description and any(held_by_route(item, parts) for item in items):
+            continue
         gap = DISTANCE_REPORTED.search(description)
         kind = "a plated hole on a net outside Mains" if PLATED_RULE in description else "a non-plated hole or its pad"
         location = "; ".join(item_text(item) for item in items) or design.layout
@@ -2000,7 +2153,10 @@ CATALOGUE_NAME = "catalogue-extract.yaml"
 
 #: The keys a position of the specification record holds; reference and lcsc are required, and class is
 #: required of every position by the derated-voltage rule, which reports a position without it.
-POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class")
+POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class", "fitted")
+#: The one value of a position's optional `fitted` key: the position is not fitted (do not populate). A position with
+#: no `fitted` key is fitted.
+NOT_FITTED = "no"
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
 #: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present and
@@ -2027,6 +2183,55 @@ DERATING_KEYS = ("source", "classes", "accepted_exceptions", "synthetic")
 DERATING_EXCEPTION_KEYS = ("position", "accepted_v", "reason", "bounded_by", "accepted_by", "accepted_on")
 #: The keys a record may leave out, which the derating policy record states beyond its required ones.
 DERATING_OPTIONAL_KEYS = ("synthetic", "accepted_exceptions")
+#: The workmanship acceptance record the owner may keep beside a design, its keys, and the keys of each entry in it.
+WORKMANSHIP_ACCEPTANCE_NAME = "workmanship-acceptance.yaml"
+WORKMANSHIP_ACCEPTANCE_KEYS = ("accepted_workmanship", "synthetic")
+WORKMANSHIP_ACCEPTANCE_OPTIONAL = ("synthetic",)
+WORKMANSHIP_ENTRY_KEYS = ("rule", "scope", "count", "reason", "bounded_by", "accepted_by", "accepted_on")
+#: The workmanship and neatness rules whose lines an entry of the record may accept, as the report names them.
+ACCEPTABLE_WORKMANSHIP = ("workmanship_detour", "workmanship_pad_entry", "workmanship_pad_corner", "workmanship_width",
+                          "workmanship_direction", "track_angle", "track_segment_length", "courtyards_overlap",
+                          "test_point_courtyard", "designator_astray", "silk_overlap", "items_not_allowed", "pour_gap", "decoupling_via",
+                          "starved_thermal", "silk_over_copper", "footprint_symbol_field_mismatch", "footprint_symbol_mismatch",
+                          "lib_footprint_mismatch")
+#: The severity policy record the owner may keep beside a design, its keys, and the keys of each entry in it.
+SEVERITY_POLICY_NAME = "severity-policy.yaml"
+SEVERITY_POLICY_KEYS = ("severity_policy", "synthetic")
+SEVERITY_POLICY_OPTIONAL = ("synthetic",)
+SEVERITY_ENTRY_KEYS = ("class", "severity", "count", "reason", "accepted_by", "accepted_on")
+SEVERITIES = ("ERROR", "WARNING")
+#: The classes of line, as the report names them by rule, a policy entry may name at either severity: silkscreen and
+#: designator lines, routing-neatness lines, then the narrow-track and return-path lines. A class is added only by changing the check.
+POLICY_CLASSES = ("silk_overlap", "silk_edge_clearance", "designator_astray", "reference_off_silkscreen", "track_angle",
+                  "track_segment_length", "workmanship_direction", "workmanship_pad_entry", "workmanship_pad_corner",
+                  "workmanship_detour", "track_width", "workmanship_width", "ground_return", "test_point_courtyard")
+#: The policy classes whose lists KiCad cuts at REPORT_LIMIT, so their found count is a floor and not a count.
+POLICY_CAPPED = ("track_angle", "track_segment_length")
+#: Why a rule the check reports and the policy refuses is refused, for the ones that read like cosmetic lines.
+NEVER_WARNING_POLICY = {
+    "silk_over_copper": "KiCad reports silkscreen clipped by solder mask, and the check cannot tell silk over a pad's "
+                        "solderable area, which is an error, from other cases",
+    "courtyards_overlap": "two overlapping courtyards can mean parts that cannot be assembled or reworked, a manufacturing "
+                          "consequence",
+    "items_not_allowed": "it is a floorplan placement finding, which only the per-line acceptance record may excuse",
+}
+#: The rules the record never accepts though they read like workmanship, each with why.
+NEVER_ACCEPTED_WORKMANSHIP = {
+    "side_fiducials": "the missing back-side fiducials are not accepted, the parts that cause them move to the front",
+    "hole_to_hole": "its shortfall is accepted only by a same_connector_pins entry of the separation basis record, since "
+                    "the owner can vouch for a connector's use but not for an arbitrary pair of holes",
+    "workmanship_rule": "it reports a rules file the check cannot read, so there is no measured line to accept",
+    "workmanship_figure": "it reports a figure the project does not state, so there is no measured line to accept",
+    "workmanship_pad_copper": "it reports a pad whose copper the check cannot measure, so there is no measured line to accept",
+}
+#: A line of a custom rule of the design, which KiCad words as (rule 'name' ...), and the name a line that is the whole of
+#: its rule clause carries.
+CUSTOM_RULE_LINE = re.compile(r"\(rule '")
+REPORTED_RULE_NAME = re.compile(r"\(rule '([^']*)'\)")
+#: The one form a floorplan region's rule takes in the design's rules file: named for its region with " region parts", one
+#: condition naming the footprints it keeps out of an area, and the constraint that disallows a footprint.
+FLOORPLAN_REGION_SUFFIX = " region parts"
+FLOORPLAN_REGION_CONDITION = re.compile(r"A\.Type == 'Footprint' && A\.intersectsArea\('[^']+'\)(?: && A\.Reference != '[^']+')*")
 CLASS_KEYS = ("class", "voltage", "power", "temperature")
 SHARE_KEYS = ("share", "source")
 #: The keys of the pin-limit record, of each power domain, part, part source and pin in it.
@@ -2133,6 +2338,9 @@ def read_specification(yaml, root: str, repository: Repository, design: Design, 
             for key in ("reference", "lcsc"):
                 if key not in entry:
                     bad(f"{where}.{key}", f"{where} lacks {key}, which every position states")
+            if isinstance(entry.get("fitted"), str) and entry["fitted"].strip() and entry["fitted"] != NOT_FITTED:
+                bad(f"{where}.fitted", f"{where}.fitted is {entry['fitted']!r}, where its one value is '{NOT_FITTED}', "
+                                       "a position not fitted (do not populate); leave the key out of a fitted position")
             reference = entry.get("reference")
             if isinstance(reference, str) and reference.strip():
                 if reference in stated:
@@ -2339,6 +2547,101 @@ def load_derating(yaml, root: str, repository: Repository, design: Design, not_f
                                                  if isinstance(entry, dict) and isinstance(entry.get("position"), str)
                                                  and entry["position"].strip()], "the position")
     return (None if reading.found else data), reading.found
+
+
+def load_workmanship_acceptance(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                                ) -> Tuple[Optional[str], List[Tuple[int, dict]], List[Violation]]:
+    """The workmanship acceptance record's path, its well-formed entries with their positions in the list, and the
+    violations of its form; no path where the design's folders hold no record, and no entries where the record as a
+    whole is not in its form."""
+    data, reading = read_optional(yaml, root, repository, design, WORKMANSHIP_ACCEPTANCE_NAME, "workmanship_acceptance",
+                                  "workmanship acceptance record", WORKMANSHIP_ACCEPTANCE_KEYS, not_for_manufacture,
+                                  WORKMANSHIP_ACCEPTANCE_OPTIONAL)
+    if reading is None:
+        return None, [], []
+    entries: List[Tuple[int, dict]] = []
+    if data is None or reading.found:
+        return reading.record, entries, reading.found
+    if "accepted_workmanship" not in data:
+        reading.bad("accepted_workmanship", "the record lacks accepted_workmanship, the list of lines the owner accepts, "
+                                           "which is an empty list when it accepts none")
+        return reading.record, entries, reading.found
+    if not reading.listed("accepted_workmanship", data["accepted_workmanship"], "accepted workmanship entries", empty=True):
+        return reading.record, entries, reading.found
+    first: Dict[Tuple[str, str], int] = {}
+    for index, entry in enumerate(data["accepted_workmanship"]):
+        where = f"accepted_workmanship[{index}]"
+        before = len(reading.found)
+        if reading.mapping(where, entry, WORKMANSHIP_ENTRY_KEYS, WORKMANSHIP_ENTRY_KEYS, "an accepted_workmanship entry"):
+            for key in ("rule", "scope", "reason", "bounded_by"):
+                if key in entry:
+                    reading.text(f"{where}.{key}", entry[key])
+            count = entry.get("count")
+            if "count" in entry and (isinstance(count, bool) or not isinstance(count, int) or count < 1):
+                reading.bad(f"{where}.count", f"{where}.count is {count!r}, where it is a whole number of lines, at least one")
+            if len(reading.found) == before:
+                pair = (entry["rule"].strip(), entry["scope"].strip())
+                if pair in first:
+                    reading.bad(f"{where}.scope", f"{where} repeats the rule '{pair[0]}' and scope '{pair[1]}' of "
+                                                  f"accepted_workmanship[{first[pair]}], so one entry would replace another; "
+                                                  "keep one entry for each rule and scope")
+                else:
+                    first[pair] = index
+        if len(reading.found) == before:
+            entries.append((index, entry))
+    return reading.record, entries, reading.found
+
+def load_severity_policy(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool
+                         ) -> Tuple[Optional[str], List[Tuple[int, dict]], List[Violation]]:
+    """The severity policy record's path, its well-formed entries with their positions in the list, and the violations
+    of its form; no path where the design's folders hold no record, and no entries where the record as a whole is not
+    in its form."""
+    data, reading = read_optional(yaml, root, repository, design, SEVERITY_POLICY_NAME, "severity_policy",
+                                  "severity policy record", SEVERITY_POLICY_KEYS, not_for_manufacture,
+                                  SEVERITY_POLICY_OPTIONAL)
+    if reading is None:
+        return None, [], []
+    entries: List[Tuple[int, dict]] = []
+    if data is None or reading.found:
+        return reading.record, entries, reading.found
+    if "severity_policy" not in data:
+        reading.bad("severity_policy", "the record lacks severity_policy, the list of classes the owner classifies, which is "
+                                       "an empty list when it classifies none")
+        return reading.record, entries, reading.found
+    if not reading.listed("severity_policy", data["severity_policy"], "severity policy entries", empty=True):
+        return reading.record, entries, reading.found
+    first: Dict[str, int] = {}
+    for index, entry in enumerate(data["severity_policy"]):
+        where = f"severity_policy[{index}]"
+        before = len(reading.found)
+        if reading.mapping(where, entry, SEVERITY_ENTRY_KEYS, [key for key in SEVERITY_ENTRY_KEYS if key != "count"],
+                           "a severity_policy entry"):
+            for key in ("class", "reason"):
+                if key in entry:
+                    reading.text(f"{where}.{key}", entry[key])
+            severity = entry.get("severity")
+            if "severity" in entry:
+                reading.one_of(f"{where}.severity", severity, SEVERITIES)
+            count = entry.get("count")
+            if severity == "WARNING" and "count" not in entry:
+                reading.bad(f"{where}.count", f"{where} is a WARNING entry and lacks count, the number of warning lines of "
+                                              "the class the owner accepted")
+            elif severity == "WARNING" and (isinstance(count, bool) or not isinstance(count, int) or count < 0):
+                reading.bad(f"{where}.count", f"{where}.count is {count!r}, where it is a whole number of lines, zero or more")
+            elif severity == "ERROR" and "count" in entry:
+                reading.bad(f"{where}.count", f"{where} is an ERROR entry and carries count {count!r}; an ERROR entry states "
+                                              "no count")
+            if len(reading.found) == before:
+                name = entry["class"].strip()
+                if name in first:
+                    reading.bad(f"{where}.class", f"{where} repeats the class '{name}' of severity_policy[{first[name]}], so "
+                                                  "one entry would replace another; keep one entry for each class")
+                else:
+                    first[name] = index
+        if len(reading.found) == before:
+            entries.append((index, entry))
+    return reading.record, entries, reading.found
+
 
 
 def read_pin_limits(yaml, root: str, repository: Repository, design: Design, not_for_manufacture: bool) -> List[Violation]:
@@ -3268,14 +3571,15 @@ def sensing_clearance(kicad_cli: str, design: Design, copy: str, layout: str, ru
     finding is reported under the sensing rule's own name; only those rules'
     findings are read. The design's own rules stay as it wrote them in the first
     run, so a pair the design holds more strictly is still held to its own figure
-    there.
+    there. As in the mounting-hole pass, the rules text is handed to KiCad
+    without its creepage constraints, which this pass never reads.
     """
     problems = sensing_classes(design, record, sensing, project_classes, members)
     if problems:
         return problems
     ahead, after, named = sensing_rules(sensing, signed)
     with open(rules_copy, "w", encoding="utf-8") as handle:
-        handle.write(existing + ahead + appended_rules(signed, nonce, net) + after)
+        handle.write(without_creepage(existing + ahead + appended_rules(signed, nonce, net) + after))
     report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
 
     def fail(message: str) -> List[Violation]:
@@ -3289,8 +3593,8 @@ def sensing_clearance(kicad_cli: str, design: Design, copy: str, layout: str, ru
     if not fired(report, marker_rule(nonce)):
         return fail("KiCad did not load the rules that hold the sensing classes to the declared clearance, so no sensing item was checked")
     clearances = [entry for entry in report.get("violations") or [] if entry.get("type") == "clearance"]
-    if len(clearances) >= REPORT_LIMIT:
-        return fail(f"KiCad's report holds {len(clearances)} clearance failures, as many as it reports of one kind, so a sensing "
+    if len(clearances) >= CLEARANCE_REPORT_LIMIT:
+        return fail(f"KiCad's report holds {len(clearances)} clearance failures, as many as it reports of that kind, so a sensing "
                     "item inside the declared clearance may have been dropped from it; correct the design's own clearance failures first")
     found, seen = [], set()
     for entry in clearances:
@@ -3880,7 +4184,9 @@ def overrides(design: Design, layout: list, signed_clearance: float, mains_nets:
     signed figure on either side of a Mains/low-voltage pair would win over the
     appended signed rule; any such override fails, whatever net it is on. A
     zone's clearance does not outrank custom rules, and a Mains-class zone may
-    still not declare one below the signed figure.
+    still not declare one below the signed figure. A zone clearance written as 0
+    is none: KiCad writes 0 where no local clearance is set, and the zone then
+    takes the rules' figure.
     """
     found = []
     why = (f"below the signed {signed_clearance:g} mm; KiCad ranks a pad or footprint clearance override above "
@@ -3912,7 +4218,7 @@ def overrides(design: Design, layout: list, signed_clearance: float, mains_nets:
         connect = sexpr.child(zone, "connect_pads")
         for node in (connect or []):
             value = numeric_clearance(node)
-            if value is not None and value < signed_clearance - 1e-9:
+            if value is not None and value != 0 and value < signed_clearance - 1e-9:
                 corner = ""
                 points = next(walk(zone, "xy"), None)
                 if points is not None and len(points) > 2:
@@ -4693,6 +4999,262 @@ def unsized_pads(design: Design, layout: Layout) -> List[Violation]:
             for pad in layout.unsized]
 
 
+#: The most a pad may stand off a straight line, in mm, and still be on it.
+ROW_TOLERANCE = 0.05
+#: Fewest distinct numbers a footprint needs for its direction to be judged.
+NUMBERING_MIN_NUMBERS = 4
+
+
+def hull_corners(points: Sequence[board_geometry.Point]) -> List[board_geometry.Point]:
+    """The corners of the convex hull of `points`, in order, with no point that only lies along a side."""
+    ordered = sorted(set(points))
+    if len(ordered) < 3:
+        return ordered
+
+    def half(sequence):
+        chain: List[board_geometry.Point] = []
+        for point in sequence:
+            while len(chain) >= 2 and ((chain[-1][0] - chain[-2][0]) * (point[1] - chain[-2][1])
+                                       - (chain[-1][1] - chain[-2][1]) * (point[0] - chain[-2][0])) <= 1e-9:
+                chain.pop()
+            chain.append(point)
+        return chain
+    return half(ordered)[:-1] + half(list(reversed(ordered)))[:-1]
+
+
+def numbered_ring(footprint: list, table: Dict[str, str]) -> Dict[int, board_geometry.Point]:
+    """Where each pad number of a footprint stands on the board, for the numbers that lie round the part.
+
+    Only a numbered pad with copper counts: a pad whose number is not a whole number, a hole with no copper and an
+    opening on a paste or mask layer alone are left out. A pad that lies inside the outline of the rest, such as an
+    exposed centre pad, is left out, and so is a number that more than one of the remaining pads carries.
+    """
+    nodes = sexpr.children(footprint, "pad")
+    centres: List[Tuple[int, board_geometry.Point]] = []
+    for node, pad in zip(nodes, board_geometry.footprint_pads(footprint, table)):
+        kind = str(node[2]) if len(node) > 2 else ""
+        if (kind != "np_thru_hole" and re.fullmatch(r"[0-9]+", pad.number)
+                and any(layer.endswith(".Cu") for layer in pad.layers)):
+            centres.append((int(pad.number), pad.centre))
+    corners = hull_corners([point for _, point in centres])
+    if len(corners) < 3:
+        return {}
+    sides = list(zip(corners, corners[1:] + corners[:1]))
+    ring = [(number, point) for number, point in centres
+            if min(board_geometry.distance_to_segment(point, a, b) for a, b in sides) <= ROW_TOLERANCE]
+    counts: Dict[int, int] = {}
+    for number, _ in ring:
+        counts[number] = counts.get(number, 0) + 1
+    return {number: point for number, point in ring if counts[number] == 1}
+
+
+def on_lines(points: Sequence[board_geometry.Point]) -> Optional[List[List[board_geometry.Point]]]:
+    """The straight lines the points stand in, the line with most points first, or None for more than four.
+
+    Two points are the least a line holds; a point on no such line stands alone.
+    """
+    left = list(points)
+    lines: List[List[board_geometry.Point]] = []
+    while left:
+        best = [left[0]]
+        for i, a in enumerate(left):
+            for b in left[i + 1:]:
+                held = [p for p in left
+                        if abs((b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])) / math.dist(a, b) <= ROW_TOLERANCE]
+                if len(held) > len(best):
+                    best = held
+        lines.append(best)
+        left = [p for p in left if p not in best]
+    return lines if len(lines) <= 4 else None
+
+
+def direction_of(line: Sequence[board_geometry.Point]) -> Optional[float]:
+    """The direction of a line of two points or more, in degrees modulo 180, or None for one point."""
+    if len(line) < 2:
+        return None
+    far = max(((a, b) for a in line for b in line), key=lambda pair: math.dist(*pair))
+    return math.degrees(math.atan2(far[1][1] - far[0][1], far[1][0] - far[0][0])) % 180
+
+
+def rows_or_sides(ring: Dict[int, board_geometry.Point]) -> bool:
+    """Whether the pads stand in two parallel rows or on the four sides of a part."""
+    lines = on_lines(list(ring.values()))
+    if lines is None or len(lines) < 2:
+        return False
+    directions = [direction_of(line) for line in lines if len(line) > 1]
+
+    def apart(a: float, b: float) -> float:
+        return min((a - b) % 180, (b - a) % 180)
+    if len(lines) == 2:
+        return len(directions) < 2 or apart(directions[0], directions[1]) <= 1.0
+    if len(lines) != 4 or len(directions) != 4:
+        return False
+    turns = sorted(apart(directions[0], d) for d in directions[1:])
+    return turns[0] <= 1.0 and all(abs(turn - 90) <= 1.0 for turn in turns[1:])
+
+
+def numbered_clockwise(footprint: list, table: Dict[str, str]) -> Optional[bool]:
+    """Whether the pad numbers of a dual-row or four-sided footprint run clockwise round the part as seen from its top,
+    or None when the footprint is not judged: its pads do not stand in two parallel rows or on four sides, it has
+    fewer than four distinct numbers, or its numbers follow no single direction round the part.
+
+    The numbers are taken in ascending order and the turn from each to the next is read about the centroid of the
+    pads, with y pointing down the board as KiCad writes it, so a growing angle is clockwise on the screen. Every turn
+    has to be in the same direction, none of nought (a pad in line with the centroid and another), and all together less than a full turn. A
+    footprint on the back of the board is seen from the back, so the sense is turned about.
+    """
+    ring = numbered_ring(footprint, table)
+    if len(ring) < NUMBERING_MIN_NUMBERS or not rows_or_sides(ring):
+        return None
+    points = [ring[number] for number in sorted(ring)]
+    cx, cy = sum(p[0] for p in points) / len(points), sum(p[1] for p in points) / len(points)
+    angles = [math.degrees(math.atan2(p[1] - cy, p[0] - cx)) for p in points]
+    steps = [(b - a + 180) % 360 - 180 for a, b in zip(angles, angles[1:])]
+    if all(step > 1e-6 for step in steps):
+        clockwise = True
+    elif all(step < -1e-6 for step in steps):
+        clockwise = False
+    else:
+        return None
+    if abs(sum(steps)) >= 360:
+        return None
+    layer = sexpr.child(footprint, "layer")
+    on_back = layer is not None and len(layer) > 1 and str(layer[1]).startswith("B.")
+    return clockwise != on_back
+
+
+def pad_numbering(design: Design, tree: list) -> List[Violation]:
+    """Every footprint of a layout, in two parallel rows or on four sides, whose pad numbers run clockwise as seen from
+    the top of the part. Real dual-row and four-sided packages number counter-clockwise from pin 1, so a footprint that
+    runs the other way is the mirror image of the part and fits it only turned over."""
+    table = board_geometry.net_table(tree)
+    found = []
+    for footprint in sexpr.children(tree, "footprint"):
+        if numbered_clockwise(footprint, table) is not True:
+            continue
+        reference = board_geometry.reference(footprint) or "?"
+        name = str(footprint[1]).split(":")[-1] if len(footprint) > 1 else "?"
+        part = next((str(item[2]) for item in sexpr.children(footprint, "property")
+                     if len(item) > 2 and str(item[1]) == "MPN" and str(item[2]).strip()), "")
+        what = f"{reference} ({name}{', part ' + part if part else ''})"
+        found.append(Violation(design.project, "pad_numbering", what,
+                               f"the pad numbers of {what} run clockwise round the part as seen from its top, the mirror "
+                               "image of the counter-clockwise numbering from pin 1 that a dual-row or four-sided package "
+                               "has, so the part would fit only turned over; number the pads counter-clockwise from pin 1"))
+    return found
+
+
+#: The values of a schematic symbol's text field named dnp that say the part is not populated, compared in lower case.
+DNP_TEXTS = ("true", "yes", "1")
+
+
+class SymbolMarks(NamedTuple):
+    """What one schematic symbol (one unit of a reference) says about being populated."""
+
+    unit: str
+    attribute: bool
+    text: Optional[bool]
+
+
+def schematic_marks(root: str, design: Design, repository: Repository) -> Dict[str, List[SymbolMarks]]:
+    """Each reference the design's schematic places, with what each of its units says: KiCad's own do-not-populate
+    attribute on the symbol instance, and the truth of a text field named dnp in any case (None where it has none).
+
+    Every sheet the schematic reaches is read, a power symbol and a symbol with `on_board` set to `no` are left out, as
+    `placed_positions` leaves them out, and a sheet that cannot be read is skipped, since the design fails for it already.
+    """
+    marks: Dict[str, List[SymbolMarks]] = {}
+    try:
+        files = sorted(sheet_files(root, design.schematic, repository.tracked))
+    except (OSError, sexpr.SexprError):
+        return marks
+    for path in files:
+        try:
+            with open(os.path.join(root, path), encoding="utf-8") as handle:
+                tree = sexpr.parse_one(handle.read())
+        except (OSError, sexpr.SexprError):
+            continue
+        library = sexpr.child(tree, "lib_symbols") or []
+        power = {str(item[1]) for item in sexpr.children(library, "symbol") if len(item) > 1 and sexpr.child(item, "power")}
+        for symbol in sexpr.children(tree, "symbol"):
+            if sexpr.child(symbol, "lib_id") is None:
+                continue
+            identity = str((sexpr.child(symbol, "lib_name") or sexpr.child(symbol, "lib_id"))[1])
+            on_board = sexpr.child(symbol, "on_board")
+            if identity in power or (on_board is not None and len(on_board) > 1 and on_board[1] == "no"):
+                continue
+            fields = [(str(prop[1]), str(prop[2])) for prop in sexpr.children(symbol, "property") if len(prop) > 2]
+            references = []
+            for project in sexpr.children(sexpr.child(symbol, "instances") or [], "project"):
+                if len(project) > 1 and project[1] == design.name:
+                    references += [str(ref[1]) for where in sexpr.children(project, "path")
+                                   for ref in sexpr.children(where, "reference") if len(ref) > 1]
+            if not references:
+                references = [text for name, text in fields if name == "Reference" and text]
+            flag = sexpr.child(symbol, "dnp")
+            attribute = flag is not None and len(flag) > 1 and str(flag[1]) == "yes"
+            texts = [text.strip().lower() in DNP_TEXTS for name, text in fields if name.lower() == "dnp"]
+            unit_item = sexpr.child(symbol, "unit")
+            unit = str(unit_item[1]) if unit_item is not None and len(unit_item) > 1 else "1"
+            for reference in references:
+                marks.setdefault(reference, []).append(SymbolMarks(unit, attribute, texts[0] if texts else None))
+    return marks
+
+
+def dnp_agreement(design: Design, tree: list, yaml, root: str, repository: Repository,
+                  not_for_manufacture: bool) -> List[Violation]:
+    """Every part the layout, the schematic and the parts record do not agree is populated, and every schematic symbol
+    whose text field named dnp disagrees with its do-not-populate attribute.
+
+    The ordering step builds the parts list from the schematic with KiCad's `--exclude-dnp`, which reads only the
+    attribute, and the placement file from the layout, so a part marked in one and not the other is listed as fitted
+    or placed without being listed. The layout marks a part with the `dnp` attribute of its footprint; the schematic
+    marks it when any unit of its symbol carries the attribute (a reference whose units differ fails); the record marks
+    it with `fitted: "no"`, and a position without that key is fitted. A source that does not list a reference says
+    nothing about it, and a record that cannot be read is no source here, since the design fails for it already.
+    """
+    layout = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        reference = board_geometry.reference(footprint)
+        if reference:
+            attributes = sexpr.child(footprint, "attr") or []
+            layout[reference] = "dnp" in [str(item) for item in attributes[1:]]
+    schematic = schematic_marks(root, design, repository)
+    stated, _ = read_specification(yaml, root, repository, design, not_for_manufacture)
+    found = []
+    for reference in sorted(schematic):
+        units = schematic[reference]
+        if len({unit.attribute for unit in units}) > 1:
+            found.append(Violation(design.project, "dnp_agreement", reference,
+                                   f"the units of {reference} disagree on do not populate: unit "
+                                   f"{', '.join(u.unit for u in units if u.attribute)} say it is not populated and unit "
+                                   f"{', '.join(u.unit for u in units if not u.attribute)} say it is fitted; set the attribute "
+                                   "on every unit alike"))
+        for unit in units:
+            if unit.text is not None and unit.text != unit.attribute:
+                says = "do not populate" if unit.text else "fitted"
+                has = "do not populate" if unit.attribute else "fitted"
+                found.append(Violation(design.project, "dnp_agreement", f"{reference} unit {unit.unit}",
+                                       f"the schematic symbol {reference} (unit {unit.unit}) carries a text field dnp that says "
+                                       f"{says} while its do-not-populate attribute says {has}; KiCad's parts list reads only "
+                                       "the attribute, so set the attribute and make the field agree or remove it"))
+    for reference in sorted(set(layout) | set(schematic) | (set(stated) if stated is not None else set())):
+        said = {}
+        if reference in layout:
+            said["the layout"] = layout[reference]
+        if reference in schematic:
+            said["the schematic"] = any(unit.attribute for unit in schematic[reference])
+        if stated is not None and reference in stated:
+            said["the parts record"] = stated[reference].get("fitted") == NOT_FITTED
+        if len(set(said.values())) < 2:
+            continue
+        words = ", ".join(f"{who} marks it {'not populated' if flag else 'fitted'}" for who, flag in said.items())
+        found.append(Violation(design.project, "dnp_agreement", reference,
+                               f"{reference} is not held to one answer on do not populate: {words}; the parts list, the "
+                               "placement file and the parts record each read their own, so make all three agree"))
+    return found
+
+
 def measured(design: Design, layout: Layout, figures: Dict[str, float], corner: Optional[float]) -> List[Violation]:
     """Every measured workmanship rule but the width rule, which needs the nets' classes, each whose figure the design sets.
 
@@ -5129,6 +5691,17 @@ def graphic_polygons(node: list, place, what: str) -> Tuple[List[board_geometry.
     return board_geometry.swept(line, width), 0.0
 
 
+def zone_copper_layers(zone: list, stack: Sequence[str]) -> List[str]:
+    """The copper layers of `stack` a zone is on, its F&B.Cu and *.Cu wildcards written out."""
+    named = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
+    layers = [str(name) for name in named[1:] if str(name) in stack]
+    if "F&B.Cu" in [str(name) for name in named[1:]]:
+        layers += [name for name in (stack[0], stack[-1]) if name not in layers]
+    if "*.Cu" in [str(name) for name in named[1:]]:
+        layers = list(stack)
+    return layers
+
+
 def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
     """Every copper pour of a layout on each of its layers: the fill as the layout stores it, or its outline where it stores none there.
 
@@ -5142,12 +5715,7 @@ def pour_items(tree: list, stack: Sequence[str]) -> List[LayerItem]:
             continue
         what = "a zone of the layout"
         net = board_geometry.item_net(zone, table, what)
-        named = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
-        layers = [str(name) for name in named[1:] if str(name) in stack]
-        if "F&B.Cu" in [str(name) for name in named[1:]]:
-            layers += [name for name in (stack[0], stack[-1]) if name not in layers]
-        if "*.Cu" in [str(name) for name in named[1:]]:
-            layers = list(stack)
+        layers = zone_copper_layers(zone, stack)
         outlines = []
         for polygon in sexpr.children(zone, "polygon"):
             points = sexpr.child(polygon, "pts")
@@ -5383,6 +5951,178 @@ def layer_violations(design: Design, findings: Sequence[LayerFinding], unmeasure
     return violations
 
 
+#: What a Mains pad whose gap to a Mains neighbour of its own part cannot be measured is reported under.
+PAD_PAIR_RULE = "mains_pad_pair"
+#: The least share of its outline a Mains-class zone's fill may cover on a layer, and what a zone short of it is reported under.
+#: A sound pour on the main board fills 0.992 or more; the proof design's two pours with relief cut-outs fill 0.939 and
+#: 0.946; a pour a clearance has trimmed filled 0.09 to 0.49. 0.90 separates the two with room on both sides and
+#: fails no sound design.
+MINIMUM_ZONE_FILL = 0.90
+ZONE_FILL_RULE = "mains_zone_fill"
+
+
+def kicad_pad_name(node: list, pad: board_geometry.Pad, layer: str) -> str:
+    """A pad as KiCad's report words it: a through-hole pad as "PTH pad 2 [/net] of J1", a surface-mount one as "Pad 2 [/net] of T1 on F.Cu"."""
+    kind = str(node[2]) if len(node) > 2 else ""
+    base = f"pad {pad.number} [{pad.net or NO_NET}] of {pad.reference}"
+    if kind == "thru_hole":
+        return f"PTH {base}"
+    if kind == "np_thru_hole":
+        return f"NPTH {base}"
+    return f"Pad {pad.number} [{pad.net or NO_NET}] of {pad.reference} on {layer}"
+
+
+def same_part_pad_pairs(design: Design, tree: list, mains: Set[str], signed: Signed) -> Tuple[List[dict], List[Violation]]:
+    """Every pair of pads of one footprint on two different Mains-class nets that stand nearer than the signed pad-to-pad clearance, as KiCad's report would list it.
+
+    The edge-to-edge gap of each pair is measured here, from the pads' own
+    copper (circle, oval, rectangle and rounded rectangle, turned as placed), on
+    the copper layers the two share. A pair nearer than the signed
+    terminal_clearance_mm, or than the larger of the mains_to_low_voltage and
+    mains_to_mains clearances where its two nets are a pair held at reinforced,
+    is returned as a clearance entry of KiCad's wording, naming the rule KiCad
+    holds that pair to, so the exception judgement reads it as it reads KiCad's
+    own line for the same pair. The second result holds a violation for each Mains-class
+    pad that has a Mains-class neighbour on another net in its footprint and whose copper the
+    layout file does not size, since its gap cannot be measured.
+    """
+    held = signed.mains_to_mains
+    stack = copper_layers(tree)
+    table = board_geometry.net_table(tree)
+    reinforced = [(index + 1, set(pair)) for index, pair in enumerate(held["held_at_reinforced"])]
+    entries: List[dict] = []
+    problems: List[Violation] = []
+    unsized: Dict[str, str] = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        nodes = sexpr.children(footprint, "pad")
+        live = [(node, pad) for node, pad in zip(nodes, board_geometry.footprint_pads(footprint, table)) if pad.net in mains]
+        shapes: Dict[int, board_geometry.Shape] = {}
+        for position, (node_a, one) in enumerate(live):
+            for node_b, other in live[position + 1:]:
+                if one.net == other.net:
+                    continue
+                shared = [layer for layer in stack if one.on(layer) and other.on(layer)]
+                if not shared:
+                    continue
+                if one.unsized or other.unsized:
+                    for node, pad in ((node_a, one), (node_b, other)):
+                        if pad.unsized:
+                            unsized[kicad_pad_name(node, pad, shared[0])] = (
+                                f"its copper is {pad.unsized}, which the layout file does not give")
+                    continue
+                rule, figure = TERMINAL_RULE, held["terminal_clearance_mm"]
+                for index, nets in reinforced:
+                    if nets == {one.net, other.net}:
+                        rule, figure = f"{REINFORCED_RULE} {index}", max(signed[0], held["clearance_mm"])
+                for pad in (one, other):
+                    shapes.setdefault(id(pad), board_geometry.Shape([pad.outline(64)]))
+                first, second = shapes[id(one)], shapes[id(other)]
+                if board_geometry.apart(first, second, figure):
+                    continue
+                gap = board_geometry.shape_distance(first, second, figure)
+                if gap >= figure - ROUNDING:
+                    continue
+                entries.append({
+                    "type": "clearance", "severity": "error",
+                    "description": f"Clearance violation (rule '{rule}' clearance {figure:.4f} mm; actual {gap:.4f} mm)",
+                    "items": [{"description": kicad_pad_name(node, pad, shared[0]), "pos": {"x": pad.centre[0], "y": pad.centre[1]}}
+                              for node, pad in ((node_a, one), (node_b, other))]})
+    for name, why in sorted(unsized.items()):
+        problems.append(Violation(design.project, PAD_PAIR_RULE, f"{design.layout} {name}",
+                                  f"{name} stands on a Mains-class net beside a Mains-class pad of another net in its own part, and "
+                                  f"{why}, so the gap between them cannot be measured; draw its copper as a circle, oval, rectangle or "
+                                  "rounded rectangle"))
+    return entries, problems
+
+
+def pad_pair_key(entry: dict) -> Optional[Tuple[str, Tuple[str, str]]]:
+    """The footprint and the two pad names of a clearance line between two pads of one footprint, or None where it is of anything else."""
+    items = entry.get("items") or []
+    if entry.get("type") != "clearance" or len(items) != 2:
+        return None
+    found = [REPORTED_PAD.search(item.get("description", "")) for item in items]
+    if any(pad is None for pad in found) or found[0].group(2) != found[1].group(2):
+        return None
+    return found[0].group(2), tuple(sorted(pad.group(1) or "" for pad in found))
+
+
+def with_measured_pad_pairs(reported: Sequence[dict], measured: Sequence[dict]) -> List[dict]:
+    """KiCad's lines less those for a pair of pads the check measured itself, and the check's own lines in their place.
+
+    A pair is the same finding whichever of the two found it, so it is
+    reported once, in the check's measure, and what KiCad's list holds or
+    cuts changes nothing about it.
+    """
+    pairs = {pad_pair_key(entry) for entry in measured}
+    return [entry for entry in reported if pad_pair_key(entry) not in pairs] + list(measured)
+
+
+def zone_outline_area(zone: list, what: str) -> float:
+    """The area of a zone's outline in mm2: its polygons, arcs sampled, one lying inside another taken as a hole of it."""
+    rings: List[List[board_geometry.Point]] = []
+    for polygon in sexpr.children(zone, "polygon"):
+        points = sexpr.child(polygon, "pts")
+        if points is None:
+            raise board_geometry.Unreadable(f"{what} has an outline with no corners")
+        ring: List[board_geometry.Point] = []
+        for corner in points[1:]:
+            if sexpr.head(corner) == "arc":
+                ring += board_geometry.arc_points(*(board_geometry.xy(sexpr.child(corner, key), what) for key in ("start", "mid", "end")))
+            else:
+                ring.append(board_geometry.xy(corner, what))
+        if len(ring) < 3:
+            raise board_geometry.Unreadable(f"{what} has an outline of fewer than three corners")
+        rings.append(ring)
+    if not rings:
+        raise board_geometry.Unreadable(f"{what} has no outline")
+    total = 0.0
+    for ring in rings:
+        depth = sum(1 for other in rings if other is not ring and board_geometry.within(ring[0], other))
+        total += board_geometry.polygon_area(ring) * (1 if depth % 2 == 0 else -1)
+    return total
+
+
+def mains_zone_fill(design: Design, tree: list, mains: Set[str]) -> List[Violation]:
+    """Each Mains-class zone whose fill, as KiCad has just stored it, covers less of its outline than MINIMUM_ZONE_FILL on a layer it is on.
+
+    A rule area is not judged. A zone's layers are judged one by one, the
+    outline's area against the area of its filled polygons on that layer (each
+    polygon carries its holes joined in by a bridge of no width, so its area
+    is the copper's). A clearance that trims a pour to nothing, or to a sliver,
+    leaves the nets still looking connected through the pads the pour overlaps;
+    this is where that is seen.
+    """
+    stack = copper_layers(tree)
+    table = board_geometry.net_table(tree)
+    found = []
+    for zone in sexpr.children(tree, "zone"):
+        net = board_geometry.item_net(zone, table, "a zone of the layout")
+        if sexpr.child(zone, "keepout") is not None or net not in mains:
+            continue
+        name = sexpr.child(zone, "name")
+        label = f"zone {name[1]} [{net}]" if name is not None and len(name) > 1 else f"zone [{net}]"
+        what = f"the {label}"
+        outline = zone_outline_area(zone, what)
+        filled: Dict[str, float] = {}
+        for fill in sexpr.children(zone, "filled_polygon"):
+            layer, points = sexpr.child(fill, "layer"), sexpr.child(fill, "pts")
+            if layer is None or len(layer) < 2 or points is None or len(points) < 4:
+                raise board_geometry.Unreadable(f"a fill of the {label} has no layer or no corners where KiCad writes them")
+            if any(sexpr.head(corner) != "xy" for corner in points[1:]):
+                raise board_geometry.Unreadable(f"a fill of the {label} is not a run of (xy ...) corners")
+            filled[str(layer[1])] = filled.get(str(layer[1]), 0.0) + board_geometry.polygon_area(
+                [board_geometry.xy(corner, what) for corner in points[1:]])
+        for layer in zone_copper_layers(zone, stack):
+            share = filled.get(layer, 0.0) / outline if outline > 0 else 0.0
+            if share < MINIMUM_ZONE_FILL:
+                found.append(Violation(
+                    design.project, ZONE_FILL_RULE, f"{design.layout} {label} on {layer}",
+                    f"the {label} on Mains-class net {net} fills {share:.3f} of its {outline:.2f} mm2 outline on {layer}, below the "
+                    f"{MINIMUM_ZONE_FILL:g} the pour must keep: a clearance or another zone has trimmed it, so the net is joined "
+                    "only where its pads and tracks overlap; correct the zone's clearance, outline or priority until it fills"))
+    return found
+
+
 def first_written(*values: Optional[float]) -> float:
     """The first of the values a layout writes, or 0 where it writes none."""
     return next((value for value in values if value is not None), 0.0)
@@ -5574,6 +6314,370 @@ def appended_rules(signed: Optional[Tuple[float, float]], nonce: str, net: Optio
     return text
 
 
+#: A creepage constraint in the one form the check recognises: its minimum, maximum or optimum figures in parentheses and nothing else.
+CREEPAGE_CONSTRAINT = re.compile(r"\(\s*constraint\s+creepage\s+(?:\(\s*(?:min|max|opt)\s+[^()\s\"]+\s*\)\s*)+\)", re.IGNORECASE)
+
+
+def _balanced_forms(text: str, start: int = 0, stop: Optional[int] = None) -> Optional[List[Tuple[int, int]]]:
+    """The spans of the parenthesised forms written directly between `start` and `stop`, or None where the text is not balanced.
+
+    Quoted strings, with their backslash escapes, and comments from a # to the
+    end of the line are skipped, so a bracket inside either counts for nothing.
+    """
+    stop = len(text) if stop is None else stop
+    spans: List[Tuple[int, int]] = []
+    depth, begin, index = 0, 0, start
+    while index < stop:
+        char = text[index]
+        if char == '"':
+            index += 1
+            while index < stop and text[index] != '"':
+                index += 2 if text[index] == "\\" else 1
+            if index >= stop:
+                return None
+        elif char == "#":
+            while index < stop and text[index] != "\n":
+                index += 1
+        elif char == "(":
+            if depth == 0:
+                begin = index
+            depth += 1
+        elif char == ")":
+            depth -= 1
+            if depth < 0:
+                return None
+            if depth == 0:
+                spans.append((begin, index + 1))
+        index += 1
+    return spans if depth == 0 else None
+
+
+def without_creepage(text: str) -> str:
+    """The rules text with every creepage constraint taken out, and every rule left holding no constraint with it.
+
+    KiCad's creepage test is the slowest of its tests on a board with poured
+    planes, and a pass of the check that reads no creepage finding gains
+    nothing from it. A constraint is taken out only in the form
+    (constraint creepage (min <figure>) ...), the form the check writes and
+    reads; one in any other form stays, as does text that does not balance, so
+    the pass is then slower and never hides a finding. A rule that held no
+    constraint before is left as written. Constraints of any other kind, the
+    clearance included, and the order of the rules are untouched.
+    """
+    forms = _balanced_forms(text)
+    if forms is None:
+        return text
+    cuts: List[Tuple[int, int]] = []
+    for begin, end in forms:
+        if not re.match(r"\(\s*rule\b", text[begin:end], re.IGNORECASE):
+            continue
+        inside = _balanced_forms(text, begin + 1, end - 1)
+        if inside is None:
+            continue
+        constraints = [span for span in inside if re.match(r"\(\s*constraint\b", text[span[0]:span[1]], re.IGNORECASE)]
+        creepage = [span for span in constraints if CREEPAGE_CONSTRAINT.fullmatch(text[span[0]:span[1]])]
+        if not creepage:
+            continue
+        if len(creepage) == len(constraints):
+            cuts.append((begin, end + 1 if text[end:end + 1] == "\n" else end))
+        else:
+            for first, last in creepage:
+                while first > begin and text[first - 1] in " \t":
+                    first -= 1
+                cuts.append((first, last))
+    out, position = [], 0
+    for first, last in cuts:
+        out.append(text[position:first])
+        position = last
+    out.append(text[position:])
+    return "".join(out)
+
+
+#: A constraint of the creepage kind in any form, however its figures are written.
+ANY_CREEPAGE = re.compile(r"\(\s*constraint\s+creepage\b", re.IGNORECASE)
+#: A figure of a creepage constraint, in millimetres.
+CREEPAGE_FIGURE = re.compile(r"\(\s*(?:min|max|opt)\s+([0-9]*\.?[0-9]+)\s*mm\s*\)", re.IGNORECASE)
+RULE_CONDITION = re.compile(r'\(\s*condition\s+"((?:[^"\\]|\\.)*)"', re.IGNORECASE)
+NET_NAME_TERM = re.compile(r"""NetName\s*==\s*(?:'((?:[^'\\]|\\.)*)'|"((?:[^"\\]|\\.)*)")""")
+
+
+def only_creepage(text: str) -> str:
+    """The rules text with every rule that holds a creepage constraint cut down to those constraints, and every other rule taken out.
+
+    It is the inverse of without_creepage: KiCad's creepage test is run on its
+    own from it. A constraint of the creepage kind in any form stays, so a form
+    without_creepage leaves in the first pass is also judged here; the conditions
+    and the order of the rules are untouched, since the last matching rule
+    decides. Anything that is not a rule, the version line included, stays.
+    Text that does not balance is returned unchanged, so no constraint is ever
+    lost from it.
+    """
+    forms = _balanced_forms(text)
+    if forms is None:
+        return text
+    cuts: List[Tuple[int, int]] = []
+    for begin, end in forms:
+        if not re.match(r"\(\s*rule\b", text[begin:end], re.IGNORECASE):
+            continue
+        inside = _balanced_forms(text, begin + 1, end - 1)
+        if inside is None:
+            continue
+        constraints = [span for span in inside if re.match(r"\(\s*constraint\b", text[span[0]:span[1]], re.IGNORECASE)]
+        creepage = [span for span in constraints if ANY_CREEPAGE.match(text[span[0]:span[1]])]
+        if not creepage:
+            cuts.append((begin, end + 1 if text[end:end + 1] == "\n" else end))
+            continue
+        for first, last in constraints:
+            if (first, last) not in creepage:
+                while first > begin and text[first - 1] in " \t":
+                    first -= 1
+                if first > begin and text[first - 1] == "\n" and text[last:last + 1] == "\n":
+                    last += 1
+                cuts.append((first, last))
+    out, position = [], 0
+    for first, last in sorted(cuts):
+        out.append(text[position:first])
+        position = last
+    out.append(text[position:])
+    return "".join(out)
+
+
+class CreepageRule:
+    """A rule of a rules text that holds a creepage constraint: its condition, its figures in millimetres, and whether they were all read."""
+
+    def __init__(self, condition: str, figures: Sequence[float], readable: bool):
+        self.condition, self.figures, self.readable = condition, tuple(figures), readable
+
+    def nets(self) -> Set[str]:
+        """The nets the condition names outright."""
+        return {first or second for first, second in NET_NAME_TERM.findall(self.condition)}
+
+    def about_mains(self) -> bool:
+        """Whether the condition holds one side to a Mains class or to a named net, so a conductor a creepage figure reaches from is known."""
+        return "hasNetclass('Mains" in self.condition or bool(self.nets())
+
+
+def creepage_rules(text: str) -> Optional[List[CreepageRule]]:
+    """Every rule of the text holding a creepage constraint, or None where the text does not balance."""
+    forms = _balanced_forms(text)
+    if forms is None:
+        return None
+    found = []
+    for begin, end in forms:
+        if not re.match(r"\(\s*rule\b", text[begin:end], re.IGNORECASE):
+            continue
+        inside = _balanced_forms(text, begin + 1, end - 1)
+        if inside is None:
+            return None
+        spans = [text[first:last] for first, last in inside if ANY_CREEPAGE.match(text[first:last])]
+        if not spans:
+            continue
+        figures, readable = [], True
+        for span in spans:
+            read = [float(number) for number in CREEPAGE_FIGURE.findall(span)]
+            figures += read
+            readable = readable and bool(read) and CREEPAGE_CONSTRAINT.fullmatch(span) is not None
+        condition = RULE_CONDITION.search(text[begin:end])
+        found.append(CreepageRule(condition.group(1) if condition else "", figures, readable))
+    return found
+
+
+#: How much farther than the creepage limit the guard measures a ground pour from Mains, so it can say how near the pour came.
+GUARD_REPORT_MARGIN_MM = 5.0
+
+
+class PourGuard:
+    """What stands between the creepage test and a ground pour left out of it.
+
+    `limit` is the largest creepage figure the rules hold, in mm, or None where
+    the rules are not all of a form the guard can read, in which case no pour
+    is left out and `why` says so. `removable` holds the indices of the layout's
+    zones, in file order, that are ground pours left out of the creepage test:
+    those standing at least `limit` from every conductor a creepage rule reaches
+    from, and those `judged` here instead. A ground pour standing nearer than
+    `limit` to Mains-class copper only is judged by the check's own geometry,
+    on the layers it shares with that copper, the shortest way round the barrier
+    slots held to `limit`; its shortfalls are `findings`. One standing nearer to
+    a conductor of a net a rule names is `kept` in the layout the creepage test
+    reads. `nearest` is, for each ground pour, its label, the least straight
+    distance found, which is the margin's end where it stands farther, and the
+    conductor it is from.
+    """
+
+    def __init__(self):
+        self.limit: Optional[float] = None
+        self.why = ""
+        self.removable: List[int] = []
+        self.judged: List[Tuple[str, float, str]] = []
+        self.findings: List["LayerFinding"] = []
+        self.kept: List[Tuple[str, float, str]] = []
+        self.nearest: List[Tuple[str, float, str]] = []
+
+
+def zone_label(zone: list, table: Dict[str, str]) -> str:
+    """A zone as a person finds it: its net, its layers and its name or identifier."""
+    net = board_geometry.item_net(zone, table, "a zone of the layout")
+    layers = sexpr.child(zone, "layers") or sexpr.child(zone, "layer") or []
+    name = sexpr.child(zone, "name")
+    ident = sexpr.child(zone, "uuid")
+    tag = f" {name[1]}" if name is not None and len(name) > 1 else f" {ident[1]}" if ident is not None and len(ident) > 1 else ""
+    return f"Zone [{net or NO_NET}] on {', '.join(str(layer) for layer in layers[1:])}{tag}"
+
+
+def ground_pour_guard(tree: list, rules_text: str, mains: Set[str], grounds: Set[str]) -> PourGuard:
+    """Which ground pours of a refilled layout can be left out of the creepage test without hiding a finding.
+
+    The shortest way along a surface between two conductors is never shorter
+    than the straight line between them, so a pour standing at least the
+    creepage limit in a straight line from every conductor a creepage rule
+    reaches from cannot lie on a path shorter than that limit, nor be one end
+    of a pair under it. The conductors are the Mains-class copper and the
+    nets a creepage rule's condition names. The line is measured here by the
+    check's own geometry on every copper layer. A pour nearer than that to
+    Mains-class copper alone is no hidden finding either, for a path between
+    two conductors that passes along the pour begins with a path from the one
+    to the pour, which is judged here, on the layers they share, over the
+    shortest way round the barrier slots; layers the two do not share are
+    the cross-layer rule's. A creepage rule whose figures
+    or condition are not of a form read here, so no conductor it reaches from
+    is known, leaves every pour in.
+    """
+    guard = PourGuard()
+    rules = creepage_rules(rules_text)
+    if rules is None:
+        guard.why = "the rules text does not balance"
+        return guard
+    unread = [rule for rule in rules if not rule.readable or not rule.about_mains()]
+    if unread:
+        guard.why = "a creepage rule holds a figure or a condition the guard cannot read, so no conductor it reaches from is known"
+        return guard
+    figures = [figure for rule in rules for figure in rule.figures]
+    if not figures:
+        guard.why = "the rules hold no creepage figure"
+        return guard
+    guard.limit = max(figures)
+    named = set().union(set(), *(rule.nets() for rule in rules))
+    reached = set(mains) | named
+    stack = copper_layers(tree)
+    items, _ = layer_items(tree, stack, hole_footprints(tree), mains)
+    conductors = [item for item in items if item.net in reached]
+    table = board_geometry.net_table(tree)
+    heads = [node for node in tree[1:] if isinstance(node, list) and sexpr.head(node) == "net"]
+    reach = guard.limit + GUARD_REPORT_MARGIN_MM
+    ways = board_geometry.Detours(board_geometry.barrier_slots(tree))
+    for index, zone in enumerate(sexpr.children(tree, "zone")):
+        net = board_geometry.item_net(zone, table, "a zone of the layout")
+        if sexpr.child(zone, "keepout") is not None or net not in grounds or net in reached:
+            continue
+        label = zone_label(zone, table)
+        least, near = reach, ""
+        inside: List[Tuple[LayerItem, LayerItem, float]] = []
+        for pour in pour_items([tree[0]] + heads + [zone], stack):
+            for conductor in conductors:
+                if board_geometry.apart(pour.shape, conductor.shape, reach):
+                    continue
+                distance = board_geometry.shape_distance(pour.shape, conductor.shape, reach)
+                if distance < least:
+                    least, near = distance, conductor.name
+                if distance < guard.limit - ROUNDING:
+                    inside.append((pour, conductor, distance))
+        guard.nearest.append((label, least, near))
+        if not inside:
+            guard.removable.append(index)
+        elif all(conductor.net in mains for _, conductor, _ in inside):
+            guard.removable.append(index)
+            guard.judged.append((label, least, near))
+            for pour, conductor, distance in inside:
+                if not set(pour.stored) & set(conductor.stored):
+                    continue
+                length, rounds = board_geometry.route_length(conductor.shape, pour.shape, ways, guard.limit, distance)
+                if length < guard.limit - ROUNDING:
+                    guard.findings.append(LayerFinding("creepage", conductor, pour, length, guard.limit, rounds))
+        else:
+            guard.kept.append((label, least, near))
+    return guard
+
+
+def without_zones(text: str, indices: Sequence[int], count: int) -> Optional[str]:
+    """The layout text with the zones at the given positions, in file order, taken out; None where the text does not hold `count` zones.
+
+    A zone is cut from its opening bracket to its closing one with the line
+    that ends it, everything else, the fills of the other zones included, left
+    byte for byte as it was.
+    """
+    forms = _balanced_forms(text)
+    if forms is None or len(forms) != 1:
+        return None
+    begin, end = forms[0]
+    inside = _balanced_forms(text, begin + 1, end - 1)
+    if inside is None:
+        return None
+    zones = [span for span in inside if re.match(r"\(\s*zone\b", text[span[0]:span[1]])]
+    if len(zones) != count:
+        return None
+    out, position = [], 0
+    for index in sorted(set(indices)):
+        first, last = zones[index]
+        while first > begin and text[first - 1] in " \t":
+            first -= 1
+        out.append(text[position:first])
+        position = last + 1 if text[last:last + 1] == "\n" else last
+    out.append(text[position:])
+    return "".join(out)
+
+
+def creepage_pass(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, rules_text: str, nonce: str,
+                  net: Optional[str], refilled: list, mains: Set[str], grounds: Set[str]) -> Tuple[List[dict], List[Violation], PourGuard]:
+    """KiCad's creepage test, run on its own over the refilled layout, with the ground pours that cannot matter left out.
+
+    The first pass holds no creepage constraint, since KiCad's creepage search
+    does not finish on a board with many pours. This pass hands KiCad only the
+    creepage constraints of the same rules text, in the same order and under
+    the same rule names, and the layout the first pass saved after it refilled
+    its zones, less the ground pours ground_pour_guard clears: those standing at
+    least the creepage limit from every conductor a creepage rule reaches from,
+    and those standing nearer to Mains-class copper alone, which the guard
+    judges itself. A ground pour that stands nearer to a conductor of a net a
+    rule names stays in, and the pass is then the slow one. The
+    layout file is put back as it was after the run. Returns KiCad's creepage
+    findings, the violations that stop the pass from being a judgement, and the
+    guard.
+    """
+    guard = PourGuard()
+    rules = creepage_rules(rules_text)
+    if rules is None or not rules:
+        guard.why = "the rules hold no creepage constraint" if rules is not None else "the rules text does not balance"
+        return [], [], guard
+    guard = ground_pour_guard(refilled, rules_text, mains, grounds)
+    path = os.path.join(copy, layout)
+    with open(path, encoding="utf-8") as handle:
+        original = handle.read()
+    text = without_zones(original, guard.removable, len(sexpr.children(refilled, "zone"))) if guard.removable else original
+    if text is None:
+        text, guard.removable = original, []
+        guard.why = "the layout's zones cannot be told apart in its text, so every pour stays in"
+    with open(rules_copy, "w", encoding="utf-8") as handle:
+        handle.write(only_creepage(rules_text) + "\n" + marker(nonce, EVERY_ITEM if net is None else f"A.NetName == '{net}'"))
+    kept = "; ".join(f"{label} stands {distance:.3f} mm from {near}" for label, distance, near in guard.kept)
+    slow = (f" the ground pours kept in the creepage test because they stand inside the {guard.limit:g} mm creepage limit of "
+            f"such copper make it the slow one ({kept})" if guard.kept else "")
+    try:
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(text)
+        report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
+    finally:
+        with open(path, "w", encoding="utf-8") as handle:
+            handle.write(original)
+    if report is None:
+        return [], [Violation(design.project, "design_unreadable", design.layout,
+                              f"the creepage cannot be checked: {why};{slow or ' every ground pour was left in or out by the guard'}")], guard
+    if not fired(report, marker_rule(nonce)):
+        return [], [Violation(design.project, "custom_rules", design.rules,
+                              "KiCad did not load the creepage rules the check hands its creepage pass, so no creepage was checked")], guard
+    cut = cut_lists(design, report, "creepage pass") if mains else []
+    return [entry for entry in report.get("violations") or [] if entry.get("type") == "creepage"], cut, guard
+
+
 #: The names of the rules written after the signed one for the spacing between conductors at different mains potentials.
 MAINS_TO_MAINS_RULE = f"{RESERVED}: signed mains-to-mains spacing"
 TERMINAL_RULE = f"{RESERVED}: signed terminal clearance"
@@ -5613,6 +6717,89 @@ def mains_to_mains_rules(signed) -> str:
                  f'\t(constraint clearance (min {max(signed[0], held["clearance_mm"]):g}mm))\n'
                  f'\t(constraint creepage (min {max(signed[1], held["creepage_mm"]):g}mm)))\n')
     return text
+
+
+#: The rules that split the first pass's Mains clearance question between two KiCad runs, so that neither list reaches the cap.
+PAD_PAIRS_SILENCED_RULE = f"{RESERVED}: pad pairs of the Mains class left to the second run"
+OTHER_PAIRS_SILENCED_RULE = f"{RESERVED}: every pair but two pads left to the first run"
+
+
+def pad_pairs_silenced() -> str:
+    """A rule, written last, that holds a pair of Mains-class pads to no clearance, so the run's list leaves those pairs out."""
+    return (f'(rule "{PAD_PAIRS_SILENCED_RULE}"\n\t(condition "{TERMINAL_CONDITION}")\n'
+            '\t(constraint clearance (min 0mm)))\n')
+
+
+def other_pairs_silenced() -> str:
+    """A rule, written last, that holds every pair but two pads to no clearance, so the run's list holds only pairs of pads."""
+    return (f'(rule "{OTHER_PAIRS_SILENCED_RULE}"\n\t(condition "A.Type != \'Pad\' || B.Type != \'Pad\'")\n'
+            '\t(constraint clearance (min 0mm)))\n')
+
+
+#: The most lines of each kind KiCad reports in one run, for the kinds a Mains rule's lines can be of. Clearance is measured;
+#: the others are held to the limit KiCad applies to its other lists, no list of them having been seen cut.
+CAPPED_KINDS = {"clearance": CLEARANCE_REPORT_LIMIT, "creepage": REPORT_LIMIT, "hole_clearance": REPORT_LIMIT,
+                "physical_clearance": REPORT_LIMIT}
+
+
+def cut_lists(design: Design, report: dict, which: str) -> List[Violation]:
+    """A violation for each list of a Mains rule's kind in one KiCad run that holds as many lines as KiCad reports.
+
+    A list at its cap may be missing lines, which KiCad drops at random, so a
+    cut list is not a verdict: a shortfall may be among the lines dropped.
+    """
+    counts: Dict[str, int] = {}
+    for entry in report.get("violations") or []:
+        kind = entry.get("type")
+        if kind in CAPPED_KINDS:
+            counts[kind] = counts.get(kind, 0) + 1
+    return [Violation(design.project, "report_cut_short", design.layout,
+                      f"KiCad's list of {kind} lines in the {which} holds {count}, as many as it reports of that kind ({CAPPED_KINDS[kind]}), "
+                      "so the list was cut and a cut list is not a verdict: a shortfall of mains spacing may be among the lines dropped; "
+                      "split the question across KiCad runs or correct the design's own failures until the list falls below the cap")
+            for kind, count in sorted(counts.items()) if count >= CAPPED_KINDS[kind]]
+
+
+def pad_pair_pass(kicad_cli: str, design: Design, copy: str, layout: str, rules_copy: str, existing: str, signed, nonce: str,
+                  net: Optional[str]) -> Tuple[List[dict], List[Violation]]:
+    """The clearance lines of pairs of Mains-class pads, KiCad's second run over the layout its first run refilled and saved.
+
+    The first run holds those pairs silent, so that its clearance list stays
+    under KiCad's cap; this run holds every other pair silent, so that its list
+    holds pairs of pads alone. It refills nothing, and so reads the layout as
+    the first run left it. Only the lines under the check's own terminal and
+    reinforced rules are read, those being the rules a pair of Mains-class pads
+    meets last; the lines KiCad lists for other pairs of pads are the first
+    run's. The rules text is handed over without its creepage constraints.
+    """
+    with open(rules_copy, "w", encoding="utf-8") as handle:
+        handle.write(without_creepage(existing + appended_rules(signed, nonce, net) + other_pairs_silenced()))
+    report, why = run_report([kicad_cli, "pcb", "drc", "--format", "json", "--severity-all", "--units", "mm", layout], copy)
+    if report is None:
+        return [], [Violation(design.project, "design_unreadable", design.layout,
+                              f"the clearance between pairs of Mains-class pads cannot be checked: {why}")]
+    if not fired(report, marker_rule(nonce)):
+        return [], [Violation(design.project, "custom_rules", design.rules,
+                              "KiCad did not load the rules the check hands its pad-pair pass, so no pair of Mains-class pads "
+                              "was checked")]
+    problems = cut_lists(design, report, "pad-pair run")
+    names = (f"(rule '{TERMINAL_RULE}'", f"(rule '{REINFORCED_RULE}")
+    lines = [entry for entry in report.get("violations") or []
+             if entry.get("type") == "clearance" and any(name in entry.get("description", "") for name in names)]
+    return lines, problems
+
+
+def joined_once(first: List[dict], second: List[dict]) -> List[dict]:
+    """The first run's lines and those of the second it does not already hold, a line KiCad words the same way twice being one finding."""
+    def key(entry: dict) -> str:
+        return json.dumps(entry, sort_keys=True)
+    held = {key(entry) for entry in first}
+    out = list(first)
+    for entry in second:
+        if key(entry) not in held:
+            held.add(key(entry))
+            out.append(entry)
+    return out
 
 
 #: The marker's condition when it is to fire on every item.
@@ -7408,10 +8595,248 @@ def judge_exceptions(design: Design, record: str, signed: Signed, violations: Se
 # --- One design ----------------------------------------------------------------
 
 
+def floorplan_region_rules(rules: Optional[List[list]]) -> Set[str]:
+    """The names of the design's own floorplan region rules among its custom rules: each named for a region with
+    ` region parts`, in the one form the floorplan's rules take, and nothing else a design's rules file holds."""
+    found = set()
+    for rule in rules or []:
+        name = rule_name(rule)
+        form = sole_rule_form(rule)
+        constraints = [[str(part) for part in node] for node in sexpr.children(rule, "constraint")]
+        if (name.endswith(FLOORPLAN_REGION_SUFFIX) and form is not None and FLOORPLAN_REGION_CONDITION.fullmatch(form)
+                and constraints == [["constraint", "disallow", "footprint"]]):
+            found.add(name)
+    return found
+
+
+class Places(NamedTuple):
+    """The places of a design a workmanship acceptance may name: its nets, its parts by reference and its text variables."""
+    nets: Set[str]
+    references: Set[str]
+    figures: Set[str]
+    regions: Set[str]
+
+
+def in_scope(scope: str, line: Violation, places: Places) -> bool:
+    """Whether a line falls in the scope of an entry: a net the line is on, a reference designator the line names, or a
+    text variable (a figure the rule reads) the line's message names."""
+    def named(text: str) -> bool:
+        return re.search(rf"(?<![A-Za-z0-9_]){re.escape(scope)}(?![A-Za-z0-9_])", text) is not None
+
+    on_net = line.location.startswith(f"net {scope}:") or f"[{scope}]" in line.location
+    return ((scope in places.nets and on_net) or (scope in places.references and named(line.location))
+            or (scope in places.figures and named(line.message)))
+
+
+def acceptable_line(line: Violation, places: Places) -> bool:
+    """Whether a line is one the workmanship acceptance record may accept: a line of a rule of the closed set, and of
+    courtyards_overlap only a plain part-courtyard overlap and of items_not_allowed only a rule that is one of the
+    design's own floorplan region rules, as its rules file holds them."""
+    if line.rule not in ACCEPTABLE_WORKMANSHIP:
+        return False
+    if line.rule == "courtyards_overlap":
+        return CUSTOM_RULE_LINE.search(line.message) is None
+    if line.rule == "items_not_allowed":
+        named = REPORTED_RULE_NAME.search(line.message)
+        return named is not None and named.group(1) in places.regions
+    return True
+
+
+def judge_workmanship(design: Design, record: str, entries: Sequence[Tuple[int, dict]], found: Sequence[Violation],
+                      places: Optional[Places], today: datetime.date, accepted: Optional[List[str]],
+                      warned: Sequence[str] = ()) -> List[Violation]:
+    """The lines of a design with the ones a signed entry of the workmanship acceptance record covers taken out and reported
+    in `accepted`, and a violation added for each entry that fails.
+
+    An entry covers the lines of its own rule inside its own scope, up to its count, in the order the check reports them.
+    An entry that is unsigned or future dated, names a rule outside the closed set, names a place the design lacks, or that
+    no line uses covers nothing and fails, as does an entry for a rule that `warned`, the classes a valid signed severity
+    policy marks WARNING, names.
+    """
+    result: List[Violation] = []
+
+    def fail(index: int, entry: dict, message: str, key: str = "") -> None:
+        at = f"{record} accepted_workmanship[{index}]" + (f".{key}" if key else "")
+        result.append(Violation(design.project, "workmanship_acceptance", at,
+                                f"accepted_workmanship[{index}] ({entry['rule'].strip()} at {entry['scope'].strip()}) {message}"))
+
+    usable: List[Tuple[int, dict]] = []
+    for index, entry in entries:
+        rule, scope = entry["rule"].strip(), entry["scope"].strip()
+        problems = 0
+        if rule in warned:
+            fail(index, entry, f"is stale: the signed severity policy marks the class {rule} WARNING, so its lines are "
+                               "judged by the policy and no violation uses this entry; remove it", "rule")
+            problems += 1
+        if rule not in ACCEPTABLE_WORKMANSHIP:
+            why = NEVER_ACCEPTED_WORKMANSHIP.get(rule)
+            fail(index, entry, f"names the rule {rule}, which the record does not accept"
+                 + (f": {why}" if why else ": it is not a workmanship or neatness rule of the check, and a rule that carries "
+                    "a mains spacing, a derated voltage, a pin limit or any other safety finding has its own form or none")
+                 + f"; the rules it accepts are {', '.join(ACCEPTABLE_WORKMANSHIP)}", "rule")
+            problems += 1
+        reason = entry_unsigned(entry, None, today)
+        if reason is not None:
+            fail(index, entry, f"is not signed: {reason}; an entry is the owner's to sign, and an unsigned one accepts nothing",
+                 "accepted_by" if reason.startswith("accepted_by") else "accepted_on")
+            problems += 1
+        if places is None:
+            fail(index, entry, "cannot be judged: the layout's nets and parts cannot be read, so the check cannot tell whether "
+                               "the design has the place it names, and the entry accepts nothing", "scope")
+            problems += 1
+        elif scope not in places.nets | places.references | places.figures:
+            fail(index, entry, f"names {scope}, which is no net, reference designator or text variable of the design", "scope")
+            problems += 1
+        if not problems:
+            usable.append((index, entry))
+
+    used = {index: 0 for index, _ in usable}
+    for line in found:
+        taker = None
+        if places is not None and acceptable_line(line, places):
+            taker = next(((index, entry) for index, entry in usable if entry["rule"].strip() == line.rule
+                          and used[index] < entry["count"] and in_scope(entry["scope"].strip(), line, places)), None)
+        if taker is None:
+            result.append(line)
+            continue
+        index, entry = taker
+        used[index] += 1
+        if accepted is not None:
+            accepted.append("ACCEPTED | " + " | ".join(clean(field) for field in (
+                design.project, "workmanship_acceptance", f"{record} accepted_workmanship[{index}]",
+                f"{line.rule} at {line.location}: {line.message}; the owner accepts {entry['scope'].strip()} "
+                f"({used[index]} of up to {entry['count']} lines): {entry['reason'].strip()} (bounded by "
+                f"{entry['bounded_by'].strip()}; accepted by {entry['accepted_by'].strip()} on "
+                f"{iso_date(entry['accepted_on']).isoformat()})")))
+    for index, entry in usable:
+        if not used[index]:
+            fail(index, entry, f"is used by no line: the check reports no {entry['rule'].strip()} line within the scope "
+                               f"{entry['scope'].strip()} that the record can accept, so the entry is stale; remove it")
+    return result
+
+
+def judge_severity_policy(design: Design, record: str, entries: Sequence[Tuple[int, dict]], problems: Sequence[Violation],
+                          found: Sequence[Violation], today: datetime.date, warnings: Optional[List[str]]
+                          ) -> Tuple[List[Violation], List[str], List[Violation]]:
+    """`found` less the lines a valid signed severity policy marks WARNING, the classes it marks, and the policy's own violations.
+
+    The policy is valid only when its record is in form and every entry is signed and names a class the policy may
+    name; one fault in any entry voids the whole policy, which then marks nothing. The lines of a class marked WARNING
+    go to `warnings` as report lines, with a count line for each class, and a class whose found count is above its
+    recorded count fails; a class whose KiCad list reached the cap is found at least that many and passes only when its
+    recorded count equals the cap.
+    """
+    def fail(index: int, entry: dict, message: str, key: str = "") -> Violation:
+        at = f"{record} severity_policy[{index}]" + (f".{key}" if key else "")
+        return Violation(design.project, "severity_policy", at,
+                         f"severity_policy[{index}] ({entry['class'].strip()}) {message}")
+
+    own: List[Violation] = list(problems)
+    for index, entry in entries:
+        name = entry["class"].strip()
+        if name not in POLICY_CLASSES:
+            why = NEVER_WARNING_POLICY.get(name)
+            own.append(fail(index, entry, f"names the class {name}, which the policy does not cover"
+                            + (f": {why}" if why else ": it is not a silkscreen, designator, routing-neatness, narrow-track or return-path class the check "
+                               "reports, and a class that carries a safety, mains spacing, creepage, clearance, derated-voltage, "
+                               "pin-limit, mounting-hole, plated-hole, connectivity, hole, annular ring, drill, other "
+                               "manufacturing, paste, solder, courtyard or separation basis finding is never a warning")
+                            + f"; the classes it covers are {', '.join(POLICY_CLASSES)}", "class"))
+        reason = entry_unsigned(entry, None, today)
+        if reason is not None:
+            own.append(fail(index, entry, f"is not signed: {reason}; an entry is the owner's to sign, and one unsigned "
+                                          "entry voids the whole policy", "accepted_by" if reason.startswith("accepted_by")
+                            else "accepted_on"))
+    if own:
+        return list(found), [], own
+    if warnings is None:
+        return list(found), [], own
+
+    marked = {entry["class"].strip(): (index, entry) for index, entry in entries if entry["severity"] == "WARNING"}
+    rest: List[Violation] = []
+    taken: Dict[str, List[Violation]] = {name: [] for name in marked}
+    for line in found:
+        (taken[line.rule] if line.rule in marked else rest).append(line)
+    for name, (index, entry) in marked.items():
+        lines, signed = taken[name], entry["count"]
+        capped = name in POLICY_CAPPED and len(lines) >= REPORT_LIMIT
+        said = f"at least {len(lines)}, KiCad having cut its list at {REPORT_LIMIT}" if capped else str(len(lines))
+        if capped and signed != REPORT_LIMIT:
+            own.append(fail(index, entry, f"has a signed count of {signed}, where KiCad's list of {name} lines reached its cap of "
+                                          f"{REPORT_LIMIT} and so holds at least that many; the count can only be signed at {REPORT_LIMIT} "
+                                          "until the list falls below the cap", "count"))
+        elif not capped and len(lines) > signed:
+            own.append(fail(index, entry, f"found {len(lines)} lines, above its recorded count of {signed}; a count of warning "
+                                          "lines rises only by the owner signing a higher one", "count"))
+        if warnings is not None:
+            for line in lines:
+                warnings.append("WARNING | " + " | ".join(clean(field) for field in (
+                    design.project, name, line.location,
+                    f"{line.message}; the owner's severity policy marks {name} WARNING with a recorded count of {signed} "
+                    f"(severity_policy[{index}], accepted by {entry['accepted_by'].strip()} on "
+                    f"{iso_date(entry['accepted_on']).isoformat()}): {entry['reason'].strip()}")))
+            warnings.append("COUNT | " + " | ".join(clean(field) for field in (
+                design.project, name, f"{record} severity_policy[{index}]", f"found {said} of recorded {signed}")))
+    return rest, sorted(marked), own
+
+
+def judge_accepted_workmanship(yaml, repository: Repository, design: Design, today: datetime.date,
+                               found: List[Violation], accepted: Optional[List[str]],
+                               warnings: Optional[List[str]] = None) -> List[Violation]:
+    """`found` judged against the severity policy and then the workmanship acceptance record the design's folders hold, if any.
+
+    `warnings` receives the report line of each line the policy marks WARNING and the found count beside the recorded one.
+    """
+    if any(v.rule == "design_discovery" for v in found):
+        return found
+    root = repository.root
+    try:
+        with open(os.path.join(root, design.project), encoding="utf-8") as handle:
+            project = json.load(handle, object_pairs_hook=unique_keys)
+    except (OSError, ValueError):
+        return found
+    variables = project.get("text_variables") if isinstance(project, dict) else None
+    variables = variables if isinstance(variables, dict) else {}
+    not_for_manufacture = variables.get("NOT_FOR_MANUFACTURE") == "true"
+    policy_record, policy_entries, policy_problems = load_severity_policy(yaml, root, repository, design, not_for_manufacture)
+    warned: List[str] = []
+    policy_failures: List[Violation] = []
+    if policy_record is not None:
+        found, warned, policy_failures = judge_severity_policy(design, policy_record, policy_entries, policy_problems, found,
+                                                               today, warnings)
+    record, entries, problems = load_workmanship_acceptance(yaml, root, repository, design, not_for_manufacture)
+    if record is None:
+        return found + policy_failures
+    places: Optional[Places] = None
+    try:
+        with open(os.path.join(root, design.layout), encoding="utf-8") as handle:
+            tree = sexpr.parse_one(handle.read())
+        places = Places(layout_nets(tree), set(board_footprints(tree)), set(map(str, variables)),
+                        floorplan_region_rules(read_rules(root, design, repository)[0]))
+    except (OSError, sexpr.SexprError, board_geometry.Unreadable):
+        pass
+    return judge_workmanship(design, record, entries, found, places, today, accepted, warned) + problems + policy_failures
+
+
 def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
                  already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None,
-                 accepted: Optional[List[str]] = None) -> List[Violation]:
-    """Every violation of one design. `read`, when given, receives each measured rule's figure as the design sets it,
+                 accepted: Optional[List[str]] = None, warnings: Optional[List[str]] = None) -> List[Violation]:
+    """Every violation of one design, less the lines of a class the owner-signed severity policy marks WARNING, which
+    `warnings` receives as report lines, and the workmanship lines an owner-signed entry of the design's workmanship
+    acceptance record covers, which `accepted` receives as report lines.
+
+    The lines are judged over whichever way the design's check ends, so the early ends are judged too.
+    """
+    return judge_accepted_workmanship(yaml, repository, design, today,
+                                      check_design_lines(design, repository, kicad_cli, yaml, today, already, read, accepted),
+                                      accepted, warnings)
+
+
+def check_design_lines(design: Design, repository: Repository, kicad_cli: str, yaml, today: datetime.date,
+                       already: List[Violation], read: Optional[List[Tuple[str, str, str]]] = None,
+                       accepted: Optional[List[str]] = None) -> List[Violation]:
+    """Every violation of one design, before the workmanship lines the owner accepts are taken out.
+    `read`, when given, receives each measured rule's figure as the design sets it,
     as (item and what it measures, the text variable, the figure with its unit); `accepted`, the report line of each
     spacing exception, and of each derating exception, the owner signed that the design uses."""
     root = repository.root
@@ -7558,6 +8983,8 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                                        f"the layout's copper cannot be read for its workmanship rules ({unread})"))
                 return found
             found += measured(design, copper, figures, corner)
+            found += pad_numbering(design, tree)
+            found += dnp_agreement(design, tree, yaml, root, repository, not_for_manufacture)
             found += pasted
             if limits is not None and board_rules is not None:
                 found += board_minimums(design, project, rules, tree, limits, board_rules["fabrication"]["outer_copper_oz"])
@@ -7566,8 +8993,12 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         if rules is not None and os.path.exists(rules_copy):
             with open(rules_copy, encoding="utf-8", errors="replace") as handle:
                 existing = handle.read()
+        first_rules = existing + appended_rules(signed, nonce, marker_net(items))
+        # With the signed mains-to-mains rules the first run's clearance list passes KiCad's cap, which cuts it without
+        # saying so; the pairs of Mains-class pads are left to a second run, so that neither list is cut.
+        split = signed is not None and signed.mains_to_mains is not None
         with open(rules_copy, "w", encoding="utf-8") as handle:
-            handle.write(existing + appended_rules(signed, nonce, marker_net(items)))
+            handle.write(without_creepage(first_rules + (pad_pairs_silenced() if split else "")))
 
         erc, why = run_report([kicad_cli, "sch", "erc", "--format", "json", "--severity-all", "--units", "mm", schematic], copy)
         netlist: Optional[Dict[str, Tuple[List[str], List[str]]]] = None
@@ -7631,6 +9062,13 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
         own = {id(entry) for entry in markers}
         found += ignored(design, drc, "board.design_settings.rule_severities")
         reported = [entry for entry in drc.get("violations") or [] if id(entry) not in own]
+        if signed is not None:
+            found += cut_lists(design, drc, "first run")
+        if split and refilled is not None and markers:
+            pad_lines, pad_problems = pad_pair_pass(kicad_cli, design, copy, layout, rules_copy, existing, signed, nonce,
+                                                    marker_net(items))
+            reported = joined_once(reported, pad_lines)
+            found += pad_problems
         consumed: Set[int] = set()
         project_copy = os.path.join(copy, os.path.basename(design.project))
         classes_read: list = []
@@ -7645,6 +9083,20 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                 classes_read.append((names, project_classes, members, why))
             return classes_read[0]
 
+        poured: List[LayerFinding] = []
+        if refilled is not None and markers and not cut_short(drc):
+            members_now = layout_classes()[2]
+            if members_now is not None:
+                try:
+                    creepage, stopped, guard = creepage_pass(kicad_cli, design, copy, layout, rules_copy, first_rules, nonce,
+                                                             marker_net(items), refilled, members_now["Mains"], ground_nets(members_now))
+                except (OSError, board_geometry.Unreadable) as unread:
+                    creepage, stopped, guard = [], [Violation(design.project, "design_unreadable", design.layout,
+                                                              f"the layout cannot be read for the creepage pass ({unread})")], PourGuard()
+                reported += creepage
+                found += stopped
+                poured = guard.findings
+
         layered = LayerResult()
         if (signed is not None and tree is not None and refilled is not None and netlist is not None and markers
                 and not cut_short(drc)):
@@ -7655,6 +9107,17 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
                 except board_geometry.Unreadable as unread:
                     found.append(Violation(design.project, "design_unreadable", design.layout,
                                            f"the layout KiCad refilled cannot be read for the copper on every layer ({unread})"))
+        layered.findings = layered.findings + poured
+        if signed is not None and signed.mains_to_mains is not None and refilled is not None and markers:
+            resolved = layout_classes()[2]
+            if resolved is not None and resolved["Mains"]:
+                try:
+                    measured_pairs, unmeasured_pairs = same_part_pad_pairs(design, refilled, resolved["Mains"], signed)
+                    reported = with_measured_pad_pairs(reported, measured_pairs)
+                    found += unmeasured_pairs
+                except board_geometry.Unreadable as unread:
+                    found.append(Violation(design.project, "design_unreadable", design.layout,
+                                           f"the layout KiCad refilled cannot be read for the pads of one part ({unread})"))
         if signed is not None and signed.exceptions and tree is not None and markers and not cut_short(drc):
             mains_class = None
             if any(NET_PAIR_FORM_KEY in entry for entry in signed.exceptions):
@@ -7794,6 +9257,12 @@ def check_design(design: Design, repository: Repository, kicad_cli: str, yaml, t
     except board_geometry.Unreadable as unread:
         found.append(Violation(design.project, "design_unreadable", design.layout,
                                f"the layout KiCad refilled cannot be read for the barrier under a part ({unread})"))
+    try:
+        if refilled is not None:
+            found += mains_zone_fill(design, refilled, on_layout)
+    except board_geometry.Unreadable as unread:
+        found.append(Violation(design.project, "design_unreadable", design.layout,
+                               f"the layout KiCad refilled cannot be read for the fill of its Mains-class zones ({unread})"))
     return found
 
 
@@ -7838,7 +9307,8 @@ def design_reads(top: str, files: List[str], git: str = "git") -> List[str]:
         reads.add(design.directory + "/" if design.directory else WHOLE_REPOSITORY)
         reads.update(design_files(design, repository)[0])
         for name in (RECORD_NAME, PIN_RECORD_NAME, CONTROLLER_RECORD_NAME, PARTS_RECORD_NAME, CATALOGUE_NAME, DERATING_NAME,
-                     PIN_LIMITS_NAME, BOARD_RULES_NAME, MANUFACTURER_LIMITS_NAME):
+                     WORKMANSHIP_ACCEPTANCE_NAME, SEVERITY_POLICY_NAME, PIN_LIMITS_NAME, BOARD_RULES_NAME,
+                     MANUFACTURER_LIMITS_NAME):
             record = find_record(top, design.directory, repository.tracked, name)
             if record:
                 reads.add(record)
@@ -7865,13 +9335,16 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
     results: List[Tuple[str, List[Violation]]] = []
     figures: Dict[str, List[Tuple[str, str, str]]] = {}
     exceptions: Dict[str, List[str]] = {}
+    warned: Dict[str, List[str]] = {}
     for design in designs:
         read: List[Tuple[str, str, str]] = []
         accepted: List[str] = []
+        warnings: List[str] = []
         results.append((design.project, check_design(design, repository, kicad_cli, yaml, today, problems[design.project],
-                                                     read, accepted)))
+                                                     read, accepted, warnings)))
         figures[design.project] = read
         exceptions[design.project] = accepted
+        warned[design.project] = warnings
     for orphan in orphans:
         results.append((orphan.design, [orphan]))
     if not designs:
@@ -7882,14 +9355,17 @@ def report(top: str, kicad_cli: str, git: str, version: str, today: datetime.dat
 
     failed = 0
     for name, violations in results:
+        count = sum(line.startswith("WARNING | ") for line in warned.get(name, []))
+        warning = f"{count} warning{'s' if count != 1 else ''}"
         if violations:
             failed += 1
-            print(f"DESIGN | {clean(name)} | FAIL | {len(violations)} violation{'s' if len(violations) != 1 else ''}", file=out)
+            print(f"DESIGN | {clean(name)} | FAIL | {len(violations)} violation{'s' if len(violations) != 1 else ''}"
+                  + (f", {warning}" if count else ""), file=out)
         else:
-            print(f"DESIGN | {clean(name)} | PASS", file=out)
+            print(f"DESIGN | {clean(name)} | PASS" + (f" | {warning}" if count else ""), file=out)
         for rule, variable, figure in figures.get(name, []):
             print(f"FIGURE | {clean(name)} | {clean(rule)} | {clean(variable)} | {clean(figure)}", file=out)
-        for line in exceptions.get(name, []):
+        for line in exceptions.get(name, []) + warned.get(name, []):
             print(line, file=out)
         for violation in violations:
             print(violation.line(), file=out)

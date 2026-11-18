@@ -1375,7 +1375,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Diode:BAT54S"
+		(symbol "Diode:BAT54SW"
 			(pin_names
 				(offset 0)
 			)
@@ -1385,7 +1385,7 @@
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
 			(property "Reference" "D"
-				(at 2.54 -5.08 0)
+				(at 0.635 -3.81 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -1395,7 +1395,7 @@
 					(justify left)
 				)
 			)
-			(property "Value" "BAT54S"
+			(property "Value" "BAT54SW"
 				(at -6.35 3.175 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1406,7 +1406,7 @@
 					(justify left)
 				)
 			)
-			(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+			(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 				(at 1.905 3.175 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1418,7 +1418,7 @@
 					(justify left)
 				)
 			)
-			(property "Datasheet" "https://www.diodes.com/assets/Datasheets/ds11005.pdf"
+			(property "Datasheet" "https://assets.nexperia.com/documents/data-sheet/BAT54W_SER.pdf"
 				(at -3.048 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1440,7 +1440,7 @@
 					)
 				)
 			)
-			(property "ki_keywords" "schottky diode"
+			(property "ki_keywords" "dual schottky diode"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1451,7 +1451,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "SOT?23*"
+			(property "ki_fp_filters" "SOT?323*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1462,13 +1462,10 @@
 					)
 				)
 			)
-			(symbol "BAT54S_0_1"
+			(symbol "BAT54SW_0_1"
 				(polyline
 					(pts
-						(xy -4.445 1.27)
-						(xy -4.445 -1.27)
-						(xy -2.54 0)
-						(xy -4.445 1.27)
+						(xy -4.445 1.27) (xy -4.445 -1.27) (xy -2.54 0) (xy -4.445 1.27)
 					)
 					(stroke
 						(width 0)
@@ -1480,8 +1477,7 @@
 				)
 				(polyline
 					(pts
-						(xy -3.81 0)
-						(xy -1.27 0)
+						(xy -3.81 0) (xy -1.27 0)
 					)
 					(stroke
 						(width 0)
@@ -1493,8 +1489,7 @@
 				)
 				(polyline
 					(pts
-						(xy -3.175 -1.27)
-						(xy -3.175 -1.016)
+						(xy -3.175 -1.27) (xy -3.175 -1.016)
 					)
 					(stroke
 						(width 0)
@@ -1506,8 +1501,7 @@
 				)
 				(polyline
 					(pts
-						(xy -2.54 1.27)
-						(xy -1.905 1.27)
+						(xy -2.54 1.27) (xy -1.905 1.27)
 					)
 					(stroke
 						(width 0)
@@ -1519,8 +1513,7 @@
 				)
 				(polyline
 					(pts
-						(xy -2.54 -1.27)
-						(xy -3.175 -1.27)
+						(xy -2.54 -1.27) (xy -3.175 -1.27)
 					)
 					(stroke
 						(width 0)
@@ -1532,8 +1525,7 @@
 				)
 				(polyline
 					(pts
-						(xy -2.54 -1.27)
-						(xy -2.54 1.27)
+						(xy -2.54 -1.27) (xy -2.54 1.27)
 					)
 					(stroke
 						(width 0)
@@ -1545,8 +1537,7 @@
 				)
 				(polyline
 					(pts
-						(xy -1.905 1.27)
-						(xy -1.905 1.016)
+						(xy -1.905 1.27) (xy -1.905 1.016)
 					)
 					(stroke
 						(width 0)
@@ -1558,8 +1549,7 @@
 				)
 				(polyline
 					(pts
-						(xy -1.905 0)
-						(xy 1.905 0)
+						(xy -1.905 0) (xy 1.905 0)
 					)
 					(stroke
 						(width 0)
@@ -1582,8 +1572,7 @@
 				)
 				(polyline
 					(pts
-						(xy 1.27 0)
-						(xy 3.81 0)
+						(xy 1.27 0) (xy 3.81 0)
 					)
 					(stroke
 						(width 0)
@@ -1595,10 +1584,7 @@
 				)
 				(polyline
 					(pts
-						(xy 1.905 1.27)
-						(xy 1.905 -1.27)
-						(xy 3.81 0)
-						(xy 1.905 1.27)
+						(xy 1.905 1.27) (xy 1.905 -1.27) (xy 3.81 0) (xy 1.905 1.27)
 					)
 					(stroke
 						(width 0)
@@ -1610,8 +1596,7 @@
 				)
 				(polyline
 					(pts
-						(xy 3.175 -1.27)
-						(xy 3.175 -1.016)
+						(xy 3.175 -1.27) (xy 3.175 -1.016)
 					)
 					(stroke
 						(width 0)
@@ -1623,8 +1608,7 @@
 				)
 				(polyline
 					(pts
-						(xy 3.81 1.27)
-						(xy 4.445 1.27)
+						(xy 3.81 1.27) (xy 4.445 1.27)
 					)
 					(stroke
 						(width 0)
@@ -1636,8 +1620,7 @@
 				)
 				(polyline
 					(pts
-						(xy 3.81 -1.27)
-						(xy 3.175 -1.27)
+						(xy 3.81 -1.27) (xy 3.175 -1.27)
 					)
 					(stroke
 						(width 0)
@@ -1649,8 +1632,7 @@
 				)
 				(polyline
 					(pts
-						(xy 3.81 -1.27)
-						(xy 3.81 1.27)
+						(xy 3.81 -1.27) (xy 3.81 1.27)
 					)
 					(stroke
 						(width 0)
@@ -1662,8 +1644,7 @@
 				)
 				(polyline
 					(pts
-						(xy 4.445 1.27)
-						(xy 4.445 1.016)
+						(xy 4.445 1.27) (xy 4.445 1.016)
 					)
 					(stroke
 						(width 0)
@@ -1674,7 +1655,7 @@
 					)
 				)
 			)
-			(symbol "BAT54S_1_1"
+			(symbol "BAT54SW_1_1"
 				(pin passive line
 					(at -7.62 0 0)
 					(length 3.81)
@@ -1730,6 +1711,8 @@
 					)
 				)
 			)
+			(embedded_fonts no)
+		
 			(embedded_fonts no)
 		)
 		(symbol "power:GND"
@@ -2613,6 +2596,13 @@
 		)
 		(uuid "753c8f89-511f-49ac-91ab-42e56badeeb1")
 	)
+	(wire
+		(pts
+			(xy 154.94 83.82)
+			(xy 154.94 86.36)
+		)
+		(uuid "90ba1bcb-f7b1-42b0-b3fe-daab0b6aae4f")
+	)
 	(label "FLOW_RAW"
 		(at 45.72 48.26 0)
 		(effects
@@ -3413,6 +3403,16 @@
 		)
 		(uuid "78ee1b59-b763-42d4-bcac-e4dec500a413")
 	)
+	(label "FLOW_BUF"
+		(at 153.67 76.2 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "50fe8b5b-4bc3-45ad-a66c-163024f4e53a")
+	)
 	(global_label "+5V"
 		(shape input)
 		(at 45.72 53.34 0)
@@ -3688,17 +3688,6 @@
 		)
 		(uuid "338c319c-0919-4b67-8576-e67f8e60973b")
 	)
-	(hierarchical_label "FLOW_IN"
-		(shape output)
-		(at 154.94 76.2 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left)
-		)
-		(uuid "d00e9d1f-17d4-4f20-ad2a-7183ba94648f")
-	)
 	(hierarchical_label "STM_SCL"
 		(shape output)
 		(at 142.24 154.94 0)
@@ -3720,6 +3709,17 @@
 			(justify left)
 		)
 		(uuid "068a0919-c93d-42fd-a0cf-af411163fd5e")
+	)
+	(hierarchical_label "FLOW_IN"
+		(shape output)
+		(at 154.94 86.36 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "21ba1685-65fa-416c-b1aa-e71e560ff09a")
 	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x03")
@@ -4209,7 +4209,7 @@
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "a1777846-81a6-4951-8176-936d631585f2")
 		(property "Reference" "R522"
 			(at 144.272 50.8 90)
@@ -4281,6 +4281,15 @@
 				)
 			)
 		)
+		(property "dnp" "true"
+			(at 142.24 50.8 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Rating" "0603 zero-ohm link"
 			(at 142.24 50.8 0)
 			(hide yes)
@@ -4334,7 +4343,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.ti.com/lit/ds/symlink/sn74lvc1g17.pdf"
+		(property "Datasheet" "https://www.lcsc.com/datasheet/lcsc_datasheet_2403202350_UMW-Youtai-Semiconductor-Co---Ltd--SN74LVC1G17DCKR-UMW_C7394034.pdf"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4352,7 +4361,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C10425"
+		(property "LCSC" "C7394034"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4361,7 +4370,7 @@
 				)
 			)
 		)
-		(property "MPN" "SN74LVC1G17DCKR"
+		(property "MPN" "SN74LVC1G17DCKR(UMW)"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4370,7 +4379,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Texas Instruments"
+		(property "Manufacturer" "UMW"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -4379,7 +4388,7 @@
 				)
 			)
 		)
-		(property "Rating" "6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs"
+		(property "Rating" "7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs"
 			(at 142.24 76.2 0)
 			(hide yes)
 			(effects
@@ -5150,7 +5159,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Diode:BAT54S")
+		(lib_id "Diode:BAT54SW")
 		(at 142.24 147.32 0)
 		(unit 1)
 		(in_bom yes)
@@ -5166,7 +5175,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 144.145 0)
 			(effects
 				(font
@@ -5175,7 +5184,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 147.32 0)
 			(hide yes)
 			(effects
@@ -5202,7 +5211,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 147.32 0)
 			(hide yes)
 			(effects
@@ -5211,7 +5220,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 147.32 0)
 			(hide yes)
 			(effects
@@ -5536,7 +5545,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Diode:BAT54S")
+		(lib_id "Diode:BAT54SW")
 		(at 142.24 182.88 0)
 		(unit 1)
 		(in_bom yes)
@@ -5552,7 +5561,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 179.705 0)
 			(effects
 				(font
@@ -5561,7 +5570,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 182.88 0)
 			(hide yes)
 			(effects
@@ -5588,7 +5597,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 182.88 0)
 			(hide yes)
 			(effects
@@ -5597,7 +5606,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 182.88 0)
 			(hide yes)
 			(effects
@@ -6366,7 +6375,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Diode:BAT54S")
+		(lib_id "Diode:BAT54SW")
 		(at 142.24 257.81 0)
 		(unit 1)
 		(in_bom yes)
@@ -6382,7 +6391,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 254.635 0)
 			(effects
 				(font
@@ -6391,7 +6400,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 257.81 0)
 			(hide yes)
 			(effects
@@ -6418,7 +6427,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 257.81 0)
 			(hide yes)
 			(effects
@@ -6427,7 +6436,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 257.81 0)
 			(hide yes)
 			(effects
@@ -6752,7 +6761,7 @@
 		)
 	)
 	(symbol
-		(lib_id "Diode:BAT54S")
+		(lib_id "Diode:BAT54SW")
 		(at 142.24 293.37 0)
 		(unit 1)
 		(in_bom yes)
@@ -6768,7 +6777,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BAT54S"
+		(property "Value" "BAT54SW"
 			(at 135.89 290.195 0)
 			(effects
 				(font
@@ -6777,7 +6786,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-323_SC-70"
 			(at 142.24 293.37 0)
 			(hide yes)
 			(effects
@@ -6804,7 +6813,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C47546"
+		(property "LCSC" "C78606"
 			(at 142.24 293.37 0)
 			(hide yes)
 			(effects
@@ -6813,7 +6822,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAT54S,215"
+		(property "MPN" "BAT54SW,115"
 			(at 142.24 293.37 0)
 			(hide yes)
 			(effects
@@ -11352,4 +11361,100 @@
 			)
 		)
 	)
+	(symbol
+		(lib_id "Device:R")
+		(at 154.94 80.01 0)
+		(unit 1)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "ad77a07c-4679-4876-97fb-c50379abe652")
+		(property "Reference" "R545"
+			(at 156.972 80.01 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "220"
+			(at 154.94 80.01 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Resistor"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/da7d33e1-a5c7-4984-bd6c-b0eb81797478"
+					(reference "R545")
+					(unit 1)
+				)
+			)
+		)
+	
+		(property "LCSC" "C22962"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "0603WAF2200T5E"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 100ppm/K 0603 100mW"
+			(at 154.94 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		))
 )

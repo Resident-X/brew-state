@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS.C4
+type: criterion
+title: The resistors keep their pad geometry so no copper changes
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The footprint of R630 and R631 is the 2512 pattern the new part lands on, with pad geometry, position and the 4.7 mm pad gap unchanged, and the board's copper is unchanged, stated in the item; if the footprint differs the item says it is a layout change. Out of scope: the beads' footprints, which are the same 0603 pattern.
+links:
+  - target: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS
+    type: criterion-of

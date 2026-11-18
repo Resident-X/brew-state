@@ -1,0 +1,14 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C4
+type: criterion
+title: The anode rail's fall is bounded by calculation, and the one case it does not bound is recorded as an accepted fault-only residual
+status: active
+version: 2
+measurement_type: binary
+verification: analysis
+scope: 'Out of scope: choosing the hardware, and the wall board''s design.'
+text: |
+  The record states how the anode rail's fall is bounded while the controller's supply is falling or absent. For power-up, power-down and brown-out it shows by calculation, from the maker sheets, that no controller pin on the panel nets goes beyond its datasheet limit, with the rail never above the 5 V rail and its turn-off after a controller reset derived stage by stage. For the one case the calculation does not bring inside the limit, the 3.3 V supply lost alone while the 5 V rail stays up, it states the overshoot in volts, its duration and the current per indicator element, records that no clamp diode is drawn and the owner's acceptance of the case as a fault-only residual with its ground, and writes the rule that keeps the bring-up steps out of it.
+  Out of scope: choosing clamp hardware, the wall board's design and any reading on a built board.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
+    type: criterion-of

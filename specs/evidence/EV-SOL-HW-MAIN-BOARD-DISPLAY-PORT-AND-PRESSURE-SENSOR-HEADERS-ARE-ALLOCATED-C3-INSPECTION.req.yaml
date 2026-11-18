@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T00:15:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board-v2/main-board.kicad_pcb
+  artifact_version: 0b7429798b0a982955a821e409e44d32296a23d3
+text: |
+  Read the pad nets of hardware/sunbeam-em7000/main-board-v2/main-board.kicad_pcb (sha256 9bcc3ebdd8a3c3f7e6d080947431c5375577251747638e63996a7dbebbad506e) at commit 0b7429798b0a982955a821e409e44d32296a23d3. J524 pad 4 is net BREWA_RAW; R534 joins it to net BREWA_DIV and R536 joins that to net BREW_AN, which is the controller's pin 30. The controller pin table names pin 30 as PA6 with ADC12_INP3, against DS12110 Table 9.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C3
+    type: satisfies

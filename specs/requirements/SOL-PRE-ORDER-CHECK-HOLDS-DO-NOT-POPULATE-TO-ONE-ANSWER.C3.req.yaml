@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C3
+type: criterion
+title: A schematic symbol whose text field says do-not-populate while its attribute says fitted fails the design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A schematic symbol with a text field named dnp, in any case, whose value is true, yes or 1 while the symbol's do-not-populate attribute says fitted fails the design, naming the symbol and its unit, and so does a field that says fitted while the attribute says do not populate. A field that agrees with the attribute, and a field with another name, pass. Out of scope: the layout and the parts record.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+    type: criterion-of

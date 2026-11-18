@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE-C5-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-14T17:40:24Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_pad_numbering.py::TheClockwiseFootprintSeedIsCaught.test_the_seeded_fault_adds_a_clockwise_numbered_part_to_a_copy_of_the_proof_design_and_the_check_catches_it
+  artifact_version: d61c853072db143dac194761042558f41cf25846
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C5
+    type: satisfies

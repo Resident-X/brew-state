@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OW
 type: criterion
 title: A malformed severity policy entry fails the record naming the entry and the key
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  On a synthetic design, a severity policy with an entry that is not a mapping, one with a missing key, one with an extra key, one whose severity is neither ERROR nor WARNING, two entries for one class, a WARNING entry with a count that is not a non-negative whole number and an ERROR entry carrying a count each fail the check naming the entry and the key, and the same policy with well-formed entries does not fail as a record. Out of scope is the judgement of a well-formed entry.
+text: |
+  On a synthetic design, a severity policy with an entry that is not a mapping, one with a missing key, one with an extra key, one whose severity is neither ERROR nor WARNING, two entries for one class, a WARNING entry with no count or a count that is not a non-negative whole number and an ERROR entry carrying a count each fail the check under the rule `severity_policy` naming the entry and the key, and in each case the whole policy is void: a line of a class that a well-formed signed entry of the same policy marks WARNING stands as a violation and no line is printed as a WARNING. On the same design a policy file with the top-level severity_policy key missing, with that key not a list, or with a top-level key other than severity_policy and synthetic fails under the rule severity_policy naming the key and marks nothing a WARNING, while an explicit empty severity_policy list is a valid policy that marks nothing a WARNING and does not fail as a record, and the record is read from the nearest tracked file of that name at or above the design folder. The same policy with well-formed entries does not fail as a record. Out of scope is the judgement of a well-formed entry.
 links:
   - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
     type: criterion-of

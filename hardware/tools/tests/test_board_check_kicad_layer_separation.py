@@ -24,7 +24,7 @@ import board_check  # noqa: E402
 import board_prove  # noqa: E402
 import sexpr  # noqa: E402
 from board_kicad_fixtures import KICAD_CLI, load_tests, setUpModule  # noqa: E402,F401
-from board_kicad_fixtures import Copy, Proved, outcomes  # noqa: E402
+from board_kicad_fixtures import Copy, Proved, basis_record, outcomes  # noqa: E402
 
 Q = sexpr.Quoted
 #: The most the rule's own computation may take, in seconds, on a fill of 50,000 vertices with 360 pieces of mains copper over it.
@@ -37,10 +37,10 @@ def brief(lines: list) -> list:
 
 
 def pour(net: str, layer: str, box: tuple, uuid: str, clearance: float = 0.2) -> list:
-    """A pour of `net` on `layer` over a box, as (left, top, right, bottom), whose own clearance is `clearance`."""
+    """A pour of `net` on `layer` over a box, as (left, top, right, bottom), whose own clearance is `clearance`, joined solid to the pads it overlaps so no thermal relief takes a share of a small pour."""
     left, top, right, bottom = box
     return ["zone", ["net", Q(net)], ["layer", Q(layer)], ["uuid", Q(uuid)], ["hatch", "edge", "0.5"],
-            ["connect_pads", ["clearance", f"{clearance:g}"]], ["min_thickness", "0.25"],
+            ["connect_pads", "yes", ["clearance", f"{clearance:g}"]], ["min_thickness", "0.25"],
             ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
             ["polygon", ["pts", ["xy", f"{left}", f"{top}"], ["xy", f"{right}", f"{top}"], ["xy", f"{right}", f"{bottom}"],
                          ["xy", f"{left}", f"{bottom}"]]]]
@@ -268,6 +268,7 @@ class TheRuleKeepsEveryTrackedDesignPassing(unittest.TestCase):
             name = os.path.basename(design)
             with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
                 seed = board_prove.prepare(scratch, design, name)
+                basis_record(seed, design)
                 status, lines, stderr = board_prove.check(seed, KICAD_CLI)
                 self.assertNotEqual(status, 2, stderr)
                 self.assertEqual([line for line in lines if board_check.LAYER_RULE in line], [], brief(lines))

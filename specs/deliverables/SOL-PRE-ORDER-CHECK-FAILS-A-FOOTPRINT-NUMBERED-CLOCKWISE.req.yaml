@@ -1,0 +1,28 @@
+id: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE
+type: deliverable
+category: solution
+title: The pre-order check fails a footprint whose pad numbers run clockwise, the mirror image of the counter-clockwise numbering a dual-row or four-sided part carries
+status: active
+version: 1
+text: |
+  Three optocoupler footprints of the main board, the two pump triac drivers and the zero-crossing detector, were numbered as the mirror image of the real parts. Every pad had the right size and the right place, so three audits of sizes and the pre-order check passed them. As drawn, the two pump triac drivers could never fire, and the zero-crossing detector's transistor was wired collector to ground. An order-readiness audit found it by reading the pad positions against the makers' top views and against the assembler's own library footprint. The check had no rule that reads which way a footprint's numbers run, and a size check cannot see a mirrored numbering.
+
+  Settled for the build:
+  - A dual-row or four-sided package is numbered counter-clockwise from pin 1 as seen from the top of the part, so a footprint whose numbers run clockwise is the mirror image of the part and fits it only turned over. The check reads the layout alone, for every design, and no record carries a key for it. For each footprint it takes the numbered pads with copper, leaves out an exposed centre pad inside the outline of the rest, and judges the footprint when at least four distinct numbers remain and the pads stand on two parallel straight lines or on four lines in two parallel pairs at right angles. The numbers are put in ascending order and the turn about the pads' centroid from each pad to that of the next number is read. When every turn is clockwise and together they make less than a full turn, the design fails under the name pad_numbering, naming the reference, the footprint and the part number field, and saying the numbering is the mirror image of the counter-clockwise convention.
+  - A footprint whose numbers follow no single direction is not judged, so the rule has no false failure and needs no exemption: a header numbered by rows or in a zig-zag, a relay, a module, an in-line part, a mounting or shield pad numbered out of turn, and a part of fewer than four distinct numbers.
+  - A footprint on the back of the board is seen from the back, so its sense is turned about. KiCad writes the pads of a back footprint already placed as they lie on the board seen from the front, and a test has KiCad itself place a pad of a back footprint to show it.
+  - No acceptance record waives a clockwise-numbered footprint. The rule is in neither the workmanship rules an acceptance record may cover nor the classes the owner may mark as warnings.
+  - The seeded-fault proof (task hw:prove) holds a seed that numbers one footprint of a throwaway proof design clockwise, and the check catches it.
+  - The rule was run over every multi-pad footprint of the main board, 36 groups of footprint and part number. Ten are counter-clockwise, two are clockwise and are the three optocouplers, and 24 are not judged. Four of the unjudged groups are three-terminal groups, the two-diode clamps of seven positions, the three-lead SOT-23 diode of four positions, the SOT-223 regulator and the triac in the TO-252 package, which had no recorded basis for their numbering. A second reader read each against the makers' sheets and found all four right. No footprint of any proof design is clockwise.
+  - hardware/README.md states the rule, what it judges and what it leaves unjudged, and has a row for it in the table of the check's rule names.
+
+  Out of scope: three-terminal parts and footprints whose numbers follow no single direction, whose numbering stays a reading against the maker's sheet, as the board design method says.
+rationale: |
+  Restores REQ-BOARD-LAYOUT-PRACTICE-001.C1: a board is judged against every applicable item before it is ordered, and a mirrored footprint is a fault of that kind that the existing items could not see. The same-part pad pair and mains zone fill item is a different item because it measures copper, where this one reads the order of the pad numbers. The rule judges only what a geometric test can decide without a false failure, and leaves the rest to the reading against the maker's sheet that the method requires, so it neither waives anything nor claims more than it can see.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-PRE-ORDER-RULE-READINGS
+    type: justified-by

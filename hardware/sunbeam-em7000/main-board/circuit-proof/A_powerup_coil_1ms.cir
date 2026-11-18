@@ -1,0 +1,35 @@
+Interlock supply ramp A_powerup_coil_1ms.cir: output float, rising in 1 ms, slowest corner, drawn 21-part drive
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND PWL(0 0 1m 0 0.002000 5.25 4 5.25)
+* relay coil at its high end, 68.2 ohm, behind a 0 V sense source: the coil voltage is 68.2 ohm x i(Vsc); 3.50 V pick-up = 51.3 mA
+Vsc +5V KC 0
+Rcoil KC POL_COIL_LO 68.2
+* FET input capacitance at its datasheet maximum, 50 pF (NX3008NBK Table 7), one per gate
+Cg201 POL_GATE_A GND 50p
+Cg202 POL_GATE_B GND 50p
+Rcl1 POL_CLAMP_1 GND 100Meg
+Rcl2 POL_CLAMP_2 GND 100Meg
+Rmid POL_MID GND 100Meg
+.options reltol=1e-4 abstol=1e-10 gmin=1e-12 itl4=200 method=gear
+.tran 5u 1500m 0 5u
+.control
+* both FETs at the lowest threshold (VGSth 0.6 V) with the pick-up row's KP: coil voltage reached by the gate pump
+altermod NM vto=0.6 kp=0.5102
+alter R203 = 5.6896Meg
+alter R204 = 5.6896Meg
+alter C203 = 4.9645n
+alter C205 = 4.9645n
+alter C202 = 105.6n
+alter C204 = 105.6n
+run
+meas tran vgmaxA MAX v(POL_GATE_A)
+meas tran vgmaxB MAX v(POL_GATE_B)
+meas tran vbufmax MAX v(POL_BUF)
+meas tran tabove06a TRIG v(POL_GATE_A) VAL=0.6 RISE=1 TARG v(POL_GATE_A) VAL=0.6 FALL=1
+meas tran tabove073a TRIG v(POL_GATE_A) VAL=0.73 RISE=1 TARG v(POL_GATE_A) VAL=0.73 FALL=1
+meas tran tabove18a TRIG v(POL_GATE_A) VAL=1.8 RISE=1 TARG v(POL_GATE_A) VAL=1.8 FALL=1
+meas tran icoilmax MAX i(Vsc)
+meas tran tcoil35 TRIG i(Vsc) VAL=0.0513 RISE=1 TARG i(Vsc) VAL=0.0513 FALL=1
+.endc
+.end

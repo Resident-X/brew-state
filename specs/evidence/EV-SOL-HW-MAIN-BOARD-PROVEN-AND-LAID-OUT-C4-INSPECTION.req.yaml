@@ -1,0 +1,46 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T04:30:48.03064Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/{layout-plan.md,layout-review.md,owner-sign-off.md,design-rules.md,circuit-proof.md,circuit-verdicts.md,open-items.md,main-board.kicad_pcb,main-board.kicad_dru}, hardware/sunbeam-em7000/separation-basis.yaml, docs/sunbeam-em7000/{controller-board-division.md,controller-board-design-constraints.md}
+  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  verifier: claude (AI agent)
+attested_by: crun-53ff47a01c39164b
+text: |-
+  SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C4 (inspection, version 2): VERDICT PASS.
+  Criterion: "With each retained tab's footprint as the schematic leaf drew it, every separation and fixing distance holds. Where the judgements leaf finds suppression needed, the line-to-line capacitor and common-mode choke are placed at the entry with ratings and separation judged against the signed basis; if they cannot fit, the floorplan in the division record is revised and the basis is not relaxed. Drawing the footprints and buying the parts are out of scope."
+  Inspected at HEAD 123d64ad; main-board.kicad_pcb sha256 8ca1288bd3e4d5fbf16af303c8d23dbb6cdd28eb96487a8ed85945ce4e1062fc (the board judged in layout-review.md rounds 6 and 7, headers lines 5746 and 5898; differs from the round 4-5 board 38eb68f2... in 8 text lines only: R822 value/LCSC/MPN and the JP303 Rating field).
+
+  1. Every separation and fixing distance holds with each retained tab's footprint as drawn.
+   - Board file: tabs J101-J103, J106-J110 are Tab_TE_63849-1, two 3.0 mm circular plated pads each (x 4.46 and 9.54, hole 1.4). Centre pitch (my script): J101-J102 8.5, J102-J103 8.5, J103-J110 10.5, J106-J107 10.6, J107-J108 9.6, J108-J109 8.7 mm; pad edge to pad edge at the closest pair 8.5 - 3.0 = 5.5 mm, over the signed mains_to_mains 2.0 mm between pads (separation-basis.yaml lines 328-331: clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 2.6).
+   - layout-plan.md line 224 (BOARD-9) states "at least 8.5 mm apart centre to centre (5.5 mm between pad edges, measured on the board)"; line 229 BOARD-14, line 230 BOARD-15 (receptacle housing room). layout-review.md BOARD-14 pass in round 4 (line 5526), round 5 (5679), round 6 (5859), round 7 (6011); BOARD-15 pass at 5680, 5860, 6012; BOARD-9 round 7 line 6006 reproduces the 8.5 / 5.5 figures.
+   - Fixing distance: mounting hole H3 (6.5, 5.5) to the nearest tab pad edge, J109 pad (4.46, 21.0): sqrt(2.04^2+15.5^2) - 1.5 = 14.13 mm, over the 13.25 mm hole keep-out of controller-board-division.md line 326.
+   - Round 7 result line 6035: "CLEAN: no ISSUE is open".
+   Result: met.
+
+  2. The line-to-line capacitor is placed at the entry.
+   - Judgement: controller-board-design-constraints.md line 158: the entry carries an X2 capacitor, 0.1 uF, across line and neutral, "and no common-mode choke and no Y capacitor"; controller-board-division.md line 761 repeats it.
+   - Board: C101 (C_Rect_L13.0mm_P10.00mm, F.Cu) at (15.5, 69.7): pad 1 LINE (15.5, 69.7), pad 2 NEUTRAL (5.5, 69.7); RV101 (15.5, 62.6); discharge strings R101-R104 at y 74.7; all inside the plan's mains rectangle (layout-plan.md line 26; design-rules.md line 37 lets C101 into Mains region parts). Distances: C101 to F101 pad 2 (44.3, 86.3) sqrt(28.8^2+16.6^2) = 33.24 mm; RV101 sqrt(28.8^2+23.7^2) = 37.30 mm; C101 to J102 (7, 98.7) 30.22 mm. These equal layout-plan.md line 224 (33.2, 37.3, 30).
+   - The distance is not "against F101's pad": finding 4.1 (layout-review.md line 5554), closed by owner decision S-75 (owner-sign-off.md line 106; reviewer re-check line 5533): 41 nH x 60 A/us = 2.5 V; resonance 1/(2 pi sqrt(61 nH x 100 nF)) = 2.04 MHz; at 5 MHz the lead is 1.92 ohm against the capacitor's 0.318 ohm, net 1.60 ohm, attenuation 49.9 dB ideal against 35.9 dB, a loss of 14.0 dB (record: about 14 dB). Round 7 BOARD-9 (line 6006) keeps the override.
+   Result: met.
+
+  3. The common-mode choke is placed at the entry where needed.
+   - The judgement needs none (constraints line 158). Board scan: inductor-class footprints are only F601, F602 (L_0603 beads on the AMC supply) and FB301 (3.3 V analogue bead). layout-review.md line 5544: "no footprint carries an inductor or choke designator except the bead FB301"; circuit-verdicts.md line 99: no Y capacitor, C101 the only line-to-neutral part. Result: met (nothing to place; none drawn).
+
+  4. Ratings and separation judged against the signed basis.
+   - Rating: C101 KNSCHA MPX104K31C3KN15600, 0.1 uF, 310 VAC X2 (circuit-proof.md line 556). Basis working voltage 253 V rms, 358 V peak (separation-basis.yaml line 191); 310 V rms = 438 V peak; margin 80 V. circuit-verdicts.md line 43: C101 PASS. Impulse withstand against overvoltage category 2 (basis line 195) is "not shown" (circuit-proof.md line 582), finding 7.17, accepted and carried to DEL-HW-BRING-UP.C15 by DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER (z8) (owner-sign-off.md line 130, S-61; schematic-review.md lines 8251, 8420): a recorded open figure, owner-accepted.
+   - Separation: no accepted exception in separation-basis.yaml names C101 (42 entries from line 560), so 1.5 mm clearance, 2.0 mm pad to pad, 2.6 mm creepage apply. Recomputed from the board file (tracks, vias, pads of all layers, conservative circles; pours excluded): nearest other-net copper to C101 pads 3.850 mm (DISCH_B and DISCH_A F.Cu tracks), 4.356 mm via, 5.935 mm VMEAS_N1: all over 2.6. Pads are 10 mm apart. Round 7 MAINS-1 pass (layout-review.md line 5959). Result: met.
+
+  5. If they cannot fit, the floorplan is revised and the basis not relaxed. They fit; no basis entry relates to C101; owner-sign-off.md S-25 (line 57): mains clearance and creepage kept strictly, not relaxed. Result: met (not triggered).
+  6. Out of scope: footprint drawing, purchase. Not assessed.
+
+  Checked against the committed records and tests at commit 123d64ad (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C4
+    type: satisfies

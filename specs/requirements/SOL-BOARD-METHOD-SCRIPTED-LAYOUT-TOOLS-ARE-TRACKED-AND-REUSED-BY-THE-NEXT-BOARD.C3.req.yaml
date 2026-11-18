@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C3
+type: criterion
+title: The fill-difference command reports the copper difference of two boards per zone and layer
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Run over two synthetic boards whose zones differ, the command reports for each zone and each layer the copper area present in one board and absent in the other, and reports no difference for identical boards. Tests cover a zone that gains copper, one that loses copper, a layer that holds no zone and boards with different zone sets, in text and in JSON. This does not cover differences outside zones, which the other checks report.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

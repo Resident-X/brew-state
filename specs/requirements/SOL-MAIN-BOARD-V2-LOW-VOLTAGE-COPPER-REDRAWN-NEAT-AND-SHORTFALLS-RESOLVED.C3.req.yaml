@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED.C3
+type: criterion
+title: The routed board passes the placement and routing history check and the zone-filled design rule check with no unconnected item
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The layout's recorded history check passes on the final board in its routed form, and a design rule check that refills the zones reports no unconnected item and no item in a place the rules forbid. A failure of either fails. Out of scope: the lines the pre-order check accepts on a signed entry.
+links:
+  - target: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED
+    type: criterion-of

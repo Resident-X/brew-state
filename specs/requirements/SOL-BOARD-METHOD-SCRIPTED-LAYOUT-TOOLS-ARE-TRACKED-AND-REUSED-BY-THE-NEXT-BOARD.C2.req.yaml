@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C2
+type: criterion
+title: The safe refill command leaves the board's property lines and zone clearances as they were
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Run over a synthetic board that carries property lines and zone clearances, the refill command leaves every property line and every zone clearance as it was before the run and never writes a zero zone clearance, with the refilled copper otherwise as the zone fill computes it. Tests cover a board with property lines, a zone with an explicit clearance and a board with no zones, in text and in JSON. This does not cover the refill's speed or any zone other than a copper zone.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C1
+type: criterion
+title: A part the layout marks do-not-populate and the schematic does not, or the reverse, fails the design, naming the part
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A reference whose footprint in the layout carries the do-not-populate attribute while its schematic symbol does not, or the reverse, fails the design under the name dnp_agreement, naming the reference and saying which of the layout and the schematic marks it not populated and which marks it fitted. The schematic marks a part when the symbol attribute is set on any unit of any sheet the design reaches, a reference whose units differ fails, and a text field is not read as the attribute. A reference one source does not list is not judged by that source. Out of scope: the parts record and any other rule of the check.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+    type: criterion-of

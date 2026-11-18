@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C6
+type: criterion
+title: The BAT54SW,115 sheet holds every figure the records use for the seven clamps at least as good as the BAT54S figures
+status: active
+version: 3
+measurement_type: binary
+verification: inspection
+text: |
+  The maker's sheet for the swapped part (https://www.lcsc.com/datasheet/lcsc_datasheet_2407241045_Nexperia-BAT54SW-115_C78606.pdf, fetched by curl and read with pdftotext) is read, and each figure the records use for each of the seven clamp references is compared with the sheet's figure for the BAT54SW,115 with the arithmetic shown in the evidence. The uses are read from the netlist: the thermistor inputs NTC_COF (D502), NTC_STM (D504) and NTC_WAND (D506), the steam-path pressure I2C pins STM_SCL and STM_SDA (D523, D524) and the brew-path pressure I2C pins BREW_SCL and BREW_SDA (D527, D528). The figures compared are reverse leakage against the 2 uA at 25 V and 25 degC that the error budget's 0.56 degC clamp-leakage term and the front-end proof script use; forward voltage against the 0.24 V at 0.1 mA and 0.32 V at 1 mA maxima that fit the thermistor clamp decks, the shorted-lead verdict rows and the I2C pin-voltage rows; reverse voltage against the 30 V of the pin limits and the 0.75 derating share of 22.5 V; total power and forward current against the 200 mW and 200 mA the derating rows use; diode capacitance against the 10 pF of the line-capacitance sums, thermistor and I2C bus alike; and the sheet's pin functions against the board's pads, pin 1 the anode of diode 1, pin 2 the cathode of diode 2 and pin 3 the common node. Each figure of the swapped part is at least as good as the one used, or the record that uses it is re-derived with the sheet's figure and its margin shown to hold. The inspection fails on a sheet figure worse than the one a record uses with that record unchanged, on a node among the seven uses left uncompared, and on a figure compared without the sheet's test condition. Out of scope: parts other than the BAT54SW,115, and measurement on built boards.
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+    type: criterion-of

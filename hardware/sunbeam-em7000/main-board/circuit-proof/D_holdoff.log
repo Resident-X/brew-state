@@ -1,10 +1,11 @@
-== gate pull-down: every NMOS stage (Q701 Q711 Q731 Q741 Q761 Q771 Q821 Q823 Q824)
+== gate pull-down: every NMOS stage with a 100 kohm pull-down (Q701 Q711 Q731 Q741 Q761 Q771 Q823 Q824)
 PASS  gate level under leakage: (Ilkg 350 nA + IGSS 100 nA) x (Rg + Rpd) = 45.5 mV vs VGS(th) min 0.65 V: margin x14
 PASS  leakage through the LED, pump drive: IDSS 5 uA (55 degC) is x2000 under IFT max 10 mA (the sheet states no minimum trigger current)
 PASS  leakage through the LED, heater drive: IDSS 5 uA is x1000 under IFT max 5 mA (the sheet states no minimum trigger current)
 PASS  leakage through a valve coil: 5 uA x 97.2 ohm = 0.49 mV vs drop-out 0.25 V min: x514
 
-== anode rail gate Q821 / Q822
+== anode rail gate Q821 / Q822 (R822 10 kohm: the gate discharge sets the turn-off after a reset)
+PASS  Q821 gate level under leakage, R822 10 kohm: (Ilkg 350 nA + IGSS 100 nA) x (Rg + R822) = 4.6 mV vs VGS(th) min 0.65 V: margin x142
 PASS  PMOS off, both pull-ups: gate pulled to +5V by R823 || R824 (11 k): VSG 0 V vs |VGS(th)| min 0.5 V; leakage drop: IGSS 100 nA x 11 k = 1.1 mV
 PASS  PMOS off, one pull-up open: gate pulled to +5V by 22 k: IGSS 100 nA x 22 k = 2.2 mV; VSG stays under 0.5 V by x227
    both pull-ups open (a second fault): the gate floats and the switch keeps the state it had; the anode rail can stay lit after a command off. Indicators only; not detected by the board
@@ -24,6 +25,15 @@ PASS  input clamp current, +5V absent: worst 2.90 mA per input vs IIK 20 mA (SCL
 == key lines KEY1..KEY5 and the anode rail
 PASS  pin voltage with VDD present: anode rail on (firmware-driven), VF taken as 0: pin <= 5.25 V; operating limit Min(VDD) + 3.6 V and below 5.5 V holds for VDD >= 1.65 V
 PASS  pin voltage with +3V3 absent, +5V present: ANODE_GATE is a floating input / low, Q821 gate pulled down, Q822 gate pulled to +5V: anode rail 22 mV, key pin <= 0.1 V
-   3V3 falling: Q822 turns off when ANODE_GATE leaves its high level; the rail bleeds through R825 22 k; the time to fall is set by the panel's wiring capacitance (unread), not bounded here (open item)
+PASS  pin voltage in a normal brown-out: rail at most +5V; VDD within 0.35 V of +5V while U302 is in dropout: rail minus VDD at most 0.35 V, under the 2.5 V margin to Min(VDD) + 3.6 V and 5.5 V
+
+== +3V3 lost alone while +5V and the anode rail stay up (a fault-only residual)
+   turn-off after reset, typical: supervisor 10.0 + NRST (C418) 24.5 + Q821 gate to plateau 10.6 + Q821 Miller 19.1 + Q822 gate pull-up 30.8 + rail 1.9 us -> 78 us (Miller and pull-up overlap: the longer counted)
+   turn-off after reset, worst: supervisor 10.0 + NRST (C418) 27.4 + Q821 gate to plateau 20.0 + Q821 Miller 39.3 + Q822 gate pull-up 41.7 + rail 1.9 us -> 140 us
+   time available after the trip: operating limit 35 to 52 us, absolute maximum 46 to 78 us (constant-current to resistive load)
+   at the typical turn-off (78 us, constant-current load) VDD is 0.13 V: the key pin at 5.25 V is 1.12 V over the absolute maximum (VDD + 4.0 V) and 1.52 V over the operating limit, for 32 us
+   at the worst turn-off (140 us, constant-current load) VDD is 0.00 V: the key pin at 5.25 V is 1.25 V over the absolute maximum (VDD + 4.0 V) and 1.65 V over the operating limit, for 94 us
+   current per indicator element meanwhile: at most 5.25 V / 300 ohm = 17.5 mA (330 ohm element 15.9 mA), VF taken as 0 and the pin at 0 V; 35.0 mA on a two-element line
+RESIDUAL  +3V3 lost alone: NOT inside the pin limit by these figures (turn-off 78 us typical, 140 us worst, against 46 to 78 us available to the absolute maximum); a fault-only residual accepted by the owner (S-88 of owner-sign-off.md), held at bring-up by the rule not to remove +3V3 while firmware drives ANODE_GATE
 
 SUMMARY: 0 failing []

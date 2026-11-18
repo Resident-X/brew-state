@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -31,10 +32,54 @@ import unittest
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
 
+import board_check  # noqa: E402
 import board_fixtures  # noqa: E402
 import board_prove  # noqa: E402
 
 KICAD_CLI = os.environ.get("KICAD_CLI") or "kicad-cli"
+
+
+def _record_names():
+    """The name of every record the check looks up by the nearest-folder rule, as the module's own constants name them."""
+    names = [getattr(board_check, constant) for constant in dir(board_check)
+             if constant.endswith("_NAME") and constant != "DEFAULT_SHEET_NAME"
+             and isinstance(getattr(board_check, constant), str) and getattr(board_check, constant).endswith(".yaml")]
+    return sorted(set(names) | {board_check.RECORD_NAME})
+
+
+def place_records(seed, design):
+    """Put every record the check finds at or above `design`'s folder into the seed's copy, each at the same place from the root.
+
+    The copy holds the design's folder alone, so a record that sits above the folder is absent from it and the check
+    would fail the copied design for lacking it. A record the copy already holds is left as it is.
+    """
+    for name in _record_names():
+        found = board_check.find_record(board_prove.REPO, design, name=name)
+        if found is None:
+            continue
+        target = os.path.join(seed.root, found)
+        if os.path.isfile(target):
+            continue
+        held = board_prove.committed(found)
+        os.makedirs(os.path.dirname(target), exist_ok=True)
+        if held is not None:
+            with open(target, "wb") as handle:
+                handle.write(held[found])
+        else:
+            shutil.copyfile(os.path.join(board_prove.REPO, found), target)
+
+
+def basis_record(seed, design):
+    """The separation basis record the check holds `design` to, as (path in the seed's copy, whether it sits in the design's own folder).
+
+    The record is found as the check finds it, the nearest at or above the design's folder. Every record the check finds
+    above the folder is placed in the copy too, at the same place from the repository's root, where the check finds it.
+    """
+    found = board_check.find_record(board_prove.REPO, design)
+    if found is None:
+        raise AssertionError(f"no separation basis record at or above {design}")
+    place_records(seed, design)
+    return os.path.join(seed.root, found), os.path.dirname(found) == design
 
 #: The environment variable that, set to anything, leaves out every test that needs the seeded-fault proof.
 WITHOUT_PROOF = "BOARD_TESTS_WITHOUT_PROOF"

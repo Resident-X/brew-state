@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF-C3-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-14T17:40:24Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_measured_spacing.py::AZoneClearanceOfZeroIsNone.test_zero_and_no_clearance_are_no_local_clearance
+  artifact_version: d61c853072db143dac194761042558f41cf25846
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C3
+    type: satisfies

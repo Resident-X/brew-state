@@ -10,7 +10,7 @@ Using SPARSE 1.3 as Direct Linear Solver
 Operating point simulation skipped by 'uic',
   now using transient initial conditions.
 
-No. of Data Rows : 60100
+No. of Data Rows : 60118
 tr06                =  6.18842e-02
 tr05                =  6.70859e-02
 Note: Simulation executed from .control section 

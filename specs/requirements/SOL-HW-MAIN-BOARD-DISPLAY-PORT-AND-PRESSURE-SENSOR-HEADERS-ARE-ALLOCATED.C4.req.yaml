@@ -1,0 +1,12 @@
+id: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C4
+type: criterion
+title: The channel enumeration names the display port and each pressure sensor's header and pins
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The channel enumeration carries a row for the display serial port, the steam-path pressure sensor and the brew-path pressure sensor, each naming its header and the controller pins it uses.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED
+    type: criterion-of

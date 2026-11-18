@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C7
+type: criterion
+title: The silkscreen command refuses to write a board that differs from its input in anything but silkscreen
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  When the board the command would write differs from its input in anything other than silkscreen, the command refuses to write it, names what differs and leaves the input untouched. Tests seed a changed track, a moved part and a changed zone in turn and check each is refused, and check that a silkscreen-only change is written. This does not cover judging the neatness of the silkscreen, which pictures settle.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

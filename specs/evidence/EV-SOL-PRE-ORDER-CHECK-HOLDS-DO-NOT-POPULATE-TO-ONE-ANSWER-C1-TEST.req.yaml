@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-14T23:28:26Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_dnp_agreement.py::LayoutAndSchematicDisagree.test_a_part_the_layout_marks_and_the_schematic_leaves_fitted_fails_naming_the_part_and_the_sources
+  artifact_version: 446c53a97f3156986fedc2c9632d25021043fc5e
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C1
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C6
+type: criterion
+title: The creepage pass hands the rule engine only the creepage constraints of the rules the first pass was given, under the same rule names, and the refilled layout less exactly the ground pours the guard cleared
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A test requires the rules text handed to the creepage pass to hold the creepage constraints of the first pass's text, in any form, in their order and under their rule names, and no other constraint and no rule left with none, so that the first function and this one split every constraint between them with none lost and none in both; requires the layout handed to the rule engine to be the refilled layout with exactly the zones the guard cleared taken out and every other byte unchanged, and put back as it was after the run, however the run ends; requires the pass to return only the creepage findings of KiCad's report, a failed run to fail the design naming the pour kept in and its distance, and a run that did not load its rules to fail the design; and requires a rules text holding no creepage constraint to run no KiCad pass. The slowness of the rule engine on a pour kept in is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
+    type: criterion-of

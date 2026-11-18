@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET-C3-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-18T02:31:48.036668Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_seven_kept_net_pair_entries_hold_the_lists_working_voltages_and_distances_the_leaf_sets
+  artifact_version: 4eaf4c9f
+attested_by: crun-0031785d43e1346b
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C3
+    type: satisfies

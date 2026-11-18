@@ -1946,36 +1946,6 @@
 		)
 		(uuid "fc9469a3-0291-4df1-a4c8-b1a597e0a98e")
 	)
-	(label "SPI2_SCK"
-		(at 157.48 127 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "53e22c70-4ddf-4bad-96ef-5e879cd0b912")
-	)
-	(label "SPI2_MISO"
-		(at 157.48 129.54 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "bf0038a6-ad53-4cd1-94fd-e649abfb58c6")
-	)
-	(label "SPI2_MOSI"
-		(at 157.48 132.08 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "12afe227-3f00-48ba-973a-14209a9b6b2e")
-	)
 	(label "FLOW_IN"
 		(at 157.48 134.62 0)
 		(effects
@@ -2736,26 +2706,6 @@
 		)
 		(uuid "61705dd7-228c-4fbf-970e-e4ded846bd39")
 	)
-	(label "SPI2_SCK"
-		(at 82.55 113.03 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "ff26eb3b-77c9-4605-b729-caf5f286b327")
-	)
-	(label "SPI2_MOSI"
-		(at 82.55 115.57 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "f1beb55d-1591-408f-a3bd-db139fd2f0d3")
-	)
 	(label "AMC_CS"
 		(at 82.55 118.11 0)
 		(effects
@@ -2765,16 +2715,6 @@
 			(justify left bottom)
 		)
 		(uuid "79626633-28d9-4778-b263-49108f9990a7")
-	)
-	(label "SPI2_MISO"
-		(at 82.55 120.65 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "5955cf7a-621a-453e-bb8a-5849c239bb9c")
 	)
 	(label "AMC_RESET"
 		(at 82.55 123.19 0)
@@ -2826,26 +2766,6 @@
 		)
 		(uuid "3e9b38e5-0e50-4aa7-a6c2-7af5fd46e573")
 	)
-	(label "SPI2_MOSI"
-		(at 127 152.4 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "7efe777a-98a3-43d6-99a0-46cf2863da72")
-	)
-	(label "SPI2_SCK"
-		(at 127 154.94 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "4a2468c4-5e04-4f3b-961d-5fa4e8c87a23")
-	)
 	(label "PT1_CS"
 		(at 127 157.48 180)
 		(effects
@@ -2855,16 +2775,6 @@
 			(justify right bottom)
 		)
 		(uuid "5a2ac917-0a96-4c12-a4e4-df2acd1a3fa9")
-	)
-	(label "SPI2_MISO"
-		(at 127 160.02 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "7a4cf193-9882-4792-9487-e786fb2bacdc")
 	)
 	(label "PT2_CS"
 		(at 127 162.56 180)
@@ -2915,6 +2825,96 @@
 			(justify left bottom)
 		)
 		(uuid "146f0ff6-b3dc-4f7a-8852-f540f93b18a7")
+	)
+	(label "SPI3_SCK"
+		(at 157.48 127 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "c9096709-2706-451d-addb-ac9d7998a62a")
+	)
+	(label "SPI3_MISO"
+		(at 157.48 129.54 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "72ad9086-ad24-46fe-ac04-5d960347a535")
+	)
+	(label "SPI3_MOSI"
+		(at 157.48 132.08 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "51cc4ffd-f30a-4929-a600-e33228336427")
+	)
+	(label "SPI3_SCK"
+		(at 82.55 113.03 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "da5c3fa9-95ef-424c-9427-257121fcac59")
+	)
+	(label "SPI3_MOSI"
+		(at 82.55 115.57 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "e33b62e0-3d3d-4ee0-b7ad-1ec24652a3a8")
+	)
+	(label "SPI3_MISO"
+		(at 82.55 120.65 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "929f81f5-c30c-4851-8b25-dee74f942795")
+	)
+	(label "SPI3_MOSI"
+		(at 127 152.4 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "02023c4d-93d3-492e-8f64-1a61064a5854")
+	)
+	(label "SPI3_SCK"
+		(at 127 154.94 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "ec328055-4831-41fe-b499-2edebb261f4f")
+	)
+	(label "SPI3_MISO"
+		(at 127 160.02 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "4d424871-4ff0-4f8e-a026-7ffbc2da00bd")
 	)
 	(global_label "NRST"
 		(shape bidirectional)
@@ -3215,15 +3215,15 @@
 			(at 154.94 124.46 0)
 			(uuid "c3459f13-4e6e-4c66-9700-5506637fbbb3")
 		)
-		(pin "SPI2_SCK" bidirectional
+		(pin "SPI3_SCK" bidirectional
 			(at 154.94 127 0)
 			(uuid "1bb043cc-7d3c-46c9-81c8-59a1bd194fa8")
 		)
-		(pin "SPI2_MISO" bidirectional
+		(pin "SPI3_MISO" bidirectional
 			(at 154.94 129.54 0)
 			(uuid "4425cdd5-e7b6-4b55-9af1-ed2602885cbd")
 		)
-		(pin "SPI2_MOSI" bidirectional
+		(pin "SPI3_MOSI" bidirectional
 			(at 154.94 132.08 0)
 			(uuid "928b17d1-0a4e-4405-9ba5-022d6048ea3a")
 		)
@@ -3807,11 +3807,11 @@
 			(at 234.95 222.25 0)
 			(uuid "beb8f619-605e-457e-888f-47ce2fe34d0e")
 		)
-		(pin "MAINS_PRES_C" bidirectional
+		(pin "MAINS_PRES_C" output
 			(at 234.95 224.79 0)
 			(uuid "01223c23-f5a8-45e9-a631-331d9044d3a6")
 		)
-		(pin "MAINS_PRES_S" bidirectional
+		(pin "MAINS_PRES_S" output
 			(at 234.95 227.33 0)
 			(uuid "011eec5e-f163-42ca-808c-e2b6e8fdb9bf")
 		)
@@ -4099,11 +4099,11 @@
 			(at 80.01 110.49 0)
 			(uuid "e13644c6-0d23-4127-8461-f97519b23096")
 		)
-		(pin "SPI2_SCK" input
+		(pin "SPI3_SCK" input
 			(at 80.01 113.03 0)
 			(uuid "c8445686-04ad-4638-95ae-4d9fdef64fff")
 		)
-		(pin "SPI2_MOSI" input
+		(pin "SPI3_MOSI" input
 			(at 80.01 115.57 0)
 			(uuid "19b5d429-ba88-42a7-bcbd-9cbfbc4fcce0")
 		)
@@ -4111,7 +4111,7 @@
 			(at 80.01 118.11 0)
 			(uuid "0e44bbcd-8910-432c-a886-2766f73d4a92")
 		)
-		(pin "SPI2_MISO" output
+		(pin "SPI3_MISO" output
 			(at 80.01 120.65 0)
 			(uuid "3cd1c16c-2f9a-4080-a9f6-f031cf6195b0")
 		)
@@ -4227,11 +4227,11 @@
 				(justify left top)
 			)
 		)
-		(pin "SPI2_MOSI" input
+		(pin "SPI3_MOSI" input
 			(at 129.54 152.4 180)
 			(uuid "5baefb1c-6207-446e-be53-a69f24bf0d8b")
 		)
-		(pin "SPI2_SCK" input
+		(pin "SPI3_SCK" input
 			(at 129.54 154.94 180)
 			(uuid "cc331481-bd4c-4d4e-b4d4-3d3dd40ea5cd")
 		)
@@ -4239,7 +4239,7 @@
 			(at 129.54 157.48 180)
 			(uuid "be419c69-f242-4b84-a7a4-c41012d91732")
 		)
-		(pin "SPI2_MISO" output
+		(pin "SPI3_MISO" output
 			(at 129.54 160.02 180)
 			(uuid "617a85ef-99e9-4b5b-95f2-7e67c720dbbf")
 		)

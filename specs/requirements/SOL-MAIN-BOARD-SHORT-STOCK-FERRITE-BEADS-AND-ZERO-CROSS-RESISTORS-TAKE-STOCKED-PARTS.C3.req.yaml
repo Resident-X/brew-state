@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS.C3
+type: criterion
+title: The zero-cross stress and delay proofs are re-run at 59 kohm and the margins hold
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The zero-cross stress script and the delay scripts under the circuit-proof folder are re-run with R630 and R631 at 59 kohm, and the record shows with the arithmetic: LED current at the lowest and the highest line voltage against the 1 mA needed and the LED maximum, each resistor's dissipation against 2 W and its voltage against 300 V, and the zero-cross timing shift. The margins hold, no mains figure and no signed separation figure is relaxed, and the mains-pair exception records are unchanged. Out of scope: the other circuit proofs.
+links:
+  - target: SOL-MAIN-BOARD-SHORT-STOCK-FERRITE-BEADS-AND-ZERO-CROSS-RESISTORS-TAKE-STOCKED-PARTS
+    type: criterion-of

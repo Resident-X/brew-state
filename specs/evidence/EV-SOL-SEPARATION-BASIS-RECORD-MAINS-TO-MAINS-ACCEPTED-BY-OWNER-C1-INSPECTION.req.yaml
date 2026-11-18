@@ -1,0 +1,30 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C1
+status: active
+version: 2
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:31:49.716584Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/separation-basis.yaml
+  artifact_version: 123d64ad
+attested_by: crun-fd60ac5c15996e07
+text: |-
+  Stated check of SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C1, made at commit 123d64ad.
+
+  Where the shown material lives: the presentation the owner was shown on 2026-11-17 is a document outside this repository (it is not committed, by design); this evidence therefore carries its content, section by section, and the check below is of that content against each clause of the criterion. The presentation was produced from the committed record hardware/sunbeam-em7000/separation-basis.yaml (962 lines, 42 accepted exceptions) and the main-board files, and shown in the working session before the owner's answer of 2026-11-17 (empty commit 532cbc7d) and before the commit that entered the acceptance (771eba09, 2026-11-18). The session itself cannot be reread from the repository; the presentation text and the commit messages are the durable trace.
+
+  Clause by clause:
+  1. Each signed mains-to-mains and mains-to-low-voltage figure with the table row it rests on. Shown (presentation section 1, 'Signed figures and the table rows they rest on'): mains to low voltage clearance 3.0 mm (table_rows 1: reinforced, 300 V row, category II, 2.5 kV basic so 4.0 kV reinforced, Table F.2 4.0 kV at PD2 = 3.0 mm); mains to low voltage creepage 10.0 mm, deliberately above table_rows 2 (320 V row, PD2, group III, 3.2 mm basic x 2 = 6.4 mm; margin 3.6 mm); mains to mains clearance 1.5 mm (table_rows 3, 2.5 kV basic, PD2, Table F.2); terminal clearance 2.0 mm (table_rows 4, 1.5 + 0.5 mm terminal allowance); creepage and creepage ahead of fuse F101 2.6 mm (table_rows 5: rows 250 V = 2.5 mm and 320 V = 3.2 mm, at 253 V 2.5 + 0.7 x 3/70 = 2.53 mm, signed 2.6); the pairs across the open contact of K201 held at the mains-to-low-voltage figures; the working-voltage note (253 V treated inside the 250 V band); and the eight functional band rows (10 V to 320 V) used by the net-pair entries, with the band rule.
+  2. Every accepted_exceptions entry with its pair, the distance accepted, the figure it falls short of, the owner's reason and the bounding element. Shown (section 2, groups A to H, with the count check 4 + 5 + 7 + 2 + 4 + 8 + 8 + 4 = 42 and by day 23 on 2026-11-06, 3 on 2026-11-07, 16 on 2026-11-14): A, four triac tab-to-lead pairs at 2.0 mm against 2.6 mm creepage, with the bound that no fuse clears them and K201 is the bounding element; B, five same-connector plated-hole pairs (J630 and J635 at 1.15 mm, J791, J821 and J861 at 1.25 mm); C, seven net-pair entries (1, 2, 3, 5, 8, 10, 11) with nets, constraint, working voltage, accepted distance, figure fallen short of, bound; D, two R105 pairs at 0.51 mm; E, R605 to R608 at 0.85 mm; F, opto-triac pin 5 pairs, creepage and clearance, at 0.76 mm; G, gate resistors R704, R705, R714, R715 at 1.8 mm; H, discharge resistors R101 to R104 at 1.8 mm.
+  3. The readings the record marks for the owner's check (section 3, each with 'Accepting' and 'If wrong'): (a) interpolation of the household-appliance standard's creepage table with the 3.2 mm fallback at PD2; (b) the 0.5 mm terminal allowance; (c) the PD2 material group III column of the 250 V and 320 V rows; (d) the six conditions of the PD2 credit (enclosure as ground, coat as support, degree, laminate, slots, humidity with fall-back to PD3 and 4.1 mm, re-signature); (e) the single-sourced, unread-standards residual risk the owner accepted on 2026-10-31; (f) for each net-pair entry its two lists of nets, its working voltage with the derivation, its band figure and its single-fault table row (rows 1 to 11 with volts, current and arithmetic), and the fifteen nets of set N.
+  4. The nets on each pin of J630, J635, J791, J821 and J861 with each net's class and speed (section 4), with the statement that the slow-signals-only ground of the five entries is the owner's assertion and the tool does not check it, and the listing of J791 pins 4 and 9 (step pulses up to 7.2 kHz, listed by the layout plan as switching faster than 50 kHz) among the 'Things to check'.
+  5. Plain words with the arithmetic where a figure is derived: each figure above is given with its arithmetic (for example 2.5 + 0.7 x 3/70 = 2.53; 253 / 2 = 126.5 V; 1.6 + 0.4 x 18.8 / 40 = 1.788 rounded up to 1.8). The presentation closes with four things to check (stale comments, bought-part exceptions held only in prose, gauge step speed, possibly redundant entries).
+  6. Before any acceptance is entered: the empty commit 532cbc7d (2026-11-17) records the owner's answer after the presentation; the acceptance was first entered in the record's own fields by 771eba09 on 2026-11-18, after the plain-words restatement of what signing covers (the 42 exceptions, the two pump-triac exceptions bounded by an element that is not independent of the controller, and the single-sourced residual risk accepted on 2026-10-31). Changing any figure, row or exception was out of scope and none changed (771eba09 touches accepted_by and accepted_on only).
+
+  Limit: this check rests on the presentation text and the commit messages, because the session cannot be reread; the claim that the owner was shown it in the session is the operator's account, which the commit message of 532cbc7d repeats, not something the repository proves.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C1
+    type: satisfies

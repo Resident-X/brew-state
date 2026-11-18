@@ -3074,7 +3074,7 @@
 				)
 			)
 		)
-		(property "Value" "100k"
+		(property "Value" "10k"
 			(at 40.64 76.2 90)
 			(effects
 				(font
@@ -3109,7 +3109,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C25803"
+		(property "LCSC" "C25804"
 			(at 40.64 76.2 0)
 			(hide yes)
 			(effects
@@ -3118,7 +3118,7 @@
 				)
 			)
 		)
-		(property "MPN" "0603WAF1003T5E"
+		(property "MPN" "0603WAF1002T5E"
 			(at 40.64 76.2 0)
 			(hide yes)
 			(effects

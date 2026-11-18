@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET-C1-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-18T02:31:47.857311Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_record_is_signed_by_the_owner_on_every_exception_and_the_reader_finds_no_problem
+  artifact_version: 4eaf4c9f
+attested_by: crun-0031785d43e1346b
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C1
+    type: satisfies

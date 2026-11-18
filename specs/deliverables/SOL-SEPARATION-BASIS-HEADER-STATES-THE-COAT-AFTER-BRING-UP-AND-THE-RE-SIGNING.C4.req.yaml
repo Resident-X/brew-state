@@ -1,0 +1,12 @@
+id: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C4
+type: criterion
+title: The record and every exception carry the owner's acceptance of 2026-11-18, and the header states it and keeps the earlier days as history
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |
+  The committed record's top-level accepted_on and the accepted_on of each of its 42 accepted_exceptions entries read 2026-11-18, the day the owner accepted the whole record in the working session, and the accepted_by of the record and of every entry names the owner's acceptance of that day in the session and quotes its words; no exception is dated later than the record. The header states that the owner accepted the whole record on 2026-11-18 in the working session, that Claude entered the acceptance in the record and in each of the 42 entries, and that no figure, pair, distance, reason or bound changed with the date, and states the earlier acceptances of 2026-11-05, 2026-11-06, 2026-11-07 and 2026-11-14 as history, each superseded on every entry by the acceptance of 2026-11-18, with no sentence stating an earlier day as the one the record or an entry now carries. The check's reader on the committed record finds it and every exception signed. The test fails on a record or an exception dated or signed otherwise, an exception dated after the record, or a header that does not state the acceptance and keep the earlier days as history. Out of scope is the derating policy and any field of the record other than accepted_by, accepted_on and the header.
+links:
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
+    type: criterion-of

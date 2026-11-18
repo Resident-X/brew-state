@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION.C1
+type: criterion
+title: No via of the main board is inside a surface-mount pad, and the owner's acceptance of the earlier survey's vias in pads and agreement to shrink them is recorded
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |
+  No via of the committed main board has its centre inside a surface-mount pad, and this item records that the owner accepted the six vias in pads the survey of 2026-11-07 listed ("Accept vias") and agreed to shrink them ("Ok") on that day, the layout that followed having moved them out of the pads instead. The item writes no exception and moves no via. Out of scope: the thermal vias of 0.6 mm and under in exposed pads.
+links:
+  - target: SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION
+    type: criterion-of

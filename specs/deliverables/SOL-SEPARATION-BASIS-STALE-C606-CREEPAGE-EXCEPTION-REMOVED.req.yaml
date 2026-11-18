@@ -1,0 +1,24 @@
+id: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED
+type: deliverable
+category: solution
+title: The separation basis record no longer holds the C606 creepage exception the layout does not need
+status: active
+version: 2
+text: |
+  The main board's separation basis record no longer holds the accepted_exceptions entry for mains_to_mains creepage between C606.1 and C606.2 (0.65 mm accepted), which the layout rule check no longer reports a shortfall for. The pair is not restored; the entry goes.
+
+  Settled for the build:
+  - The entry was removed on the owner's written instruction of 2026-11-07, and the owner's later acceptances dated entries that were then changed or added. The count and day figures the record holds are those the record's own test pins.
+  - The records and tests that restate the record's entry count state the number the record holds.
+  - Out of scope: any other entry, figure, or the derating policy, and the day each entry carries, which the finished header item's criterion on the re-signing day governs.
+rationale: |
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks of the record: a pair is held below the full figure only where the record lists it with its derivation and the layout needs it; an exception the layout does not need excuses nothing and leaves a signed claim that the pair is short. Found by the pre-order check on the finished board.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 97705826d54d3c9bbcea21ab8eea328a5cd9b1e686bdde7d1e3fc8a8a5393d96
+  gating_profile: ""

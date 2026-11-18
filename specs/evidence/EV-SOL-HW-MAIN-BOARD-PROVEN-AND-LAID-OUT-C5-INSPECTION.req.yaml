@@ -1,0 +1,54 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C5-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C5
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T04:30:48.104599Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/{layout-plan.md,layout-review.md,owner-sign-off.md,main-board.kicad_pcb,main-board.kicad_dru}, hardware/sunbeam-em7000/separation-basis.yaml, docs/sunbeam-em7000/controller-board-division.md
+  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  verifier: claude (AI agent)
+attested_by: crun-53ff47a01c39164b
+text: |-
+  SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C5 (inspection, version 2): VERDICT PASS.
+  Criterion: "Each net the division record joins on an inner layer is routed clear of every mounting hole, slot and low-voltage block, and each route is recorded. The valve-relay net from its tab and the other nets the division record's route table lists are among them; a net the finished board routes on the surface instead is recorded with its surface route and the signed figures it is held to. The signed separation basis is kept from all other copper on that layer, and where a net cannot be so routed the floorplan is revised and the basis is not relaxed. Nets the division record does not join on an inner layer are out of scope."
+  Inspected at HEAD 123d64ad; main-board.kicad_pcb sha256 8ca1288b... (same file as layout-review.md rounds 6 and 7, lines 5746 and 5898). Decision read: DEC-MAIN-BOARD-TWO-MAINS-NETS-ARE-ROUTED-ON-IN3.
+
+  1. Route table (controller-board-division.md lines 1014-1020): COFVALVE 34 mm, HOTVALVE inner 36 mm, COFFPUMP 9 mm, LINE_IN inner 23 mm, STEAMPUMP 9 mm, LINE and NEUTRAL group 49 mm; A32 (line 227): the pumps' returns join the neutral pour on an inner layer. Layers: line 306 (six layers; mains routes inside the mains region on In3.Cu).
+   As built (board file, my scan of all segments, vias and the 66 zone blocks):
+   - HOTVALVE (valve-relay net, tab J109 to K741 pad 13): In3.Cu, five tracks 0.30 mm, lengths 12.36 + 7.27 + 4.26 + 5.94 + 14.09 = 43.92 mm, no via; endpoints (9.54, 21.0) J109 and (45.46, 10.1) K741 pad 13; plus a 5.08 mm F.Cu bridge between J109's two plated pads (not a route).
+   - ZC_LED_A (U602 pad 2 to R631): In3.Cu three tracks 0.25 mm = 56.52 mm, two through vias 0.6/0.3 at (22.3, 58.9) and (50.6, 26.17).
+   - LINE_IN: F.Cu zone "ENTRY LINE_IN F 1" and B.Cu zone "ENTRY LINE_IN B 1"; no LINE_IN segment, via or zone on In2.Cu or In3.Cu.
+   - STEAMPUMP: three F.Cu segments 0.6 mm = 18.79 mm, no via; COFFPUMP: three F.Cu segments 0.6 mm = 17.85 mm, no via; COFVALVE: three F.Cu segments 0.30 mm, 5.08 + 6.08 + 30.62 = 41.78 mm, no via, from J106 to K731 pad 13.
+   - Pump returns: T701 pin 1 (50.54, 34.28) has three vias (50.55; 35.4, 36.25, 37.1) and T711 pin 1 (50.54, 19.48) two vias (51.2; 20.5, 21.35) into the In2.Cu zone "NEUTRAL pour In2 north".
+   - Mains-net zones exist only on F.Cu, B.Cu and the In2.Cu NEUTRAL pour; mains-net tracks per layer F.Cu 98, B.Cu 35, In2.Cu 28, In3.Cu 8, In1.Cu 0, In4.Cu 0.
+   Result: HOTVALVE, ZC_LED_A and the pump returns are the inner-layer nets; met.
+
+  2. Each route is recorded, and each surface route with its signed figures.
+   - HOTVALVE and ZC_LED_A: DEC-MAIN-BOARD-TWO-MAINS-NETS-ARE-ROUTED-ON-IN3 ("43.9 mm in five tracks 0.30 mm wide with no via"; "56.5 mm ... three tracks 0.25 mm ... two vias"), layout-plan.md line 9 (Stack paragraph), owner-sign-off.md S-37 (line 75), S-39 (line 77).
+   - layout-plan.md line 220 (BOARD-5): pump returns into In2.Cu through the vias of POWER-3; ZC_LED_A and HOTVALVE on In3.Cu; "LINE_IN ... the F.Cu pour LK_L (zone ENTRY LINE_IN F 1)", STEAMPUMP 18.8 mm, COFFPUMP 17.85 mm, "COFVALVE (J106 to K731, 41.78 mm, three segments, 0.3 mm, no via) is a 0.3 mm F.Cu track, all on the surface with no inner copper, each held to the same signed separation figures as every other mains pair". Line 147 (POWER-2) also records COFVALVE's 41.78 mm route; line 148 (POWER-3): "three vias at T701 pin 1 and two at T711 pin 1". All figures equal my scan.
+   - controller-board-division.md line 1023 ("What the finished main board does with these routes"): LINE_IN's F.Cu pour with its B.Cu twin and no inner copper; HOTVALVE on In3.Cu; STEAMPUMP 18.79 mm and COFFPUMP 17.85 mm of 0.60 mm F.Cu; COFVALVE 41.78 mm of 0.30 mm F.Cu in three segments, the 5.08 mm first segment joining the tab's two plated pads, held to 3.0 mm straight and 10.0 mm by path from low-voltage copper and the signed mains_to_mains figures; the pump returns through vias into the In2.Cu pour. The LINE and NEUTRAL group is recorded by POWER-2 (layout-plan.md line 147).
+   - layout-review.md BOARD-5 re-measured the routes and passed in round 6 (line 5850) and round 7 (line 6002); round 7 result line 6035: CLEAN.
+   Result: met.
+
+  3. Clear of every mounting hole, slot and low-voltage block.
+   - Mounting holes H1 (6.5, 122.5), H2 (126.7, 122.5), H3 (6.5, 5.5), H4 (127, 5.5): nearest inner run is HOTVALVE to H3, (9.54, 21.0): sqrt(3.04^2+15.5^2) = 15.80 mm centre to track centre, less 0.15 half width = 15.65 mm, over the 13.25 mm keep-out (division line 326); ZC_LED_A 31.2 mm.
+   - Slots (Edge.Cuts, 24 lines and 11 arcs): nearest cut to HOTVALVE 6.28 mm edge to edge ((51.9, 10.5)-(52.5, 9.9)), to ZC_LED_A 6.18 mm ((56.9, 36.5)-(56.9, 11.1)); the decision requires 1.5 mm. Barrier strips empty on every layer: round 7 MAINS-3 pass (layout-review.md line 5961).
+   - Low-voltage blocks: both runs lie inside the mains rectangles (layout-plan.md line 26: (1.3, 1.9)-(57.5, 48.4), (1.3, 48.4)-(62, 79.5)). Nearest connected non-mains copper (tracks, vias, pads of all layers, pours excluded): HOTVALVE 14.14 mm (K741 A1, +5V; the 11.1 mm figure is an unconnected NC pad of U711 in the mains pad row); ZC_LED_A 9.24 mm (U602 pad 3 GND). Straight-line floors exceed 3.0 mm; the decision's path figures 12.586 mm and 10.818 mm rest on the pre-order check and review (round 7 BOARD-5 line 6002: straight 3.747 mm or more, no pair under 10 mm straight has a path under 15 mm).
+   Result: met.
+
+  4. The signed basis is kept from all other copper on that layer (basis mains_to_mains 1.5 clearance, 2.0 pad to pad, 2.6 creepage: separation-basis.yaml lines 328-331; mains_to_low_voltage 3.0 and 10.0: lines 315-316).
+   - In3.Cu edge to edge (tracks, vias, through pads), my script: HOTVALVE 2.656 mm to F711 pad 1 (STEAMPUMP; oval 1.6 x 3.2 at (16.8, 20.5): 4.172 - 1.366 - 0.15), 2.635 mm to the PUMP_S_MT2 vias at y 18.4; ZC_LED_A 2.620 mm to the PUMP_C_OPTO_MT via (48.06, 23.05). All over 2.6 (margins 0.056, 0.035, 0.020 mm); the decision states 2.642 and 2.627 mm.
+   - The decision states no basis entry changes; none of the 42 accepted_exceptions (from line 560) names HOTVALVE, ZC_LED_A, COFVALVE, STEAMPUMP or COFFPUMP route copper.
+   - Not recomputed: the In2.Cu overlap figures (HOTVALVE under neutral 3.952 mm2, cap 5; ZC_LED_A 13.142 mm2) and creepage by path round the slots; they rest on the decision and on the check (layout-review.md lines 5959, 6002).
+   Result: met.
+
+  5. Where a net cannot be so routed the floorplan is revised and the basis not relaxed: HOTVALVE and ZC_LED_A had no legal surface or In2.Cu route; the owner chose In3.Cu on an independent verdict (S-37, line 75), no basis figure changed; S-25 (line 57) keeps mains clearance and creepage unrelaxed. Result: met.
+
+  Checked against the committed records and tests at commit 123d64ad (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C5
+    type: satisfies

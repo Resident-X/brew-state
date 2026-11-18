@@ -3,13 +3,13 @@ type: deliverable
 category: solution
 title: The separation basis record drafts an exception for every shortfall pair the finished main board shows, or the layout clears it
 status: active
-version: 1
+version: 3
 text: |
-  Closes the gap between the mains-to-mains spacing shortfalls the finished main board shows and the exceptions the separation basis record drafts for them. The record's draft holds exceptions for the pairs known when the net-pair and same-part leaves were drafted; the finished layout shows pairs, 14 pair keys at the layout round's reading, that no draft exception covers, and the record's 98 draft exceptions are all unsigned. Each uncovered pair either gets a draft entry stating its ground and bounding element, or is cleared by a layout change; no pair is left to the owner's signature unseen.
+  Closes the gap between the mains-to-mains spacing shortfalls the finished main board shows and the exceptions the separation basis record drafts for them. The record's draft holds exceptions for the pairs known when the net-pair and same-part leaves were drafted; the finished layout shows pairs, 14 pair keys at the layout round's reading, that no draft exception covers, and the record's 98 draft exceptions were all unsigned when drafted; the owner has since signed the record, with the exceptions its finished layout uses. Each uncovered pair either gets a draft entry stating its ground and bounding element, or is cleared by a layout change; no pair is left to the owner's signature unseen.
 
   Settled for the build:
   - The pairs are read from the pre-order check's own report on the finished board, not from a second measurement.
-  - Every added entry is a draft: accepted_by and accepted_on stay empty and the record stays unsigned. Signing is the owner's act, held by the owner-acceptance leaf, and nothing here weighs or presumes it.
+  - By DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF this leaf owns only that the check, run on the finished main board, lists no shortfall pair that no entry of the record covers; the check's reports belong to the pre-order check's own leaves, and the record's signed state and the owner's acceptance to the signed-record leaf and the owner-acceptance leaf.
   - A distance is never relaxed to cover a pair, and an entry is added only where the check shows a shortfall.
   - Out of scope: the owner's acceptance, the signed figures, and the pump-triac entries held by their own leaf.
 rationale: |
@@ -21,3 +21,9 @@ links:
     type: targets
   - target: DEL-HW-MAIN-BOARD-DESIGNED.C6
     type: derives-from
+  - target: DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 888b6c6ebbe17fd673ecd5426ac35906ae281e64421348740c193cabca0f2f04
+  gating_profile: ""

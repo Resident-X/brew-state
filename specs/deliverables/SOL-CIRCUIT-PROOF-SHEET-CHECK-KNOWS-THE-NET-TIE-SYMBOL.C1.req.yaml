@@ -1,0 +1,13 @@
+id: SOL-CIRCUIT-PROOF-SHEET-CHECK-KNOWS-THE-NET-TIE-SYMBOL.C1
+type: criterion
+title: The measurement and high-side sheet check passes the committed sheets with the net tie known and still fails an unknown pin
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Run on the committed main board's sheet records for the measurement and high-side sheets, the proof script exits 0 and counts the net tie NT601 as a two-pin part whose pins 1 and 2 exist; run on a sheet record that names a pin the net-tie symbol does not have (a third pin), or a part whose symbol the script does not know, it exits non-zero and names that part. A test runs the script on the committed sheets and on one altered copy of each kind.
+  Out of scope: any change to a sheet record, the schematic or the board, and the other proof scripts.
+links:
+  - target: SOL-CIRCUIT-PROOF-SHEET-CHECK-KNOWS-THE-NET-TIE-SYMBOL
+    type: criterion-of

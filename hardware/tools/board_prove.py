@@ -725,6 +725,31 @@ def mains_zone(seed: Seed) -> None:
     seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
 
 
+def emptied_mains_zone(seed: Seed) -> None:
+    """A Mains-class pour whose minimum copper width is wider than the pour is, so KiCad's fill leaves none of it."""
+    Q = sexpr.Quoted
+    zone = ["zone", ["net", Q("/MAINS_L")], ["layer", Q("F.Cu")], ["uuid", Q("0b0e5c1a-0000-4000-8000-000000000004")],
+            ["hatch", "edge", "0.5"], ["connect_pads", ["clearance", "3.5"]], ["min_thickness", "5"],
+            ["fill", ["thermal_gap", "0.5"], ["thermal_bridge_width", "0.5"]],
+            ["polygon", ["pts", ["xy", "2", "15"], ["xy", "20", "15"], ["xy", "20", "19"], ["xy", "2", "19"]]]]
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, zone))
+
+
+def mains_run_over_the_cap(seed: Seed) -> None:
+    """A grid of 256 short tracks, alternating /MAINS_L and /MAINS_N, 0.4 mm apart in a square of about 6 mm, so that most pairs
+    of tracks on the two nets stand inside the signed clearance: more clearance lines than KiCad's report holds in the one run,
+    which KiCad cuts at its cap."""
+    side = 16
+
+    def edit(tree: list) -> None:
+        for row in range(side):
+            for column in range(side):
+                net = "/MAINS_L" if (row + column) % 2 == 0 else "/MAINS_N"
+                x, y = 20 + 0.4 * column, 25 + 0.4 * row
+                tree.insert(len(tree) - 1, segment(net, x, y, x + 0.1, y, f"0b0e5c1a-0000-4000-8000-{0x500 + row * side + column:012d}"))
+    seed.layout(edit)
+
+
 def netclass_below(seed: Seed) -> None:
     def edit(data: dict) -> None:
         for netclass in data["net_settings"]["classes"]:
@@ -982,6 +1007,25 @@ def track_under_bridging_part(seed: Seed) -> None:
                               tree.insert(len(tree) - 1, segment("/LV_B", 32, 4, 34, 4, "0b0e5c1a-0000-4000-8000-000000000801"))))
 
 
+def clockwise_part(seed: Seed) -> None:
+    """A four-pad part X3 in two rows whose pads are numbered clockwise from the top: 1 and 2 along the upper row, left to
+    right, then 3 and 4 along the lower row, right to left."""
+    surface = ("smd", ["F.Cu", "F.Mask", "F.Paste"])
+    part = small_part("X3", 30, 4, "0b0e5c1a-0000-4000-8000-000000000f00", ("1", *surface, "/LV_A", -1.3, -2.5, 1),
+                      ("2", *surface, "/LV_A", 1.3, -2.5, 1), ("3", *surface, "/LV_A", 1.3, 2.5, 1),
+                      ("4", *surface, "/LV_A", -1.3, 2.5, 1))
+    seed.layout(lambda tree: tree.insert(len(tree) - 1, part))
+
+
+def layout_only_do_not_populate(seed: Seed) -> None:
+    """The footprint of R2 marked do-not-populate in the layout, while its schematic symbol and the parts record leave it fitted."""
+    def mark(tree: list) -> None:
+        attributes = sexpr.child(footprint(tree, "R2"), "attr")
+        assert attributes is not None, "the proof layout's R2 has no attribute list"
+        attributes.append("dnp")
+    seed.layout(mark)
+
+
 def via_under_paste(seed: Seed) -> None:
     """A surface-mount pad of /LV_A, paste layer and all, with a 0.3 mm /LV_A via drilled through its middle."""
     Q = sexpr.Quoted
@@ -1134,6 +1178,17 @@ def custom_pad(seed: Seed) -> None:
     """R2's pad 1, which /LV_A runs into, made a custom-shaped pad whose copper the check does not size."""
     def edit(tree: list) -> None:
         item = pad(tree, "R2", "1")
+        item[3] = "custom"
+        item.append(["options", ["clearance", "outline"], ["anchor", "circle"]])
+        item.append(["primitives", ["gr_poly", ["pts", ["xy", "0", "-0.8"], ["xy", "1.2", "0"], ["xy", "0", "0.8"]],
+                                    ["width", "0"], ["fill", "yes"]]])
+    seed.layout(edit)
+
+
+def custom_mains_pad(seed: Seed) -> None:
+    """J1's pad 1, on /MAINS_L beside pad 2 on /MAINS_N, made a custom-shaped pad whose copper the check does not size."""
+    def edit(tree: list) -> None:
+        item = pad(tree, "J1", "1")
         item[3] = "custom"
         item.append(["options", ["clearance", "outline"], ["anchor", "circle"]])
         item.append(["primitives", ["gr_poly", ["pts", ["xy", "0", "-0.8"], ["xy", "1.2", "0"], ["xy", "0", "0.8"]],
@@ -1548,8 +1603,8 @@ def supply_a_signal(seed: Seed) -> None:
     """Supply is a signal class held to one signal pin per return, and Sensing to three."""
     seed.replace("board-rules.yaml", NON_SIGNAL, "  non_signal_classes:\n    - Mains\n    - Power\n  signal_classes:\n"
                  "    - class: Supply\n      signal_pins_per_return: 1\n      " + SOURCE)
-    seed.replace("board-rules.yaml", "signal_pins_per_return: 1\n      " + SOURCE + "synthetic",
-                 "signal_pins_per_return: 3\n      " + SOURCE + "synthetic")
+    seed.replace("board-rules.yaml", "signal_pins_per_return: 1\n      " + SOURCE + "fabrication:",
+                 "signal_pins_per_return: 3\n      " + SOURCE + "fabrication:")
 
 
 #: A pin allocation record declaring that its design places no controller, and each entry as given: the two nets of the
@@ -1567,6 +1622,109 @@ MACHINE_TARGET = (DESIGN, NAME, "hardware/seeded-machine/gate-proof")
 
 SIGNED = f"rule '{board_check.SIGNED_RULE}' clearance"
 CONDITION = board_check.MAINS_CONDITION
+
+REVIEW_TARGET = SENSING_TARGET
+
+
+def acceptance_entry(rule: str, scope: str, count: int = 1, accepted_by: str = "proof-owner", accepted_on: str = "2026-10-01") -> str:
+    """One synthetic workmanship acceptance entry; its signature is a made-up name and a past date, nobody's own."""
+    return (f"  - rule: {rule}\n    scope: \"{scope}\"\n    count: {count}\n    reason: a synthetic ground, chosen to exercise the check\n"
+            f"    bounded_by: a synthetic element, which is no real part\n    accepted_by: \"{accepted_by}\"\n    accepted_on: \"{accepted_on}\"\n")
+
+
+def acceptance_record(*entries: str, synthetic: bool = True) -> str:
+    """The workmanship acceptance record holding `entries`, each written as list items of its keys."""
+    return ("accepted_workmanship:" + ("\n" + "".join(entries) if entries else " []\n")
+            + ("synthetic: true\n" if synthetic else ""))
+
+
+def accepting(*entries: str, record: Optional[str] = None):
+    """The record the design's folder holds given as the workmanship acceptance record of `entries`, or as `record` text."""
+    return lambda seed: seed.write(board_check.WORKMANSHIP_ACCEPTANCE_NAME, acceptance_record(*entries) if record is None else record)
+
+
+def right_angle(seed: Seed) -> None:
+    """The route of /LV_B turned through a right angle, which KiCad reports as two track_angle lines on /LV_B."""
+    reroute("/LV_B", (LV_B_RUN, LV_B_BEND), [(40, 12.54), (55.16, 12.54), (55.16, 10)])(seed)
+
+
+def with_right_angle(*entries: str, record: Optional[str] = None):
+    """The right angle on /LV_B and the workmanship acceptance record of `entries`."""
+    return seeded(right_angle, accepting(*entries, record=record))
+
+
+def policy_entry(cls: str, severity: str = "WARNING", count: Optional[int] = 2, accepted_by: str = "proof-owner",
+                 accepted_on: str = "2026-10-01") -> str:
+    """One synthetic severity policy entry; its signature is a made-up name and a past date, nobody's own. A WARNING entry
+    carries `count`; pass None to leave it out, and an ERROR entry carries none unless one is given."""
+    return (f"  - class: {cls}\n    severity: {severity}\n" + ("" if count is None else f"    count: {count}\n")
+            + f"    reason: a synthetic ground, chosen to exercise the check\n    accepted_by: \"{accepted_by}\"\n"
+              f"    accepted_on: \"{accepted_on}\"\n")
+
+
+def policy_record(*entries: str, synthetic: bool = True) -> str:
+    """The severity policy record holding `entries`, each written as list items of its keys."""
+    return ("severity_policy:" + ("\n" + "".join(entries) if entries else " []\n") + ("synthetic: true\n" if synthetic else ""))
+
+
+def policing(*entries: str, record: Optional[str] = None):
+    """The record the design's folder holds given as the severity policy record of `entries`, or as `record` text."""
+    return lambda seed: seed.write(board_check.SEVERITY_POLICY_NAME, policy_record(*entries) if record is None else record)
+
+
+def with_policy(*entries: str, record: Optional[str] = None):
+    """The right angle on /LV_B, which KiCad reports as two track_angle lines, and the severity policy record of `entries`."""
+    return seeded(right_angle, policing(*entries, record=record))
+
+
+def short_jog(seed: Seed) -> None:
+    """The run of /LV_A given a 0.42 mm jog, which KiCad reports as one track_segment_length line, with segment identities
+    of its own so it can be seeded beside the right angle."""
+    points = [(40, 10), (42, 10), (42.3, 10.3), (45, 10.3)]
+
+    def edit(tree: list) -> None:
+        tree.remove(track_at(tree, *LV_A_ENDS))
+        for index, (a, b) in enumerate(zip(points, points[1:])):
+            tree.insert(len(tree) - 1, segment("/LV_A", *a, *b, f"0b0e5c1a-0000-4000-8000-0000000009{index:02d}"))
+    seed.layout(edit)
+
+
+def staircase(seed: Seed) -> None:
+    """The run of /LV_B replaced by a staircase of 0.06 mm steps and 0.4 mm rises, which KiCad reports as more track_angle
+    lines than its report holds, cut at REPORT_LIMIT."""
+    steps = 140
+    points = [(40.0, 12.54)]
+    for step in range(steps):
+        x, y = points[-1]
+        points.append((x, y - 0.4 if step % 2 == 0 else y + 0.4))
+        points.append((x + 0.06, points[-1][1]))
+    points.append((52.62, points[-1][1]))
+
+    def edit(tree: list) -> None:
+        tree.remove(track_at(tree, *LV_B_RUN))
+        for index, (a, b) in enumerate(zip(points, points[1:])):
+            tree.insert(len(tree) - 1, segment("/LV_B", *a, *b, f"0b0e5c1a-0000-4000-8000-{0x400 + index:012d}"))
+    seed.layout(edit)
+
+
+def crystal_crowded(seed: Seed) -> None:
+    """FB1 of the review proof design moved inside the crystal keep-clear, which KiCad reports as a courtyards_overlap line
+    naming the rule Crystal keep-clear."""
+    import review_seed
+    seed.layout(lambda tree: review_seed.move(tree, "FB1", 73.8, 38.0))
+
+
+def region_crowded(seed: Seed) -> None:
+    """D1 of the review proof design moved into the digital region, which KiCad reports as an items_not_allowed line."""
+    import review_seed
+    seed.layout(lambda tree: review_seed.move(tree, "D1", 80.0, 22.0))
+
+
+def region_rule_renamed(seed: Seed) -> None:
+    """The digital region's rule renamed so it is no floorplan region's rule, with D1 inside the region."""
+    seed.replace(".kicad_dru", '(rule "Digital region parts"', '(rule "Digital keepout"')
+    region_crowded(seed)
+
 
 #: (fault, the check it proves, the rule the check must report, text that line must carry, the edit), and, for a
 #: fault seeded into a design other than DESIGN, that design's folder and name as a sixth element and, as a seventh,
@@ -1691,6 +1849,11 @@ FAULTS: List[tuple] = [
     ("a local clearance override on a mains footprint", "separation: no override outranks the signed figure", "local_clearance_override", "footprint R1", local_override(lambda tree: footprint(tree, "R1"))),
     ("a local clearance override on a low-voltage pad", "separation: no override outranks the signed figure", "local_clearance_override", "pad 1 of R2", local_override(lambda tree: pad(tree, "R2", "1"))),
     ("a clearance below the signed figure on a mains zone", "separation: no override outranks the signed figure", "local_clearance_override", "zone on Mains-class net /MAINS_L", mains_zone),
+    ("a footprint numbered clockwise", "footprint numbering: a dual-row or four-sided footprint whose pad numbers run clockwise seen from the top of the part fails by name", "pad_numbering", "X3 (Seeded_Part)", clockwise_part),
+    ("a part the layout marks do not populate and the schematic leaves fitted", "do not populate: the layout, the schematic and the parts record are held to one answer, and a part marked in one and fitted in another fails by name", "dnp_agreement", "R2 is not held to one answer on do not populate", layout_only_do_not_populate),
+    ("a mains pour the fill leaves empty", "separation: a Mains-class pour the fill leaves under 90 percent of its outline fails by name", "mains_zone_fill", "zone [/MAINS_L] on F.Cu", emptied_mains_zone),
+    ("a mains run whose clearance list reaches KiCad's cap", "separation: a KiCad list cut at its cap on a design that declares mains fails the design", "report_cut_short", "the list was cut and a cut list is not a verdict", mains_run_over_the_cap),
+    ("a mains pad whose copper the check does not size", "separation: a Mains pad beside a Mains pad of its part is measured from sized copper or fails by name", "mains_pad_pair", "pad 1 [/MAINS_L] of J1 stands on a Mains-class net beside a Mains-class pad of another net in its own part", custom_mains_pad),
     ("a net class setting below the signed figure", "separation: the signed rule prevails over net class settings", "clearance", SIGNED, netclass_below),
     ("a Mains rule narrowed by layer", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by layer", mains_rule("(condition", "(layer outer)\n\t(condition")),
     ("a Mains rule narrowed by area", "separation: the Mains rule holds everywhere", "separation_rule", "narrowed by its condition", mains_rule(CONDITION, CONDITION + " && A.intersectsArea('mains')")),
@@ -2151,6 +2314,133 @@ FAULTS: List[tuple] = [
     ("a part whose catalogue entry lacks its lifecycle mapping", "lifecycle: the mapping is required on the entry of every part the design places", "parts_lifecycle",
      "the position R1, catalogue number C9000002, has no lifecycle in the catalogue extract",
      extract("    stock: 1001\n    unit_price: 0.01\n    lifecycle:\n      status: active\n      source: none -- synthetic lifecycle reading\n      read_on: 2026-10-14\n", "    stock: 1001\n    unit_price: 0.01\n")),
+    # Workmanship acceptance
+    ("an acceptance entry that is not a mapping", "workmanship acceptance: an entry that is not a mapping fails the record", "workmanship_acceptance",
+     "accepted_workmanship[0] is not a mapping of the keys", with_right_angle(record="accepted_workmanship:\n  - just some words\nsynthetic: true\n")),
+    ("an acceptance entry lacking a key", "workmanship acceptance: an entry with a missing key fails the record", "workmanship_acceptance",
+     "accepted_workmanship[0] lacks reason",
+     with_right_angle(record="accepted_workmanship:\n  - rule: track_angle\n    scope: \"/LV_B\"\n    count: 2\n    bounded_by: x\n"
+                             "    accepted_by: proof-owner\n    accepted_on: \"2026-10-01\"\nsynthetic: true\n")),
+    ("an acceptance entry holding another key", "workmanship acceptance: an entry with an extra key fails the record", "workmanship_acceptance",
+     "holds the key 'note'", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2) + "    note: x\n")),
+    ("two acceptance entries for one rule and scope", "workmanship acceptance: two entries for one rule and scope fail the record", "workmanship_acceptance",
+     "repeats the rule 'track_angle' and scope '/LV_B'",
+     with_right_angle(acceptance_entry("track_angle", "/LV_B", 1), acceptance_entry("track_angle", "/LV_B", 1))),
+    ("an acceptance entry with a count of zero", "workmanship acceptance: an entry with a count of zero fails the record", "workmanship_acceptance",
+     "accepted_workmanship[0].count is 0", with_right_angle(acceptance_entry("track_angle", "/LV_B", 0))),
+    ("an acceptance entry with an empty accepted_by", "workmanship acceptance: an unsigned entry fails and accepts nothing", "workmanship_acceptance",
+     "accepted_by is ''", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_by=""))),
+    ("an acceptance entry signed with a placeholder", "workmanship acceptance: a placeholder signature fails and accepts nothing", "workmanship_acceptance",
+     "accepted_by 'unsigned' is a placeholder", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_by="unsigned"))),
+    ("an acceptance entry signed in angle brackets", "workmanship acceptance: an angle-bracketed signature fails and accepts nothing", "workmanship_acceptance",
+     "accepted_by '<owner>' is a placeholder", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_by="<owner>"))),
+    ("an acceptance entry with an empty date", "workmanship acceptance: an empty date fails the entry", "workmanship_acceptance",
+     "is not a valid calendar date", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on=""))),
+    ("an acceptance entry with a malformed date", "workmanship acceptance: a malformed date fails the entry", "workmanship_acceptance",
+     "accepted_on tomorrow is not a valid calendar date", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on="tomorrow"))),
+    ("an acceptance entry with a future date", "workmanship acceptance: a date after today fails the entry", "workmanship_acceptance",
+     "accepted_on 2099-01-01 is later than today", with_right_angle(acceptance_entry("track_angle", "/LV_B", 2, accepted_on="2099-01-01"))),
+    ("an acceptance entry for side_fiducials", "workmanship acceptance: the record never accepts side_fiducials", "workmanship_acceptance",
+     "names the rule side_fiducials, which the record does not accept", with_right_angle(acceptance_entry("side_fiducials", "/LV_B"))),
+    ("an acceptance entry for hole_to_hole", "workmanship acceptance: the record never accepts hole_to_hole", "workmanship_acceptance",
+     "names the rule hole_to_hole, which the record does not accept", with_right_angle(acceptance_entry("hole_to_hole", "/LV_B"))),
+    ("an acceptance entry for workmanship_rule", "workmanship acceptance: the record never accepts workmanship_rule", "workmanship_acceptance",
+     "names the rule workmanship_rule, which the record does not accept", with_right_angle(acceptance_entry("workmanship_rule", "/LV_B"))),
+    ("an acceptance entry for workmanship_figure", "workmanship acceptance: the record never accepts workmanship_figure", "workmanship_acceptance",
+     "names the rule workmanship_figure, which the record does not accept", with_right_angle(acceptance_entry("workmanship_figure", "/LV_B"))),
+    ("an acceptance entry for workmanship_pad_copper", "workmanship acceptance: the record never accepts workmanship_pad_copper", "workmanship_acceptance",
+     "names the rule workmanship_pad_copper, which the record does not accept", with_right_angle(acceptance_entry("workmanship_pad_copper", "/LV_B"))),
+    ("an acceptance entry for a mains spacing rule", "workmanship acceptance: the record never accepts a mains spacing rule", "workmanship_acceptance",
+     "names the rule creepage, which the record does not accept", with_right_angle(acceptance_entry("creepage", "/LV_B"))),
+    ("an acceptance entry for a derated-voltage rule", "workmanship acceptance: the record never accepts the derated-voltage rule", "workmanship_acceptance",
+     "names the rule derated_voltage, which the record does not accept", with_right_angle(acceptance_entry("derated_voltage", "/LV_B"))),
+    ("an acceptance entry for a pin-limit rule", "workmanship acceptance: the record never accepts the pin-limit rule", "workmanship_acceptance",
+     "names the rule pin_limit, which the record does not accept", with_right_angle(acceptance_entry("pin_limit", "/LV_B"))),
+    ("an acceptance entry for a place the design lacks", "workmanship acceptance: an entry for a place the design does not have fails", "workmanship_acceptance",
+     "names /NO_SUCH_NET, which is no net, reference designator or text variable of the design",
+     with_right_angle(acceptance_entry("track_angle", "/NO_SUCH_NET", 2))),
+    ("an acceptance entry no line uses", "workmanship acceptance: an entry no reported line uses fails as stale", "workmanship_acceptance",
+     "is used by no line", accepting(acceptance_entry("track_angle", "/LV_B", 2))),
+    ("a synthetic acceptance record applied to a design not marked not for manufacture", "workmanship acceptance: a synthetic record cannot pass an orderable board", "workmanship_acceptance",
+     "marked synthetic", seeded(right_angle, accepting(acceptance_entry("track_angle", "/LV_B", 2)),
+                                lambda seed: seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE")))),
+    ("a line beyond an acceptance entry's count", "workmanship acceptance: a line beyond the entry's count still fails", "track_angle",
+     "actual 90.000", with_right_angle(acceptance_entry("track_angle", "/LV_B", 1))),
+    ("a line of a rule the acceptance record does not name", "workmanship acceptance: a line of another rule still fails", "track_angle",
+     "actual 90.000", with_right_angle(acceptance_entry("workmanship_detour", "/LV_B", 2))),
+    ("a line at a place the acceptance entry does not name", "workmanship acceptance: a line at another place still fails", "track_angle",
+     "actual 90.000", with_right_angle(acceptance_entry("track_angle", "/LV_A", 2))),
+    ("a crystal keep-clear line under an acceptance entry for courtyards_overlap", "workmanship acceptance: a courtyard line naming a custom rule is not accepted", "courtyards_overlap",
+     "rule 'Crystal keep-clear'", seeded(crystal_crowded, accepting(acceptance_entry("courtyards_overlap", "FB1"))), REVIEW_TARGET),
+    ("an acceptance entry for courtyards_overlap used only by the crystal keep-clear", "workmanship acceptance: an entry only a custom rule's line could use is stale", "workmanship_acceptance",
+     "is used by no line", seeded(crystal_crowded, accepting(acceptance_entry("courtyards_overlap", "FB1"))), REVIEW_TARGET),
+    ("a line of a custom rule other than a floorplan region's under an items_not_allowed entry", "workmanship acceptance: an items_not_allowed line of another rule is not accepted", "items_not_allowed",
+     "rule 'Digital keepout'", seeded(region_rule_renamed, accepting(acceptance_entry("items_not_allowed", "D1"))), REVIEW_TARGET),
+    ("an items_not_allowed entry used only by a rule other than a floorplan region's", "workmanship acceptance: an entry only another rule's line could use is stale", "workmanship_acceptance",
+     "is used by no line", seeded(region_rule_renamed, accepting(acceptance_entry("items_not_allowed", "D1"))), REVIEW_TARGET),
+    # Severity policy
+    ("a policy entry that is not a mapping", "severity policy: an entry that is not a mapping fails the record and voids the policy", "severity_policy",
+     "severity_policy[1] is not a mapping of the keys", with_policy(record="severity_policy:\n  - class: track_angle\n    severity: WARNING\n    count: 2\n    reason: x\n    accepted_by: proof-owner\n    accepted_on: \"2026-10-01\"\n  - just some words\nsynthetic: true\n")),
+    ("a policy entry lacking a key", "severity policy: an entry with a missing key fails the record", "severity_policy",
+     "severity_policy[0] lacks reason", with_policy(record="severity_policy:\n  - class: track_angle\n    severity: WARNING\n    count: 2\n    accepted_by: proof-owner\n    accepted_on: \"2026-10-01\"\nsynthetic: true\n")),
+    ("a policy entry holding another key", "severity policy: an entry with an extra key fails the record", "severity_policy",
+     "holds the key 'note'", with_policy(policy_entry("track_angle") + "    note: x\n")),
+    ("a policy entry with a severity that is neither ERROR nor WARNING", "severity policy: another severity fails the record", "severity_policy",
+     "severity_policy[0].severity is 'FATAL'", with_policy(policy_entry("track_angle", "FATAL"))),
+    ("two policy entries for one class", "severity policy: two entries for one class fail the record", "severity_policy",
+     "repeats the class 'track_angle'", with_policy(policy_entry("track_angle"), policy_entry("track_angle", count=3))),
+    ("a WARNING policy entry with no count", "severity policy: a WARNING entry lacks its count", "severity_policy",
+     "is a WARNING entry and lacks count", with_policy(policy_entry("track_angle", count=None))),
+    ("a WARNING policy entry with a negative count", "severity policy: a count below zero fails the record", "severity_policy",
+     "severity_policy[0].count is -1", with_policy(policy_entry("track_angle", count=-1))),
+    ("a WARNING policy entry with a count that is not whole", "severity policy: a fractional count fails the record", "severity_policy",
+     "severity_policy[0].count is 1.5", with_policy(policy_entry("track_angle", count=1.5))),
+    ("an ERROR policy entry carrying a count", "severity policy: an ERROR entry states no count", "severity_policy",
+     "is an ERROR entry and carries count", with_policy(policy_entry("track_angle", "ERROR", 2))),
+    ("a policy with no severity_policy key", "severity policy: a record without its list fails", "severity_policy",
+     "lacks severity_policy", with_policy(record="synthetic: true\n")),
+    ("a policy whose severity_policy is not a list", "severity policy: a record whose list is no list fails", "severity_policy",
+     "severity_policy is not a list", with_policy(record="severity_policy: {}\nsynthetic: true\n")),
+    ("a policy holding another top-level key", "severity policy: a record holding another key fails", "severity_policy",
+     "holds the key 'extra'", with_policy(record="severity_policy: []\nextra: 1\nsynthetic: true\n")),
+    ("a policy entry with an empty accepted_by", "severity policy: an unsigned entry fails and voids the policy", "severity_policy",
+     "accepted_by is ''", with_policy(policy_entry("track_angle", accepted_by=""))),
+    ("a policy entry signed with a placeholder", "severity policy: a placeholder signature fails and voids the policy", "severity_policy",
+     "accepted_by 'unsigned' is a placeholder", with_policy(policy_entry("track_angle", accepted_by="unsigned"))),
+    ("a policy entry signed in angle brackets", "severity policy: an angle-bracketed signature fails and voids the policy", "severity_policy",
+     "accepted_by '<owner>' is a placeholder", with_policy(policy_entry("track_angle", accepted_by="<owner>"))),
+    ("a policy entry with an empty date", "severity policy: an empty date fails the entry", "severity_policy",
+     "is not a valid calendar date", with_policy(policy_entry("track_angle", accepted_on=""))),
+    ("a policy entry with a malformed date", "severity policy: a malformed date fails the entry", "severity_policy",
+     "accepted_on tomorrow is not a valid calendar date", with_policy(policy_entry("track_angle", accepted_on="tomorrow"))),
+    ("a policy entry with a future date", "severity policy: a date after today fails the entry", "severity_policy",
+     "accepted_on 2099-01-01 is later than today", with_policy(policy_entry("track_angle", accepted_on="2099-01-01"))),
+    ("a policy entry for silk_over_copper", "severity policy: the policy never covers silk_over_copper", "severity_policy",
+     "names the class silk_over_copper, which the policy does not cover", with_policy(policy_entry("silk_over_copper"))),
+    ("a policy entry for a clearance class", "severity policy: the policy never covers a clearance class", "severity_policy",
+     "names the class clearance, which the policy does not cover", with_policy(policy_entry("clearance", "ERROR", None))),
+    ("a policy entry for a class the check does not report", "severity policy: the policy never covers a class the check does not report", "severity_policy",
+     "names the class no_such_class, which the policy does not cover", with_policy(policy_entry("no_such_class"))),
+    ("a policy entry for pour_gap", "severity policy: the policy never covers pour_gap", "severity_policy",
+     "names the class pour_gap, which the policy does not cover", with_policy(policy_entry("pour_gap"))),
+    ("a synthetic policy applied to a design not marked not for manufacture", "severity policy: a synthetic record cannot pass an orderable board", "severity_policy",
+     "marked synthetic", seeded(right_angle, policing(policy_entry("track_angle")), lambda seed: seed.project(lambda data: data["text_variables"].pop("NOT_FOR_MANUFACTURE")))),
+    ("a policy WARNING class found above its recorded count", "severity policy: a class found above its recorded count fails", "severity_policy",
+     "found 2 lines, above its recorded count of 1", with_policy(policy_entry("track_angle", count=1))),
+    ("a capped KiCad list under a signed count below the cap", "severity policy: a capped list passes only at a signed count equal to the cap", "severity_policy",
+     "reached its cap of 199", seeded(staircase, policing(policy_entry("track_angle", count=150)))),
+    ("a capped KiCad list under a signed count above the cap", "severity policy: a capped list passes only at a signed count equal to the cap", "severity_policy",
+     "reached its cap of 199", seeded(staircase, policing(policy_entry("track_segment_length", count=250)))),
+    ("a line of a class the policy does not name", "severity policy: a line of an unnamed class still fails", "track_angle",
+     "actual 90.000", with_policy(policy_entry("silk_overlap"))),
+    ("a line of a class the policy marks ERROR", "severity policy: a line of an ERROR class still fails", "track_angle",
+     "actual 90.000", with_policy(policy_entry("track_angle", "ERROR", None))),
+    ("a line under a policy voided by an unsigned entry of another class", "severity policy: one unsigned entry voids the whole policy, so the lines stand", "track_angle",
+     "actual 90.000", with_policy(policy_entry("track_angle"), policy_entry("silk_overlap", accepted_by=""))),
+    ("a line under a policy voided by a refused class", "severity policy: a refused class voids the whole policy, so the lines stand", "track_angle",
+     "actual 90.000", with_policy(policy_entry("track_angle"), policy_entry("courtyards_overlap"))),
+    ("a per-line acceptance entry for a class the policy marks WARNING", "severity policy: an acceptance entry for a class the policy marks WARNING is stale", "workmanship_acceptance",
+     "is stale: the signed severity policy marks the class track_angle WARNING", seeded(right_angle, policing(policy_entry("track_angle")), accepting(acceptance_entry("track_angle", "/LV_B", 2)))),
 ]
 
 

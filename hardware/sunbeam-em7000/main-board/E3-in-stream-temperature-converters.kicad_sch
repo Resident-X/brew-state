@@ -2614,36 +2614,6 @@
 		)
 		(uuid "a28e2073-31aa-4097-856b-e69e01e59889")
 	)
-	(label "SPI2_MOSI"
-		(at 96.52 139.7 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "734d465f-ec71-413b-9f3a-7a101b2f6752")
-	)
-	(label "SPI2_SCK"
-		(at 96.52 142.24 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "a936fdc4-b4e5-40e4-a659-369cdd77ffb3")
-	)
-	(label "SPI2_MISO"
-		(at 96.52 147.32 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right bottom)
-		)
-		(uuid "f54d0272-099c-438a-80c8-df76f7185b22")
-	)
 	(label "PT1_CS"
 		(at 63.5 44.45 0)
 		(effects
@@ -2664,27 +2634,35 @@
 		)
 		(uuid "3b19f6a8-5d70-4c4d-8099-395573bf7e64")
 	)
-	(hierarchical_label "SPI2_MOSI"
-		(shape input)
-		(at 96.52 38.1 180)
+	(label "SPI3_MOSI"
+		(at 96.52 139.7 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify right bottom)
 		)
-		(uuid "9229bf60-5f77-4bc6-a639-330c503a2672")
+		(uuid "0e24342c-e2c2-4379-9686-3513e18561cd")
 	)
-	(hierarchical_label "SPI2_SCK"
-		(shape input)
-		(at 96.52 40.64 180)
+	(label "SPI3_SCK"
+		(at 96.52 142.24 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify right)
+			(justify right bottom)
 		)
-		(uuid "40fe90f0-7fd6-4c89-b78c-3b354863e407")
+		(uuid "e7e967d5-ff82-4164-ba1f-25cbf1906f34")
+	)
+	(label "SPI3_MISO"
+		(at 96.52 147.32 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "84a212eb-cffb-49ff-b66e-4ef06b03f422")
 	)
 	(hierarchical_label "PT1_CS"
 		(shape input)
@@ -2697,17 +2675,6 @@
 		)
 		(uuid "b635d2f4-a90c-468a-b103-794ef8fa2ad8")
 	)
-	(hierarchical_label "SPI2_MISO"
-		(shape output)
-		(at 96.52 45.72 180)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify right)
-		)
-		(uuid "f752a20e-3d43-42af-aafd-3b26e76f6111")
-	)
 	(hierarchical_label "PT2_CS"
 		(shape input)
 		(at 96.52 144.78 180)
@@ -2718,6 +2685,39 @@
 			(justify right)
 		)
 		(uuid "a1c8deac-9957-4272-8cf0-c914de18fec3")
+	)
+	(hierarchical_label "SPI3_MOSI"
+		(shape input)
+		(at 96.52 38.1 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "0a1332f9-4344-440f-9cda-c93bfa594fb9")
+	)
+	(hierarchical_label "SPI3_SCK"
+		(shape input)
+		(at 96.52 40.64 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "7f4ff46d-49e6-4d89-832d-f368fe7f0783")
+	)
+	(hierarchical_label "SPI3_MISO"
+		(shape output)
+		(at 96.52 45.72 180)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "eb335a88-e454-406d-be3f-59c5af60e35f")
 	)
 	(symbol
 		(lib_id "Sensor_Temperature:MAX31865xTP")
@@ -2797,15 +2797,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "U620")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "4 V absolute maximum VDD and DVDD, VDD/DVDD 3.0-3.6 V, inputs +/-45 V protected, SPI mode 1 or 3, 5 MHz max"
 			(at 127 50.8 0)
 			(hide yes)
@@ -2814,7 +2805,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "U620")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 101.6 25.4 0)
@@ -2893,15 +2893,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R640")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "0.1% 25ppm 0603 100mW thin film"
 			(at 101.6 25.4 0)
 			(hide yes)
@@ -2910,7 +2901,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R640")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 63.5 38.1 0)
@@ -2989,15 +2989,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R641")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1% 100mW 75V 0603"
 			(at 63.5 38.1 0)
 			(hide yes)
@@ -3006,7 +2997,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R641")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 147.32 22.86 0)
@@ -3060,7 +3060,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 147.32 22.86 0)
 			(hide yes)
 			(effects
@@ -3069,7 +3069,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 147.32 22.86 0)
 			(hide yes)
 			(effects
@@ -3078,7 +3078,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
+			(at 147.32 22.86 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 147.32 22.86 0)
 			(hide yes)
 			(effects
@@ -3095,16 +3104,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "X7R 50V 10% 0603"
-			(at 147.32 22.86 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 157.48 22.86 0)
@@ -3158,7 +3158,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 157.48 22.86 0)
 			(hide yes)
 			(effects
@@ -3167,7 +3167,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 157.48 22.86 0)
 			(hide yes)
 			(effects
@@ -3176,7 +3176,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
+			(at 157.48 22.86 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 157.48 22.86 0)
 			(hide yes)
 			(effects
@@ -3193,16 +3202,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "X7R 50V 10% 0603"
-			(at 157.48 22.86 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 165.1 63.5 90)
@@ -3281,15 +3281,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R690")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "0603 zero-ohm link"
 			(at 165.1 63.5 0)
 			(hide yes)
@@ -3298,7 +3289,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R690")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 165.1 71.12 0)
@@ -3350,15 +3350,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "TP690")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "none"
 			(at 165.1 71.12 0)
 			(hide yes)
@@ -3367,7 +3358,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "TP690")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 193.04 60.96 0)
@@ -3448,15 +3448,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "C640")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "X7R 50V 10% 0603"
 			(at 193.04 60.96 0)
 			(hide yes)
@@ -3465,7 +3456,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "C640")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 228.6 50.8 0)
@@ -3544,15 +3544,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "J620")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "JST XH 2.5 mm 3 A 250 V"
 			(at 228.6 50.8 0)
 			(hide yes)
@@ -3561,7 +3552,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "J620")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
 		(at 193.04 33.02 0)
@@ -3613,7 +3613,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 33.02 0)
 			(hide yes)
 			(effects
@@ -3622,7 +3622,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 33.02 0)
 			(hide yes)
 			(effects
@@ -3631,7 +3631,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
+			(at 193.04 33.02 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 33.02 0)
 			(hide yes)
 			(effects
@@ -3648,16 +3657,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "2.54 mm header with jumper cap"
-			(at 193.04 33.02 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
 		(at 193.04 83.82 0)
@@ -3709,7 +3709,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 83.82 0)
 			(hide yes)
 			(effects
@@ -3718,7 +3718,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 83.82 0)
 			(hide yes)
 			(effects
@@ -3727,7 +3727,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
+			(at 193.04 83.82 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 83.82 0)
 			(hide yes)
 			(effects
@@ -3744,16 +3753,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "2.54 mm header with jumper cap"
-			(at 193.04 83.82 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 86.36 78.74 0)
@@ -3832,15 +3832,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R642")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "0603 0 ohm link"
 			(at 86.36 78.74 0)
 			(hide yes)
@@ -3849,14 +3840,23 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R642")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 99.06 78.74 0)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "2ba7b048-e446-4f64-93a9-88247aea71b5")
 		(property "Reference" "R643"
 			(at 101.092 78.74 90)
@@ -3928,15 +3928,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R643")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "dnp" "true"
 			(at 99.06 78.74 0)
 			(hide yes)
@@ -3954,7 +3945,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R643")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 88.9 25.4 0)
@@ -4006,15 +4006,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "TP620")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "none"
 			(at 88.9 25.4 0)
 			(hide yes)
@@ -4023,7 +4014,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "TP620")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 205.74 43.18 0)
@@ -4075,15 +4075,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "TP621")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "none"
 			(at 205.74 43.18 0)
 			(hide yes)
@@ -4092,7 +4083,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "TP621")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Sensor_Temperature:MAX31865xTP")
 		(at 127 152.4 0)
@@ -4171,15 +4171,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "U621")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "4 V absolute maximum VDD and DVDD, VDD/DVDD 3.0-3.6 V, inputs +/-45 V protected, SPI mode 1 or 3, 5 MHz max"
 			(at 127 152.4 0)
 			(hide yes)
@@ -4188,7 +4179,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "U621")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 101.6 127 0)
@@ -4267,15 +4267,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R645")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "0.1% 25ppm 0603 100mW thin film"
 			(at 101.6 127 0)
 			(hide yes)
@@ -4284,7 +4275,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R645")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 63.5 139.7 0)
@@ -4363,15 +4363,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R646")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "1% 100mW 75V 0603"
 			(at 63.5 139.7 0)
 			(hide yes)
@@ -4380,7 +4371,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R646")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 147.32 124.46 0)
@@ -4434,7 +4434,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 147.32 124.46 0)
 			(hide yes)
 			(effects
@@ -4443,7 +4443,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 147.32 124.46 0)
 			(hide yes)
 			(effects
@@ -4452,7 +4452,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
+			(at 147.32 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 147.32 124.46 0)
 			(hide yes)
 			(effects
@@ -4469,16 +4478,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "X7R 50V 10% 0603"
-			(at 147.32 124.46 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 157.48 124.46 0)
@@ -4532,7 +4532,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C1591"
+		(property "LCSC" "C14663"
 			(at 157.48 124.46 0)
 			(hide yes)
 			(effects
@@ -4541,7 +4541,7 @@
 				)
 			)
 		)
-		(property "MPN" "CL10B104KB8NNNC"
+		(property "MPN" "CC0603KRX7R9BB104"
 			(at 157.48 124.46 0)
 			(hide yes)
 			(effects
@@ -4550,7 +4550,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "Samsung Electro-Mechanics"
+		(property "Manufacturer" "YAGEO"
+			(at 157.48 124.46 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "X7R 50 V 10 % 0603"
 			(at 157.48 124.46 0)
 			(hide yes)
 			(effects
@@ -4567,16 +4576,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "X7R 50V 10% 0603"
-			(at 157.48 124.46 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 165.1 165.1 90)
@@ -4655,15 +4655,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R691")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "0603 zero-ohm link"
 			(at 165.1 165.1 0)
 			(hide yes)
@@ -4672,7 +4663,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R691")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 165.1 172.72 0)
@@ -4724,15 +4724,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "TP691")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "none"
 			(at 165.1 172.72 0)
 			(hide yes)
@@ -4741,7 +4732,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "TP691")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:C")
 		(at 193.04 162.56 0)
@@ -4822,15 +4822,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "C645")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "X7R 50V 10% 0603"
 			(at 193.04 162.56 0)
 			(hide yes)
@@ -4839,7 +4830,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "C645")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x04")
 		(at 228.6 152.4 0)
@@ -4918,15 +4918,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "J625")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "JST XH 2.5 mm 3 A 250 V"
 			(at 228.6 152.4 0)
 			(hide yes)
@@ -4935,7 +4926,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "J625")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
 		(at 193.04 134.62 0)
@@ -4987,7 +4987,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 134.62 0)
 			(hide yes)
 			(effects
@@ -4996,7 +4996,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 134.62 0)
 			(hide yes)
 			(effects
@@ -5005,7 +5005,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
+			(at 193.04 134.62 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 134.62 0)
 			(hide yes)
 			(effects
@@ -5022,16 +5031,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "2.54 mm header with jumper cap"
-			(at 193.04 134.62 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x02")
 		(at 193.04 185.42 0)
@@ -5083,7 +5083,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C2337"
+		(property "LCSC" "C492401"
 			(at 193.04 185.42 0)
 			(hide yes)
 			(effects
@@ -5092,7 +5092,7 @@
 				)
 			)
 		)
-		(property "MPN" "2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed"
+		(property "MPN" "PZ254V-11-02P + 2.54 Short Circuit Cap Closed"
 			(at 193.04 185.42 0)
 			(hide yes)
 			(effects
@@ -5101,7 +5101,16 @@
 				)
 			)
 		)
-		(property "Manufacturer" "BOOMELE"
+		(property "Manufacturer" "XFCN + BOOMELE"
+			(at 193.04 185.42 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1x2 2.54 mm header with jumper cap"
 			(at 193.04 185.42 0)
 			(hide yes)
 			(effects
@@ -5118,16 +5127,7 @@
 				)
 			)
 		)
-	
-		(property "Rating" "2.54 mm header with jumper cap"
-			(at 193.04 185.42 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 86.36 180.34 0)
@@ -5206,15 +5206,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R647")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "Rating" "0603 0 ohm link"
 			(at 86.36 180.34 0)
 			(hide yes)
@@ -5223,14 +5214,23 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R647")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:R")
 		(at 99.06 180.34 0)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "ca3e2139-84e4-474c-9c9b-c5a2e30f1081")
 		(property "Reference" "R648"
 			(at 101.092 180.34 90)
@@ -5302,15 +5302,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "R648")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "dnp" "true"
 			(at 99.06 180.34 0)
 			(hide yes)
@@ -5328,7 +5319,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "R648")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 88.9 127 0)
@@ -5380,15 +5380,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "TP622")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "none"
 			(at 88.9 127 0)
 			(hide yes)
@@ -5397,7 +5388,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "TP622")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 205.74 144.78 0)
@@ -5449,15 +5449,6 @@
 				)
 			)
 		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
-					(reference "TP623")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "none"
 			(at 205.74 144.78 0)
 			(hide yes)
@@ -5466,7 +5457,16 @@
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/3acb68eb-b9be-4d14-8969-415df5e77791"
+					(reference "TP623")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "power:+3V3")
 		(at 124.46 30.48 0)

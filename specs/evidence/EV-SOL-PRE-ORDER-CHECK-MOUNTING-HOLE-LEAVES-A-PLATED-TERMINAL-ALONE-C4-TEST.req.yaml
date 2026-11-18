@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE-C4-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:47:55.675517Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check.py::test_a_one_pad_plated_footprint_whose_net_cannot_be_read_is_unreadable_and_neither_passed_as_a_terminal_nor_failed_as_a_hole
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-f40a0937c0b41d30
+links:
+  - target: SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4
+    type: satisfies

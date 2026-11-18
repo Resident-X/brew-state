@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C3
+type: criterion
+title: A path never passes through a slot by way of two of its corners
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  On a synthetic board with a C-shaped slot open to one side, an item inside the C and an item outside it whose straight line passes through the slot's inner corner and leaves by its opposite outer corner and touches no wall anywhere else, the creepage route length is the length of the shortest path round the slot's open end, not the straight line through the slot, and the same pair with the outside item moved off that line is unchanged.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS
+    type: criterion-of

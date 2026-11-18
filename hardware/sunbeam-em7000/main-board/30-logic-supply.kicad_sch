@@ -3933,7 +3933,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C141723"
+		(property "LCSC" "C133937"
 			(at 50.8 170.18 0)
 			(hide yes)
 			(effects
@@ -3942,7 +3942,7 @@
 				)
 			)
 		)
-		(property "MPN" "FCM1608KF-601T03"
+		(property "MPN" "FCM1608KF-601T05"
 			(at 50.8 170.18 0)
 			(hide yes)
 			(effects
@@ -3960,7 +3960,7 @@
 				)
 			)
 		)
-		(property "Rating" "0603, 0.50 ohm DC max, 350 mA, 25 %"
+		(property "Rating" "0603, 0.50 ohm DC max, 500 mA, 25 %"
 			(at 50.8 170.18 0)
 			(hide yes)
 			(effects
@@ -4877,7 +4877,7 @@
 				)
 			)
 		)
-		(property "Rating" "two plated holes for a wire link (1.5 mm2 or a component-lead off-cut) between LINE and LINE_MOD: the link is fitted in service"
+		(property "Rating" "two plated holes for a wire link between LINE and LINE_MOD: 1.5 mm2 copper wire, insulation rated for the mains working voltage of the LINE net (open-items.md, JP303 row), 70 degC enclosure air; the link is fitted in service"
 			(at 25.4 92.71 0)
 			(hide yes)
 			(effects

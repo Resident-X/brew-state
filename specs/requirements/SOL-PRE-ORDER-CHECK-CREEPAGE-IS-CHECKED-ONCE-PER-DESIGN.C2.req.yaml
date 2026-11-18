@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C2
+type: criterion
+title: The rules the first pass, the mounting-hole pass and the sensing pass hand the rule engine hold no creepage constraint
+status: active
+version: 2
+measurement_type: binary
+verification: test
+text: |-
+  The rules text written for the first pass, for the mounting-hole pass and for the sensing pass, the design's own rules included, holds no creepage constraint in the form (constraint creepage (min <number>mm)) and no rule left with no constraint, while it holds every other constraint, the signed clearance included, in the order it held them. A creepage constraint in a form the function does not recognise, and text that does not balance, are left as written, and a rule that held no constraint is left as written. The rules text of the creepage pass and the design's own file are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
+    type: criterion-of

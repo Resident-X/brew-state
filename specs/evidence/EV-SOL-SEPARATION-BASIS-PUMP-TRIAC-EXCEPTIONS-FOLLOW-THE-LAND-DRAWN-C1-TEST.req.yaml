@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN-C1-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T14:12:38.82087Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_pump_triac_entries_equal_the_land_the_board_draws_and_a_fault_in_either_is_refused
+  artifact_version: 83938560b5bbae372eeca04f2011b04655286708
+attested_by: crun-233fbe0f126b476f
+links:
+  - target: SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN.C1
+    type: satisfies

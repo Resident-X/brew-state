@@ -1,0 +1,34 @@
+id: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS
+type: deliverable
+category: solution
+title: The v2 main board's three optocoupler footprints take the makers' pin numbers, with the copper, records and one workmanship entry that follow
+status: active
+version: 1
+text: |
+  Three optocoupler footprints of the v2 main board, the two pump triac drivers U701 and U711 (MOC3052SVM) and the zero-crossing detector U602 (LTV-814S), were numbered clockwise where the parts are numbered counter-clockwise from pin 1 seen from the top. Every pad had the right size and place, so the pads landed on the wrong pins: as drawn the two pump triac drivers could never fire and the detector's transistor was wired collector to ground. The check had no rule that reads which way a footprint is numbered; the rule that now does is delivered by the solution it depends on.
+
+  Settled for the build:
+  - The two library footprints are numbered as the makers number the parts, counter-clockwise from pin 1 in the top view. The MOC3052SVM has pin 1 anode, pin 2 cathode, pin 3 no connection, pin 4 main terminal, pin 5 no connection (the triac substrate, never connected) and pin 6 main terminal. The LTV-814S has pin 1 anode or cathode, pin 2 cathode or anode (its LED is two antiparallel diodes), pin 3 emitter and pin 4 collector. The mains-side pads keep their position, size and net and take the other number.
+  - The interchangeable pins are swapped in the project symbols so that no mains copper moved: pins 4 and 6 of the triac driver, which are the two main terminals of a bilateral switch, and pins 1 and 2 of the detector, its two LED leads. After the correction the main terminal on the OPTO_MT net is pin 4 and the one on the TRIAC_G net is pin 6, and the neutral terminal of the detector is pin 1 with its LED terminal on ZC_LED_A on pin 2.
+  - The low-voltage copper at the three parts is laid again for the new pad numbers: the LED anode nets of both pump drivers, the LED cathode net of the steam pump driver, and the ZC_IN and ground nets of the detector. Vias are added at the pump drivers to cross the rows, and the ZC_IN run is one diagonal with its test point via on it.
+  - The pin-1 marks, the silk dot and the fabrication-layer chamfer, are moved to the true pin 1 of each part.
+  - The records that name these pads follow the copper: eight separation-basis entries are renamed between pins 4 and 6 of U701 and U711 with their figures, acceptance and day unchanged; the pin-limits record of the detector exchanges its two LED pins; the sheet records of the pump drives and the zero-crossing detector, the schematic specification and the prose records that restate a pad number of these places are corrected to the same copper.
+  - One workmanship detour entry is signed on the owner's behalf, as the neatness decision records, for the coffee pump LED anode net: its tracks are 20.02 mm against a shortest tree of 12.11 mm, 1.65 times where 1.5 is allowed. The best lay found was 18.9 mm, 1.56 times, because the corridors are held by the gate, three-way valve and LED cathode copper of the neighbouring drive. The net is a slow drive from DC to about 100 Hz, so the longer path costs no timing, and the entry covers one line on that net while clearance and every separation rule still judge the copper.
+  - R522, R572 and R576 carry do-not-populate again, as the parts specification says.
+  - A second reader who did not make the correction read the makers' sheets independently and the assembler's own library footprint for the detector, and found all three parts right: numbering, geometry and the net on every pin.
+  - The J630 and J635 holes were considered for 0.90 mm at the same time and are left at 0.85 mm, the middle of the maker's band. Raising them would re-open the signed 1.15 mm hole spacing entries for no gain.
+
+  Out of scope: the assembler's placement rotation of the three parts, which is read again when the order's files are made because the pin 1 mark moved corner, and the layout review rounds.
+rationale: |
+  Restores REQ-BOARD-LAYOUT-PRACTICE-001.C1 for the v2 main board: a board that is judged before it is ordered must not carry footprints that put a part's pins on the wrong pads, and this one did while every size and place was right, so the judgement had passed it. The footprints are corrected rather than the nets because the nets are the circuit; the interchangeable pins are swapped in the symbols so that no mains copper, and so no signed separation figure, moves. The correction is a separate item from the mains re-lay it follows, which is sealed, and the rule that would have caught it is delivered by the numbering-rule solution. The one new neatness line is signed on the owner's behalf as the neatness decision records, because no shorter lay was found and the drive is slow.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-MAIN-BOARD-NEATNESS-LINES-ARE-ACCEPTED-BY-CLASS-AND-PER-NET-ENTRIES-SIGNED-ON-BEHALF
+    type: justified-by
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: depends-on
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE
+    type: depends-on

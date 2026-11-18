@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED.C2
+type: criterion
+title: The four decoupling-capacitor places have no via between the capacitor's supply pad and the pin it decouples
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The four named vias and capacitors.
+text: |-
+  On the main board the vias at (95.35, 34.25) and (95.35, 33.45) mm on +3V3 between pad 1 of C401 and pad 11 of U401, at (83.6, 24.5) mm on +3V3 between pad 1 of C405 and pad 100 of U401, and at (70.3, 84.4) mm on AMC_DCDC_CAP between pad 1 of C612 and pad 14 of U601 are moved out of the rule's box, and each capacitor's pad is joined to the pin on the surface layer. The pre-order check reports no decoupling_via line. Out of scope: the four named vias and capacitors.
+links:
+  - target: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED
+    type: criterion-of

@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE-C2-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-14T17:40:24Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_pad_numbering.py::KiCadPlacesTheOwnPadsOfABackFootprintAtItsPosition.test_kicad_itself_places_a_back_footprints_pad_at_the_footprints_position_plus_the_pads_own
+  artifact_version: d61c853072db143dac194761042558f41cf25846
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C2
+    type: satisfies

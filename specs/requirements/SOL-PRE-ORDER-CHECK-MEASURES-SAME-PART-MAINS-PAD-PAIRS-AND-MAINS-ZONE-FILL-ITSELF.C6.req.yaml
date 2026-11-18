@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C6
+type: criterion
+title: The mains clearance findings of the first pass are gathered in runs that each stay under the rule engine's cap, and each finding is reported once
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The Mains clearance findings of the first pass are gathered from more than one run of the rule engine, each run holding a part of the Mains pairs so that its list stays under the cap, and the union is reported. A finding that two runs both list is reported once, and the verdict on a design is the same as if one run had listed every line. The creepage pass, the mounting-hole pass and the sensing pass are out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF
+    type: criterion-of

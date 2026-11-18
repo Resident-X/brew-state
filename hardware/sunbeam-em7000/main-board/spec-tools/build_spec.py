@@ -21,7 +21,7 @@ MAINS_CLASS = """LINE_IN LINE_F LINE LINE1 NEUTRAL_IN NEUTRAL COFVALVE COFFPUMP 
 DISCH_A DISCH_B PUMP_C_MT2 PUMP_S_MT2 PUMP_C_GATE_R PUMP_S_GATE_R PUMP_C_OPTO_MT PUMP_S_OPTO_MT
 PUMP_C_TRIAC_G PUMP_S_TRIAC_G VMEAS_N1 VMEAS_N2 VMEAS_DIV AMC_AIN0P AMC_AIN0N AMC_AIN1P AMC_AIN1N
 AMC_DCDC_OUT AMC_DCDC_HGND AMC_HGND AMC_HLDO_IN AMC_HLDO_OUT ZC_N1 ZC_LED_A SHUNT_SENSE_IN SHUNT_SENSE_NEUTRAL
-LINE_MOD PUMP_C_SNUB PUMP_S_SNUB""".split()
+LINE_MOD""".split()
 
 out_sheets = []
 refmap = {}
@@ -76,15 +76,15 @@ header = {
   {'pin': 3, 'net': 'HEAT_S_LED_K', 'direction': 'return sunk by Q771', 'use': 'steam opto-triac LED return'},
   {'pin': 4, 'net': 'GND', 'direction': 'ground', 'use': 'low-voltage ground, in the cable for the reserved confirm places'},
   {'pin': 5, 'net': 'MAINS_PRES_C', 'direction': 'reserved input', 'use': 'coffee mains-presence confirm, not drawn (no parts); PE15 reserved'},
-  {'pin': 6, 'net': 'MAINS_PRES_S', 'direction': 'reserved input', 'use': 'steam mains-presence confirm, not drawn (no parts); PD7 reserved'},
+  {'pin': 6, 'net': 'MAINS_PRES_S', 'direction': 'reserved input', 'use': 'steam mains-presence confirm, not drawn (no parts); PB11 reserved'},
   {'pin': 7, 'net': None, 'direction': 'spare', 'use': 'no-connect, reserved'}, {'pin': 8, 'net': None, 'direction': 'spare', 'use': 'no-connect, reserved'},
   {'pin': 9, 'net': None, 'direction': 'spare', 'use': 'no-connect, reserved'}, {'pin': 10, 'net': None, 'direction': 'spare', 'use': 'no-connect, reserved'}],
- 'neutral_return_landing': {'ref': 'J110', 'net': 'NEUTRAL', 'note': 'WB_RET: the eighth board-mounted 6.3 mm blade (C20626104, owner decision D8 drawn at the blade), a pad of the tab section in the NEUTRAL pour above the shunt; no retained lead lands on it, the wall board return wire ends in a female push-on on it'},
- 'channels_crossing_header_for_the_pin_allocation_record': ['HEAT_C_DRV -> HEAT_C_LED_K (controller PD2)', 'HEAT_S_DRV -> HEAT_S_LED_K (controller PD3)', '+5V_WB (rail)', 'GND (rail)', 'MAINS_PRES_C (controller PE15, reserved)', 'MAINS_PRES_S (controller PD7, reserved)']}
+ 'neutral_return_landing': {'ref': 'J110', 'net': 'NEUTRAL', 'note': 'WB_RET: the eighth board-mounted 6.3 mm blade (C86469, owner decision D8 drawn at the blade), a pad of the tab section in the NEUTRAL pour above the shunt; no retained lead lands on it, the wall board return wire ends in a female push-on on it'},
+ 'channels_crossing_header_for_the_pin_allocation_record': ['HEAT_C_DRV -> HEAT_C_LED_K (controller PD11)', 'HEAT_S_DRV -> HEAT_S_LED_K (controller PD12)', '+5V_WB (rail)', 'GND (rail)', 'MAINS_PRES_C (controller PE15, reserved)', 'MAINS_PRES_S (controller PB11, reserved)']}
 
 anticipated = [
- {'kind': 1, 'name': 'Supply voltage measurement', 'placed': True, 'where': 'sheet "Supply voltage and current measurement": AMC131M02 channel 0 through the LINE to NEUTRAL divider; digital over SPI2 (the division record\'s analogue conditioning block VM_C became the converter\'s serial link; PB1 stays free)'},
- {'kind': 2, 'name': 'Weight-based endpoint, two load-cell channels', 'placed': True, 'where': 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PC8, PC9, PC11, PC12'},
+ {'kind': 1, 'name': 'Supply voltage measurement', 'placed': True, 'where': 'sheet "Supply voltage and current measurement": AMC131M02 channel 0 through the LINE to NEUTRAL divider; digital over SPI3 (the division record\'s analogue conditioning block VM_C became the converter\'s serial link; PB1 stays free)'},
+ {'kind': 2, 'name': 'Weight-based endpoint, two load-cell channels', 'placed': True, 'where': 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PD2, PD3, PD5 and PD6'},
  {'kind': 3, 'name': 'Further temperature and pressure inputs of the kinds in use', 'placed': False, 'reason': 'Removed in the division record\'s removal order (D12 drawn at the default). The criterion reserving it would have weakened is the fit: the header regions (46.5 mm wide, 2 x rectangles) cannot take its two two-way and one four-way headers at the 0.3 mm spacing the drawing keeps (no arrangement of the headers exists). Its pins PA4 and PA5 and the second I2C bus stay free on the controller.'},
  {'kind': 4, 'name': 'Direct group-head instrumentation, two channels', 'placed': False, 'reason': 'Removed in the division record\'s removal order (D12 drawn at the default). The criterion reserving it would have weakened is the fit: its two three-way headers cannot be placed in the header regions at the 0.3 mm spacing (no arrangement exists). Pins PA7 and PB0 stay free on the controller.'},
  {'kind': 5, 'name': 'Second current-sensing channel', 'placed': True, 'where': 'sheet "Current sensing inputs": CURR2_H header with burden position and filter to PA3 (CURR2_AN)'},
@@ -93,8 +93,8 @@ anticipated = [
  {'kind': 8, 'name': 'Current sensing, first channel', 'placed': True, 'where': 'sheet "Current sensing inputs": CURR1_H to PA2 (CURR1_AN)'},
  {'kind': 9, 'name': 'Total supply current measurement', 'placed': True, 'where': 'neutral shunt R105 (sheet "Mains entry and load feed") read as channel 1 of the AMC131M02'},
  {'kind': 10, 'name': 'Real-time clock', 'placed': True, 'where': 'sheet "Controller": LSE crystal Y402 on PC14/PC15 (fitted or left unfitted by the open item on the crystal row)'},
- {'kind': 11, 'name': 'In-stream temperature, two PT1000 probes', 'placed': True, 'where': 'sheet "In-stream temperature converters": PT1_H, PT2_H and two RTD converters on SPI2 (PB13, PB14, PB15), chip selects PB12 and PD8'},
- {'kind': 12, 'name': 'Brew-path pressure transducer', 'placed': True, 'where': 'sheet "Flow, pressure and spare analogue inputs": BREW_D (I2C2 on PB10/PB11) and BREW_A (analogue fallback to PA6)'},
+ {'kind': 11, 'name': 'In-stream temperature, two PT1000 probes', 'placed': True, 'where': 'sheet "In-stream temperature converters": PT1_H, PT2_H and two RTD converters on SPI3 (PC10, PC11, PC12), chip selects PD0 and PD1'},
+ {'kind': 12, 'name': 'Brew-path pressure transducer', 'placed': True, 'where': 'sheet "Flow, pressure and spare analogue inputs": BREW_D (I2C4 on PB6/PB7) and BREW_A (analogue fallback to PA6)'},
  {'kind': 13, 'name': 'Supply frequency measurement', 'placed': True, 'where': 'shared with the zero-crossing detector, ZC_IN on PA10 (TIM1_CH3), both edges'}]
 
 spec = {
@@ -131,14 +131,15 @@ spec = {
    'status': 'adopted by the owner on 2026-10-29 ("agree, proceed") and relaxed the same day ("adopt"): integrated circuit voltage share 1, junction cap 110 degC, relay contact current share 1; the record is derating-policy.yaml and the factors below are the starting proposal, not the policy',
    'source': 'NASA Goddard Space Flight Center, EEE Parts Derating, Preferred Reliability Practice PD-ED-1201, Table 1 (https://klabs.org/DEI/References/design_guidelines/design_series/1201.pdf, no date printed, read 2026-10-29)',
    'factors': {'capacitors': 'at most 60 % of rated voltage', 'resistors': 'at most 60 % of rated power', 'semiconductor devices': 'at most 50 % of rated power, 75 % of rated voltage, junction temperature 110 degC', 'microcircuits': 'supply at most 80 % of rated voltage, 75 % of rated power, junction temperature 100 degC', 'inductive devices': 'at most 50 % of rated voltage, 60 % of rated temperature', 'relays and connectors': 'at most 50 % of rated current'},
-   'consequence_for_mains_rated_parts': 'Taken literally the table puts mains-rated, safety-listed parts (X2 capacitor, varistor, relay contacts, tabs, fuse clips) out of policy at 358 V peak and 15 A; those rows are findings until the owner either declares a different factor for safety-listed parts with a stated reason or accepts the findings.'},
+   'consequence_for_mains_rated_parts': 'Taken literally the table puts mains-rated, safety-listed parts (X2 capacitor, varistor, relay contacts, tabs) out of policy at 358 V peak and 15 A; those rows are findings until the owner either declares a different factor for safety-listed parts with a stated reason or accepts the findings.'},
  'departures_from_the_division_record': [
-  'Interlock drive has 21 parts, not 19: R205 and R206 (100 kohm, each coupling node to ground) are added, because the record\'s circuit holds the coil about 1.2 s when the output rests high after a rising edge (circuit-proof/A_removal_gate_high_rec.log); the record\'s sentence that a level cannot cross the coupling capacitor is to be amended.',
-  'The supply voltage and supply current are read digitally by the AMC131M02 over SPI2, so the record\'s conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.',
-  'Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 60.4 kohm 2512 resistors (a single element would see more than the 200 V working voltage the maker rates); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.',
-  'Three Extended machine-placed part types are added to the record\'s five (PESD5V0F1BL C45961, BAT54S C47546, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.',
-  'The debug SWO pin PB3 is wired; the allocation record\'s free list loses PA0, PB3, PC7, PD9, PD10 and PD11.',
+  'Interlock drive has 21 parts, not 19 (counting the buffer as one part): R205 and R206 (100 kohm, each coupling node to ground) are added, because the record\'s circuit holds the coil about 1.2 s when the output rests high after a rising edge (circuit-proof/A_removal_gate_high_rec.log); the record\'s sentence that a level cannot cross the coupling capacitor is to be amended.',
+  'The supply voltage and supply current are read digitally by the AMC131M02 over SPI3, so the record\'s conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.',
+  'Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 59 kohm 2512 resistors (each at half the line, 126.5 V rms, against the 300 V working voltage the maker rates; the OEM\'s single 120 kohm part would see 253 V rms against a 200 V working voltage); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.',
+  'Three Extended machine-placed part types are added to the record\'s five (PESD5V0F1BL C45961, BAT54SW C78606, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.',
+  'The debug SWO pin PB3 is wired; the allocation record\'s free list loses PA0, PB3, PC7, PC8, PD2 and PD7.',
   'The 8 MHz converter clock oscillator Y601 is added (the AMC131M02 has no oscillator of its own).',
+  'The buffer U_PL is two inverting SN74AHCT1G14 gates in series, U201 and U203 (C7486), with R208 (100 kohm) from the net between them to ground and C206 beside U203, not the record\'s one non-inverting buffer, because the non-inverting part has no stock; the polarity, the pull-downs R201 R202 and the pump edge are the record\'s (circuit-proof.md A, rows "input network" and "supply ramps"; the single-inverter alternative was rejected).',
   'The record\'s controller current budget (480 MHz, 439 mA) has no stable junction temperature at 70 degC air; the rail skeleton is drawn to 200 MHz at the lowest power scale until the firmware clock is declared (open-items.md).'],
  'circuit_verdicts': {'file': 'circuit-verdicts.md', 'covers': 'every part and every net of every sheet, and each sheet against the drawing convention; a FINDING names its closing action or its owner'},
  'sheets': out_sheets,

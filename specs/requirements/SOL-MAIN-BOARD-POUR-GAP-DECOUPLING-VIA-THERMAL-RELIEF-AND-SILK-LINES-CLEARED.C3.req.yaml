@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED.C3
+type: criterion
+title: The three starved thermal reliefs have at least the zone's minimum spoke count
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The three named pads; the zone rules stay as they are.
+text: |-
+  On the main board the thermal reliefs of pad 2 of J635 in the GND pour on B.Cu, pad 2 of C609 in the GND pour on F.Cu and pad 3 of U602 in the GND pour on F.Cu each have at least the zone's minimum of two spokes, cleared by the layout (clearing the copper or the track that starves the relief) without lowering the minimum spoke count or the relief gap. The pre-order check reports no starved_thermal line. Out of scope: the three named pads; the zone rules stay as they are.
+links:
+  - target: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED
+    type: criterion-of

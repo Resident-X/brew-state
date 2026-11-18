@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER-C4-TEST
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-18T02:31:49.996551Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_record_is_signed_by_the_owner_on_every_exception_and_the_reader_finds_no_problem
+  artifact_version: 4eaf4c9f
+attested_by: crun-fd60ac5c15996e07
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER.C4
+    type: satisfies

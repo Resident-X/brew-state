@@ -3,7 +3,7 @@ type: decision
 category: tactical
 title: Board design records are YAML files in the machine's hardware folder that the connectivity and parts checks compare a design against
 status: active
-version: 13
+version: 14
 text: |
   The three records a board design is checked against are YAML files in the machine's hardware folder, hardware/<machine>/, found the way the separation basis record is found: a design is held to the record in the nearest folder at or above its own, and a proof design carries its own records marked synthetic: true. A record marked synthetic satisfies only a design marked not for manufacture. A record that cannot be parsed, or lacks a required key, fails like a missing one, and a design with no record to be held to fails rather than passes.
 
@@ -16,6 +16,8 @@ text: |
   The catalogue extract, catalogue-extract.yaml, is a committed reading of the manufacturer's public catalogue. It states the date it was read, its source, a max_age_days beyond which the check refuses it, and a list under entries of LCSC number, library class, stock and unit price. Each entry also carries a lifecycle mapping holding status, the part's lifecycle status as published, or a statement that no source publishes one; source, where it was read, the part maker's published status or the manufacturer's catalogue, naming the sources looked at where none publishes it; and read_on, the date it was read. The lifecycle mapping is required on the entry of every part a design places, and holds all three; status is one of active, not recommended for new designs, end of life, obsolete, or a statement that no source publishes one. An entry may also carry the optional key category, the first category name of the part's parts-library record copied verbatim, a non-empty string when present; the decoupling pin-type rule skips an integrated circuit only when its entry's category is in a closed list of categories of parts that have no supply pin, and a malformed category fails the extract read. The parts check never fetches the catalogue: it fails a part whose LCSC number is absent from the extract, a part the extract shows out of stock, and an extract older than its own max_age_days.
 
   Every entry of the parts specification record also carries class, naming a derating policy class exactly, or none for a part no class covers.
+
+  An entry may also carry the optional key fitted, whose one value is the string no, stating that the position is not fitted (do not populate). An entry without the key is fitted, and any other value, a bare YAML no included, fails the record read. The do-not-populate rule of the pre-order check holds the key to the layout's footprint attribute and the schematic's symbol attribute.
 
   Four further records, found and marked synthetic the same way, hold what the derating, pin-limit, board-minimum and sensing checks compare a design against. The manufacturer limits record, manufacturer-limits.yaml, and the board rules record, board-rules.yaml, are defined, with what each rule compares, by the decision on the further pre-order rule readings.
 

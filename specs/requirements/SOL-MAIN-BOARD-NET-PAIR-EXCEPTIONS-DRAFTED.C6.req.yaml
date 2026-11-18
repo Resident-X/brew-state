@@ -1,7 +1,7 @@
 id: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED.C6
 type: criterion
 title: The record holds a creepage entry and a clearance entry for each same-part pad pair under 1.5 mm
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -10,3 +10,5 @@ text: |-
 links:
   - target: SOL-MAIN-BOARD-NET-PAIR-EXCEPTIONS-DRAFTED
     type: criterion-of
+attributes:
+  deprecation_reason: Carried in the finished state by SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4, which states the same-part entries the finished layout uses; this criterion required entries for twenty-seven pairs including the C606 pad pair, whose entry was removed on 2026-11-07 (SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED), and two R105 pairs were removed on 2026-11-14.

@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES-C6-INSPECTION
+type: evidence
+title: inspection evidence for SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T08:46:58.423645Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_workmanship_acceptance.py::test_the_notes_state_the_entry_form_the_accepted_line_each_failure_the_rules_refused_and_whose_it_is_to_sign
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-ddb434eadcb72114
+links:
+  - target: SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES.C6
+    type: satisfies

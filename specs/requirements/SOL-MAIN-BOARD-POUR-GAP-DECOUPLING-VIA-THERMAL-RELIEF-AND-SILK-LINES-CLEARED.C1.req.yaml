@@ -1,0 +1,13 @@
+id: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED.C1
+type: criterion
+title: The pour of a net reaches its own pad and via, or stands at least the board's minimum clearance clear of it, on the seven pour_gap places
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: The seven named places; other pours are outside this item.
+text: |-
+  On the main board no pour of a net stops short of copper of its own net by less than the board's 0.09 mm minimum clearance. The seven places are cleared by the layout, by drawing the copper into the pour or moving the item clear of the fill edge: pad 1 of R704 on /Pump drives/PUMP_C_MT2 and pad 1 of R714 on /Pump drives/PUMP_S_MT2 (F.Cu, 0.063 mm short); the GND vias at (77.7452, 100.1484), (77.7618, 101.0051), (77.7452, 101.8484) and (77.7618, 99.3051) mm and at (122.3036, 34.5038) mm on In2.Cu. No mains spacing figure is relaxed by the redraw. The pre-order check reports no pour_gap line. Out of scope: the seven named places; other pours are outside this item.
+links:
+  - target: SOL-MAIN-BOARD-POUR-GAP-DECOUPLING-VIA-THERMAL-RELIEF-AND-SILK-LINES-CLEARED
+    type: criterion-of

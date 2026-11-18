@@ -151,7 +151,7 @@
         "min_microvia_drill": 0.2,
         "min_resolved_spokes": 2,
         "min_silk_clearance": 0.15,
-        "min_text_height": 1.0,
+        "min_text_height": 0.8,
         "min_text_thickness": 0.15,
         "min_through_hole_diameter": 0.2,
         "min_track_width": 0.09,
@@ -296,7 +296,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.75,
+        "via_diameter": 0.6,
         "via_drill": 0.3,
         "wire_width": 6
       },
@@ -308,7 +308,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.75,
+        "via_diameter": 0.6,
         "via_drill": 0.3
       },
       {
@@ -319,7 +319,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.45,
         "tuning_profile": "",
-        "via_diameter": 0.75,
+        "via_diameter": 0.6,
         "via_drill": 0.3
       },
       {
@@ -374,7 +374,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.75,
+        "via_diameter": 0.6,
         "via_drill": 0.3
       },
       {
@@ -385,7 +385,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.75,
+        "via_diameter": 0.6,
         "via_drill": 0.3
       },
       {
@@ -396,7 +396,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.2,
         "tuning_profile": "",
-        "via_diameter": 0.75,
+        "via_diameter": 0.6,
         "via_drill": 0.3
       },
       {
@@ -407,7 +407,7 @@
         "schematic_color": "rgba(0, 0, 0, 0.000)",
         "track_width": 0.45,
         "tuning_profile": "",
-        "via_diameter": 0.75,
+        "via_diameter": 0.6,
         "via_drill": 0.3
       }
     ],
@@ -496,6 +496,10 @@
       {
         "netclass": "Supply3V3",
         "pattern": "/Logic supply/+3V3_REG"
+      },
+      {
+        "netclass": "Supply3V3",
+        "pattern": "/Controller/VCAP"
       },
       {
         "netclass": "Ground",
@@ -999,15 +1003,15 @@
       },
       {
         "netclass": "Fast",
-        "pattern": "/SPI2_SCK"
+        "pattern": "/SPI3_SCK"
       },
       {
         "netclass": "Fast",
-        "pattern": "/SPI2_MOSI"
+        "pattern": "/SPI3_MOSI"
       },
       {
         "netclass": "Fast",
-        "pattern": "/SPI2_MISO"
+        "pattern": "/SPI3_MISO"
       },
       {
         "netclass": "Fast",
@@ -1028,6 +1032,46 @@
       {
         "netclass": "Fast",
         "pattern": "/Supply voltage and current measurement/AMC_DOUT_PIN"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/AMC_CS"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/AMC_DRDY"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/AMC_RESET"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/PT1_CS"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/PT2_CS"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT1_CLK"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT1_DATA"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT2_CLK"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/WT2_DATA"
+      },
+      {
+        "netclass": "Fast",
+        "pattern": "/Supply voltage and current measurement/AMC_CS_PIN"
       },
       {
         "netclass": "Mains",
@@ -1183,14 +1227,6 @@
       },
       {
         "netclass": "Mains",
-        "pattern": "/Pump drives/PUMP_C_SNUB"
-      },
-      {
-        "netclass": "Mains",
-        "pattern": "/Pump drives/PUMP_S_SNUB"
-      },
-      {
-        "netclass": "Mains",
         "pattern": "unconnected-(U601-GPO-Pad6)"
       },
       {
@@ -1242,7 +1278,7 @@
     "PASTE_OVER_VIA_MM2": "0",
     "TEST_COURTYARD_MM": "1",
     "WORK_ANGLE_TOLERANCE_DEG": "0.1",
-    "WORK_DETOUR_RATIO": "1.3",
+    "WORK_DETOUR_RATIO": "1.5",
     "WORK_NECK_MM": "1",
     "WORK_PAD_ANGLE_DEG": "90",
     "WORK_PAD_ENTRY_RATIO": "2"

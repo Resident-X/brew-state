@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C2
+type: criterion
+title: A signed same-part clearance entry is judged against the check's own measurement of its pad pair, and the verdict does not change with what the rule engine lists
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An accepted exception between two pads of one part is judged against the distance the check measured for that pair, by the same judgement as any other accepted exception. The entry is accepted or fails the same way in a run where the rule engine lists the pair and in a run where it leaves the pair out. What an accepted exception's reason or acceptance date must state is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF
+    type: criterion-of

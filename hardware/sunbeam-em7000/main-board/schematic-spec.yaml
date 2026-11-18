@@ -56,8 +56,6 @@ mains_class_nets:
 - SHUNT_SENSE_IN
 - SHUNT_SENSE_NEUTRAL
 - LINE_MOD
-- PUMP_C_SNUB
-- PUMP_S_SNUB
 sheets_order:
 - Mains entry and load feed
 - Interlock
@@ -78,17 +76,15 @@ sheets_order:
 - Knob, tank-level and reed inputs
 totals:
   sheets: 17
-  parts: 444
+  parts: 446
   nets: 230
   parts_by_catalogue_class:
-    extended: 155
-    none: 96
-    basic: 186
+    extended: 142
+    none: 95
+    basic: 202
     preferred: 7
   hand_fitted_refs:
   - C101
-  - C701
-  - C711
   - F101
   - J101
   - J102
@@ -128,8 +124,6 @@ totals:
   - K201
   - K731
   - K741
-  - R706
-  - R716
   - RT301
   - RV101
   - U301
@@ -164,7 +158,7 @@ header_to_wall_board:
   - pin: 6
     net: MAINS_PRES_S
     direction: reserved input
-    use: steam mains-presence confirm, not drawn (no parts); PD7 reserved
+    use: steam mains-presence confirm, not drawn (no parts); PB11 reserved
   - pin: 7
     net: null
     direction: spare
@@ -184,25 +178,25 @@ header_to_wall_board:
   neutral_return_landing:
     ref: J110
     net: NEUTRAL
-    note: 'WB_RET: the eighth board-mounted 6.3 mm blade (C20626104, owner decision D8 drawn at the blade), a pad of the tab section in the NEUTRAL pour above the shunt; no retained lead lands on it, the wall board return
-      wire ends in a female push-on on it'
+    note: 'WB_RET: the eighth board-mounted 6.3 mm blade (C86469, owner decision D8 drawn at the blade), a pad of the tab section in the NEUTRAL pour above the shunt; no retained lead lands on it, the wall board return wire
+      ends in a female push-on on it'
   channels_crossing_header_for_the_pin_allocation_record:
-  - HEAT_C_DRV -> HEAT_C_LED_K (controller PD2)
-  - HEAT_S_DRV -> HEAT_S_LED_K (controller PD3)
+  - HEAT_C_DRV -> HEAT_C_LED_K (controller PD11)
+  - HEAT_S_DRV -> HEAT_S_LED_K (controller PD12)
   - +5V_WB (rail)
   - GND (rail)
   - MAINS_PRES_C (controller PE15, reserved)
-  - MAINS_PRES_S (controller PD7, reserved)
+  - MAINS_PRES_S (controller PB11, reserved)
 anticipated_channel_kinds:
 - kind: 1
   name: Supply voltage measurement
   placed: true
-  where: 'sheet "Supply voltage and current measurement": AMC131M02 channel 0 through the LINE to NEUTRAL divider; digital over SPI2 (the division record''s analogue conditioning block VM_C became the converter''s serial link;
+  where: 'sheet "Supply voltage and current measurement": AMC131M02 channel 0 through the LINE to NEUTRAL divider; digital over SPI3 (the division record''s analogue conditioning block VM_C became the converter''s serial link;
     PB1 stays free)'
 - kind: 2
   name: Weight-based endpoint, two load-cell channels
   placed: true
-  where: 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PC8, PC9, PC11, PC12'
+  where: 'sheet "Load-cell amplifiers": WT1_H, WT2_H headers and two HX711 amplifiers; PD2, PD3, PD5 and PD6'
 - kind: 3
   name: Further temperature and pressure inputs of the kinds in use
   placed: false
@@ -240,11 +234,11 @@ anticipated_channel_kinds:
 - kind: 11
   name: In-stream temperature, two PT1000 probes
   placed: true
-  where: 'sheet "In-stream temperature converters": PT1_H, PT2_H and two RTD converters on SPI2 (PB13, PB14, PB15), chip selects PB12 and PD8'
+  where: 'sheet "In-stream temperature converters": PT1_H, PT2_H and two RTD converters on SPI3 (PC10, PC11, PC12), chip selects PD0 and PD1'
 - kind: 12
   name: Brew-path pressure transducer
   placed: true
-  where: 'sheet "Flow, pressure and spare analogue inputs": BREW_D (I2C2 on PB10/PB11) and BREW_A (analogue fallback to PA6)'
+  where: 'sheet "Flow, pressure and spare analogue inputs": BREW_D (I2C4 on PB6/PB7) and BREW_A (analogue fallback to PA6)'
 - kind: 13
   name: Supply frequency measurement
   placed: true
@@ -360,7 +354,7 @@ controller_pin_assignment:
     net: 'NO_CONNECT: PB1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 36
     port_or_name: PB2
-    net: 'NO_CONNECT: PB2 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: BUZZER
   - pin: 37
     port_or_name: PE7
     net: 'NO_CONNECT: PE7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
@@ -378,7 +372,7 @@ controller_pin_assignment:
     net: 'NO_CONNECT: PE11 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 42
     port_or_name: PE12
-    net: TANK_LEVEL
+    net: LOWWATER_K
   - pin: 43
     port_or_name: PE13
     net: KNOB_HOT
@@ -390,10 +384,10 @@ controller_pin_assignment:
     net: MAINS_PRES_C
   - pin: 46
     port_or_name: PB10
-    net: BREW_SCL
+    net: FLOW_IN
   - pin: 47
     port_or_name: PB11
-    net: BREW_SDA
+    net: MAINS_PRES_S
   - pin: 48
     port_or_name: VCAP
     net: VCAP
@@ -405,34 +399,34 @@ controller_pin_assignment:
     net: +3V3
   - pin: 51
     port_or_name: PB12
-    net: PT1_CS
+    net: VALVE_3W_DRV
   - pin: 52
     port_or_name: PB13
-    net: SPI2_SCK
+    net: 'NO_CONNECT: PB13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 53
     port_or_name: PB14
-    net: SPI2_MISO
+    net: 'NO_CONNECT: PB14 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 54
     port_or_name: PB15
-    net: SPI2_MOSI
+    net: 'NO_CONNECT: PB15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 55
     port_or_name: PD8
-    net: PT2_CS
+    net: GAUGE_DIR1
   - pin: 56
     port_or_name: PD9
-    net: AMC_CS
+    net: GAUGE_DIR2
   - pin: 57
     port_or_name: PD10
-    net: AMC_DRDY
+    net: GAUGE_RST
   - pin: 58
     port_or_name: PD11
-    net: AMC_RESET
+    net: HEAT_C_DRV
   - pin: 59
     port_or_name: PD12
-    net: 'NO_CONNECT: PD12 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: HEAT_S_DRV
   - pin: 60
     port_or_name: PD13
-    net: 'NO_CONNECT: PD13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: VALVE_2W_DRV
   - pin: 61
     port_or_name: PD14
     net: GAUGE_STEP1
@@ -441,16 +435,16 @@ controller_pin_assignment:
     net: GAUGE_STEP2
   - pin: 63
     port_or_name: PC6
-    net: FLOW_IN
+    net: AMC_DRDY
   - pin: 64
     port_or_name: PC7
     net: POL_OUT
   - pin: 65
     port_or_name: PC8
-    net: WT1_DATA
+    net: AMC_RESET
   - pin: 66
     port_or_name: PC9
-    net: WT1_CLK
+    net: 'NO_CONNECT: PC9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 67
     port_or_name: PA8
     net: PUMP_S_GATE
@@ -483,40 +477,40 @@ controller_pin_assignment:
     net: SWCLK
   - pin: 77
     port_or_name: PA15
-    net: 'NO_CONNECT: PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: AMC_CS
   - pin: 78
     port_or_name: PC10
-    net: 'NO_CONNECT: PC10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: SPI3_SCK
   - pin: 79
     port_or_name: PC11
-    net: WT2_DATA
+    net: SPI3_MISO
   - pin: 80
     port_or_name: PC12
-    net: WT2_CLK
+    net: SPI3_MOSI
   - pin: 81
     port_or_name: PD0
-    net: GAUGE_DIR1
+    net: PT1_CS
   - pin: 82
     port_or_name: PD1
-    net: GAUGE_DIR2
+    net: PT2_CS
   - pin: 83
     port_or_name: PD2
-    net: HEAT_C_DRV
+    net: WT2_DATA
   - pin: 84
     port_or_name: PD3
-    net: HEAT_S_DRV
+    net: WT2_CLK
   - pin: 85
     port_or_name: PD4
-    net: VALVE_2W_DRV
+    net: 'NO_CONNECT: PD4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 86
     port_or_name: PD5
-    net: VALVE_3W_DRV
+    net: WT1_DATA
   - pin: 87
     port_or_name: PD6
-    net: GAUGE_RST
+    net: WT1_CLK
   - pin: 88
     port_or_name: PD7
-    net: MAINS_PRES_S
+    net: 'NO_CONNECT: PD7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 89
     port_or_name: PB3
     net: SWO
@@ -528,10 +522,10 @@ controller_pin_assignment:
     net: ANODE_GATE
   - pin: 92
     port_or_name: PB6
-    net: 'NO_CONNECT: PB6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: BREW_SCL
   - pin: 93
     port_or_name: PB7
-    net: 'NO_CONNECT: PB7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+    net: BREW_SDA
   - pin: 94
     port_or_name: BOOT0
     net: BOOT0
@@ -543,10 +537,10 @@ controller_pin_assignment:
     net: STM_SDA
   - pin: 97
     port_or_name: PE0
-    net: LOWWATER_K
+    net: TANK_LEVEL
   - pin: 98
     port_or_name: PE1
-    net: BUZZER
+    net: 'NO_CONNECT: PE1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: 99
     port_or_name: VSS
     net: GND
@@ -590,17 +584,19 @@ derating_policy_proposed:
     microcircuits: supply at most 80 % of rated voltage, 75 % of rated power, junction temperature 100 degC
     inductive devices: at most 50 % of rated voltage, 60 % of rated temperature
     relays and connectors: at most 50 % of rated current
-  consequence_for_mains_rated_parts: Taken literally the table puts mains-rated, safety-listed parts (X2 capacitor, varistor, relay contacts, tabs, fuse clips) out of policy at 358 V peak and 15 A; those rows are findings
-    until the owner either declares a different factor for safety-listed parts with a stated reason or accepts the findings.
+  consequence_for_mains_rated_parts: Taken literally the table puts mains-rated, safety-listed parts (X2 capacitor, varistor, relay contacts, tabs) out of policy at 358 V peak and 15 A; those rows are findings until the owner
+    either declares a different factor for safety-listed parts with a stated reason or accepts the findings.
 departures_from_the_division_record:
-- 'Interlock drive has 21 parts, not 19: R205 and R206 (100 kohm, each coupling node to ground) are added, because the record''s circuit holds the coil about 1.2 s when the output rests high after a rising edge (circuit-proof/A_removal_gate_high_rec.log);
-  the record''s sentence that a level cannot cross the coupling capacitor is to be amended.'
-- The supply voltage and supply current are read digitally by the AMC131M02 over SPI2, so the record's conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.
-- Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 60.4 kohm 2512 resistors (a single element would see more than the 200 V working voltage the maker rates); the VMEAS and IN_COND blocks of the
-  floorplan are larger than the record drew.
-- Three Extended machine-placed part types are added to the record's five (PESD5V0F1BL C45961, BAT54S C47546, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.
-- The debug SWO pin PB3 is wired; the allocation record's free list loses PA0, PB3, PC7, PD9, PD10 and PD11.
+- 'Interlock drive has 21 parts, not 19 (counting the buffer as one part): R205 and R206 (100 kohm, each coupling node to ground) are added, because the record''s circuit holds the coil about 1.2 s when the output rests high
+  after a rising edge (circuit-proof/A_removal_gate_high_rec.log); the record''s sentence that a level cannot cross the coupling capacitor is to be amended.'
+- The supply voltage and supply current are read digitally by the AMC131M02 over SPI3, so the record's conversion pins PB1 and PA1 and the conditioning blocks VM_C and I_C are not used; the pins stay free.
+- Mains divider is three 300 kohm 2512 resistors and the zero-crossing feed two 59 kohm 2512 resistors (each at half the line, 126.5 V rms, against the 300 V working voltage the maker rates; the OEM's single 120 kohm part
+  would see 253 V rms against a 200 V working voltage); the VMEAS and IN_COND blocks of the floorplan are larger than the record drew.
+- Three Extended machine-placed part types are added to the record's five (PESD5V0F1BL C45961, BAT54SW C78606, MF-NSMF012-2 C163517), +9.21 USD at Economic assembly.
+- The debug SWO pin PB3 is wired; the allocation record's free list loses PA0, PB3, PC7, PC8, PD2 and PD7.
 - The 8 MHz converter clock oscillator Y601 is added (the AMC131M02 has no oscillator of its own).
+- The buffer U_PL is two inverting SN74AHCT1G14 gates in series, U201 and U203 (C7486), with R208 (100 kohm) from the net between them to ground and C206 beside U203, not the record's one non-inverting buffer, because the
+  non-inverting part has no stock; the polarity, the pull-downs R201 R202 and the pump edge are the record's (circuit-proof.md A, rows "input network" and "supply ramps"; the single-inverter alternative was rejected).
 - The record's controller current budget (480 MHz, 439 mA) has no stable junction temperature at 70 degC air; the rail skeleton is drawn to 200 MHz at the lowest power scale until the firmware clock is declared (open-items.md).
 circuit_verdicts:
   file: circuit-verdicts.md
@@ -615,10 +611,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB1_LINE1
     rating: 6.3 x 0.8 mm blade, retained red lead (live out to the loads)
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 1: live out to every load through the retained daisy-chain wire; fed only from the interlock contact'
@@ -628,10 +624,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB2_LINE_IN
     rating: 6.3 x 0.8 mm blade, retained brown lead (live in from the plug)
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 2: live in from the plug, before the entry fuse'
@@ -641,10 +637,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB3_NEUTRAL_IN
     rating: 6.3 x 0.8 mm blade, retained blue lead (neutral from the plug)
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 3: neutral in from the plug, plug side of the shunt'
@@ -654,10 +650,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB6_COFVALVE
     rating: 6.3 x 0.8 mm blade, retained brown lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 6: two-way coffee valve coil, switched side, to the valve relay K_V1 (owner D)'
@@ -667,10 +663,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB7_COFFPUMP
     rating: 6.3 x 0.8 mm blade, retained white lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 7: coffee pump, switched side (owner D''s pump drive)'
@@ -680,10 +676,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB8_STEAMPUMP
     rating: 6.3 x 0.8 mm blade, retained black lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 8: steam pump, switched side (owner D''s pump drive)'
@@ -693,10 +689,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: TAB9_HOTVALVE
     rating: 6.3 x 0.8 mm blade, retained blue lead
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Tab 9: three-way valve coil, switched side, to the valve relay K_V2 (owner D)'
@@ -706,10 +702,10 @@ sheets:
     lib_id: Connector_Generic:Conn_01x01
     value: WB_RET
     rating: 6.3 x 0.8 mm blade, same part as the tabs; the wall board's return wire ends here
-    footprint: Tab_BZXC_BTC-3-PCB634908T
-    mpn: BTC-3-PCB634908T
-    maker: Dongguan Bozhong (BZXC)
-    lcsc: C20626104
+    footprint: Tab_TE_63849-1
+    mpn: 63849-1
+    maker: TE Connectivity
+    lcsc: C86469
     class: extended
     hand: true
     function: 'Return landing for the heater wall board: a blade on the NEUTRAL pour (not a harness tab), above the shunt'
@@ -718,15 +714,15 @@ sheets:
   - ref: F101
     lib_id: Device:Fuse
     value: 10A_T_250V
-    rating: SETfuse SCT520 plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5 x 20 mm leadless ceramic; fitted in two Littelfuse 0111 0501 (111 501) clips
-    footprint: Fuse:Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal
-    mpn: SCT520T10A250V
+    rating: SETfuse SCT520PT plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5.2 x 20 mm ceramic cartridge with 0.8 mm soldered pigtail leads, soldered in, no clips
+    footprint: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+    mpn: SCT520PT10A250V
     maker: SETfuse (Xiamen SET Electronics)
-    lcsc: C22447847
+    lcsc: C22447834
     class: extended
     hand: true
-    function: 'Entry fuse on the live; protects the trunk and both heaters. Two clips C151075 (Littelfuse 01110501Z, 111 501, spring brass, up to 10 A) are bought with it: the footprint holds the clips'' 4 holes (17.8 x 5.0
-      mm, 1.17 mm), pin 1 = line-side clip, pin 2 = load-side clip'
+    function: Entry fuse on the live; protects the trunk and both heaters. A pigtail fuse soldered through two plated holes 28.0 mm apart (the leads formed to that pitch before the bend rule of the maker's sheet, page 5),
+      no clips; pin 1 = line-side lead, pin 2 = load-side lead
     mains: true
     sim_exclude: true
   - ref: JP101
@@ -739,20 +735,20 @@ sheets:
     lcsc: none
     class: none
     hand: true
-    function: 'Isolating link in the live between the fuse and everything it feeds (bring-up): wire link in service, lamp or resistor on first power; open voltage across the link is 253 V rms'
+    function: 'Isolating link in the live between the fuse and everything it feeds (bring-up): wire link in service, lamp or resistor on first power; open voltage across the link is 253 V rms; hand-fitted, listed in the bill of materials without an assembler part number (so the assembler does not fit it), not in the position file'
     mains: true
     sim_exclude: true
   - ref: RV101
     lib_id: Device:Varistor
     value: 14D471K
     rating: 300 VAC max, 470 V class 14 mm disc, 423-517 V at 1 mA, 775 V clamp at 50 A
-    footprint: Varistor:RV_Disc_D15.5mm_W5mm_P7.5mm
+    footprint: RV_Disc_14D471K_P7.5mm
     mpn: 14D471K
     maker: Ruilon
     lcsc: C8852
     class: extended
     hand: true
-    function: 'Surge clamp across LINE and NEUTRAL, hard against the fuse''s load-side clip (the disc outline and pitch are placeholders: the sheet read gives neither)'
+    function: Surge clamp across LINE and NEUTRAL, hard against the fuse's load-side lead (the disc outline and 7.5 mm pitch are the maker's 14D series drawing)
     mains: true
     sim_exclude: true
   - ref: C101
@@ -940,8 +936,8 @@ sheets:
   - ref: H1
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -953,8 +949,8 @@ sheets:
   - ref: H2
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -966,8 +962,8 @@ sheets:
   - ref: H3
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -979,8 +975,8 @@ sheets:
   - ref: H4
     lib_id: Mechanical:MountingHole
     value: MountingHole
-    rating: M3 lid screw, 3.1 mm non-plated hole
-    footprint: MountingHole_3.1mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
+    footprint: MountingHole_3.4mm_Lid
     mpn: ''
     maker: ''
     lcsc: none
@@ -1110,13 +1106,22 @@ sheets:
   no_connect: []
   custom_symbols: []
   custom_footprints:
-  - name: Tab_BZXC_BTC-3-PCB634908T
-    from: 'Dongguan Bozhong Electrical Co., Ltd drawing of BTC-3-PCB634908T (LCSC C20626104), Rev. A1, 2021-10-12, read 2026-10-29 from the datasheet linked on the part''s jlcpcb.com page. The record''s own figures: blade
-      B 6.3 +-0.2 mm wide, T 0.8 mm thick (+0/-0.03), blade length A 14.3 +-0.2 mm, mating terminal 250 female T=0.8 (controller-board-division.md, Sources read P15). The drawing also prints D 1.8 +-0.1, E 7.9 +-0.2, F 3.8
-      +-0.2, G 1.2 +-0.1, C 3.8 +-0.2, W 8.1 +-0.1, J 2.4 +-0.1, H 2.6 +-0.2.'
-    detail: 'One plated pad, number 1. Copper at least 7.0 mm (along the blade''s width) by 1.45 mm: the blade''s section from connector-pinouts.md (division record assumption A2; the pad is at least the part''s own footprint).
-      Hole: one oval plated slot, 4.2 x 1.0 mm provisional = the drawing''s leg width C 3.8 +-0.2 and thickness T 0.8 plus 0.2 mm clearance each way; the drawing does not dimension the leg''s barbs separately, so confirm the
-      slot against a received part before ordering (open item). The blade stands 9.9 mm clear of the board by the harness record; the drawing gives blade length 14.3 mm, not the stand-off.'
+  - name: Tab_TE_63849-1
+    from: TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469), https://datasheet.lcsc.com/datasheet/pdf/d78aaa5668ef44d19432bad6ab97dbf2.pdf; read 2026-11-13. Blade 6.35 +-0.08 wide, 0.76 to 0.84 thick, overall 14.02,
+      shoulders 7.92 wide, legs 3.81 long, 1.14 to 1.27 wide, 5.08 +-0.08 apart; PC board hole pattern 2 x diameter 1.40 +-0.05 at 5.08 +-0.08.
+    detail: 'Two plated pads, both number 1 (one terminal), round 3.0 mm, drill 1.4 mm, at x = -2.54 and +2.54 (pitch 5.08 mm). The legs are a barbed press fit in the 1.40 mm holes (the maker''s own pattern). Courtyard the
+      pads plus 0.25 mm; the blade is drawn on the fabrication layer with its wide face along X. Not verified: the plated-hole tolerance the board house holds against the maker''s 1.40 +-0.05, and the part''s current rating
+      (the maker''s specification 114-2115 was not read); a trial fit of one tab in a scrap board is the check.'
+  - name: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+    from: SETfuse SCT520(P) datasheet, https://datasheet.lcsc.com/datasheet/pdf/c399a71412fc2cbf24b5ddba60b5c909.pdf, page 1 (dimensions) and page 5 (lead bending); read 2026-11-13. Body diameter 5.2 x length 20.0 +-0.5, lead
+      diameter 0.80 +-0.05 for above 6.3 A to 10 A.
+    detail: Two plated holes, drill 1.10 mm, pads round 3.0 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 25.0 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
+      2 x 4.2 mm for the straight run and bend the maker's sheet asks for at the 0.8 mm lead; the leads are formed to that pitch. Courtyard the body plus 0.25 mm.
+  - name: RV_Disc_14D471K_P7.5mm
+    from: 'Ruilon 14D series datasheet version A3, https://datasheet.lcsc.com/datasheet/pdf/305ba13b482fd415d345c9b9446eb189.pdf, page 4 (14D471K: D max 17.0, T max 6.2, lead pitch 7.5 +-1.0, lead diameter 0.8 +-0.1); read
+      2026-11-13.'
+    detail: Two plated holes, drill 1.1 mm, pads round 2.1 mm, pitch 7.5 mm along X, both pads on one line; body 17.0 x 6.2 mm drawn on the fabrication and silkscreen layers, centred between the leads; courtyard the body plus
+      0.25 mm.
   - name: JP101_WireLink_P10mm
     from: 'Own design for the first-power link of the board method (bring-up step 3): a pair of through-hole pads taking a wire link in service or a lamp / resistor on first power. Hole 1.7 mm is KiCad''s stock SolderWire-1.5sqmm
       pattern (1.5 mm2 wire); pad gap set to the division record''s basic creepage 5.0 mm or more.'
@@ -1125,23 +1130,22 @@ sheets:
   - name: R_WSK2512_4T
     from: 'Vishay Dale WSK2512, document number 30108, revision 04-Apr-2022, ''Solder pad dimensions'' table for 0.0005 to 0.0049 ohm: a 3.30 mm, b 3.30 mm, c 0.76 mm, d 0.51 mm, e 1.70 mm, l 1.65 mm; body L 6.35 x W 3.18
       mm (inch figures converted).'
-    detail: 'Four pads: 1 = current terminal I1 and 4 = current terminal I2 (the two large pads, 3.30 mm along the body by 3.30 mm across, the gap between them l = 1.65 mm), 2 = sense E1 and 3 = sense E2 (two small pads c
-      0.76 mm by d 0.51 mm, spacing e 1.70 mm, inside the gap beside the large pads). The placement of the sense pads against the large pads is read from the maker''s land-pattern figure when the footprint is drawn (open item):
-      the text of the sheet gives the dimensions, not the sketch''s layout. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
-  - name: MountingHole_3.1mm_Lid
+    detail: 'Four pads, centres in mm from the body centre: 1 = current terminal I1 at (-2.475, -0.635) and 4 = current terminal I2 at (2.475, 0.635), each 3.30 mm by 2.03 mm; 2 = sense E1 at (-3.275, 1.27) and 3 = sense E2
+      at (3.275, -1.27), each 1.70 mm by 0.76 mm. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
+  - name: MountingHole_3.4mm_Lid
     from: 'Own design for the machine''s four lid-screw points (layout-plan.md BOARD-7: four holes of 3.1 mm, a part-free circle of 3.5 mm radius).'
-    detail: One non-plated hole, drill 3.1 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
+    detail: One non-plated hole, drill 3.4 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
   power_flags: []
   drawing_notes: 'Placement and drawing notes. (1) The whole sheet is mains: draw it as the left, mains-referenced region of the board with the plug-side tabs at the left edge and signal flow left to right: J102 (LINE_IN)
     -> TP101 -> F101 -> TP102 -> JP101 -> LINE bus; the LINE bus carries RV101, C101, the R101-R102 / R103-R104 discharge strings (drawn as two parallel strings across C101, each of two resistors in series, DISCH_A and DISCH_B
     between the pair) and goes off-sheet to the interlock sheet (K201 pin 14); LINE1 returns from the interlock sheet to J101 and TP104. Neutral at the bottom: J103 -> TP105 -> R105 (pin 1) -> R105 pin 4 -> NEUTRAL bus (RV101,
     C101, R102/R104, J110, TP106). R105''s sense pins 2 and 3 leave as global labels SHUNT_SENSE_IN and SHUNT_SENSE_NEUTRAL (owner E filters them). (2) J106 to J109 each show the net on the pin (COFVALVE, COFFPUMP, STEAMPUMP,
-    HOTVALVE); no other part of this sheet touches them. (3) Suppression placement: RV101 hard against F101''s load-side clip on the LINE copper (the varistor is downstream of the fuse and JP101); C101 beside RV101; the discharge
+    HOTVALVE); no other part of this sheet touches them. (3) Suppression placement: RV101 hard against F101''s load-side lead on the LINE copper (the varistor is downstream of the fuse and JP101); C101 beside RV101; the discharge
     strings R101..R104 directly across C101''s two leads, so that the discharge path exists whenever the capacitor is on the board; keep the 4 resistors off the shunt copper. (4) Values are written for SPICE: the resistor
-    value 1Meg is mega (an M alone is milli in SPICE and KiCad''s simulator). (5) Tabs 4 and 5 are not fitted on this board (heater leads go to the wall-board joiners). (6) The 6.3 mm blade tab, F101''s clips, RV101, C101
-    and JP101 are through-hole parts the owner hand-fits and leaves off the manufacturer''s order (hand: true); the clips are two of C151075 for F101. (7) No choke and no Y capacitor, by the record''s decision. (8) TP107 and
-    TP108 are the second pad on NEUTRAL_IN and on NEUTRAL beside R105, so the voltage across the shunt is read apart from the pads TP105 and TP106 that carry the current; drawn under TP105 and TP106 on the same nets. (9) H1
-    to H4 (lid-screw holes) and FID1 to FID3 (fiducials) are mechanical symbols with in_bom no and on_board yes, drawn in a row at the foot of the sheet; they are on no net and carry the LCSC field none.
+    value 1Meg is mega (an M alone is milli in SPICE and KiCad''s simulator). (5) Tabs 4 and 5 are not fitted on this board (heater leads go to the wall-board joiners). (6) The 6.3 mm blade tab, F101, RV101, C101 and JP101
+    are through-hole parts the owner hand-fits and leaves off the manufacturer''s order (hand: true). (7) No choke and no Y capacitor, by the record''s decision. (8) TP107 and TP108 are the second pad on NEUTRAL_IN and on
+    NEUTRAL beside R105, so the voltage across the shunt is read apart from the pads TP105 and TP106 that carry the current; drawn under TP105 and TP106 on the same nets. (9) H1 to H4 (lid-screw holes) and FID1 to FID3 (fiducials)
+    are mechanical symbols with in_bom no and on_board yes, drawn in a row at the foot of the sheet; they are on no net and carry the LCSC field none.
 
     '
 - order: 2
@@ -1150,30 +1154,45 @@ sheets:
   parts:
   - ref: K201
     lib_id: Relay:Relay_SPST-NO
-    value: HF115F-Q/005-1H
-    rating: 440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
-    footprint: Relay_HF115F-Q_1H_Vertical
-    mpn: HF115F-Q/005-1H
+    value: HF115F-I/005-1HS3A
+    rating: 440 VAC max, 1 Form A AgSnO2, coil 5 V 62 ohm +-10 %, 16 A 250 VAC resistive (VDE 16 A at 85 C), pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
+    footprint: Relay_HF115F-I_1HS3A
+    mpn: HF115F-I/005-1HS3A
     maker: Hongfa (Xiamen Hongfa Electroacoustic)
-    lcsc: none
-    class: none
+    lcsc: C2976795
+    class: extended
     hand: true
-    function: 'Interlock relay: contact in series in the live feed (pin 13 = LINE1, pin 14 = LINE), coil A1 = +5V, A2 = POL_COIL_LO. The 5 V code was not found in the JLCPCB/LCSC catalogue on 2026-10-29 (only HF115F-Q/012-1H,
-      C5318991, 12 V coil, and /024-1HT, C400142); it is bought outside the catalogue and hand-fitted'
+    function: 'Interlock relay: contact in series in the live feed (pin 13 = LINE1, pin 14 = LINE), coil A1 = +5V, A2 = POL_COIL_LO. Hongfa HF115F-I, 5 V coil, catalogue number C2976795 (JLCPCB extended, checked 2026-11-13);
+      hand-fitted'
     mains: true
     sim_exclude: true
   - ref: U201
-    lib_id: 74xGxx:74LVC1G17
-    value: 74AHCT1G17
-    rating: 7 V absolute maximum VCC, Schmitt non-inverting buffer, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt buffer with the same pin numbers (1 NC, 2 A,
-      3 GND, 4 Y, 5 VCC)
+    lib_id: 74LVC1G14
+    value: SN74AHCT1G14
+    rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; first of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate
+      Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
     footprint: Package_TO_SOT_SMD:SOT-353_SC-70-5
-    mpn: 74AHCT1G17GW
-    maker: Nexperia
-    lcsc: C554579
+    mpn: SN74AHCT1G14DCKR
+    maker: Texas Instruments
+    lcsc: C7486
     class: extended
     hand: false
-    function: 'Proof-of-life buffer on the 5 V rail; stock on 2026-10-29 only 3 pieces (C554578, SOT753 package, 2 pieces): sourcing open'
+    function: Proof-of-life buffer, first gate of two inverting gates in series (the second is U203), on the 5 V rail; replaces the Nexperia 74AHCT1G17GW (C554579, out of stock); stock 3178 pieces in the JLCPCB parts library
+      copy and 2360 on LCSC on 2026-11-09
+    mains: false
+    sim_exclude: false
+  - ref: U203
+    lib_id: 74LVC1G14
+    value: SN74AHCT1G14
+    rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; second of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate
+      Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
+    footprint: Package_TO_SOT_SMD:SOT-353_SC-70-5
+    mpn: SN74AHCT1G14DCKR
+    maker: Texas Instruments
+    lcsc: C7486
+    class: extended
+    hand: false
+    function: 'Proof-of-life buffer, second gate: restores the record''s polarity, so the buffer output follows POL_OUT; its input is the net POL_INV, its output POL_BUF feeds both channels'
     mains: false
     sim_exclude: false
   - ref: C201
@@ -1189,6 +1208,19 @@ sheets:
     function: Bypass of U201 supply (the datasheet requires none; placed as ordinary practice, not one of the 19 parts)
     mains: false
     sim_exclude: false
+  - ref: C206
+    lib_id: Device:C
+    value: 100n
+    rating: X7R 50 V 0603 10 %
+    footprint: Capacitor_SMD:C_0603_1608Metric
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
+    hand: false
+    function: Bypass of U203 supply (the datasheet requires none; placed as ordinary practice beside U203 pin 5, which stands 3.9 mm from C201)
+    mains: false
+    sim_exclude: false
   - ref: R207
     lib_id: Device:R
     value: 1k
@@ -1199,8 +1231,8 @@ sheets:
     lcsc: C21190
     class: basic
     hand: false
-    function: 'Series resistor between the controller output and the buffer input: limits the current the 3.3 V output can push into the unpowered 5 V buffer''s input (3.3 V present, 5 V absent) to 2.93 mA at most (20 mA clamp
-      rating), with at most 83 ns of added edge delay (circuit-proof/A_pol_series.py)'
+    function: 'Series resistor between the controller output and U201''s input: limits the current the 3.3 V output can push into the unpowered 5 V gate''s input (3.3 V present, 5 V absent) to 2.93 mA at most (20 mA clamp
+      rating, the nearest the maker states), with at most 83 ns of added edge delay (circuit-proof/A_pol_series.py)'
     mains: false
     sim_exclude: false
   - ref: R201
@@ -1227,6 +1259,19 @@ sheets:
     class: basic
     hand: false
     function: Pull-down 2 of 2 on the buffer input
+    mains: false
+    sim_exclude: false
+  - ref: R208
+    lib_id: Device:R
+    value: 100k
+    rating: 1 % 0603 100 mW
+    footprint: Resistor_SMD:R_0603_1608Metric
+    mpn: 0603WAF1003T5E
+    maker: UNI-ROYAL
+    lcsc: C25803
+    class: basic
+    hand: false
+    function: 'Pull-down on the net between the two gates (POL_INV): if the link between U201 and U203 opens on the U201 side, U203''s input is held low and its output stays high, a level, instead of the input floating'
     mains: false
     sim_exclude: false
   - ref: C202
@@ -1535,7 +1580,9 @@ sheets:
       pins:
       - K201.A1
       - U201.5
+      - U203.5
       - C201.1
+      - C206.1
       - D205.3
       - D206.3
       - TP206.1
@@ -1543,7 +1590,10 @@ sheets:
       scope: power
       pins:
       - C201.2
+      - C206.2
       - U201.3
+      - U203.3
+      - R208.2
       - R201.2
       - R202.2
       - D201.2
@@ -1566,10 +1616,16 @@ sheets:
       - U201.2
       - R201.1
       - R202.1
-    POL_BUF:
+    POL_INV:
       scope: local
       pins:
       - U201.4
+      - U203.2
+      - R208.1
+    POL_BUF:
+      scope: local
+      pins:
+      - U203.4
       - C202.1
       - C204.1
       - TP204.1
@@ -1636,7 +1692,9 @@ sheets:
       - K201.13
   no_connect:
   - pin: U201.1
-    reason: pin 1 is n.c. in the 74AHCT1G17 pin table (Nexperia 74AHC1G17/74AHCT1G17 Rev. 4, table 3)
+    reason: pin 1 is n.c. in the SN74AHCT1G14 pin table (Texas Instruments SCLS322P, DCK package, top view)
+  - pin: U203.1
+    reason: pin 1 is n.c. on the SN74AHCT1G14 (SCLS322P), as on U201
   - pin: D202.2
     reason: SOT-23 pin 2 is n.c. on the BAS116 (Nexperia BAS116 sheet, table 2 pinning)
   - pin: D204.2
@@ -1649,26 +1707,49 @@ sheets:
     reason: SOT-23 pin 2 is n.c. on the BZX84 (Nexperia BZX84 series Rev. 7, table 2)
   - pin: Z202.2
     reason: n.c. on the BZX84 SOT-23
-  custom_symbols: []
+  custom_symbols:
+  - name: 74LVC1G14
+    ref_prefix: U
+    note: KiCad's stock 74xGxx 74LVC1G14 (single Schmitt inverter, pins 1 NC, 2 A, 3 GND, 4 Y, 5 VCC), copied into the project symbol library with the footprint filter widened to 'SOT?23* SOT?353* SOT?553*' so that the SC-70-5
+      package of U201 and U203 matches.
+    pins:
+    - number: '1'
+      name: NC
+      type: no_connect
+      unit: 1
+    - number: '2'
+      name: ''
+      type: input
+      unit: 1
+    - number: '3'
+      name: GND
+      type: power_in
+      unit: 1
+    - number: '4'
+      name: ''
+      type: output
+      unit: 1
+    - number: '5'
+      name: VCC
+      type: power_in
+      unit: 1
   custom_footprints:
-  - name: Relay_HF115F-Q_1H_Vertical
-    from: Hongfa HF115F-Q datasheet, 2024 Rev. 1.00, pages 205-206 (https://source.hongfa.com/Uploads/Product/PDF/HF115F-Q_en.pdf), 'PCB Layout (bottom view)' for the 1 Form A, vertical quick-connect type, read 2026-10-29
-    detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) plated holes drill 1.4 mm (the drawing gives 2 x diameter 1.3 +0.1/0; the drill is the upper tolerance end, 1.3 plus 0.1) pad 2.2 mm round;
-      contact pole a = pad number 13 at (32.5, 0) and (37.5, 0); pole b = pad number 14 at (32.5, 7.56) and (37.5, 7.56): four holes drill 1.6 mm (drawing 4 x diameter 1.5 +0.1/0, so 1.6 is the upper end) pad 2.5 mm round;
-      the two pads of one number are one pin (duplicate pad numbers). Pole a (pin 13) is on LINE1 and pole b (pin 14) on LINE, the order that puts LINE and LINE1 in the same order as the mains tabs J102 and J101 when the contacts
-      face the tabs, so the two feeds do not cross at the relay; the pad gap between the poles is 7.56 - 2.5 = 5.06 mm at least the basic 5.0 mm. The drawing''s tolerances for the layout are +-0.1 mm. Body outline 29 +-0.3
-      x 12.7 +-0.3 mm with the quick-connect tabs reaching 41 mm overall (vertical type), 15.7 mm high, 3.6 mm stand-off pins; body starts 2.5 mm before the coil holes (drawing dimension 2.5). The coil has no marked polarity
-      in the sheet (A1 and A2 are interchangeable).'
+  - name: Relay_HF115F-I_1HS3A
+    from: Hongfa HF115F-I datasheet, page 202 (PCB layout, bottom view), https://datasheet.lcsc.com/datasheet/pdf/0ebe0ad433a21202e9ed2b99eb26b6ee.pdf; HF115F-S sheet page 214 gives the same pattern; read 2026-11-13
+    detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) round 2.2 mm, drill 1.4 mm (drawing 6 x diameter 1.3 +0.1/0, tolerance +-0.1); contact pins 13 at (20.16, 0) and (20.16, 7.56) and 14 at (25.20,
+      0) and (25.20, 7.56), round 2.0 mm, drill 1.4 mm; the two pads of one number are one pin (duplicate pad numbers; the maker joins the two pins of a contact column inside). Pin 13 is on LINE1 and pin 14 on LINE. Body 29
+      +-0.3 x 12.7 +-0.3 x 15.7 +-0.3 mm, stand-off 0.3 mm, pins 3.6 mm long; the coil column is 2.6 mm in from the body end. Coil pad to nearest contact pad 20.16 mm along the body; contact column to column pad edge gap 3.04
+      mm. The coil has no marked polarity (A1 and A2 are interchangeable).'
   power_flags: []
-  drawing_notes: 'Drawing notes. (1) One function: the interlock. Draw left to right: POL_OUT enters at the left and goes through R207 to U201''s input net POL_IN, which carries R201 and R202 to ground; U201''s output POL_BUF
-    feeds two identical rows, channel A above and channel B below (coupling capacitor, then the pump node with D201 to ground and D202 to the gate, then the gate with C203, R203 and the FET). R205 and R206 hang from each pump
-    node to ground. (2) The FET stack at the right: Q201 source at GND, Q201 drain = POL_MID = Q202 source, Q202 drain = POL_COIL_LO, which goes to K201''s A2. K201''s A1 is +5V at the top. The clamp: two parallel branches
-    from POL_COIL_LO up to +5V, each a zener Z (pin 3 cathode to POL_COIL_LO, pin 1 anode) in series with a diode D (pin 1 anode on the zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and values;
-    the second channel must not share any part with the first except U201 (the one common element, by the record''s design), the coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart from the
-    coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier was unlisted in the separation basis when this was written (the draft, unsigned at this commit, lists it); its distances
-    are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s coil is low voltage and its contact mains: keep >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting
-    between them as the division record does; the footprint''s own coil-to-contact pad distance is 32.5 mm along the body. (6) Values in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part
-    circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
+  drawing_notes: 'Drawing notes. (1) One function: the interlock. Draw left to right: POL_OUT enters at the left and goes through R207 to U201''s input net POL_IN, which carries R201 and R202 to ground; U201 (inverting) drives
+    POL_INV, which carries R208 to ground and U203''s input; U203 (inverting) drives POL_BUF, which feeds two identical rows, channel A above and channel B below (coupling capacitor, then the pump node with D201 to ground
+    and D202 to the gate, then the gate with C203, R203 and the FET). R205 and R206 hang from each pump node to ground. (2) The FET stack at the right: Q201 source at GND, Q201 drain = POL_MID = Q202 source, Q202 drain = POL_COIL_LO,
+    which goes to K201''s A2. K201''s A1 is +5V at the top. The clamp: two parallel branches from POL_COIL_LO up to +5V, each a zener Z (pin 3 cathode to POL_COIL_LO, pin 1 anode) in series with a diode D (pin 1 anode on the
+    zener''s anode, pin 3 cathode on +5V). (3) Both channels use the same parts and values; the second channel must not share any part with the first except U201 and U203 (the common elements, by the record''s design), the
+    coil and the clamp. (4) K201''s contact pins 13 (LINE1) and 14 (LINE) are drawn apart from the coil with a dashed barrier line between coil and contact (BARRIER-1: the coil-to-contact barrier was unlisted in the separation
+    basis when this was written (the draft, unsigned at this commit, lists it; the owner has since accepted the whole record, on 2026-11-18); its distances are not shown to reach 10.0 mm creepage and 3.0 mm clearance). (5) The relay''s coil is low voltage and its contact mains: keep
+    >= 10.0 mm creepage from the coil pads (A1, A2) to the contact pads by the layout, slotting between them as the division record does; the footprint''s own coil-to-contact pad distance is 20.16 mm along the body. (6) Values
+    in SPICE form: 5.6Meg is mega. (7) Behaviour with R205/R206 absent is the record''s 19-part circuit; see circuit-proof.md row ''Interlock rest states'' and open-items.md.
 
     '
 - order: 3
@@ -1693,7 +1774,7 @@ sheets:
   - ref: JP303
     lib_id: Connector_Generic:Conn_01x02
     value: LINK_MOD
-    rating: 'two plated holes for a wire link (1.5 mm2 or a component-lead off-cut) between LINE and LINE_MOD: the link is fitted in service'
+    rating: 'two plated holes for a wire link between LINE and LINE_MOD: 1.5 mm2 copper wire, insulation rated for the mains working voltage of the LINE net (open-items.md, JP303 row), 70 degC enclosure air; the link is fitted in service'
     footprint: JP101_WireLink_P10mm
     mpn: none (owner-fitted wire)
     maker: none
@@ -1702,7 +1783,7 @@ sheets:
     hand: true
     function: 'series position in the module''s mains feed, wire link in service so the board works with RT301 unfitted; remove the link when RT301 is fitted, never both: with both fitted the link shorts the thermistor. Open
       voltage across the link when the inrush thermistor RT301 replaces it is the thermistor''s drop, under 253 V rms. Pin 1 = LINE side, pin 2 = LINE_MOD side (module). A 1206 0 ohm chip link was not used: its sheet gives
-      2 A rated and 10 A overload (UNI-ROYAL data sheet, 1206 row) and no duration, against the module''s 40 A typical cold-start inrush (IRM-20 sheet), where the wire has no such limit'
+      2 A rated and 10 A overload (UNI-ROYAL data sheet, 1206 row) and no duration, against the module''s 40 A typical cold-start inrush (IRM-20 sheet), where the wire has no such limit; hand-fitted, listed in the bill of materials without an assembler part number (so the assembler does not fit it), not in the position file'
     mains: true
     sim_exclude: true
   - ref: RT301
@@ -1861,11 +1942,11 @@ sheets:
   - ref: FB301
     lib_id: Device:FerriteBead
     value: 600R@100MHz
-    rating: 0603, 0.50 ohm DC max, 350 mA, 25 %
+    rating: 0603, 0.50 ohm DC max, 500 mA, 25 %
     footprint: Inductor_SMD:L_0603_1608Metric
-    mpn: FCM1608KF-601T03
+    mpn: FCM1608KF-601T05
     maker: TAI-TECH
-    lcsc: C141723
+    lcsc: C133937
     class: extended
     hand: false
     function: filter between +3V3 and the analogue supply for VDDA and VREF+ (AN4938 2.2 optional; the reference design's part)
@@ -2882,7 +2963,7 @@ sheets:
     TANK_LEVEL:
       scope: global
       pins:
-      - U401.42
+      - U401.97
     KNOB_HOT:
       scope: global
       pins:
@@ -2898,43 +2979,43 @@ sheets:
     BREW_SCL:
       scope: global
       pins:
-      - U401.46
+      - U401.92
     BREW_SDA:
       scope: global
       pins:
-      - U401.47
+      - U401.93
     PT1_CS:
       scope: global
       pins:
-      - U401.51
-    SPI2_SCK:
+      - U401.81
+    SPI3_SCK:
       scope: global
       pins:
-      - U401.52
-    SPI2_MISO:
+      - U401.78
+    SPI3_MISO:
       scope: global
       pins:
-      - U401.53
-    SPI2_MOSI:
+      - U401.79
+    SPI3_MOSI:
       scope: global
       pins:
-      - U401.54
+      - U401.80
     PT2_CS:
       scope: global
       pins:
-      - U401.55
+      - U401.82
     AMC_CS:
       scope: global
       pins:
-      - U401.56
+      - U401.77
     AMC_DRDY:
       scope: global
       pins:
-      - U401.57
+      - U401.63
     AMC_RESET:
       scope: global
       pins:
-      - U401.58
+      - U401.65
     GAUGE_STEP1:
       scope: global
       pins:
@@ -2946,7 +3027,7 @@ sheets:
     FLOW_IN:
       scope: global
       pins:
-      - U401.63
+      - U401.46
     POL_OUT:
       scope: global
       pins:
@@ -2954,11 +3035,11 @@ sheets:
     WT1_DATA:
       scope: global
       pins:
-      - U401.65
+      - U401.86
     WT1_CLK:
       scope: global
       pins:
-      - U401.66
+      - U401.87
     PUMP_S_GATE:
       scope: global
       pins:
@@ -2974,43 +3055,43 @@ sheets:
     WT2_DATA:
       scope: global
       pins:
-      - U401.79
+      - U401.83
     WT2_CLK:
       scope: global
       pins:
-      - U401.80
+      - U401.84
     GAUGE_DIR1:
       scope: global
       pins:
-      - U401.81
+      - U401.55
     GAUGE_DIR2:
       scope: global
       pins:
-      - U401.82
+      - U401.56
     HEAT_C_DRV:
       scope: global
       pins:
-      - U401.83
+      - U401.58
     HEAT_S_DRV:
       scope: global
       pins:
-      - U401.84
+      - U401.59
     VALVE_2W_DRV:
       scope: global
       pins:
-      - U401.85
+      - U401.60
     VALVE_3W_DRV:
       scope: global
       pins:
-      - U401.86
+      - U401.51
     GAUGE_RST:
       scope: global
       pins:
-      - U401.87
+      - U401.57
     MAINS_PRES_S:
       scope: global
       pins:
-      - U401.88
+      - U401.47
     ANODE_GATE:
       scope: global
       pins:
@@ -3026,11 +3107,11 @@ sheets:
     LOWWATER_K:
       scope: global
       pins:
-      - U401.97
+      - U401.42
     BUZZER:
       scope: global
       pins:
-      - U401.98
+      - U401.36
   no_connect:
   - pin: U401.7
     reason: 'PC13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
@@ -3050,8 +3131,6 @@ sheets:
     reason: 'PB0 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.35
     reason: 'PB1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.36
-    reason: 'PB2 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.37
     reason: 'PE7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.38
@@ -3062,20 +3141,22 @@ sheets:
     reason: 'PE10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.41
     reason: 'PE11 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.59
-    reason: 'PD12 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.60
-    reason: 'PD13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.77
-    reason: 'PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.78
-    reason: 'PC10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.52
+    reason: 'PB13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.53
+    reason: 'PB14 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.54
+    reason: 'PB15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.66
+    reason: 'PC9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.85
+    reason: 'PD4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.88
+    reason: 'PD7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: U401.90
     reason: 'PB4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.92
-    reason: 'PB6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-  - pin: U401.93
-    reason: 'PB7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+  - pin: U401.98
+    reason: 'PE1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
   - pin: J401.7
     reason: 'KEY: Cortex Debug 10-pin pin 7 is the key position, no contact'
   - pin: J401.8
@@ -3111,8 +3192,8 @@ sheets:
     U401: draw all 100 pins; pins listed under no_connect carry a no-connect flag. Supply pins: five VDD (11, 27, 50, 75, 100) each with its own 100 nF placed at the pin, five VSS (10, 26, 49, 74, 99), VSSA (19) to GND, VDDA
     (21) on +3V3A, VREF+ (20) on VREF+, VBAT (6) on +3V3, VCAP (48 and 73) joined on net VCAP with one 2.2 uF at each pin.
 
-    Crystals: Y401 with C414 and C415 close to PH0/PH1; Y402 with C416 and C417 close to PC14/PC15. Probe point TP406 is on HSE_IN, a probe point on the crystal''s own node: no pin is free for a buffered clock (PA8 is MCO1
-    and is the steam pump gate; PC9 is MCO2 and is a load-cell clock), so the clock is observed at TP406 with a 10 Mohm 10 pF-class probe and the loading noted in the bring-up record.
+    Crystals: Y401 with C414 and C415 close to PH0/PH1; Y402 with C416 and C417 close to PC14/PC15. Probe point TP406 is on HSE_IN, a probe point on the crystal''s own node: no pin is used for a buffered clock (PA8 is MCO1
+    and is the steam pump gate; PC9 is MCO2, unconnected and available for one, which TP406 does not need today), so the clock is observed at TP406 with a 10 Mohm 10 pF-class probe and the loading noted in the bring-up record.
 
     Reset: SW401 and C418 from NRST to GND; no external pull-up (the part has one, 30 to 50 kohm, inside the 10 kohm to 1 Mohm the supervisor''s sheet asks of its RESET pull-up); J401.10 on NRST. U402 (TLV803S supervisor)
     on +3V3 with C422 at its VDD pin: its open-drain RESET (pin 2) is on NRST, wire-ORed with the button, the probe and the controller''s own reset, and holds the controller in reset while +3V3 is under 2.87 to 2.99 V and
@@ -3139,7 +3220,7 @@ sheets:
 - order: 5
   sheet: Supply voltage and current measurement
   function: One isolated two-channel delta-sigma converter reads the mains voltage through a three-resistor divider (channel 0) and the supply current through the neutral shunt (channel 1) and hands both to the controller
-    over the shared SPI2 bus.
+    over the shared SPI3 bus.
   parts:
   - ref: U601
     lib_id: AMC131M02
@@ -3326,11 +3407,11 @@ sheets:
   - ref: F601
     lib_id: Device:FerriteBead_Small
     value: 600R@100MHz
-    rating: 0603 350mA 0.5ohm
+    rating: 0603 500mA 0.5ohm
     footprint: Inductor_SMD:L_0603_1608Metric
-    mpn: FCM1608KF-601T03
+    mpn: FCM1608KF-601T05
     maker: TAI-TECH
-    lcsc: C141723
+    lcsc: C133937
     class: extended
     hand: false
     function: 'F1: DCDC_OUT to HLDO_IN, EMI bead (SBASA56 9.3)'
@@ -3339,11 +3420,11 @@ sheets:
   - ref: F602
     lib_id: Device:FerriteBead_Small
     value: 600R@100MHz
-    rating: 0603 350mA 0.5ohm
+    rating: 0603 500mA 0.5ohm
     footprint: Inductor_SMD:L_0603_1608Metric
-    mpn: FCM1608KF-601T03
+    mpn: FCM1608KF-601T05
     maker: TAI-TECH
-    lcsc: C141723
+    lcsc: C133937
     class: extended
     hand: false
     function: 'F2: DCDC_HGND to HGND (AMC_HGND), EMI bead (SBASA56 9.3)'
@@ -3352,12 +3433,12 @@ sheets:
   - ref: C605
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: 'C24: HLDO_IN to HGND, 100 nF'
     mains: true
@@ -3365,11 +3446,11 @@ sheets:
   - ref: C606
     lib_id: Device:C
     value: 1n
-    rating: X7R 50V 10% 0603
-    footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B102KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1588
+    rating: X7R 50V 10% 0402
+    footprint: Capacitor_SMD:C_0402_1005Metric
+    mpn: 0402B102K500NT
+    maker: FH
+    lcsc: C1523
     class: basic
     hand: false
     function: 'C10: HLDO_IN to HGND, 1 nF'
@@ -3378,11 +3459,11 @@ sheets:
   - ref: C607
     lib_id: Device:C
     value: 100n
-    rating: C0G 50V 5% 1206
+    rating: C0G 50 V +-5 % 1206
     footprint: Capacitor_SMD:C_1206_3216Metric
-    mpn: 1206N104J500CT
-    maker: Walsin
-    lcsc: C170182
+    mpn: GRM31C5C1H104JA01L
+    maker: Murata
+    lcsc: C97946
     class: extended
     hand: false
     function: 'C13: HLDO_OUT to HGND, 100 nF NP0 as Table 9-3 lists'
@@ -3430,12 +3511,12 @@ sheets:
   - ref: C612
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: 'C17: DCDC_CAP to DGND, 100 nF'
     mains: false
@@ -3443,12 +3524,12 @@ sheets:
   - ref: C611
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: oscillator Vdd decoupling, 0.1 uF or more required (SiT8008B note 11)
     mains: false
@@ -3663,7 +3744,7 @@ sheets:
     sim_exclude: true
   - ref: TP610
     lib_id: Connector:TestPoint
-    value: TP_SPI2_MISO
+    value: TP_SPI3_MISO
     rating: ''
     footprint: main-board:TestPoint_Pad_D1.0mm_Tight
     mpn: ''
@@ -3671,7 +3752,7 @@ sheets:
     lcsc: none
     class: none
     hand: false
-    function: 'key signal: shared SPI2 data-out line, carries the converter''s and both RTD converters'' replies'
+    function: 'key signal: shared SPI3 data-out line, carries the converter''s and both RTD converters'' replies'
     mains: false
     sim_exclude: true
   nets:
@@ -3813,7 +3894,7 @@ sheets:
       - R609.2
       - U601.17
       - TP602.1
-    SPI2_SCK:
+    SPI3_SCK:
       scope: global
       pins:
       - R610.1
@@ -3822,7 +3903,7 @@ sheets:
       pins:
       - R610.2
       - U601.18
-    SPI2_MOSI:
+    SPI3_MOSI:
       scope: global
       pins:
       - R611.1
@@ -3846,7 +3927,7 @@ sheets:
       pins:
       - U601.12
       - R613.1
-    SPI2_MISO:
+    SPI3_MISO:
       scope: global
       pins:
       - R613.2
@@ -3968,7 +4049,7 @@ sheets:
     Channel assignment: channel 0 carries the mains voltage (gain 1 or 2), channel 1 the shunt (gain 32). SBASA56 Table 5-1 note 3 says channel 0 is the more precise; the record declares no accuracy for either, so the assignment
     is the brief''s.
 
-    Barrier: U601 is a mains-to-low-voltage barrier the separation basis did not list when this was written (the draft, unsigned at this commit, lists it as isolated-measurement); its creepage (8.0 mm) is shorter than the
+    Barrier: U601 is a mains-to-low-voltage barrier the separation basis did not list when this was written (the draft, unsigned at this commit, lists it as isolated-measurement; the owner has since accepted the whole record, on 2026-11-18); its creepage (8.0 mm) is shorter than the
     basis''s 10.0 mm. See the verdicts and open items. The footprint''s gap under the body is 7.6 mm. Nothing is relaxed here.
 
     The two 33 ohm resistors on SCLK/DIN, the CS and DOUT series resistors and the 100 kohm pull-ups follow SBASA56 9.4.2 ("terminate long digital input lines with resistors") and Fig. 9-8.
@@ -3985,25 +4066,25 @@ sheets:
   parts:
   - ref: R630
     lib_id: Device:R
-    value: 60.4k
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
+    value: 59k
+    rating: 1% 100ppm 2512 2W 300V
     footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: FRC2512F6042TS
-    maker: FOJAN
-    lcsc: C5126066
+    mpn: HP122WF5902T4E
+    maker: UNI-ROYAL
+    lcsc: C2775980
     class: extended
     hand: false
-    function: series feed of the optocoupler LED, half of the OEM's 120 kohm 1 W; two in series so each sees half of the line (126.5 V rms) against a 200 V working figure
+    function: series feed of the optocoupler LED, half of the OEM's 120 kohm 1 W; two in series so each sees half of the line (126.5 V rms) against a 300 V working figure
     mains: true
     sim_exclude: false
   - ref: R631
     lib_id: Device:R
-    value: 60.4k
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
+    value: 59k
+    rating: 1% 100ppm 2512 2W 300V
     footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: FRC2512F6042TS
-    maker: FOJAN
-    lcsc: C5126066
+    mpn: HP122WF5902T4E
+    maker: UNI-ROYAL
+    lcsc: C2775980
     class: extended
     hand: false
     function: series feed of the optocoupler LED, second half
@@ -4075,11 +4156,11 @@ sheets:
       scope: local
       pins:
       - R631.2
-      - U602.1
+      - U602.2
     NEUTRAL:
       scope: global
       pins:
-      - U602.2
+      - U602.1
     ZC_IN:
       scope: global
       pins:
@@ -4122,15 +4203,15 @@ sheets:
   custom_footprints:
   - name: LTV-814S_SMD-4
     from: Lite-On LTV-814/824/844 series BNS-OD-C131/A4, page 13 recommended foot print pattern, 4 pin, and page 5 outline of the LTV-814S
-    detail: 4 SMD pads 1.5 x 1.3 mm (1.5 along the row, 1.3 across), pitch 2.54 mm along the row, rows 9.0 mm apart centre to centre (pads 1 and 2 on one row, pads 4 and 3 on the other, pin 1 at top-left looking from above,
+    detail: 4 SMD pads 1.5 x 1.3 mm (1.5 along the row, 1.3 across), pitch 2.54 mm along the row, rows 9.0 mm apart centre to centre (pads 1 and 2 on one row, pads 4 and 3 on the other, pin 1 at top-right looking from above (the input row on top), numbered counter-clockwise as the package,
       pin 4 opposite pin 1 as the package); body 6.5 x 4.6 mm, lead span 10.16 mm. The input row (1, 2) is the mains side and the output row (3, 4) the low-voltage side; the gap between the rows' pad edges is 7.7 mm. Stock
       Package_DIP:SMDIP-4_W9.53mm has rows 9.53 mm apart and is not the maker's pattern.
   power_flags: []
-  drawing_notes: 'Drawing: left to right: LINE -> R630 -> R631 -> U602 pin 1; U602 pin 2 -> NEUTRAL (mains side, left). U602 pins 3, 4 on the right (low-voltage side): pin 3 to GND, pin 4 to the node ZC_IN, with R632 up to
+  drawing_notes: 'Drawing: left to right: LINE -> R630 -> R631 -> U602 pin 2; U602 pin 1 -> NEUTRAL (mains side, left). U602 pins 3, 4 on the right (low-voltage side): pin 3 to GND, pin 4 to the node ZC_IN, with R632 up to
     +3V3 and C630 down to GND, and the global label ZC_IN leaving to the right. Mark the barrier between the optocoupler''s two halves with a dashed line and the text "mains | low voltage".
 
-    The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PD7) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764
-    and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PD7).
+    The two mains-presence inputs of the division (IN_COND: MAINS_PRES_C on PE15, MAINS_PRES_S on PB11) are NOT drawn on this sheet: they are on the wall-header sheet (J761 pins 5 and 6 through 27 kohm series resistors R764
+    and R774, with 82 kohm pull-downs R765 and R775, to PE15 and PB11).
 
     Both crossings: the LEDs are antiparallel, so the output falls once per half-cycle whatever the polarity; the supply''s period is the time between like edges (division record: PA10, capture on both edges).
 
@@ -4210,13 +4291,13 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D502
-    lib_id: Diode:BAT54S
-    value: BAT54S
+    lib_id: Diode:BAT54SW
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead
@@ -4308,13 +4389,13 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D504
-    lib_id: Diode:BAT54S
-    value: BAT54S
+    lib_id: Diode:BAT54SW
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead
@@ -4406,13 +4487,13 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D506
-    lib_id: Diode:BAT54S
-    value: BAT54S
+    lib_id: Diode:BAT54SW
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead
@@ -4505,8 +4586,8 @@ sheets:
   custom_footprints: []
   power_flags: []
   drawing_notes: 'Signal flows left to right: header (left) -> divider node -> series resistor -> filter node -> converter pin label. +3V3A at the top, GND at the bottom. Each header pin 1 is the square pad; the wand header
-    is fitted rotated 180 degrees on the board (placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. BAT54S symbol Diode:BAT54S pins: 1=A (to GND), 2=K (to
-    +3V3A), 3=COM (to the converter pin node).'
+    is fitted rotated 180 degrees on the board (placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. BAT54SW symbol Diode:BAT54SW pins: 1=A (to GND), 2=K
+    (to +3V3A), 3=COM (to the converter pin node).'
 - order: 8
   sheet: Flow, pressure and spare analogue inputs
   function: Flow-meter pulse input, the two digital pressure-transducer buses, and the three analogue sensor inputs with 5 V scaling
@@ -4591,21 +4672,36 @@ sheets:
     lcsc: C21189
     class: basic
     hand: false
-    function: 'bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would short the buffer''s input to its output'
+    function: 'bypass link position, not fitted (do not populate): the Schmitt buffer U520 carries FLOW_F to FLOW_IN, and a link here would join the buffer''s input to its output through R545'
     mains: false
     sim_exclude: false
     dnp: true
+  - ref: R545
+    lib_id: Device:R
+    value: '220'
+    rating: 1% 100ppm/K 0603 100mW
+    footprint: Resistor_SMD:R_0603_1608Metric
+    mpn: 0603WAF2200T5E
+    maker: UNI-ROYAL
+    lcsc: C22962
+    class: basic
+    hand: false
+    function: 'series resistor between the buffer output and FLOW_IN: limits the current when the controller''s bootloader drives PB10 as USART3_TX against the buffer output'
+    mains: false
+    sim_exclude: false
+    dnp: false
   - ref: U520
     lib_id: 74xGxx:74LVC1G17
     value: SN74LVC1G17
-    rating: 6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs
+    rating: 7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs
     footprint: Package_TO_SOT_SMD:SOT-353_SC-70-5
-    mpn: SN74LVC1G17DCKR
-    maker: Texas Instruments
-    lcsc: C10425
+    mpn: SN74LVC1G17DCKR(UMW)
+    maker: UMW
+    lcsc: C7394034
     class: extended
     hand: false
-    function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_IN for either meter output type, and its Ioff protects PC6 with +3V3 absent (input and output on the two nets the unfitted link position R522 joins)'
+    function: 'Schmitt-trigger buffer, fitted: carries FLOW_F to FLOW_BUF, and through R545 to FLOW_IN, for either meter output type, and its Ioff protects PB10 with +3V3 absent (the unfitted link position R522 joins its input
+      net to FLOW_IN)'
     mains: false
     sim_exclude: false
     dnp: false
@@ -4750,13 +4846,13 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D523
-    lib_id: Diode:BAT54S
-    value: BAT54S
+    lib_id: Diode:BAT54SW
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SCL pin to GND and +3V3
@@ -4764,13 +4860,13 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D524
-    lib_id: Diode:BAT54S
-    value: BAT54S
+    lib_id: Diode:BAT54SW
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SDA pin to GND and +3V3
@@ -4932,13 +5028,13 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D527
-    lib_id: Diode:BAT54S
-    value: BAT54S
+    lib_id: Diode:BAT54SW
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SCL pin to GND and +3V3
@@ -4946,13 +5042,13 @@ sheets:
     sim_exclude: false
     dnp: false
   - ref: D528
-    lib_id: Diode:BAT54S
-    value: BAT54S
+    lib_id: Diode:BAT54SW
+    value: BAT54SW
     rating: dual series Schottky 30V 200mA
-    footprint: Package_TO_SOT_SMD:SOT-23
-    mpn: BAT54S,215
+    footprint: Package_TO_SOT_SMD:SOT-323_SC-70
+    mpn: BAT54SW,115
     maker: Nexperia
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: steering clamp of the SDA pin to GND and +3V3
@@ -5478,11 +5574,16 @@ sheets:
       - C520.1
       - R522.1
       - U520.2
+    FLOW_BUF:
+      scope: local
+      pins:
+      - U520.4
+      - R545.1
     FLOW_IN:
       scope: global
       pins:
       - R522.2
-      - U520.4
+      - R545.2
     STMD_3V3_SRC:
       scope: local
       pins:
@@ -5525,6 +5626,7 @@ sheets:
       - F521.2
       - R541.1
       - TP526.1
+    # BRWD_3V3 feeds J522, the display unit serial header (USART1 on PB6/PB7); the net names BREW_SCL_X and BREW_SDA_X are retained
     BRWD_3V3:
       scope: local
       pins:
@@ -5648,12 +5750,12 @@ sheets:
   custom_symbols: []
   custom_footprints: []
   power_flags: []
-  drawing_notes: 'Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520 with the unfitted link position R522 across it, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3
-    through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H
-    (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520 and C521 are fitted; R522 is drawn and marked do-not-populate (the buffer replaces the link; fitting both would
-    short the buffer''s input to its output). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X; J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X; analogue headers 1=+5V 2=3V3 feed
-    3=GND 4=signal. Diode:BAT54S pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header. Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value
-    0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
+  drawing_notes: 'Four stacked cells, signal left to right: FLOW (header, pull-up, TVS, series R, C, then the buffer U520, then the series resistor R545 on the net FLOW_BUF, then the unfitted link position R522 across the
+    buffer, then label FLOW_IN); STM_D and BREW_D (3V3 from +3V3 through the PTC to header pin 1; SCL and SDA each: header, TVS at the header, series R, pull-up to +3V3 and steering clamp at the converter-side node, labels
+    STM_SCL/STM_SDA or BREW_SCL/BREW_SDA); SPARE_A, BREW_A, SPARE_AN2_H (3V3 through PTC, 5V direct from +5V, signal pin 4 -> TVS -> 10k/20k divider -> 1k -> 47n -> label). U520, R545 and C521 are fitted; R522 is drawn and
+    marked do-not-populate (the buffer replaces the link; fitting both would join the buffer''s input to its output through R545). Header pin tables: J520 1=+5V 2=GND 3=FLOW_RAW; J521 1=STMD_3V3 2=GND 3=STM_SCL_X 4=STM_SDA_X;
+    J522 1=BRWD_3V3 2=GND 3=BREW_SCL_X 4=BREW_SDA_X (J522 is the display unit serial header, USART1 TX and RX on PB6 and PB7, 3.3 V logic; the nets keep their names); analogue headers 1=+5V 2=3V3 feed 3=GND 4=signal. Diode:BAT54SW pins: 1=A (GND), 2=K (+3V3), 3=COM (signal node). Device:Polyfuse pin 1 = +3V3 side, pin 2 = toward the header.
+    Each 3.3 V feed runs +3V3 -> PTC -> test point and link R540..R544 (1206, value 0, the isolating link) -> header pin; the test point stands on the PTC side of the link.'
 - order: 9
   sheet: Current sensing inputs
   function: Two current-sensor interfaces, each a three-way header with scaling, an unpopulated burden position and the converter filter
@@ -5948,7 +6050,7 @@ sheets:
     records leave to the owner.'
 - order: 10
   sheet: In-stream temperature converters
-  function: Two RTD-to-digital converters on the shared SPI2 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
+  function: Two RTD-to-digital converters on the shared SPI3 bus read two PT1000 probes, one in the brew water and one in the steam, each on its own four-way header that takes a 2-, 3- or 4-wire probe.
   parts:
   - ref: C640
     lib_id: Device:C
@@ -5966,12 +6068,12 @@ sheets:
   - ref: C641
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
     mains: false
@@ -5979,12 +6081,12 @@ sheets:
   - ref: C642
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
     mains: false
@@ -6005,12 +6107,12 @@ sheets:
   - ref: C646
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: VDD bypass to GND1, 0.1 uF (Pin Description, VDD)
     mains: false
@@ -6018,12 +6120,12 @@ sheets:
   - ref: C647
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD bypass to DGND, 0.1 uF (Pin Description, DVDD)
     mains: false
@@ -6044,11 +6146,11 @@ sheets:
   - ref: J622
     lib_id: Connector_Generic:Conn_01x02
     value: PT1_2W_P
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -6057,11 +6159,11 @@ sheets:
   - ref: J623
     lib_id: Connector_Generic:Conn_01x02
     value: PT1_23W_N
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
@@ -6083,11 +6185,11 @@ sheets:
   - ref: J627
     lib_id: Connector_Generic:Conn_01x02
     value: PT2_2W_P
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire probe only: ties FORCE+ to RTDIN+; fitted for a 2-wire probe, open for 3-wire and 4-wire'
@@ -6096,11 +6198,11 @@ sheets:
   - ref: J628
     lib_id: Connector_Generic:Conn_01x02
     value: PT2_23W_N
-    rating: 2.54 mm header with jumper cap
+    rating: 1x2 2.54 mm header with jumper cap
     footprint: Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical
-    mpn: 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed
-    maker: BOOMELE
-    lcsc: C2337
+    mpn: PZ254V-11-02P + 2.54 Short Circuit Cap Closed
+    maker: XFCN + BOOMELE
+    lcsc: C492401
     class: extended
     hand: true
     function: '2-wire and 3-wire probes: ties FORCE- to RTDIN-; fitted for a 2-wire or 3-wire probe, open for 4-wire'
@@ -6475,17 +6577,17 @@ sheets:
       - C647.2
       - R642.2
       - R647.2
-    SPI2_SCK:
+    SPI3_SCK:
       scope: global
       pins:
       - U620.12
       - U621.12
-    SPI2_MOSI:
+    SPI3_MOSI:
       scope: global
       pins:
       - U620.11
       - U621.11
-    SPI2_MISO:
+    SPI3_MISO:
       scope: global
       pins:
       - U620.14
@@ -6514,7 +6616,7 @@ sheets:
   custom_symbols: []
   custom_footprints: []
   power_flags: []
-  drawing_notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI2_SCK, SPI2_MOSI, SPI2_MISO
+  drawing_notes: 'Drawing: two identical blocks one above the other, probe 1 on top. In each block: the probe header on the right, the converter in the middle, the SPI lines entering from the left (SPI3_SCK, SPI3_MOSI, SPI3_MISO
     global labels shared by both blocks, its own chip-select label). The reference resistor sits above the converter between BIAS/REFIN+ and REFIN-/ISENSOR/FORCE+; the filter capacitor sits across RTDIN+ and RTDIN- beside
     the header; the configuration parts sit between the converter and the probe header with a legend table: 4-wire = R642 fitted (FORCE2 to GND), R643 not fitted, J622 and J623 open; 3-wire = R642 removed, R643 fitted (FORCE2
     to FORCE+), the FORCE-/RTDIN- link (J623) fitted, the FORCE+/RTDIN+ link (J622) open; 2-wire = R642 fitted, R643 not fitted, both links J622 and J623 fitted. (Probe 2: R647, R648, J627, J628.) R643 and R648 carry the field
@@ -6547,10 +6649,10 @@ sheets:
     mains: false
     sim_exclude: true
   - ref: J630
-    lib_id: Connector_Generic:Conn_01x05
+    lib_id: Conn_01x05
     value: WT1_H
     rating: JST PH 2.0 mm 2 A 250 V
-    footprint: Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    footprint: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     mpn: KH-PH-5P-Z
     maker: Kinghelm (JST PH family)
     lcsc: C2898948
@@ -6588,12 +6690,12 @@ sheets:
   - ref: C670
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: input filter capacitor C4 of the maker's reference board, across INA+/INA-
     mains: false
@@ -6614,12 +6716,12 @@ sheets:
   - ref: C672
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: reference bypass C3 of the reference board, VBG to AGND, 0.1 uF
     mains: false
@@ -6627,12 +6729,12 @@ sheets:
   - ref: C673
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD decoupling to AGND; the sheet gives no value for a DVDD of its own, 0.1 uF is the common value
     mains: false
@@ -6690,10 +6792,10 @@ sheets:
     mains: false
     sim_exclude: true
   - ref: J635
-    lib_id: Connector_Generic:Conn_01x05
+    lib_id: Conn_01x05
     value: WT2_H
     rating: JST PH 2.0 mm 2 A 250 V
-    footprint: Connector_JST:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    footprint: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     mpn: KH-PH-5P-Z
     maker: Kinghelm (JST PH family)
     lcsc: C2898948
@@ -6731,12 +6833,12 @@ sheets:
   - ref: C675
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: input filter capacitor C4 of the maker's reference board, across INA+/INA-
     mains: false
@@ -6757,12 +6859,12 @@ sheets:
   - ref: C677
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: reference bypass C3 of the reference board, VBG to AGND, 0.1 uF
     mains: false
@@ -6770,12 +6872,12 @@ sheets:
   - ref: C678
     lib_id: Device:C
     value: 100n
-    rating: X7R 50V 10% 0603
+    rating: X7R 50 V 10 % 0603
     footprint: Capacitor_SMD:C_0603_1608Metric
-    mpn: CL10B104KB8NNNC
-    maker: Samsung Electro-Mechanics
-    lcsc: C1591
-    class: extended
+    mpn: CC0603KRX7R9BB104
+    maker: YAGEO
+    lcsc: C14663
+    class: basic
     hand: false
     function: DVDD decoupling to AGND; the sheet gives no value for a DVDD of its own, 0.1 uF is the common value
     mains: false
@@ -6936,8 +7038,38 @@ sheets:
     reason: 'BASE: external regulator transistor not used, NC when not used (Avia V2.0 Table 1)'
   - pin: U631.13
     reason: 'XO: crystal not used, NC when not used (Avia V2.0 Table 1)'
-  custom_symbols: []
-  custom_footprints: []
+  custom_symbols:
+  - name: Conn_01x05
+    ref_prefix: J
+    note: KiCad's stock Connector_Generic Conn_01x05 (single row, five passive pins numbered 1 to 5, named Pin_1 to Pin_5), copied into the project symbol library without its footprint filter 'Connector*:*_1x??_*', which cannot
+      match a footprint of the project library.
+    pins:
+    - number: '1'
+      name: Pin_1
+      type: passive
+      unit: 1
+    - number: '2'
+      name: Pin_2
+      type: passive
+      unit: 1
+    - number: '3'
+      name: Pin_3
+      type: passive
+      unit: 1
+    - number: '4'
+      name: Pin_4
+      type: passive
+      unit: 1
+    - number: '5'
+      name: Pin_5
+      type: passive
+      unit: 1
+  custom_footprints:
+  - name: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
+    from: KiCad's stock Connector_JST footprint JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical (JST PH B5B-PH-K, 1x05, 2.0 mm pitch), copied; the hole diameter changed from the stock 0.75 mm to 0.85 mm. The Kinghelm KH-PH-5P-Z sheet
+      (LCSC C2898948) asks for a PCB hole of 0.80 +0.10/-0.00 mm; 0.85 mm is the middle of that band.
+    detail: Five plated pads at 2.0 mm pitch along X, pad 1 a rounded rectangle and the others ovals, each 1.2 mm across the row by 1.75 mm, drill 0.85 mm (ring 0.175 mm across the row, 0.45 mm along it, hole edge to hole
+      edge 1.15 mm). Pad size, positions, courtyard, silkscreen and 3D model are the stock footprint's.
   power_flags: []
   drawing_notes: 'Drawing: two identical blocks, weight channel 1 above channel 2. In each: the load-cell header on the left (pins E+, E-, A-, A+, SHIELD labelled), the filter R/R/C to its right, the amplifier in the middle
     with +5V on VSUP and AVDD (tied, 10 uF below), +3V3 on DVDD (0.1 uF), the labels WT1_DATA (DOUT) and WT1_CLK (PD_SCK) leaving to the right. Unused inputs and strap pins to GND: VFB, XI, RATE, INB+, INB- (draw a small GND
@@ -6955,7 +7087,7 @@ sheets:
     '
 - order: 12
   sheet: Pump drives
-  function: Random-phase opto-triac and snubberless triac that switch the coffee pump and the steam pump on their neutral-side leads, each behind its own branch fuse.
+  function: Random-phase opto-triac and snubberless triac that switch the coffee pump and the steam pump on their neutral-side leads, each behind its own branch fuse, with a bidirectional TVS clamp across each triac.
   parts:
   - ref: F701
     lib_id: Device:Fuse
@@ -6979,12 +7111,13 @@ sheets:
       what: 'cartridge SCT520T0.8A250V: no stocked candidate on the manufacturer''s catalogue (record); SETfuse SCT520 datasheet V1.0 is the sourced family'
   - ref: T701
     lib_id: Triac_Thyristor:BT136-600
-    value: BTA204S-600B
-    rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
+    value: T835-800B
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table
+      2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
     footprint: main-board:TO-252-2_TabPin2_Triac
-    mpn: BTA204S-600B,118
-    maker: WeEn Semiconductors
-    lcsc: C256462
+    mpn: T835-800B
+    maker: STMicroelectronics
+    lcsc: C2971290
     class: extended
     hand: false
     function: 'coffee pump triac: MT2 on the fused pump lead, MT1 on NEUTRAL'
@@ -7107,12 +7240,13 @@ sheets:
       what: 'cartridge SCT520T0.5A250V: no stocked candidate on the manufacturer''s catalogue (record); SETfuse SCT520 datasheet V1.0 is the sourced family'
   - ref: T711
     lib_id: Triac_Thyristor:BT136-600
-    value: BTA204S-600B
-    rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
+    value: T835-800B
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table
+      2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
     footprint: main-board:TO-252-2_TabPin2_Triac
-    mpn: BTA204S-600B,118
-    maker: WeEn Semiconductors
-    lcsc: C256462
+    mpn: T835-800B
+    maker: STMicroelectronics
+    lcsc: C2971290
     class: extended
     hand: false
     function: 'steam pump triac: MT2 on the fused pump lead, MT1 on NEUTRAL'
@@ -7213,35 +7347,19 @@ sheets:
     function: low-side switch sinking the steam pump opto-triac LED
     mains: false
     sim_exclude: false
-  - ref: R706
-    lib_id: Device:R
-    value: '100'
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: 25121WF1000T4E
-    maker: UNI-ROYAL
-    lcsc: C35218
+  - ref: D701
+    lib_id: Device:D_TVS
+    value: SMCJ400CA
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    footprint: Diode_SMD:D_SMC
+    mpn: SMCJ400CA
+    maker: Littelfuse
+    lcsc: C151285
     class: extended
-    hand: true
-    dnp: true
-    function: 'resistor of the coffee pump triac''s RC snubber (across MT2 and MT1): NOT FITTED. Fit with C701 only if the turn-off voltage across T701 exceeds its 600 V rating (bring-up, pump drives step). Steady state with
-      the triac off it carries the capacitor''s 7.95 mA at 50 Hz (9.54 mA at 60 Hz; 253 V, 100 nF) and dissipates 6.3 mW (9.1 mW); at turn-on it discharges the capacitor from at most 358 V crest, 3.6 A and 6.4 mJ, which the
-      sheet''s pulse limits do not state (circuit-proof.md, pump snubber row)'
-    mains: true
-    sim_exclude: true
-  - ref: C701
-    lib_id: Device:C
-    value: 100nF_X2
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    footprint: Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    mpn: MPX104K31C3KN15600
-    maker: KNSCHA
-    lcsc: C489079
-    class: extended
-    hand: true
-    dnp: true
-    function: 'capacitor of the coffee pump triac''s RC snubber, in series with R706 from MT2 to NEUTRAL (MT1): NOT FITTED, X2 class so a failed-short capacitor is held by the branch fuse and a failed-open one leaves the triac
-      as built'
+    hand: false
+    function: 'bidirectional TVS clamp across the coffee pump triac T701, MT2 (PUMP_C_MT2) to NEUTRAL (MT1): FITTED. It holds the voltage across the triac and the opto-triac on the same node when the triac lets go of the pump
+      coil at its holding current, at most 527 V (494 V maximum breakdown, hot, at 45 mA) against the opto-triac''s 600 V and the triac''s 800 V, and a mains surge reaching the node through the coil at about 556 V; idle it
+      stands off the 358 V crest of 253 V (0.895 of its 400 V stand-off, under its 447 V minimum breakdown) and passes 1 uA at most (circuit-proof.md, pump clamp row)'
     mains: true
     sim_exclude: true
   - ref: TP702
@@ -7257,35 +7375,19 @@ sheets:
     function: 'test point on PUMP_C_MT2, the triac''s MT2: with NEUTRAL (TP106) it carries the turn-off voltage read with an isolated or differential probe (mains-referenced, never an earthed scope lead)'
     mains: true
     sim_exclude: true
-  - ref: R716
-    lib_id: Device:R
-    value: '100'
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    footprint: Resistor_SMD:R_2512_6332Metric
-    mpn: 25121WF1000T4E
-    maker: UNI-ROYAL
-    lcsc: C35218
+  - ref: D711
+    lib_id: Device:D_TVS
+    value: SMCJ400CA
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    footprint: Diode_SMD:D_SMC
+    mpn: SMCJ400CA
+    maker: Littelfuse
+    lcsc: C151285
     class: extended
-    hand: true
-    dnp: true
-    function: 'resistor of the steam pump triac''s RC snubber (across MT2 and MT1): NOT FITTED. Fit with C711 only if the turn-off voltage across T711 exceeds its 600 V rating (bring-up, pump drives step). Steady state with
-      the triac off it carries the capacitor''s 7.95 mA at 50 Hz (9.54 mA at 60 Hz; 253 V, 100 nF) and dissipates 6.3 mW (9.1 mW); at turn-on it discharges the capacitor from at most 358 V crest, 3.6 A and 6.4 mJ, which the
-      sheet''s pulse limits do not state (circuit-proof.md, pump snubber row)'
-    mains: true
-    sim_exclude: true
-  - ref: C711
-    lib_id: Device:C
-    value: 100nF_X2
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    footprint: Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    mpn: MPX104K31C3KN15600
-    maker: KNSCHA
-    lcsc: C489079
-    class: extended
-    hand: true
-    dnp: true
-    function: 'capacitor of the steam pump triac''s RC snubber, in series with R716 from MT2 to NEUTRAL (MT1): NOT FITTED, X2 class so a failed-short capacitor is held by the branch fuse and a failed-open one leaves the triac
-      as built'
+    hand: false
+    function: 'bidirectional TVS clamp across the steam pump triac T711, MT2 (PUMP_S_MT2) to NEUTRAL (MT1): FITTED. It holds the voltage across the triac and the opto-triac on the same node when the triac lets go of the pump
+      coil at its holding current, at most 527 V (494 V maximum breakdown, hot, at 45 mA) against the opto-triac''s 600 V and the triac''s 800 V, and a mains surge reaching the node through the coil at about 556 V; idle it
+      stands off the 358 V crest of 253 V (0.895 of its 400 V stand-off, under its 447 V minimum breakdown) and passes 1 uA at most (circuit-proof.md, pump clamp row)'
     mains: true
     sim_exclude: true
   - ref: TP712
@@ -7328,13 +7430,8 @@ sheets:
       - F701.2
       - T701.2
       - R704.1
-      - R706.1
+      - D701.1
       - TP702.1
-    PUMP_C_SNUB:
-      scope: local
-      pins:
-      - R706.2
-      - C701.1
     PUMP_C_GATE_R:
       scope: local
       pins:
@@ -7344,11 +7441,11 @@ sheets:
       scope: local
       pins:
       - R705.2
-      - U701.6
+      - U701.4
     PUMP_C_TRIAC_G:
       scope: local
       pins:
-      - U701.4
+      - U701.6
       - T701.3
     COFFPUMP:
       scope: global
@@ -7380,13 +7477,8 @@ sheets:
       - F711.2
       - T711.2
       - R714.1
-      - R716.1
+      - D711.1
       - TP712.1
-    PUMP_S_SNUB:
-      scope: local
-      pins:
-      - R716.2
-      - C711.1
     PUMP_S_GATE_R:
       scope: local
       pins:
@@ -7396,11 +7488,11 @@ sheets:
       scope: local
       pins:
       - R715.2
-      - U711.6
+      - U711.4
     PUMP_S_TRIAC_G:
       scope: local
       pins:
-      - U711.4
+      - U711.6
       - T711.3
     STEAMPUMP:
       scope: global
@@ -7423,8 +7515,8 @@ sheets:
       pins:
       - T701.1
       - T711.1
-      - C701.2
-      - C711.2
+      - D701.2
+      - D711.2
   no_connect:
   - pin: U701.3
     reason: no connection per MOC3052M/D pin table
@@ -7448,11 +7540,12 @@ sheets:
       and the leg width, not the leg centre pitch: draw the legs 22.0 mm apart (the body length) and let the layout task read the pitch from a sample (open item).'
   power_flags: []
   drawing_notes: 'Mains side is the left of this sheet: tab net -> fuse -> triac MT2; triac MT1 on NEUTRAL (the pump''s neutral piece joins the neutral pour on an inner layer: layout). No snubber and no varistor are fitted
-    across the triac or the pump (decided in the division record, The pump drives, and kept by the owner on 2026-10-29), but each triac has an unfitted RC snubber position across MT2 and MT1 (R706 with C701 for the coffee
-    pump, R716 with C711 for the steam pump, an X2-class capacitor and a 2512 resistor, DNP) and a test point on MT2 (TP702, TP712) for the turn-off measurement that decides whether to fit it (bring-up, pump drives); the surge
-    and emission margins stay open (open-items.md). The snubber nets PUMP_C_SNUB and PUMP_S_SNUB are mains class, with the parts'' mains flag set. Low-voltage side: +5V -> R703 -> MOC3052M pin 1; pin 2 -> AO3400A drain; gate
-    from PUMP_C_GATE (PA9) through R701 with R702 to ground. Draw coffee above steam, signal left to right: controller pin, gate stage, opto-triac, triac, fuse, tab net on the right. The opto-triac straddles the barrier: pins
-    1-2 low voltage, 4-6 mains; draw a dashed barrier line through the package. Fuse values: coffee 0.8 A, steam 0.5 A (SETfuse SCT520T0.8A250V / SCT520T0.5A250V).'
+    across the triac or the pump. A bidirectional TVS clamp stands across each triac, MT2 to MT1 (D701 on the coffee pump, D711 on the steam pump, Littelfuse SMCJ400CA, fitted): it holds the turn-off voltage of the pump coil
+    and a surge reaching the node under the opto-triac''s 600 V (at most 527 V and about 556 V; circuit-proof.md, pump clamp row). The unfitted RC snubber positions of the earlier drawing (R706 C701, R716 C711) and their nets
+    were removed on 2026-11-14, because the snubber resistor''s turn-on pulse had no stocked part with a published rating that covers it. A test point stands on each MT2 (TP702, TP712) for the bring-up reading that confirms
+    the clamped turn-off voltage; the emission margin stays open (open-items.md). Low-voltage side: +5V -> R703 -> MOC3052M pin 1; pin 2 -> AO3400A drain; gate from PUMP_C_GATE (PA9) through R701 with R702 to ground. Draw
+    coffee above steam, signal left to right: controller pin, gate stage, opto-triac, triac, fuse, tab net on the right. The opto-triac straddles the barrier: pins 1-2 low voltage, 4-6 mains; draw a dashed barrier line through
+    the package. Fuse values: coffee 0.8 A, steam 0.5 A (SETfuse SCT520T0.8A250V / SCT520T0.5A250V).'
 - order: 13
   sheet: Valve drives
   function: Two 5 V relays that switch the two valve coils on their neutral-side leads, with low-side coil drivers, and the fuse the two valve branches share.
@@ -7715,12 +7808,12 @@ sheets:
   custom_footprints:
   - name: RELAY_HF32FA-G_1H_TYPE1_THT
     from: Hongfa HF32FA-G datasheet 2026 Rev 1.00, page 90 'Outline dimensions, wiring diagram and PC board layout', 1 Form A & Type 1, bottom view (read 2026-10-29)
-    detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,0.625) and 14 at (15.24,6.975) (holes 1.3 mm), the contact pair 6.35
-      mm apart and centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face, so mirror about the
-      vertical axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
+    detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,1.25) and 14 at (15.24,7.6) (holes 1.3 mm), the contact pair 6.35
+      mm apart and 0.625 mm along y from centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face,
+      so mirror about the vertical axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
   power_flags: []
   drawing_notes: 'Each relay has its contact between the valve''s tab net and VALVE_COM; VALVE_COM runs to the relay-side clip of the shared valve fuse F731, whose other clip is NEUTRAL: the valve''s live lead arrives on LINE1
-    by the retained harness wire, so the contact opens the return. Coil side: +5V -> coil -> AO3400A drain; 1N4148WS across the coil (cathode on +5V); gate from VALVE_2W_DRV (PD4) / VALVE_3W_DRV (PD5) through 100 ohm, 100
+    by the retained harness wire, so the contact opens the return. Coil side: +5V -> coil -> AO3400A drain; 1N4148WS across the coil (cathode on +5V); gate from VALVE_2W_DRV (PD13) / VALVE_3W_DRV (PB12) through 100 ohm, 100
     k to ground. Draw K731 above K741. Contacts are mains (draw them to the left, with the barrier line between contact and coil sides).'
 - order: 14
   sheet: Heater LED drive and wall board header
@@ -7937,7 +8030,7 @@ sheets:
     class: basic
     hand: false
     function: 'series resistor of the steam mains-presence input: with the pull-down R775 it divides the wall board''s level by 0.752 (82/(27+82)), so the highest level the wall board can drive, +5V_WB at 5.125 V, reaches
-      PD7 at 3.85 V, under the 4.0 V limit while VDD is absent (DS12110 Table 109)'
+      PB11 at 3.85 V, under the 4.0 V limit while VDD is absent (DS12110 Table 109)'
     mains: false
     sim_exclude: false
   - ref: R775
@@ -7950,7 +8043,7 @@ sheets:
     lcsc: C23254
     class: basic
     hand: false
-    function: 'pull-down of the steam mains-presence input at the controller pin: holds PD7 low with the wall board absent or its output off (leakage 250 nA x 82 kohm = 21 mV against VIL 0.99 V)'
+    function: 'pull-down of the steam mains-presence input at the controller pin: holds PB11 low with the wall board absent or its output off (leakage 250 nA x 82 kohm = 21 mV against VIL 0.99 V)'
     mains: false
     sim_exclude: false
   nets:
@@ -8049,9 +8142,9 @@ sheets:
   custom_footprints: []
   power_flags: []
   drawing_notes: 'Header WB_LV10 pinout is fixed in the shared conventions: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K, 4 GND, 5 MAINS_PRES_C, 6 MAINS_PRES_S (each through a 27 kohm series resistor, R764 and R774, to the controller
-    pin PE15 or PD7, where an 82 kohm pull-down, R765 or R775, to ground holds the pin low with the wall board absent; the header-side nets are MAINS_PRES_C_J and MAINS_PRES_S_J), 7-10 spare. Each LED return runs from its
-    header pin through a 180 ohm resistor (R763, R773) to the AO3400A drain; gate from HEAT_C_DRV (PD2) / HEAT_S_DRV (PD3). +5V reaches the header through JP761, with TP761 on +5V_WB. Draw the header at the right edge of the
-    sheet; no mains on this sheet.'
+    pin PE15 or PB11, where an 82 kohm pull-down, R765 or R775, to ground holds the pin low with the wall board absent; the header-side nets are MAINS_PRES_C_J and MAINS_PRES_S_J), 7-10 spare. Each LED return runs from its
+    header pin through a 180 ohm resistor (R763, R773) to the AO3400A drain; gate from HEAT_C_DRV (PD11) / HEAT_S_DRV (PD12). +5V reaches the header through JP761, with TP761 on +5V_WB. Draw the header at the right edge of
+    the sheet; no mains on this sheet.'
 - order: 15
   sheet: Gauge drive
   function: Octal buffer that lifts the five 3.3 V gauge control lines to 5 V logic for the retained stepper driver, and the gauge harness header SP2.
@@ -8616,12 +8709,12 @@ sheets:
     sim_exclude: false
   - ref: R822
     lib_id: Device:R
-    value: 100k
+    value: 10k
     rating: 1% 100mW 75V 0603
     footprint: Resistor_SMD:R_0603_1608Metric
-    mpn: 0603WAF1003T5E
+    mpn: 0603WAF1002T5E
     maker: UNI-ROYAL
-    lcsc: C25803
+    lcsc: C25804
     class: basic
     hand: false
     function: gate pull-down of Q821
@@ -9086,7 +9179,7 @@ sheets:
   drawing_notes: 'CON2 (J821) pin map from connector-pinouts.md, contact 1 nearest the bottom edge of the board: 1 buzzer drive side (BUZZER_P, +5V through 100 ohm), 2 buzzer return (BUZZER_N, switched to ground), 3 PWR (KEY1),
     4 MAN (KEY2), 5 ONE (KEY3), 6 TWO (KEY4), 7 anode rail (ANODE_RAIL), 8 PRG (KEY5), 9 GND. KEY1..KEY5 follow the record''s table order PWR, MAN, ONE, TWO, PRG. Anode rail: ANODE_GATE (PB5) -> R821 -> Q821 (AO3400A) pulls
     the gate of Q822 (AO3401A, source on +5V) low through two 22 k pull-ups; Q822 drain -> ANODE_SW (TP821) -> JP821 -> ANODE_RAIL, 22 k bleed to ground. Key lines: 10 k to +3V3, read as inputs, sunk by the controller (open-drain)
-    to light an indicator; configure KEY pins with internal pulls off. Low-water: LOWWATER_K (PE0) -> R829 -> Q824, drain = LOWWATER_CATHODE (SP2.6, on the gauge sheet). Buzzer: BUZZER (PE1) -> R826 -> Q823; D821 across the
+    to light an indicator; configure KEY pins with internal pulls off. Low-water: LOWWATER_K (PE12) -> R829 -> Q824, drain = LOWWATER_CATHODE (SP2.6, on the gauge sheet). Buzzer: BUZZER (PB2) -> R826 -> Q823; D821 across the
     buzzer (cathode on BUZZER_P).'
 - order: 17
   sheet: Knob, tank-level and reed inputs
@@ -9115,7 +9208,7 @@ sheets:
     lcsc: none
     class: none
     hand: true
-    function: tank reed element pads
+    function: tank reed element pads; hand-fitted, not in the bill of materials, not in the position file
     mains: false
     sim_exclude: true
   - ref: R861
@@ -9255,6 +9348,32 @@ sheets:
     so either lead may be the grounded one. Pin 1 is the contact nearest the right edge of the board. Reed (J862): two through-hole pads 20.0 mm apart, hand-fitted; pad 2 = TANK_LEVEL, pad 1 = GND. 10 k to +3V3 and 100 nF
     to ground on each line. The mains-presence inputs are not drawn.'
 custom_symbols:
+- name: 74LVC1G14
+  ref_prefix: U
+  note: KiCad's stock 74xGxx 74LVC1G14 (single Schmitt inverter, pins 1 NC, 2 A, 3 GND, 4 Y, 5 VCC), copied into the project symbol library with the footprint filter widened to 'SOT?23* SOT?353* SOT?553*' so that the SC-70-5
+    package of U201 and U203 matches.
+  pins:
+  - number: '1'
+    name: NC
+    type: no_connect
+    unit: 1
+  - number: '2'
+    name: ''
+    type: input
+    unit: 1
+  - number: '3'
+    name: GND
+    type: power_in
+    unit: 1
+  - number: '4'
+    name: ''
+    type: output
+    unit: 1
+  - number: '5'
+    name: VCC
+    type: power_in
+    unit: 1
+  sheet: Interlock
 - name: TLV803S
   ref_prefix: U
   note: TI SBVS157A (TLV803 3-pin voltage supervisors with active-low, open-drain reset) pin table, DBZ SOT-23-3; the stock TPS3839DBZ body and pin positions with RESET typed open collector
@@ -9379,14 +9498,50 @@ custom_symbols:
     type: passive
     unit: 1
   sheet: Zero-crossing detector
+- name: Conn_01x05
+  ref_prefix: J
+  note: KiCad's stock Connector_Generic Conn_01x05 (single row, five passive pins numbered 1 to 5, named Pin_1 to Pin_5), copied into the project symbol library without its footprint filter 'Connector*:*_1x??_*', which cannot
+    match a footprint of the project library.
+  pins:
+  - number: '1'
+    name: Pin_1
+    type: passive
+    unit: 1
+  - number: '2'
+    name: Pin_2
+    type: passive
+    unit: 1
+  - number: '3'
+    name: Pin_3
+    type: passive
+    unit: 1
+  - number: '4'
+    name: Pin_4
+    type: passive
+    unit: 1
+  - number: '5'
+    name: Pin_5
+    type: passive
+    unit: 1
+  sheet: Load-cell amplifiers
 custom_footprints:
-- name: Tab_BZXC_BTC-3-PCB634908T
-  from: 'Dongguan Bozhong Electrical Co., Ltd drawing of BTC-3-PCB634908T (LCSC C20626104), Rev. A1, 2021-10-12, read 2026-10-29 from the datasheet linked on the part''s jlcpcb.com page. The record''s own figures: blade B
-    6.3 +-0.2 mm wide, T 0.8 mm thick (+0/-0.03), blade length A 14.3 +-0.2 mm, mating terminal 250 female T=0.8 (controller-board-division.md, Sources read P15). The drawing also prints D 1.8 +-0.1, E 7.9 +-0.2, F 3.8 +-0.2,
-    G 1.2 +-0.1, C 3.8 +-0.2, W 8.1 +-0.1, J 2.4 +-0.1, H 2.6 +-0.2.'
-  detail: 'One plated pad, number 1. Copper at least 7.0 mm (along the blade''s width) by 1.45 mm: the blade''s section from connector-pinouts.md (division record assumption A2; the pad is at least the part''s own footprint).
-    Hole: one oval plated slot, 4.2 x 1.0 mm provisional = the drawing''s leg width C 3.8 +-0.2 and thickness T 0.8 plus 0.2 mm clearance each way; the drawing does not dimension the leg''s barbs separately, so confirm the
-    slot against a received part before ordering (open item). The blade stands 9.9 mm clear of the board by the harness record; the drawing gives blade length 14.3 mm, not the stand-off.'
+- name: Tab_TE_63849-1
+  from: TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469), https://datasheet.lcsc.com/datasheet/pdf/d78aaa5668ef44d19432bad6ab97dbf2.pdf; read 2026-11-13. Blade 6.35 +-0.08 wide, 0.76 to 0.84 thick, overall 14.02,
+    shoulders 7.92 wide, legs 3.81 long, 1.14 to 1.27 wide, 5.08 +-0.08 apart; PC board hole pattern 2 x diameter 1.40 +-0.05 at 5.08 +-0.08.
+  detail: 'Two plated pads, both number 1 (one terminal), round 3.0 mm, drill 1.4 mm, at x = -2.54 and +2.54 (pitch 5.08 mm). The legs are a barbed press fit in the 1.40 mm holes (the maker''s own pattern). Courtyard the pads
+    plus 0.25 mm; the blade is drawn on the fabrication layer with its wide face along X. Not verified: the plated-hole tolerance the board house holds against the maker''s 1.40 +-0.05, and the part''s current rating (the
+    maker''s specification 114-2115 was not read); a trial fit of one tab in a scrap board is the check.'
+  sheet: Mains entry and load feed
+- name: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+  from: SETfuse SCT520(P) datasheet, https://datasheet.lcsc.com/datasheet/pdf/c399a71412fc2cbf24b5ddba60b5c909.pdf, page 1 (dimensions) and page 5 (lead bending); read 2026-11-13. Body diameter 5.2 x length 20.0 +-0.5, lead
+    diameter 0.80 +-0.05 for above 6.3 A to 10 A.
+  detail: Two plated holes, drill 1.10 mm, pads round 3.0 mm, pitch 28.0 mm along X (hole to hole 28.0, pad edge to pad edge 25.0 mm); pin 1 = line-side lead, pin 2 = load-side lead. The pitch is the body length 20.0 plus
+    2 x 4.2 mm for the straight run and bend the maker's sheet asks for at the 0.8 mm lead; the leads are formed to that pitch. Courtyard the body plus 0.25 mm.
+  sheet: Mains entry and load feed
+- name: RV_Disc_14D471K_P7.5mm
+  from: 'Ruilon 14D series datasheet version A3, https://datasheet.lcsc.com/datasheet/pdf/305ba13b482fd415d345c9b9446eb189.pdf, page 4 (14D471K: D max 17.0, T max 6.2, lead pitch 7.5 +-1.0, lead diameter 0.8 +-0.1); read 2026-11-13.'
+  detail: Two plated holes, drill 1.1 mm, pads round 2.1 mm, pitch 7.5 mm along X, both pads on one line; body 17.0 x 6.2 mm drawn on the fabrication and silkscreen layers, centred between the leads; courtyard the body plus
+    0.25 mm.
   sheet: Mains entry and load feed
 - name: JP101_WireLink_P10mm
   from: 'Own design for the first-power link of the board method (bring-up step 3): a pair of through-hole pads taking a wire link in service or a lamp / resistor on first power. Hole 1.7 mm is KiCad''s stock SolderWire-1.5sqmm
@@ -9397,22 +9552,19 @@ custom_footprints:
 - name: R_WSK2512_4T
   from: 'Vishay Dale WSK2512, document number 30108, revision 04-Apr-2022, ''Solder pad dimensions'' table for 0.0005 to 0.0049 ohm: a 3.30 mm, b 3.30 mm, c 0.76 mm, d 0.51 mm, e 1.70 mm, l 1.65 mm; body L 6.35 x W 3.18 mm
     (inch figures converted).'
-  detail: 'Four pads: 1 = current terminal I1 and 4 = current terminal I2 (the two large pads, 3.30 mm along the body by 3.30 mm across, the gap between them l = 1.65 mm), 2 = sense E1 and 3 = sense E2 (two small pads c 0.76
-    mm by d 0.51 mm, spacing e 1.70 mm, inside the gap beside the large pads). The placement of the sense pads against the large pads is read from the maker''s land-pattern figure when the footprint is drawn (open item): the
-    text of the sheet gives the dimensions, not the sketch''s layout. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
+  detail: 'Four pads, centres in mm from the body centre: 1 = current terminal I1 at (-2.475, -0.635) and 4 = current terminal I2 at (2.475, 0.635), each 3.30 mm by 2.03 mm; 2 = sense E1 at (-3.275, 1.27) and 3 = sense E2
+    at (3.275, -1.27), each 1.70 mm by 0.76 mm. Kelvin rule: each sense pad connects only to the sense nets and to the sensing circuit, never to the current copper beyond its own terminal.'
   sheet: Mains entry and load feed
-- name: MountingHole_3.1mm_Lid
+- name: MountingHole_3.4mm_Lid
   from: 'Own design for the machine''s four lid-screw points (layout-plan.md BOARD-7: four holes of 3.1 mm, a part-free circle of 3.5 mm radius).'
-  detail: One non-plated hole, drill 3.1 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
+  detail: One non-plated hole, drill 3.4 mm, pad number empty, no copper; courtyard 7.0 mm square about the centre. Footprint attributes exclude_from_bom and exclude_from_pos_files.
   sheet: Mains entry and load feed
-- name: Relay_HF115F-Q_1H_Vertical
-  from: Hongfa HF115F-Q datasheet, 2024 Rev. 1.00, pages 205-206 (https://source.hongfa.com/Uploads/Product/PDF/HF115F-Q_en.pdf), 'PCB Layout (bottom view)' for the 1 Form A, vertical quick-connect type, read 2026-10-29
-  detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) plated holes drill 1.4 mm (the drawing gives 2 x diameter 1.3 +0.1/0; the drill is the upper tolerance end, 1.3 plus 0.1) pad 2.2 mm round; contact
-    pole a = pad number 13 at (32.5, 0) and (37.5, 0); pole b = pad number 14 at (32.5, 7.56) and (37.5, 7.56): four holes drill 1.6 mm (drawing 4 x diameter 1.5 +0.1/0, so 1.6 is the upper end) pad 2.5 mm round; the two pads
-    of one number are one pin (duplicate pad numbers). Pole a (pin 13) is on LINE1 and pole b (pin 14) on LINE, the order that puts LINE and LINE1 in the same order as the mains tabs J102 and J101 when the contacts face the
-    tabs, so the two feeds do not cross at the relay; the pad gap between the poles is 7.56 - 2.5 = 5.06 mm at least the basic 5.0 mm. The drawing''s tolerances for the layout are +-0.1 mm. Body outline 29 +-0.3 x 12.7 +-0.3
-    mm with the quick-connect tabs reaching 41 mm overall (vertical type), 15.7 mm high, 3.6 mm stand-off pins; body starts 2.5 mm before the coil holes (drawing dimension 2.5). The coil has no marked polarity in the sheet
-    (A1 and A2 are interchangeable).'
+- name: Relay_HF115F-I_1HS3A
+  from: Hongfa HF115F-I datasheet, page 202 (PCB layout, bottom view), https://datasheet.lcsc.com/datasheet/pdf/0ebe0ad433a21202e9ed2b99eb26b6ee.pdf; HF115F-S sheet page 214 gives the same pattern; read 2026-11-13
+  detail: 'Bottom view, origin on coil pad A1. Pads: A1 (0, 0) and A2 (0, 7.56) round 2.2 mm, drill 1.4 mm (drawing 6 x diameter 1.3 +0.1/0, tolerance +-0.1); contact pins 13 at (20.16, 0) and (20.16, 7.56) and 14 at (25.20,
+    0) and (25.20, 7.56), round 2.0 mm, drill 1.4 mm; the two pads of one number are one pin (duplicate pad numbers; the maker joins the two pins of a contact column inside). Pin 13 is on LINE1 and pin 14 on LINE. Body 29
+    +-0.3 x 12.7 +-0.3 x 15.7 +-0.3 mm, stand-off 0.3 mm, pins 3.6 mm long; the coil column is 2.6 mm in from the body end. Coil pad to nearest contact pad 20.16 mm along the body; contact column to column pad edge gap 3.04
+    mm. The coil has no marked polarity (A1 and A2 are interchangeable).'
   sheet: Interlock
 - name: TS1187A_5.1x5.1mm_SMD
   from: XKB Connection TS-1187A-X-X-X drawing, rev A0 (LCSC C318884 maker sheet), PCB LAYOUT top view
@@ -9427,10 +9579,16 @@ custom_footprints:
   sheet: Supply voltage and current measurement
 - name: LTV-814S_SMD-4
   from: Lite-On LTV-814/824/844 series BNS-OD-C131/A4, page 13 recommended foot print pattern, 4 pin, and page 5 outline of the LTV-814S
-  detail: 4 SMD pads 1.5 x 1.3 mm (1.5 along the row, 1.3 across), pitch 2.54 mm along the row, rows 9.0 mm apart centre to centre (pads 1 and 2 on one row, pads 4 and 3 on the other, pin 1 at top-left looking from above,
+  detail: 4 SMD pads 1.5 x 1.3 mm (1.5 along the row, 1.3 across), pitch 2.54 mm along the row, rows 9.0 mm apart centre to centre (pads 1 and 2 on one row, pads 4 and 3 on the other, pin 1 at top-right looking from above (the input row on top), numbered counter-clockwise as the package,
     pin 4 opposite pin 1 as the package); body 6.5 x 4.6 mm, lead span 10.16 mm. The input row (1, 2) is the mains side and the output row (3, 4) the low-voltage side; the gap between the rows' pad edges is 7.7 mm. Stock Package_DIP:SMDIP-4_W9.53mm
     has rows 9.53 mm apart and is not the maker's pattern.
   sheet: Zero-crossing detector
+- name: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
+  from: KiCad's stock Connector_JST footprint JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical (JST PH B5B-PH-K, 1x05, 2.0 mm pitch), copied; the hole diameter changed from the stock 0.75 mm to 0.85 mm. The Kinghelm KH-PH-5P-Z sheet
+    (LCSC C2898948) asks for a PCB hole of 0.80 +0.10/-0.00 mm; 0.85 mm is the middle of that band.
+  detail: Five plated pads at 2.0 mm pitch along X, pad 1 a rounded rectangle and the others ovals, each 1.2 mm across the row by 1.75 mm, drill 0.85 mm (ring 0.175 mm across the row, 0.45 mm along it, hole edge to hole edge
+    1.15 mm). Pad size, positions, courtyard, silkscreen and 3D model are the stock footprint's.
+  sheet: Load-cell amplifiers
 - name: MOC3052SVM_SMD-6
   from: onsemi MOC3052M/D Rev. 3 (May 2019), case outline PDIP6 8.51x6.35 2.54P CASE 646BY Issue A (15 Jul 2019, the SMT lead-bend package of MOC3052SM, MOC3052SVM and MOC3052SR2VM), recommended mounting footprint
   detail: '6 SMD pads 1.78 mm along the row by 1.52 mm across, pitch 2.54 mm along the row, rows 9.02 mm apart centre to centre (outer edges 10.54 mm, gap between the rows'' pad edges 7.49 mm: the maker''s recommended footprint);
@@ -9445,9 +9603,9 @@ custom_footprints:
   sheet: Pump drives
 - name: RELAY_HF32FA-G_1H_TYPE1_THT
   from: Hongfa HF32FA-G datasheet 2026 Rev 1.00, page 90 'Outline dimensions, wiring diagram and PC board layout', 1 Form A & Type 1, bottom view (read 2026-10-29)
-  detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,0.625) and 14 at (15.24,6.975) (holes 1.3 mm), the contact pair 6.35
-    mm apart and centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face, so mirror about the vertical
-    axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
+  detail: 'body 17.6 x 10.1 mm, 12.7 mm high, pins 3.6 mm below the board; 4 pads: coil A1 at (0,0) and A2 at (0,7.6) (holes 1.0 mm), contact 13 at (15.24,1.25) and 14 at (15.24,7.6) (holes 1.3 mm), the contact pair 6.35 mm
+    apart and 0.625 mm along y from centred on the coil pair; coil column left in the bottom view (the division record''s floorplan draws the coil end at the right and the contact end at the left of the component face, so
+    mirror about the vertical axis when placing). Dimensions read off the sheet''s drawing; tolerance +/-0.1 mm.'
   sheet: Valve drives
 - name: REED_PADS_P20.00mm
   from: docs/sunbeam-em7000/controller-board-division.md, The tank reed (pads 20.0 mm apart along Y) and connector-pinouts.md (leads 20 mm apart, through holes)
@@ -9581,6 +9739,11 @@ net_index:
     - Controller
     class: low-voltage
   POL_IN:
+    scope: local
+    sheets:
+    - Interlock
+    class: low-voltage
+  POL_INV:
     scope: local
     sheets:
     - Interlock
@@ -9881,21 +10044,21 @@ net_index:
     - Controller
     - In-stream temperature converters
     class: low-voltage
-  SPI2_SCK:
+  SPI3_SCK:
     scope: global
     sheets:
     - Controller
     - Supply voltage and current measurement
     - In-stream temperature converters
     class: low-voltage
-  SPI2_MISO:
+  SPI3_MISO:
     scope: global
     sheets:
     - Controller
     - Supply voltage and current measurement
     - In-stream temperature converters
     class: low-voltage
-  SPI2_MOSI:
+  SPI3_MOSI:
     scope: global
     sheets:
     - Controller
@@ -10194,6 +10357,11 @@ net_index:
     sheets:
     - Flow, pressure and spare analogue inputs
     class: low-voltage
+  FLOW_BUF:
+    scope: local
+    sheets:
+    - Flow, pressure and spare analogue inputs
+    class: low-voltage
   STMD_3V3_SRC:
     scope: local
     sheets:
@@ -10454,11 +10622,6 @@ net_index:
     sheets:
     - Pump drives
     class: Mains
-  PUMP_C_SNUB:
-    scope: local
-    sheets:
-    - Pump drives
-    class: Mains
   PUMP_C_GATE_R:
     scope: local
     sheets:
@@ -10490,11 +10653,6 @@ net_index:
     - Pump drives
     class: low-voltage
   PUMP_S_MT2:
-    scope: local
-    sheets:
-    - Pump drives
-    class: Mains
-  PUMP_S_SNUB:
     scope: local
     sheets:
     - Pump drives

@@ -1,0 +1,43 @@
+id: DEC-MAIN-BOARD-NEATNESS-LINES-ARE-ACCEPTED-BY-CLASS-AND-PER-NET-ENTRIES-SIGNED-ON-BEHALF
+type: decision
+category: tactical
+title: The v2 main board's remaining neatness lines are accepted by three class entries and per-net and per-part entries, none relaxing a safety or spacing figure
+status: active
+version: 2
+decided_by: owner (signed on behalf, session 2026-11-14)
+text: |
+  The owner's policy for the finished v2 main board is that the pre-order check's remaining neatness lines are accepted in two records, with the board's design files unchanged, and that no entry relaxes a spacing, creepage, clearance or other safety figure. The entries are signed on the owner's behalf in the session of 2026-11-14 under his standing instruction of 2026-11-07 to sign on his behalf and hand him one list at the end. They are not yet confirmed by him.
+
+  Three class entries in the severity policy, each marking a whole class a WARNING with a count that fails the check when it rises:
+  - test_point_courtyard, count 64. The test points are 1.0 mm pads on the back of the board. 61 of the 64 lines are a front-side part's courtyard against a back-side test pad, where no part body stands in a probe's way. The other 3 are one test point's courtyard against another test point's, 0.0524 to 0.25 mm apart, where a probe lands on one pad at a time. Every test point stays reachable by a probe, which is the owner's earlier written requirement for test points; the entry meets it in substance, and the count means a newly blocked test point fails the check.
+  - ground_return, count 17. Seventeen connectors have fewer ground pins than the board rules' ratio asks. The pin counts are fixed by the harness and the parts, a two-pin probe-lead header having no spare pin; the RTD and bridge pairs are balanced and return in each other; the key, I2C and sensor lines are slow at 3.3 V over a short harness.
+  - reference_off_silkscreen, count 70. Seventy reference designators have no legal spot beside their part even at 0.8 mm text and stay on the fabrication layer, which carries every designator. Nine of them name parts of the mains region (C602, C603, C604, C606, C607, C608, F601, R605, R607); text on the fabrication layer is no copper, no spacing and no safety fact.
+
+  Per-line entries in the workmanship acceptance record, one for each net or part so that every kept line stays named and counted: pad corner, 49 entries covering 61 lines; pad entry, 38 entries covering 59 lines; detour, 6 entries covering 6 lines, the sixth being the coffee pump LED anode net added with the optocoupler footprint correction; decoupling via, 12 entries covering 32 lines, one entry for each integrated circuit; starved thermal relief, 2 entries; and one library footprint mismatch. All are on low-voltage nets, with two exceptions the owner is asked to look at first: three decoupling vias of the isolated converter U601 on its mains-referenced supply nets, signed as decoupling neatness that changes no spacing, and the nine mains-region designators above. Also named for his attention: the controller's capacitor C402 reaches its pin through a plane with vias at both ends, about 2 nH of loop, and three pad-corner lines on crystal nets, signed on the reason that the geometry adds well under 1 pF.
+
+  With these entries the full pre-order check passes on the finished board with no violation and 265 warning lines. The class names the entries use all lie inside the closed lists the check accepts: the three class entries are among the policy's fourteen classes, and the per-line entries are among the nineteen workmanship rules.
+rationale: |
+  Context: the check exits non-zero on any line it prints, and the finished board still reported neatness lines that only a re-route of untouched copper, a move of test points or a drop of designators could remove, each at more risk than the line carries. The owner's earlier acceptance (o) of the residual-risk decision accepts the check red on such lines on condition that no change is a net gain across safety, then performance, then workmanship, and the severity policy and the per-line record are the two mechanisms built to carry that acceptance as signed, bounded entries.
+
+  Trade-offs: per-net and per-part entries were chosen for the neatness lines over class entries, so that each kept line stays named, counted and judged for its own net; a class entry is used only where one fact is the whole cause, namely back-side test pads under front-side courtyards, harness pin counts, and no room for a designator. Class-wide warnings for the neatness lines were rejected because they would let a new line on a fast or sensing net pass unnamed. Re-routing the untouched low-voltage nets was rejected because it undoes copper that is neat and proven for a risk lower than the move carries. Moving test points was rejected because the 61 front-courtyard lines come from the pads being on the back, where a probe is not obstructed, and any move disturbs dense copper the sense spacing was proven against. The cost is a long signed list the owner reads once.
+
+  Reversibility: cheap before the boards are ordered, since an entry is withdrawn by a re-route or a part move and a count is lowered by the owner when a class improves; after ordering, a board revision. A change to the board makes a count stale or low, which the check reports.
+
+  Consequences: the check fails any line of a class or place the records do not name, any count above its record, and any entry no line uses. No entry reaches a safety, mains spacing, creepage, clearance, derated-voltage or pin-limit rule, which the check refuses to take through either record. The owner is handed one list of everything signed on his behalf, as DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK fixes; the list is generated from the records, is kept outside the graph and is not copied here, and each entry stands as signed until he confirms or withdraws it. The two severity and acceptance solutions are built to carry these entries and stay as authored.
+options_considered:
+  - option: Three class entries in the severity policy where one fact is the cause, and per-net and per-part entries in the workmanship acceptance record for the rest, signed on the owner's behalf
+    reason_rejected: ""
+  - option: Class-wide warnings for every neatness line
+    reason_rejected: a new line on a fast or sensing net would pass unnamed, and the kept lines would no longer be named and counted
+  - option: Re-route the untouched low-voltage nets until the lines go
+    reason_rejected: undoes neat, proven copper for a risk lower than the move carries
+  - option: Move the test points
+    reason_rejected: the 61 front-courtyard lines come from back-side pads, where a probe is not obstructed, and a move disturbs dense copper the sense spacing was proven against
+chosen: Three class entries in the severity policy where one fact is the cause, and per-net and per-part entries in the workmanship acceptance record for the rest, signed on the owner's behalf
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: addresses
+  - target: DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER
+    type: addresses
+  - target: DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK
+    type: addresses

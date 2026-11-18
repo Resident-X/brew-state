@@ -36,7 +36,7 @@
 #
 # Classes the board uses that Table 1 has no row for: fuses, resettable fuses, the varistor,
 # crystals and oscillators, thermistors, the switch, jumpers and links, test points, and the
-# mains-rated, safety-listed parts (the X2 capacitors, relay contacts, tabs and fuse clips).
+# mains-rated, safety-listed parts (the X2 capacitors, relay contacts and tabs).
 # The owner (a hobbyist project) accepted on 2026-10-29 ("agree, proceed") that for these the
 # maker's rating is the limit: each of the nine classes after the Table 1 classes below takes
 # the share 1 on voltage, power and temperature, adds no margin of its own, and says so in its
@@ -189,18 +189,19 @@ classes:
   - class: mains-rated safety part
     voltage:
       share: 1
-      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated mains voltage and current is the limit; the owner accepted that on 2026-10-29
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs), so the maker's rated mains voltage and current is the limit; the owner accepted that on 2026-10-29
     power:
       share: 1
-      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs), so the maker's rated current or power is the limit; the owner accepted that on 2026-10-29
     temperature:
       share: 1
-      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs, fuse clips), so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
+      source: PD-ED-1201 Table 1 has no row for mains-rated, safety-listed parts (X2 capacitors, relay contacts, tabs), so the maker's rated operating temperature is the limit; the owner accepted that on 2026-10-29
 
-# Owner-accepted derating exceptions (SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS). Every entry is signed on 2026-11-05: the owner
+# Owner-accepted derating exceptions (SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS). Every entry but the last two is signed on 2026-11-05: the owner
 # instructed Claude, in writing in the working session, to enter the owner's acceptance on the owner's behalf, so accepted_by names both.
 # accepted_v is the working voltage the rule works out, 357.8 V, the peak of the 253 V rms top of the declared supply span. The first six
-# entries carry the owner's recorded acceptance of 2026-10-29; R102, R104, R706 and R716 are not in that acceptance and say so.
+# entries carry the owner's recorded acceptance of 2026-10-29; R102 and R104 are not in that acceptance and say so. D701 and D711,
+# the pump-triac clamps, are signed on 2026-11-14; they replace the entries of the snubber resistors R706 and R716, removed that day.
 accepted_exceptions:
   - position: F101
     accepted_v: 357.8
@@ -250,15 +251,15 @@ accepted_exceptions:
     bounded_by: "The real stress, 178.9 V peak, is 21.1 V (10.6 %) under the 200 V rating. Were the other resistor of a string to fail short, the survivor would stand the full 357.8 V for as long as the fault lasts, above its 200 V working voltage; that fault leaves the second string discharging C101, and a string's current is only 253 V / 2 Mohm = 0.13 mA, far below any fuse (circuit-proof.md, discharge conductor row)."
     accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
     accepted_on: "2026-11-05"
-  - position: R706
+  - position: D701
     accepted_v: 357.8
-    reason: "R706 (100 ohm, 2512, 200 V maximum working voltage, UNI-ROYAL C35218) is the unfitted snubber resistor of the coffee pump triac, in series with C701 (100 nF X2) from PUMP_C_MT2 to NEUTRAL; it is not fitted (owner decision of 2026-10-29, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER), so it carries no stress on the board as built, and the derating rule has no handling for a position that is not fitted and reads it as if present. The rule reads the full 357.8 V across it because the pin-limit record declares the snubber midpoint PUMP_C_SNUB as a mains domain of its own, not riding on the triac's net. If fitted, the steady stress is the capacitor's 7.95 mA at 50 Hz across 100 ohm: 0.8 V rms (1.1 V peak) and 6.3 mW; the stress that exceeds 200 V is the turn-on pulse, up to the 357.8 V crest, 3.6 A and 6.4 mJ with a 10 us time constant, which the maker's sheet states no pulse limit for (open-items.md row M15). ACCEPTED on 2026-11-05: the owner instructed Claude to enter the acceptance on the ground that the part stays unfitted (item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER); it is not accepted as a stress on a fitted part, and fitting it is revisited at the bring-up measurement."
-    bounded_by: "Not fitted, so nothing stands the stress: bring-up measurement of the turn-off voltage at TP702 and TP712 decides whether either snubber is fitted (open-items.md rows M15 and M16, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Fitting the part without a published pulse rating for it is revisited at that measurement; the pulse is a 10 us event of 6.4 mJ."
-    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-05"
-  - position: R716
+    reason: "D701 (Littelfuse SMCJ400CA, C151285, bidirectional TVS, 400 V reverse stand-off, breakdown 447 to 494 V at 1 mA) is the clamp across the coffee pump triac T701, from PUMP_C_MT2 to NEUTRAL. With the triac off it stands the 357.8 V peak of the 253 V rms top of the declared supply span, 0.895 of its stand-off voltage and above the 300 V the semiconductor class's 0.75 voltage share allows. Standing at the supply's peak below its stand-off voltage is the use the maker rates the part for: at the stand-off voltage it passes 1 uA at most, and it does not conduct until 447 V, the peak of 316 V rms. A part with a higher stand-off would clamp above the 600 V of the opto-triac it protects (the 440 V part clamps at up to 543 V at 1 mA before temperature and current), so the share is not met by choosing a larger part. ACCEPTED on 2026-11-14: the owner accepted the clamp and this share with it in the working session, and Claude entered the acceptance on the owner's standing instruction of 2026-11-07."
+    bounded_by: "The maker's own stand-off rating, 400 V against 357.8 V, and its 447 V minimum breakdown (1.25 times the peak); a clamp that failed short would run the pump uncommanded, the outcome of a shorted triac, which the interlock relay removes. Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's standing instruction of 2026-11-07"
+    accepted_on: "2026-11-14"
+  - position: D711
     accepted_v: 357.8
-    reason: "R716 (100 ohm, 2512, 200 V maximum working voltage, UNI-ROYAL C35218) is the unfitted snubber resistor of the steam pump triac, in series with C711 (100 nF X2) from PUMP_S_MT2 to NEUTRAL; it is not fitted (owner decision of 2026-10-29, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER), so it carries no stress on the board as built, and the derating rule has no handling for a position that is not fitted and reads it as if present. The rule reads the full 357.8 V across it because the pin-limit record declares the snubber midpoint PUMP_S_SNUB as a mains domain of its own, not riding on the triac's net. If fitted, the steady stress is the capacitor's 7.95 mA at 50 Hz across 100 ohm: 0.8 V rms (1.1 V peak) and 6.3 mW; the stress that exceeds 200 V is the turn-on pulse, up to the 357.8 V crest, 3.6 A and 6.4 mJ with a 10 us time constant, which the maker's sheet states no pulse limit for (open-items.md row M15). ACCEPTED on 2026-11-05: the owner instructed Claude to enter the acceptance on the ground that the part stays unfitted (item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER); it is not accepted as a stress on a fitted part, and fitting it is revisited at the bring-up measurement."
-    bounded_by: "Not fitted, so nothing stands the stress: bring-up measurement of the turn-off voltage at TP702 and TP712 decides whether either snubber is fitted (open-items.md rows M15 and M16, item (d) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER). Fitting the part without a published pulse rating for it is revisited at that measurement; the pulse is a 10 us event of 6.4 mJ."
-    accepted_by: "David Baker (owner), entered by Claude on the owner's written instruction"
-    accepted_on: "2026-11-05"
+    reason: "D711 (Littelfuse SMCJ400CA, C151285, bidirectional TVS, 400 V reverse stand-off, breakdown 447 to 494 V at 1 mA) is the clamp across the steam pump triac T711, from PUMP_S_MT2 to NEUTRAL. With the triac off it stands the 357.8 V peak of the 253 V rms top of the declared supply span, 0.895 of its stand-off voltage and above the 300 V the semiconductor class's 0.75 voltage share allows. Standing at the supply's peak below its stand-off voltage is the use the maker rates the part for: at the stand-off voltage it passes 1 uA at most, and it does not conduct until 447 V, the peak of 316 V rms. A part with a higher stand-off would clamp above the 600 V of the opto-triac it protects (the 440 V part clamps at up to 543 V at 1 mA before temperature and current), so the share is not met by choosing a larger part. ACCEPTED on 2026-11-14: the owner accepted the clamp and this share with it in the working session, and Claude entered the acceptance on the owner's standing instruction of 2026-11-07."
+    bounded_by: "The maker's own stand-off rating, 400 V against 357.8 V, and its 447 V minimum breakdown (1.25 times the peak); a clamp that failed short would run the pump uncommanded, the outcome of a shorted triac, which the interlock relay removes. Revisited if the declared span is widened above 253 V or monitoring shows the supply above it."
+    accepted_by: "David Baker (owner), entered by Claude on the owner's standing instruction of 2026-11-07"
+    accepted_on: "2026-11-14"

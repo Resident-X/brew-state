@@ -1,0 +1,56 @@
+id: DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK
+type: decision
+category: tactical
+title: Board layouts are chosen by picture, drawn by script block by block and proved with the repository's own checks
+status: active
+version: 1
+decided_by: design owner, signed on the project owner's behalf under his standing instruction of 2026-11-07
+text: |
+  The board design method practised on the dense mains board draws each board's copper by script, block by block, to a written rulebook, chooses the floorplan by picture and proves it on the real board with the repository's own pre-order check before any copper is drawn, judges legality by the checks and neatness by pictures of every layer, and reviews blind. The instructions are in docs/board-design-method.md, in the section "Placement, routing and review as practised on a dense mains board"; this decision records why that practice, and not another, is the method.
+
+  What the decision fixes:
+  - Rules before placement. The checks and records a board is judged by are read and digested first, and the untouched starting board is run through the whole pre-order check to give a baseline. The ranking is safety first, never relaxed; then neatness and workmanship; then the performance rules that matter on this board, where a rule that exists only for high-frequency behaviour the board does not have gives way to neatness and each such relaxation is listed with its reason and signed; then cost. The bar is about ninety percent of what an excellent engineer would reach on the same placement.
+  - Footprint truth before placement. Every footprint is audited against the maker's drawing, with real bodies and courtyards, because a board is built once and nothing is fixed by hand at bring-up.
+  - Floorplan by picture, proof by check. Concept variants of each crowded block are drawn as pictures and one is chosen by eye. The chosen variant is then applied to the real board and held to the pre-order check, line by line against the baseline, before any track, arc, via or pour.
+  - Copper by script, block by block. A rulebook, one narrow task for each fresh helper, a re-runnable script per block proven on its own copy, a chain script that reproduces the whole pipeline byte for byte, pictures of every layer that the helper looks at and the design owner grades, and a stop-loss of three send-backs on one area before the approach changes.
+  - Legality by the checks, neatness by the picture. Locked-copper lock, record and compare; the placement history check in both modes; creepage by the repository's method with a second measurement; collisions on real bodies; thermal and current margins; mains copper compared with the baseline. Low-voltage copper is not locked until it is neat. A mains pour is accepted only if it fills a stated share of its outline.
+  - Review. Blind reviews of unlabelled board versions and of the silkscreen alone, a fresh blind reviewer before every pull request, and an independent owner's verdict for a choice the design owner is anchored on, such as a layer-stack change or a protection part.
+  - Silkscreen by one deterministic script, run last on the finished board and refused unless the board it writes differs from its input only in silkscreen.
+  - The design owner decides, and records each decision and its reason in a sign-off list handed to the project owner in one piece. It stops for a mains safety figure that cannot be met, and for nothing the records already settle.
+
+  The next board follows the same order, reusing the checks, the chain-script pattern, the silkscreen script, the picture renderer and the sign-off list form, and re-deriving the footprint audit, the baseline, the floorplan, the blocks and every figure from its own records.
+rationale: |
+  Context: the first routing of the dense mains board used the stock autorouter with a cleanup script and ended as a board a skeptical reviewer would call autorouted; a blind comparison of two versions scored the earlier 4.5 and the later 6.5 of 10. A later redo of the mains side and the low-voltage reconnection was done in one stretch of rounds by one design owner and a series of narrow helpers, and the practice that worked and the failures that taught it are recorded here so that the next board, which has a different machine, mains voltage and country, can follow it. The toolchain decision for KiCad and Konnect stays as the board tool; this decision qualifies only its statements that the router finishes the board and that all board work stays in one session. A step a script carries out from a shell needs no Konnect toolset, so a helper may run it.
+
+  Trade-offs: the options rejected each failed on the dense board. The stock autorouter stalled on the density and left wandering copper, and cleaning it up cost more than drawing the blocks. Editor-driven hand routing in one session ties the work to that session's context and cannot be repeated after a part moves, while a block script is re-run from the table at its head. Judging the floorplan on body outlines alone passed a placement that the real check then failed on courtyards, the mounting-hole keep-clear, same-part clearances and an insulating distance, which cost a re-cut of the placement. Locking low-voltage copper because it was legal froze router-grade wandering and walled in the pads still open. A design owner deciding everything alone cannot see its own anchoring: the independent verdicts on the layer stack and on pump-triac protection each bounded the question with figures and conditions. The cost of the chosen practice is helper time (several million helper tokens over one placement round and one routing round, with a fresh helper per task because a helper spends its context on a block) and a design owner's long context; it buys a board that is checked line by line, rebuilt from a chain script, and judged against pictures.
+
+  Reversibility: cheap while only the method text and the scripts exist; each board built by it keeps its own scripts, records and sign-off list, so a later change of method leaves built boards untouched.
+
+  Consequences: the board design method carries the instructions, kept apart from this decision, and a design's scripts, their tables and its sign-off list are to be tracked in the board's folder, which SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD delivers for the layout tools that today exist only as working files; only the checks, the picture renderer, the locked-copper tool and the sign-off list form are tracked now. The schematic, main-board and wall-board leaves state that work needing a Konnect toolset stays in the main session and that a scripted step may be run by any agent. Two criteria still word board work as staying in the main agent session, the routing step of the rules-and-locked-routing solution and the followability criterion of the method solution; they read that statement as the Konnect toolsets' limit, and scripted steps run by helpers fall under this decision. A layer-stack change, such as a mains hop on an inner layer, is made only on an independent owner's verdict with conditions and a sign-off entry. Safety figures are never traded for room, neatness or cost; a figure that cannot be met stops the work. A script that asks KiCad's Python interface for the class of a footprint's graphic items crashed the tool, so scripts read items by their own collections. Relaxed performance rules are listed with the net, the rule and the reason the board does not need it, for the project owner to sign.
+options_considered:
+  - option: Floorplan chosen by picture and proved on the real board by the pre-order check, copper drawn by script block by block to a rulebook, legality judged by the checks and neatness by pictures, review blind, silkscreen rebuilt by script last
+    reason_rejected: ""
+  - option: Route the whole board with the stock autorouter and clean up afterwards
+    reason_rejected: it stalled on the density, left copper a reviewer calls autorouted, and the cleanup cost more than drawing the blocks
+  - option: Route every net by hand through the editor's tools in one session
+    reason_rejected: the work is tied to one session's context and cannot be repeated after a part moves, where a block script is re-run from its table
+  - option: Judge the floorplan on body outlines alone before routing
+    reason_rejected: a floorplan measured that way failed the real check on courtyards, the mounting-hole keep-clear, same-part clearances and an insulating distance, and the placement had to be re-cut
+  - option: Lock low-voltage copper once it is legal, so later work builds on it
+    reason_rejected: legal copper that wanders was locked and walled in the pads still open, so later routes inherited its detours
+  - option: The design owner decides every call alone
+    reason_rejected: an owner anchored on its own placement cannot judge a layer-stack or protection choice, which an independent verdict from the figures settled with conditions
+chosen: Floorplan chosen by picture and proved on the real board by the pre-order check, copper drawn by script block by block to a rulebook, legality judged by the checks and neatness by pictures, review blind, silkscreen rebuilt by script last
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: addresses
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C4
+    type: addresses
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: addresses
+  - target: DEL-HW-DESIGN-METHOD.C2
+    type: addresses
+  - target: DEL-HW-DESIGN-METHOD.C9
+    type: addresses
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: addresses

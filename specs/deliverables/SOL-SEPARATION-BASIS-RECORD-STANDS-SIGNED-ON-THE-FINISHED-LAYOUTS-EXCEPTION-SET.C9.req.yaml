@@ -1,0 +1,14 @@
+id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C9
+type: criterion
+title: The two Kinghelm header entries state 1.15 mm with the maker's hole band as the reason and the three JST header entries keep 1.25 mm
+status: deprecated
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The committed record's two same-connector hole_to_hole entries for the Kinghelm load-cell headers J630 and J635 each state accepted_mm 1.15, each state in their reason the 0.80 +0.10/-0.00 mm hole the maker's sheet asks for, and each carry accepted_on 2026-11-14. The record's three same-connector hole_to_hole entries for the JST headers J791, J821 and J861 keep accepted_mm 1.25. The record's header states that the plated holes of J630 and J635 become 0.85 mm, that the entries stand at 1.15 mm in place of 1.25 mm, that they carry the day 2026-11-14, and that the other three headers keep their 0.75 mm drill, 1.25 mm and their day. An entry of a Kinghelm header left at the earlier day is refused. Out of scope is any entry of another connector.
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
+    type: criterion-of
+attributes:
+  deprecation_reason: It requires the Kinghelm entries to carry accepted_on 2026-11-14; the owner's acceptance of 2026-11-18 dated them 2026-11-18; the successor C10 states that.

@@ -1,0 +1,32 @@
+id: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD
+type: deliverable
+category: solution
+title: The main board's seven BAT54S clamps are all the SOT-323 BAT54SW,115, and D502, D506 and R301 stand on the front
+status: active
+version: 4
+text: |
+  Moves the main board's three back-side assembled parts, D502, D506 and R301, to the front so the board is assembled on one side, and changes all seven BAT54S clamp diodes to one SOT-323 part so the whole board carries one part number and one bill-of-materials line for the clamp. A scratch run of the pre-order check on the finished board reports one side_fiducials line, because the back side holds those three surface-mount parts and no fiducial. The owner decided on 2026-11-07 that the three parts stand on F.Cu, for single-sided assembly, and does not accept the back-side parts as a carried line; no acceptance of them is recorded anywhere. The owner then decided on 2026-11-07 that all seven clamps change to the same part rather than two of them only. The owner-requested placement search found the plan below.
+
+  Settled for the build:
+  - R301 (0 ohm, +3V3A_FB to +3V3A link) moves to F.Cu with its courtyard 10 mm or more from the Y401 courtyard, so the 'Crystal keep-clear Y401' rule needs no exemption. Its two nets stay connected to every pad they were connected to, on the board, and no copper of either net is left on B.Cu at R301. R301 changes no part.
+  - All seven BAT54S dual Schottky clamps, D502, D504, D506, D523, D524, D527 and D528 (pin 1 anode of diode 1, pin 2 cathode of diode 2, pin 3 the common node), change from the SOT-23 Nexperia BAT54S,215 (LCSC C47546) to the SOT-323 Nexperia BAT54SW,115 (LCSC C78606, Extended), the same maker and die family. D502 (NTC_COF), D504 (NTC_STM) and D506 (NTC_WAND) clamp the thermistor inputs with pin 1 on GND and pin 2 on +3V3A; D523 and D524 steer the steam-path pressure I2C pins and D527 and D528 the brew-path pressure I2C pins, with pin 1 on GND, pin 2 on +3V3 and pin 3 on the bus node; the build reads each node's use from the netlist. D502 and D506 also move from B.Cu to F.Cu, each at a spot the placement method run confirmed has room for the SOT-323 courtyard of 2.99 x 2.29 mm. D504, D523, D524, D527 and D528 are already on F.Cu and are swapped in place; their SOT-323 pads sit slightly closer than the SOT-23 pads, so each needs the short re-route of its locked copper that the placement method requires. The pinout equivalence of BAT54S in SOT-23 and BAT54SW in SOT-323 is verified against the maker datasheet in the build.
+  - The smaller pad of D523 does not change the open item on the five ground vias inside surface-mount pads, which a sibling item owns, which this item neither decides nor changes.
+  - The schematic symbol fields of the seven references (footprint, LCSC, MPN, description) change through the schematic tools as a like-for-like swap with the same electrical function, with the diligence of the earlier resistor swaps: netlist and bill of materials difference, the proof scripts, and a targeted re-review.
+  - The records that name the old clamp part for any of the seven references are corrected to the new one: the parts specification, the schematic specification and the sheet records, the circuit verdicts rows, the circuit-proof clamp decks and the generators that write them, the traceability rows and the catalogue extract. The pin-limits record's single shared clamp entry is re-keyed to C78606, so no clamp reference is evaluated against no entry, because the pin-limit and derating check skips a part with no entry without printing a line; the C47546 clamp entry is removed unless another part still uses it.
+  - The electrical equivalence is read from the maker's sheet for the swapped part, not assumed from the family: reverse leakage, forward voltage, reverse voltage, power and capacitance are compared with the figures the error budget, the clamp decks, the shorted-lead verdicts, the bus-capacitance sums and the derating rows use, for every node the seven clamps protect, with the arithmetic shown, or those records are re-derived with the sheet's figures.
+  - The routes of the seven clamps are stated like R301's: pads connected on the board to the same nets as before, and the locked critical copper at the seven clamps carries the copper lock flag.
+  - All board edits go through the placement method of docs/board-design-method.md with Konnect, never by file edit.
+  - The mains copper and the signed separation figures are those the full pre-order check of the committed board passes against.
+  - The closing evidence is the full pre-order check on the committed board and the copper lock flag on the locked critical copper at the seven clamps.
+  - Out of scope: the five ground vias inside surface-mount pads (a sibling maintenance item), the pour, decoupling-via, thermal-relief and silkscreen lines, the footprint field lines, the C606 exception, and the courtyards_overlap and items_not_allowed lines.
+rationale: |
+  Honours the judgement REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of a layout: every applicable practice item judged before the board is ordered, here by a change to the board that removes the back-side assembled parts and so the second assembly side, as the owner decided on 2026-11-07. The placement search showed the front has room for each part at the stated spots, so the change to the board is made and no acceptance is recorded in its place.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: be4a4997079b5636464d98dc78690d4c68b182472c276dd128639c3f18c6f3f3
+  gating_profile: ""

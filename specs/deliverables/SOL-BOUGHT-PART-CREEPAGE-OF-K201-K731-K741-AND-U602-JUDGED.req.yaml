@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: 'The creepage and clearance of the interlock relay, the valve relays and the voltage-reading optocoupler are judged against the signed figures: met on a published figure, excepted, or the part changed'
 status: active
-version: 2
+version: 3
 text: |
-  Judges the creepage and clearance of the bought parts whose makers' figures the owner's acceptance of bought-part creepage leaves open: the interlock relay K201, the valve relays K731 and K741, and the optocoupler U602. The acceptance records them as over 8 mm (the relays) and unknown until read from the makers (U602 and the K201 clearance), against the basis's 10.0 mm creepage and 3.0 mm clearance for mains to low voltage. The reading is the reading leaf's. With the exception mechanism in the check, a shortfall of these parts fails unless the figure is met or the owner has accepted an exception, so each part is judged on the figures the reading found.
+  Judges the creepage and clearance of the bought parts whose makers' figures the owner's acceptance of bought-part creepage leaves open: the interlock relay K201, the valve relays K731 and K741, and the optocoupler U602. The acceptance records them as over 8 mm (the relays; K201's HF115F-I has since stated 10 mm on its sheet) and unknown until read from the makers (U602 and the K201 clearance), against the basis's 10.0 mm creepage and 3.0 mm clearance for mains to low voltage. The reading is the reading leaf's. With the exception mechanism in the check, a shortfall of these parts fails unless the figure is met or the owner has accepted an exception, so each part is judged on the figures the reading found.
 
   Settled for the build:
   - A part meets the signed figure only on a figure its maker publishes, with the arithmetic against the basis figure recorded. A figure the maker does not publish counts as absent, not adequate, and the part is not accepted on it; the absent figure is put to the owner with the part, the pair and the choices, and the owner decides which: an exception stating the ground, a different part, or a published figure found.

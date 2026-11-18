@@ -3,7 +3,7 @@
   (generator "konnect")
   (layer "F.Cu")
   (descr "First-power wire link, two round pads 3.0 mm drill 1.7 mm at 10.0 mm pitch")
-  (attr through_hole)
+  (attr through_hole exclude_from_pos_files)
   (pad "1" thru_hole circle (at 0 0) (size 3 3) (layers "*.Cu" "*.Mask") (drill 1.7) )
   (pad "2" thru_hole circle (at 10 0) (size 3 3) (layers "*.Cu" "*.Mask") (drill 1.7) )
   (fp_rect (start -2.0000 -2.0000) (end 12.0000 2.0000) (stroke (width 0.05) (type solid)) (fill none) (layer "F.CrtYd"))

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY.C12
+type: criterion
+title: A policy marked synthetic on a design that can be manufactured is void
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  On a synthetic design that is not marked not for manufacture, a severity policy record that is marked synthetic prints one severity_policy violation line stating that the record is synthetic, voids the whole policy so every line of the check stands as a violation and none prints as a WARNING, and the check exits non-zero; the same record on a design marked not for manufacture is read as any other policy. Out of scope is a policy that is not marked synthetic.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CLASSIFIES-COSMETIC-LINES-AS-RATCHETED-WARNINGS-UNDER-OWNER-SIGNED-POLICY
+    type: criterion-of

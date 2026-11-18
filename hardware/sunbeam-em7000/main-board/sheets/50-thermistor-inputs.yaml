@@ -72,13 +72,13 @@ parts:
     sim_exclude: false
     dnp: false
   - ref: D502
-    lib_id: "Diode:BAT54S"
-    value: "BAT54S"
+    lib_id: "Diode:BAT54SW"
+    value: "BAT54SW"
     rating: "dual series Schottky 30V 200mA"
-    footprint: "Package_TO_SOT_SMD:SOT-23"
-    mpn: "BAT54S,215"
+    footprint: "Package_TO_SOT_SMD:SOT-323_SC-70"
+    mpn: "BAT54SW,115"
     maker: "Nexperia"
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: "steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead"
@@ -170,13 +170,13 @@ parts:
     sim_exclude: false
     dnp: false
   - ref: D504
-    lib_id: "Diode:BAT54S"
-    value: "BAT54S"
+    lib_id: "Diode:BAT54SW"
+    value: "BAT54SW"
     rating: "dual series Schottky 30V 200mA"
-    footprint: "Package_TO_SOT_SMD:SOT-23"
-    mpn: "BAT54S,215"
+    footprint: "Package_TO_SOT_SMD:SOT-323_SC-70"
+    mpn: "BAT54SW,115"
     maker: "Nexperia"
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: "steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead"
@@ -268,13 +268,13 @@ parts:
     sim_exclude: false
     dnp: false
   - ref: D506
-    lib_id: "Diode:BAT54S"
-    value: "BAT54S"
+    lib_id: "Diode:BAT54SW"
+    value: "BAT54SW"
     rating: "dual series Schottky 30V 200mA"
-    footprint: "Package_TO_SOT_SMD:SOT-23"
-    mpn: "BAT54S,215"
+    footprint: "Package_TO_SOT_SMD:SOT-323_SC-70"
+    mpn: "BAT54SW,115"
     maker: "Nexperia"
-    lcsc: C47546
+    lcsc: C78606
     class: extended
     hand: false
     function: "steering clamp of the converter pin to GND and +3V3A against a cross-short to a 5 V lead"
@@ -308,4 +308,4 @@ no_connect: []
 custom_symbols: []
 custom_footprints: []
 power_flags: []
-notes: "Signal flows left to right: header (left) -> divider node -> series resistor -> filter node -> converter pin label. +3V3A at the top, GND at the bottom. Each header pin 1 is the square pad; the wand header is fitted rotated 180 degrees on the board (placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. BAT54S symbol Diode:BAT54S pins: 1=A (to GND), 2=K (to +3V3A), 3=COM (to the converter pin node)."
+notes: "Signal flows left to right: header (left) -> divider node -> series resistor -> filter node -> converter pin label. +3V3A at the top, GND at the bottom. Each header pin 1 is the square pad; the wand header is fitted rotated 180 degrees on the board (placement only, no electrical difference). The three channels are identical; draw them as three stacked identical cells. BAT54SW symbol Diode:BAT54SW pins: 1=A (to GND), 2=K (to +3V3A), 3=COM (to the converter pin node)."

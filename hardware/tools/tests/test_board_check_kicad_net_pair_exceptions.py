@@ -24,7 +24,7 @@ import board_check  # noqa: E402
 import board_prove  # noqa: E402
 import sexpr  # noqa: E402
 from board_kicad_fixtures import load_tests, setUpModule  # noqa: E402,F401
-from board_kicad_fixtures import Copy, Proved, outcomes  # noqa: E402
+from board_kicad_fixtures import Copy, Proved, basis_record, outcomes  # noqa: E402
 
 pair = board_prove.net_pair_entry
 Q = sexpr.Quoted
@@ -215,14 +215,20 @@ class TheExceptionsKeepTheTrackedDesignsPassing(unittest.TestCase):
             name = os.path.basename(design)
             with self.subTest(design=name), tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
                 seed = board_prove.prepare(scratch, design, name)
-                with open(seed.path("separation-basis.yaml"), encoding="utf-8") as handle:
+                record, own = basis_record(seed, design)
+                with open(record, encoding="utf-8") as handle:
                     text = handle.read()
-                self.assertNotIn(board_check.NET_PAIR_FORM_KEY, text)
-                self.assertNotIn("synthetic band table", text)
+                if own:
+                    # a record held in the design's own folder is a proof design's, which carries none; a machine record above the folder carries its own leaf's entries
+                    self.assertNotIn(board_check.NET_PAIR_FORM_KEY, text)
+                    self.assertNotIn("synthetic band table", text)
                 status, lines, stderr = board_prove.check(seed, KICAD_CLI)
                 self.assertNotEqual(status, 2, stderr)
                 self.assertEqual(status, 0, lines)
-                self.assertEqual([line for line in lines if line.startswith(("VIOLATION", "ACCEPTED"))], [])
+                self.assertEqual([line for line in lines if line.startswith("VIOLATION")], [])
+                if own:
+                    # a proof design accepts nothing; the signed acceptances of a machine design are its own leaf's to test
+                    self.assertEqual([line for line in lines if line.startswith("ACCEPTED")], [])
 
 
 class TheNetPairExceptionRules(Proved):

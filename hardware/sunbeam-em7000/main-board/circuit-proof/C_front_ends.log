@@ -117,15 +117,15 @@
    25 LSB typ = 1.26 mV = 0.050 degC at 88 degC, beta 3950 K
   This row does not close: beta and the element tolerance are pending in the records; the ADC accuracy is typical only.
 
-== flow input level (U520 input; PC6, FT_h, sees U520's output)
+== flow input level (U520 input; PB10, FT_f, sees U520's output)
   push-pull meter output at 5 V rail high (+2.5 %): U520 input 5.125 V ; recommended limit 5.5 V margin 0.375 V ; absolute maximum 6.5 V margin 1.375 V
   CHECK flow buffer input below 5.5 V: push-pull meter output at 5 V rail high (+2.5 %) ok
   push-pull at 5.25 V: U520 input 5.250 V ; recommended limit 5.5 V margin 0.250 V ; absolute maximum 6.5 V margin 1.250 V
   CHECK flow buffer input below 5.5 V: push-pull at 5.25 V             ok
   open-drain with the 3.3 V pull-up: U520 input 3.600 V ; recommended limit 5.5 V margin 1.900 V ; absolute maximum 6.5 V margin 2.900 V
   CHECK flow buffer input below 5.5 V: open-drain with the 3.3 V pull-up ok
-  PC6 sees the buffer's output, at most the +3V3 rail (3.6 V) against its 5.5 V limit (Table 14): margin 1.900 V
-  CHECK flow pin PC6 below 5.5 V with the buffer's output at 3.6 V     ok
+  PB10 sees the buffer's output, at most the +3V3 rail (3.6 V) against its 5.5 V limit (Table 14): margin 1.900 V
+  CHECK flow pin PB10 below 5.5 V with the buffer's output at 3.6 V    ok
   buffer input leakage 5 uA through R521 (1014 Ohm at +1.45 %) shifts the filter node by 5.1 mV
   open-drain rising edge: tau = (R520 + R521) * C520 = 663 us ; 10-90 % rise 1460 us ; corner 240 Hz
   pulse rate passed at the corner, per millilitre per second of the pump's 7.0 mL/s full scale (estimate in the record): K up to 34268 pulses/L
@@ -139,7 +139,7 @@
   CHECK Rp(min) <= Rp at its lowest                                    ok
   CHECK Cb allowed by tr >= 400 pF                                     ok
   CHECK Rp at its highest <= Rp(max) at 400 pF                         ok
-  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54S 10 pF = 31.1 pF ; left for pads, header and cable within 400 pF = 368.9 pF
+  pins on the line: sensor 10 pF + controller pin 10 pF + TVS 0.55 pF + BAT54SW 10 pF = 31.1 pF ; left for pads, header and cable within 400 pF = 368.9 pF
   VDD 3.0 V: sensor pulls low (0.4 V) through Rs: controller pin sees 0.522 V; VIL(max) 0.3 VDD = 0.900 V; margin 0.378 V vs noise margin 0.1 VDD = 0.300 V
   CHECK low-level noise margin at VDD 3.0 V                            ok
   VDD 3.3 V: sensor pulls low (0.4 V) through Rs: controller pin sees 0.536 V; VIL(max) 0.3 VDD = 0.990 V; margin 0.454 V vs noise margin 0.1 VDD = 0.330 V

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C4
+type: criterion
+title: The seeded-fault proof still catches every fault it seeded
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The on-demand seeded-fault proof, run once on the change, reports every fault it seeds as caught, the mounting-hole, sensing and creepage faults included, with no fault missed and none newly failing. The main-board comparison of the two passes' findings, before and after the change, is a stated check of the delivered artefact and not part of this proof.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF.C4
+type: criterion
+title: A Mains-class zone whose fill covers less than 90 % of its outline on a layer fails the design, naming the zone, the layer and the fraction
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  After the check refills the zones, the filled area of each Mains-class zone on each layer it is on is compared with the area of its outline, and a fraction under 0.90 fails the design with a finding that names the zone, the layer and the fraction. A zone at or above 0.90 does not fail, and a zone that is a rule area is not judged. A fill floor for zones that are not Mains-class is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SAME-PART-MAINS-PAD-PAIRS-AND-MAINS-ZONE-FILL-ITSELF
+    type: criterion-of

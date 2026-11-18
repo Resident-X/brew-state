@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C7
+type: criterion
+title: The hardware notes state the rule and the three sources it compares
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The hardware notes state the rule, the three sources it compares, which are the layout's footprint attribute, the schematic's symbol attribute and the parts record's fitted key, what each of the parts list and the placement file reads, the failure it reports and what it names, the text field check, that no acceptance record waives it, and a row for it in the table of the check's rule names. The notes' account of the parts specification record states the fitted key. Out of scope: any board's own records.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+    type: criterion-of

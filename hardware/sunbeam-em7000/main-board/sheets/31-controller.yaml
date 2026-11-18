@@ -881,7 +881,7 @@ nets:
   TANK_LEVEL:
     scope: global
     pins:
-    - U401.42
+    - U401.97
   KNOB_HOT:
     scope: global
     pins:
@@ -897,43 +897,43 @@ nets:
   BREW_SCL:
     scope: global
     pins:
-    - U401.46
+    - U401.92
   BREW_SDA:
     scope: global
     pins:
-    - U401.47
+    - U401.93
   PT1_CS:
     scope: global
     pins:
-    - U401.51
-  SPI2_SCK:
+    - U401.81
+  SPI3_SCK:
     scope: global
     pins:
-    - U401.52
-  SPI2_MISO:
+    - U401.78
+  SPI3_MISO:
     scope: global
     pins:
-    - U401.53
-  SPI2_MOSI:
+    - U401.79
+  SPI3_MOSI:
     scope: global
     pins:
-    - U401.54
+    - U401.80
   PT2_CS:
     scope: global
     pins:
-    - U401.55
+    - U401.82
   AMC_CS:
     scope: global
     pins:
-    - U401.56
+    - U401.77
   AMC_DRDY:
     scope: global
     pins:
-    - U401.57
+    - U401.63
   AMC_RESET:
     scope: global
     pins:
-    - U401.58
+    - U401.65
   GAUGE_STEP1:
     scope: global
     pins:
@@ -945,7 +945,7 @@ nets:
   FLOW_IN:
     scope: global
     pins:
-    - U401.63
+    - U401.46
   POL_OUT:
     scope: global
     pins:
@@ -953,11 +953,11 @@ nets:
   WT1_DATA:
     scope: global
     pins:
-    - U401.65
+    - U401.86
   WT1_CLK:
     scope: global
     pins:
-    - U401.66
+    - U401.87
   PUMP_S_GATE:
     scope: global
     pins:
@@ -973,43 +973,43 @@ nets:
   WT2_DATA:
     scope: global
     pins:
-    - U401.79
+    - U401.83
   WT2_CLK:
     scope: global
     pins:
-    - U401.80
+    - U401.84
   GAUGE_DIR1:
     scope: global
     pins:
-    - U401.81
+    - U401.55
   GAUGE_DIR2:
     scope: global
     pins:
-    - U401.82
+    - U401.56
   HEAT_C_DRV:
     scope: global
     pins:
-    - U401.83
+    - U401.58
   HEAT_S_DRV:
     scope: global
     pins:
-    - U401.84
+    - U401.59
   VALVE_2W_DRV:
     scope: global
     pins:
-    - U401.85
+    - U401.60
   VALVE_3W_DRV:
     scope: global
     pins:
-    - U401.86
+    - U401.51
   GAUGE_RST:
     scope: global
     pins:
-    - U401.87
+    - U401.57
   MAINS_PRES_S:
     scope: global
     pins:
-    - U401.88
+    - U401.47
   ANODE_GATE:
     scope: global
     pins:
@@ -1025,11 +1025,11 @@ nets:
   LOWWATER_K:
     scope: global
     pins:
-    - U401.97
+    - U401.42
   BUZZER:
     scope: global
     pins:
-    - U401.98
+    - U401.36
 no_connect:
 - pin: U401.7
   reason: 'PC13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
@@ -1049,8 +1049,6 @@ no_connect:
   reason: 'PB0 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.35
   reason: 'PB1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.36
-  reason: 'PB2 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.37
   reason: 'PE7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.38
@@ -1061,20 +1059,22 @@ no_connect:
   reason: 'PE10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.41
   reason: 'PE11 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.59
-  reason: 'PD12 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.60
-  reason: 'PD13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.77
-  reason: 'PA15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.78
-  reason: 'PC10 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.52
+  reason: 'PB13 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.53
+  reason: 'PB14 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.54
+  reason: 'PB15 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.66
+  reason: 'PC9 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.85
+  reason: 'PD4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.88
+  reason: 'PD7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: U401.90
   reason: 'PB4 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.92
-  reason: 'PB6 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
-- pin: U401.93
-  reason: 'PB7 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
+- pin: U401.98
+  reason: 'PE1 unused; DS12110 Table 9 pin, AN4938 7.6: firmware sets unused pins to analog or driven low; no board connection'
 - pin: J401.7
   reason: 'KEY: Cortex Debug 10-pin pin 7 is the key position, no contact'
 - pin: J401.8
@@ -1101,8 +1101,8 @@ notes: 'Signal flow left to right: supply (left) -> U401 -> signals (right, glob
   U401: draw all 100 pins; pins listed under no_connect carry a no-connect flag. Supply pins: five VDD (11, 27, 50, 75, 100) each with its own 100 nF placed at the pin, five VSS (10, 26, 49, 74, 99), VSSA
   (19) to GND, VDDA (21) on +3V3A, VREF+ (20) on VREF+, VBAT (6) on +3V3, VCAP (48 and 73) joined on net VCAP with one 2.2 uF at each pin.
 
-  Crystals: Y401 with C414 and C415 close to PH0/PH1; Y402 with C416 and C417 close to PC14/PC15. Probe point TP406 is on HSE_IN, a probe point on the crystal''s own node: no pin is free for a buffered
-  clock (PA8 is MCO1 and is the steam pump gate; PC9 is MCO2 and is a load-cell clock), so the clock is observed at TP406 with a 10 Mohm 10 pF-class probe and the loading noted in the bring-up record.
+  Crystals: Y401 with C414 and C415 close to PH0/PH1; Y402 with C416 and C417 close to PC14/PC15. Probe point TP406 is on HSE_IN, a probe point on the crystal''s own node: no pin is used for a buffered
+  clock (PA8 is MCO1 and is the steam pump gate; PC9 is MCO2, unconnected and available for one, which TP406 does not need today), so the clock is observed at TP406 with a 10 Mohm 10 pF-class probe and the loading noted in the bring-up record.
 
   Reset: SW401 and C418 from NRST to GND; no external pull-up (the part has one, 30 to 50 kohm, inside the 10 kohm to 1 Mohm the supervisor''s sheet asks of its RESET pull-up); J401.10 on NRST. U402 (TLV803S supervisor) on +3V3 with C422 at its VDD pin: its open-drain RESET (pin 2) is on NRST, wire-ORed with the button, the probe and the controller''s own reset, and holds the controller in reset while +3V3 is under 2.87 to 2.99 V and for 120 to 280 ms after it recovers (arithmetic in circuit-proof.md, Reset supervisor).
 

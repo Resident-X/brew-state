@@ -1566,7 +1566,7 @@
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "e161f090-9362-4085-895b-afdd6cf81a91")
 		(property "Reference" "R572"
 			(at 70.612 66.04 90)
@@ -1647,6 +1647,15 @@
 			)
 		)
 	
+		(property "dnp" "true"
+			(at 68.58 66.04 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Rating" "1% 100ppm/K 0603 100mW"
 			(at 68.58 66.04 0)
 			(hide yes)
@@ -2319,7 +2328,7 @@
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "a79c0192-363a-4ff4-b9cd-d77e35c85141")
 		(property "Reference" "R576"
 			(at 70.612 142.24 90)
@@ -2400,6 +2409,15 @@
 			)
 		)
 	
+		(property "dnp" "true"
+			(at 68.58 142.24 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Rating" "1% 100ppm/K 0603 100mW"
 			(at 68.58 142.24 0)
 			(hide yes)

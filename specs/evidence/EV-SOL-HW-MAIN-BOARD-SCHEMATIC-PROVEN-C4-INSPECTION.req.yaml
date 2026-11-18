@@ -1,0 +1,37 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T14:31:19Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'hardware/sunbeam-em7000/main-board/main-board.pretty/Tab_TE_63849-1.kicad_mod; hardware/sunbeam-em7000/main-board/sheets/101-mains-entry-and-load-feed.yaml::custom_footprints Tab_TE_63849-1; hardware/sunbeam-em7000/main-board/101-mains-entry-and-load-feed.kicad_sch; hardware/sunbeam-em7000/main-board/circuit-proof.md::Conductor: pad and blade of tabs 2 and 3'
+  artifact_version: 361517aee5a885fad4095ad5a6a5a738b7d75083
+text: |
+  Inspection of the criterion clause by clause. The drawn footprint was read against the maker's drawing as the board's own sheet record quotes it. Files are in hardware/sunbeam-em7000/main-board/ and are unmodified against the commit named in the artifact version.
+
+  Clause "Each retained tab's footprint is drawn from the bought part's own drawing."
+
+  1. Which tabs. sheets/101-mains-entry-and-load-feed.yaml lists the retained tabs J101, J102, J103, J106, J107, J108, J109 and J110 (eight), every one with footprint Tab_TE_63849-1, MPN 63849-1, maker TE Connectivity, LCSC C86469. 101-mains-entry-and-load-feed.kicad_sch carries eight `(property "Footprint" "main-board:Tab_TE_63849-1"` lines, on the symbols with references J102, J101, J103, J110, J106, J107, J108 and J109, and fp-lib-table points the library main-board at main-board.pretty. Matches: one drawn footprint for the one bought part, on all eight tabs.
+
+  2. The source of the drawing. The same sheet's custom_footprints entry for Tab_TE_63849-1 says its source is "TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469)", the LCSC-hosted copy named by URL (d78aaa5668ef44d19432bad6ab97dbf2.pdf), read 2026-11-13, and quotes: blade 6.35 +-0.08 wide, 0.76 to 0.84 thick, overall 14.02, shoulders 7.92 wide, legs 3.81 long and 1.14 to 1.27 wide, 5.08 +-0.08 apart, PC board hole pattern 2 x diameter 1.40 +-0.05 at 5.08 +-0.08. circuit-proof.md (row "Conductor: pad and blade of tabs 2 and 3") records the same figures from the same drawing (width 6.35 +-0.08 mm, thickness 0.76 to 0.84 mm, height 14.02 mm, two-hole pattern of 1.40 mm holes 5.08 mm apart). The maker's PDF is not in the repository and a fetch of the LCSC host from this session returned no document, so the check below is against the figures the record quotes from the drawing, not against the PDF itself.
+
+  3. The drawn footprint. main-board.pretty/Tab_TE_63849-1.kicad_mod: description "TE Connectivity 63849-1 Faston .250 PC tab, two 1.40 mm plated holes 5.08 mm apart, both pads one terminal"; two thru_hole circular pads numbered "1", size 3 x 3 mm, drill 1.4, at x = -2.54 and x = +2.54 (pitch 5.08); fabrication-layer blade outline 6.35 mm wide (x -3.175 to +3.175) and a 7.92 x 0.8 mm shoulder rectangle (x -3.96 to +3.96, y -0.4 to +0.4); courtyard 8.58 x 3.5 mm.
+
+  4. The comparison, figure by figure.
+   - Hole diameter: drawn 1.40 mm, drawing 1.40 +-0.05 mm. Equal at nominal.
+   - Hole pitch: drawn 2 x 2.54 = 5.08 mm, drawing 5.08 +-0.08 mm. Equal at nominal.
+   - Hole against leg: the legs are 1.14 to 1.27 mm wide, so the 1.40 mm hole leaves 0.13 to 0.26 mm of clearance across the diameter, as the drawing's own hole pattern intends (the sheet record calls the fit a barbed press fit and keeps "plated-hole tolerance against 1.40 +-0.05" as a not-verified item for a trial fit; that item concerns the board house, not the drawing of the footprint).
+   - Pad against the part's footprint: each pad is 3.0 mm across a 1.40 mm hole, a ring of (3.0 - 1.40) / 2 = 0.80 mm all round (0.775 mm at the drawing's largest hole, 1.45 mm). The pads' outer extent along X is 2.54 + 1.5 = 4.04 mm each side of centre, 8.08 mm overall, against the part's shoulder width of 7.92 mm: 8.08 - 7.92 = 0.16 mm to spare. Across Y each pad is 3.0 mm against a leg width of at most 1.27 mm. So each pad is at least the part's own footprint (its hole pattern, its legs and the shoulders' extent), as the criterion asks.
+   - Blade orientation: wide face along X in the footprint (fabrication outline 6.35 mm along X), as the sheet record states.
+
+  Out of scope and not inspected: the board's separation and fixing distances with the tab, and the suppression parts. The tab's current rating is not in this criterion (the drawing gives none; it is carried as open-items.md row M18).
+
+  Result: every clause is met on the figures the sheet record quotes from the maker's drawing. Stated limit of the check: the drawing's PDF itself was not available to read.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C4
+    type: satisfies

@@ -1444,7 +1444,7 @@ class TheHardwareNotesCarryAnEntryForEachRule(unittest.TestCase):
         # SOL-PRE-ORDER-CHECK-DERATED-VOLTAGE-AND-PIN-LIMITS.C6: The board-reads listing's description names the derating policy and pin-limit records.
         with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
             readme = handle.read()
-        self.assertIn("`rating`, `lcsc` and `class`", readme)
+        self.assertIn("`rating`, `lcsc`, `class` and `fitted`", readme)
         with open(os.path.join(REPO, "Taskfile.yml"), encoding="utf-8") as handle:
             lines = handle.read().splitlines()
         start = lines.index("  hw:reads:")

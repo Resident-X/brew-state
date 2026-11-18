@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C8
+type: criterion
+title: Power to the loads is made available with every load commanded off and kept available through normal use rather than switched for each use
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Each closure of an element that can be slow to close when warm is a chance for the machine to find power unavailable at the moment a load is wanted, and closing under load switches the load's current through it. The element is therefore closed at a moment when nothing is drawing from it and then left closed.
+
+  The machine commands power available to the loads only while every load is commanded off, and keeps it available between uses in normal operation. A fault and a loss of the controller's proof of life still remove it. Out of scope: how the element is switched.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

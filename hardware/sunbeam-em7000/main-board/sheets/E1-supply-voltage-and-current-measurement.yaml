@@ -1,5 +1,5 @@
 sheet: "Supply voltage and current measurement"
-function: "One isolated two-channel delta-sigma converter reads the mains voltage through a three-resistor divider (channel 0) and the supply current through the neutral shunt (channel 1) and hands both to the controller over the shared SPI2 bus."
+function: "One isolated two-channel delta-sigma converter reads the mains voltage through a three-resistor divider (channel 0) and the supply current through the neutral shunt (channel 1) and hands both to the controller over the shared SPI3 bus."
 parts:
   # ---- the isolating converter and its clock --------------------------------------------------
   - {ref: U601, lib_id: AMC131M02, value: "AMC131M02", rating: "reinforced isolation VIORM 1700 V pk, VIOTM 7070 V pk, creepage and clearance 8.0 mm min (SBASA56 6.5); DVDD 3.0-5.5 V", footprint: AMC131M02_SOIC-20W_DFM0020A, mpn: "AMC131M02DFMR", maker: "Texas Instruments", lcsc: C31423783, class: extended, hand: false, function: "isolated 2-channel 24-bit delta-sigma ADC with integrated isolated supply; pins 1-10 are the mains-referenced side, pins 11-20 the low-voltage side", mains: true, sim_exclude: true}
@@ -19,16 +19,16 @@ parts:
   # ---- converter's own supplies (SBASA56 9.3, Table 9-3) --------------------------------------
   - {ref: C603, lib_id: Device:C, value: "1u", rating: "X7R 25V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CC0603KRX7R8BB105", maker: "YAGEO", lcsc: C106858, class: extended, hand: false, function: "C6: DCDC_OUT to DCDC_HGND, 1 uF", mains: true, sim_exclude: false}
   - {ref: C604, lib_id: Device:C, value: "1n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B102KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1588, class: basic, hand: false, function: "C1: DCDC_OUT to DCDC_HGND, 1 nF, closest to the pins", mains: true, sim_exclude: false}
-  - {ref: F601, lib_id: Device:FerriteBead_Small, value: "600R@100MHz", rating: "0603 350mA 0.5ohm", footprint: "Inductor_SMD:L_0603_1608Metric", mpn: "FCM1608KF-601T03", maker: "TAI-TECH", lcsc: C141723, class: extended, hand: false, function: "F1: DCDC_OUT to HLDO_IN, EMI bead (SBASA56 9.3)", mains: true, sim_exclude: true}
-  - {ref: F602, lib_id: Device:FerriteBead_Small, value: "600R@100MHz", rating: "0603 350mA 0.5ohm", footprint: "Inductor_SMD:L_0603_1608Metric", mpn: "FCM1608KF-601T03", maker: "TAI-TECH", lcsc: C141723, class: extended, hand: false, function: "F2: DCDC_HGND to HGND (AMC_HGND), EMI bead (SBASA56 9.3)", mains: true, sim_exclude: true}
-  - {ref: C605, lib_id: Device:C, value: "100n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B104KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1591, class: extended, hand: false, function: "C24: HLDO_IN to HGND, 100 nF", mains: true, sim_exclude: false}
-  - {ref: C606, lib_id: Device:C, value: "1n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B102KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1588, class: basic, hand: false, function: "C10: HLDO_IN to HGND, 1 nF", mains: true, sim_exclude: false}
-  - {ref: C607, lib_id: Device:C, value: "100n", rating: "C0G 50V 5% 1206", footprint: "Capacitor_SMD:C_1206_3216Metric", mpn: "1206N104J500CT", maker: "Walsin", lcsc: C170182, class: extended, hand: false, function: "C13: HLDO_OUT to HGND, 100 nF NP0 as Table 9-3 lists", mains: true, sim_exclude: false}
+  - {ref: F601, lib_id: Device:FerriteBead_Small, value: "600R@100MHz", rating: "0603 500mA 0.5ohm", footprint: "Inductor_SMD:L_0603_1608Metric", mpn: "FCM1608KF-601T05", maker: "TAI-TECH", lcsc: C133937, class: extended, hand: false, function: "F1: DCDC_OUT to HLDO_IN, EMI bead (SBASA56 9.3)", mains: true, sim_exclude: true}
+  - {ref: F602, lib_id: Device:FerriteBead_Small, value: "600R@100MHz", rating: "0603 500mA 0.5ohm", footprint: "Inductor_SMD:L_0603_1608Metric", mpn: "FCM1608KF-601T05", maker: "TAI-TECH", lcsc: C133937, class: extended, hand: false, function: "F2: DCDC_HGND to HGND (AMC_HGND), EMI bead (SBASA56 9.3)", mains: true, sim_exclude: true}
+  - {ref: C605, lib_id: Device:C, value: "100n", rating: "X7R 50 V 10 % 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CC0603KRX7R9BB104", maker: "YAGEO", lcsc: C14663, class: basic, hand: false, function: "C24: HLDO_IN to HGND, 100 nF", mains: true, sim_exclude: false}
+  - {ref: C606, lib_id: Device:C, value: "1n", rating: "X7R 50V 10% 0402", footprint: "Capacitor_SMD:C_0402_1005Metric", mpn: "0402B102K500NT", maker: "FH", lcsc: C1523, class: basic, hand: false, function: "C10: HLDO_IN to HGND, 1 nF", mains: true, sim_exclude: false}
+  - {ref: C607, lib_id: Device:C, value: "100n", rating: "C0G 50 V +-5 % 1206", footprint: "Capacitor_SMD:C_1206_3216Metric", mpn: "GRM31C5C1H104JA01L", maker: "Murata", lcsc: C97946, class: extended, hand: false, function: "C13: HLDO_OUT to HGND, 100 nF NP0 as Table 9-3 lists", mains: true, sim_exclude: false}
   - {ref: C608, lib_id: Device:C, value: "1n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B102KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1588, class: basic, hand: false, function: "C11: HLDO_OUT to HGND, 1 nF, closest to the pin", mains: true, sim_exclude: false}
   - {ref: C609, lib_id: Device:C, value: "1n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B102KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1588, class: basic, hand: false, function: "C15: DVDD to DGND, 1 nF, closest to the pin", mains: false, sim_exclude: false}
   - {ref: C610, lib_id: Device:C, value: "1u", rating: "X7R 25V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CC0603KRX7R8BB105", maker: "YAGEO", lcsc: C106858, class: extended, hand: false, function: "C16: DVDD to DGND, 1 uF", mains: false, sim_exclude: false}
-  - {ref: C612, lib_id: Device:C, value: "100n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B104KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1591, class: extended, hand: false, function: "C17: DCDC_CAP to DGND, 100 nF", mains: false, sim_exclude: false}
-  - {ref: C611, lib_id: Device:C, value: "100n", rating: "X7R 50V 10% 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CL10B104KB8NNNC", maker: "Samsung Electro-Mechanics", lcsc: C1591, class: extended, hand: false, function: "oscillator Vdd decoupling, 0.1 uF or more required (SiT8008B note 11)", mains: false, sim_exclude: false}
+  - {ref: C612, lib_id: Device:C, value: "100n", rating: "X7R 50 V 10 % 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CC0603KRX7R9BB104", maker: "YAGEO", lcsc: C14663, class: basic, hand: false, function: "C17: DCDC_CAP to DGND, 100 nF", mains: false, sim_exclude: false}
+  - {ref: C611, lib_id: Device:C, value: "100n", rating: "X7R 50 V 10 % 0603", footprint: "Capacitor_SMD:C_0603_1608Metric", mpn: "CC0603KRX7R9BB104", maker: "YAGEO", lcsc: C14663, class: basic, hand: false, function: "oscillator Vdd decoupling, 0.1 uF or more required (SiT8008B note 11)", mains: false, sim_exclude: false}
   # ---- low-voltage digital side ---------------------------------------------------------------
   - {ref: R609, lib_id: Device:R, value: "33", rating: "1% 100mW 75V 0603", footprint: "Resistor_SMD:R_0603_1608Metric", mpn: "0603WAF330JT5E", maker: "UNI-ROYAL", lcsc: C23140, class: basic, hand: false, function: "source termination of the clock at the oscillator (SBASA56 9.4.1)", mains: false, sim_exclude: false}
   - {ref: R610, lib_id: Device:R, value: "33", rating: "1% 100mW 75V 0603", footprint: "Resistor_SMD:R_0603_1608Metric", mpn: "0603WAF330JT5E", maker: "UNI-ROYAL", lcsc: C23140, class: basic, hand: false, function: "series termination, SCLK to the converter (SBASA56 9.4.2)", mains: false, sim_exclude: false}
@@ -47,7 +47,7 @@ parts:
   - {ref: TP607, lib_id: Connector:TestPoint, value: "TP_AMC_HLDO_IN", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "producer-only net: high-side LDO input after the bead, mains-referenced", mains: true, sim_exclude: true}
   - {ref: TP608, lib_id: Connector:TestPoint, value: "TP_AMC_HLDO_OUT", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "producer-only net: high-side LDO output, 2.6-3.2 V, mains-referenced", mains: true, sim_exclude: true}
   - {ref: TP609, lib_id: Connector:TestPoint, value: "TP_AMC_DCDC_CAP", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "producer-only net: DCDC_CAP, the primary-side LDO output, 3.5 V abs max", mains: false, sim_exclude: true}
-  - {ref: TP610, lib_id: Connector:TestPoint, value: "TP_SPI2_MISO", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: shared SPI2 data-out line, carries the converter's and both RTD converters' replies", mains: false, sim_exclude: true}
+  - {ref: TP610, lib_id: Connector:TestPoint, value: "TP_SPI3_MISO", rating: "", footprint: "main-board:TestPoint_Pad_D1.0mm_Tight", mpn: "", maker: "", lcsc: none, class: none, hand: false, function: "key signal: shared SPI3 data-out line, carries the converter's and both RTD converters' replies", mains: false, sim_exclude: true}
 nets:
   # mains-referenced side: divider, shunt sense, high-side supplies
   LINE: {scope: global, pins: [R601.1]}
@@ -72,14 +72,14 @@ nets:
   AMC_DCDC_CAP: {scope: local, pins: [U601.14, C612.1, TP609.1]}
   AMC_CLK_OUT: {scope: local, pins: [Y601.3, R609.1]}
   AMC_CLKIN: {scope: local, pins: [R609.2, U601.17, TP602.1]}
-  SPI2_SCK: {scope: global, pins: [R610.1]}
+  SPI3_SCK: {scope: global, pins: [R610.1]}
   AMC_SCLK: {scope: local, pins: [R610.2, U601.18]}
-  SPI2_MOSI: {scope: global, pins: [R611.1]}
+  SPI3_MOSI: {scope: global, pins: [R611.1]}
   AMC_DIN: {scope: local, pins: [R611.2, U601.20]}
   AMC_CS: {scope: global, pins: [R612.1]}
   AMC_CS_PIN: {scope: local, pins: [R612.2, U601.19, R614.2]}
   AMC_DOUT_PIN: {scope: local, pins: [U601.12, R613.1]}
-  SPI2_MISO: {scope: global, pins: [R613.2, TP610.1]}
+  SPI3_MISO: {scope: global, pins: [R613.2, TP610.1]}
   AMC_RESET: {scope: global, pins: [U601.11, R615.2]}
   AMC_DRDY: {scope: global, pins: [U601.16]}
 no_connect:
@@ -118,7 +118,7 @@ notes: |
   Drawing: signal flow left to right. Mains-referenced circuits on the left half of the sheet, the barrier part U601 in the middle with pins 1-10 on its left, pins 11-20 on its right, low-voltage circuits on the right. Left to right on the left: LINE -> R601 -> R602 -> R603 -> VMEAS_DIV (-> R604 down to AMC_HGND) -> R605 -> AIN0P; AMC_HGND <- R606 <- AIN0N; C601 across AIN0P/AIN0N; SHUNT_SENSE_IN -> R607 -> AIN1P, SHUNT_SENSE_NEUTRAL -> R608 -> AIN1N, C602 across them. Supply decoupling of the four high-side pins sits left of U601. Put the text "channel 0: supply voltage, gain 1" and "channel 1: supply current, gain 32" beside the two filters.
   The high-side ground HGND is its own net, AMC_HGND, carrying U601 pin 5, the bead F602, the four high-side decoupling capacitors C605 to C608 and the two returns R604 and R606; it joins NEUTRAL at one point, the net tie NT601, placed at the shunt's neutral-side terminal, which is the SBASA56 9.3 instruction to take HGND from the shunt terminal on the AIN0N side by its own trace. NEUTRAL is a global label, not a power symbol (it is a mains net owned by the entry sheet).
   Channel assignment: channel 0 carries the mains voltage (gain 1 or 2), channel 1 the shunt (gain 32). SBASA56 Table 5-1 note 3 says channel 0 is the more precise; the record declares no accuracy for either, so the assignment is the brief's.
-  Barrier: U601 is a mains-to-low-voltage barrier the separation basis did not list when this was written (the draft, unsigned at this commit, lists it as isolated-measurement); its creepage (8.0 mm) is shorter than the basis's 10.0 mm. See the verdicts and open items. The footprint's gap under the body is 7.6 mm. Nothing is relaxed here.
+  Barrier: U601 is a mains-to-low-voltage barrier the separation basis did not list when this was written (the draft, unsigned at this commit, lists it as isolated-measurement; the owner has since accepted the whole record, on 2026-11-18); its creepage (8.0 mm) is shorter than the basis's 10.0 mm. See the verdicts and open items. The footprint's gap under the body is 7.6 mm. Nothing is relaxed here.
   The two 33 ohm resistors on SCLK/DIN, the CS and DOUT series resistors and the 100 kohm pull-ups follow SBASA56 9.4.2 ("terminate long digital input lines with resistors") and Fig. 9-8.
   Conversion pins PB1 and PA1 stay free: this converter's digital link replaces the division record's analogue VM_C and I_C signals (the division records this as a consequence).
   Consequence for the division's VMEAS block: the divider is three 2512 resistors (a failed one must not leave another over its 200 V working figure), not two, so the block of 37.5 x 5.0 mm (an estimate, A29) is too small: see the open items.

@@ -1,0 +1,32 @@
+id: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED
+type: deliverable
+category: solution
+title: The main board's display serial port and its steam-path and brew-path pressure-sensor headers are allocated to named headers and controller pins
+status: active
+version: 1
+text: |
+  Records the main board's display serial port and its two pressure-sensor headers as the owner decided them, so the channel enumeration, the board's pin allocation and the display unit's task name one allocation. The board's schematic is drawn and its records are authored by SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN, whose criteria are frozen; this leaf carries the criteria that state the allocation and the evidence of it.
+
+  Settled for the build:
+  - The display unit's serial port is header J522 on the main board: its pins 3 and 4 reach the controller's PB6 and PB7, which the controller datasheet maps to the first serial port's transmit and receive, with 3.3 V and ground on the same header. The header was drawn as the second digital I2C-or-UART transducer header and keeps the net names BREW_SCL_X and BREW_SDA_X on its pins from that drawing.
+  - The steam-path pressure sensor, an XDB401-class part on I2C, is on header J521, the I2C1 pair PB8 and PB9.
+  - The brew-path pressure sensor is an analogue transducer with a 0.5 V to 4.5 V output, on analogue header J524 and the controller's PA6 conversion input.
+  - Analogue headers J523 and J525 and pins 7 to 10 of J761 are spare and are recorded in the component specification only.
+  - Out of scope: the display unit's own connector, the firmware's use of the port and the sensors' fitting.
+rationale: |-
+  Carries the owner's allocation of the display serial port and the two pressure sensors. The allocation arrives after the schematic leaf has attested evidence, so its criteria cannot be added there and a sibling leaf under the same task carries them. The board's drawing already provides each header; the leaf states and evidences what each reaches.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C13
+    type: derives-from
+  - target: DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C1
+    type: derives-from
+  - target: REQ-MEASUREMENT-001.C7
+    type: targets
+  - target: REQ-MEASUREMENT-001.C8
+    type: targets
+  - target: DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT
+    type: justified-by
+  - target: DEC-STEAM-PRESSURE-SENSOR-ADDED
+    type: justified-by
+  - target: DEC-BREW-PRESSURE-SENSOR-IS-RETAINED-FOR-PRESSURE-MAP-AND-DRIFT
+    type: justified-by

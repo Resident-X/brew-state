@@ -15,6 +15,8 @@ Node                                   Voltage
 ----                                   -------
 +5v                                       5.25
 pol_out                                      0
+pol_in                                       0
+pol_inv                                5.24541
 pol_buf                             2.8875e-07
 pol_node_a                         5.16611e-07
 pol_gate_a                                5.25
@@ -22,7 +24,7 @@ pol_mid                              0.0448063
 pol_node_b                         5.16611e-07
 pol_gate_b                                5.25
 pol_coil_lo                          0.0901071
-pol_clamp_1                            0.25006
+pol_clamp_1                           0.250059
 pol_clamp_2                            0.25006
 ka                                        5.25
 kb                                   0.0901071
@@ -30,7 +32,7 @@ lcoil#branch                         0.0924712
 vsense#branch                        0.0924712
 vgb#branch                        -9.37505e-07
 vga#branch                        -9.37505e-07
-vsup#branch                         -0.0924712
+vsup#branch                         -0.0925237
 
 
 No. of Data Rows : 390

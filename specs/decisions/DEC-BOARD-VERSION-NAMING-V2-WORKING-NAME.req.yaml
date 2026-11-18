@@ -1,0 +1,30 @@
+id: DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME
+type: decision
+category: tactical
+title: The main board's working name v2 ended when its first revision was named v1, and its folder is main-board
+status: active
+version: 1
+decided_by: owner (session 2026-11-17)
+text: |
+  The main board was called v2 in the repository, in its folder name `main-board-v2` and in its records, until the first revision of the board was named v1. The first design of the board never reached the main branch, so no v1 and v2 ever stood side by side there; the board is now called v1, its folder is `hardware/sunbeam-em7000/main-board/`, and the title silk of the board reads v1 2026-11. Records written while the working name stood keep the word v2 as written, and the board's two working plans, `PLAN.md` and `PHASE2-CHANGE-LIST.md`, carry a note that says so; a reader who meets "v2" in a record dated before this decision reads it as this board.
+rationale: |
+  Context: the board was named v2 when it was re-placed and re-routed in a new folder beside the first design, which was frozen as v1. The first design never merged, so the repository's main branch holds one design of this board and the name v2 would have told a later reader that a v1 exists in the repository. The owner decided on 2026-11-17 that this board is v1 and that the folder takes the plain name, replacing the first design's folder in place.
+
+  Trade-offs: renaming leaves the frozen graph nodes and dated records with the word v2, because a frozen node is not edited and rewriting a dated record would falsify its date. The seven evidence nodes that cited the old folder path are replaced by new evidence at the new path rather than edited. The silk is the one physical item: it is printed on the board, so it was changed before any order and the board file's checksum changed with it, copper untouched (the locked-copper comparison of the mains classes passes).
+
+  Reversibility: easy before an order, since a folder name and a silk line are text; a revision after an order is a new board.
+
+  Consequences: path references in tests, the hardware notes and the design documents follow the folder; the pre-order check and the targeted tests read the new path. Nothing else changes: this decision adds no residual safety risk and relaxes no figure.
+options_considered:
+  - option: The board is v1, its folder is main-board, and the records written under the working name v2 keep that word
+    reason_rejected: ""
+  - option: Keep the name v2 and the folder main-board-v2
+    reason_rejected: it tells a reader that a v1 exists in the repository, and none was ever merged
+  - option: Rewrite every record and frozen node to say v1
+    reason_rejected: a frozen node is not edited and a dated record rewritten falsifies its date
+  - option: Defer the rename until after the pull request
+    reason_rejected: the silk is printed on the board and goes out with the order, so it has to be right first
+chosen: The board is v1, its folder is main-board, and the records written under the working name v2 keep that word
+links:
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: addresses

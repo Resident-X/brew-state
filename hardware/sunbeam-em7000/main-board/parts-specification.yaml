@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 main controller board: one position for every part
-# schematic-spec.yaml lists (444), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (448), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, since it fails any other key. So the figures the schema has no key for sit in the
@@ -32,8 +32,9 @@
 #   LT1963A series 1963aff: web.archive.org copy of analog.com 1963aff.pdf
 #   TLV803/TLV853/TLV863 SBVS157C: the schematic's address did not open; LCSC-linked copy ZHCS187C
 #     (April 2011, revised September 2015), datasheet.lcsc.com 3ffb790481a745eda29097d3bda5ef61.pdf
-#   74AHC1G17 / 74AHCT1G17 Rev. 5 (14 March 2025): web.archive.org copy of assets.nexperia.com
+#   SN74AHCT1G14 SCLS322P (June 2013), U201 and U203: datasheet.lcsc.com lcsc_datasheet_1809251424_Texas-Instruments-SN74AHCT1G14DCKR_C7486.pdf (read 2026-11-09)
 #   MAX31865 19-6478 Rev 3 (7/15): web.archive.org copy of analog.com MAX31865.pdf
+#   T835-800B DS2114 Rev 15 (August 2018), T701 and T711: datasheet.lcsc.com copy for C2971290; Tables 1 and 2 pp.2, Tables 4 and 5 p.3
 #   MOC3052M/D Rev. 4 (September 2022): web.archive.org copy of onsemi.com moc3052m-d.pdf
 #   MOC3052M/D Rev. 3 (May 2019), the family sheet of the MOC3052SVM (U701, U711): datasheet.lcsc.com 307107d0e3e11abb98837978cd2dba04.pdf
 #   LTV-814/824/844 (13 pages, no revision printed): datasheet.lcsc.com bc51d065248a46be93525386c92657f3.pdf
@@ -47,6 +48,10 @@
 #   SMF series (revised 12/06/17): datasheet.lcsc.com 6d382c654924c5ddbeb5b90893b39699.pdf
 #   14D series Version A3 (revised 2023-10-27): datasheet.lcsc.com 305ba13b482fd415d345c9b9446eb189.pdf
 #   HF32FA-G 2026 Rev. 1.00 and HF115F-Q: source.hongfa.com Uploads/Product/PDF
+#   SMCJ series (Littelfuse, revised 11/20/15; D701, D711), read 2026-11-14: the catalogue's datasheet for C151285
+#     (datasheet.lcsc.com), page 1 (ratings) and page 2 (SMCJ400CA row)
+#   HF115F-I (K201), SCT520(P) (F101) and TE 63849-1 (tabs), read 2026-11-13: datasheet.lcsc.com
+#     0ebe0ad433a21202e9ed2b99eb26b6ee.pdf, c399a71412fc2cbf24b5ddba60b5c909.pdf, d78aaa5668ef44d19432bad6ab97dbf2.pdf
 #   SN74LVC1G17 SCES351Y (October 2025), SN74HCT541 SCLS306E (May 2022): ti.com symlink addresses
 #   AO3400A Rev 3.1 (July 2023), AO3401A Rev 3.1 (December 2023): aosmd.com
 #   HX711 Avia V2.0: the web.archive.org address in the schematic
@@ -58,8 +63,6 @@
 # routes tried (maker address with a browser User-Agent, then web.archive.org, then the LCSC
 # product page links), and none is guessed here. A second search is running separately and its
 # result is to be folded in.
-#   BTA204S-600B (WeEn) T701 T711 ...: no datasheet opened (the BTA204S-600D and BTA208S-800B sheets
-#     were reached but are other type numbers and are not used)
 #   1N4148WS (vishay.com 85751, doc?85751, the archive copy: no PDF; the LCSC page links only RoHS reports)
 #   Crystals Y401 (YXC X50328MSB2GI: a RoHS report and an image-only sheet) and Y402
 #     (Seiko Epson Q13FC13500004: not found)
@@ -72,70 +75,70 @@
 #
 positions:
   # ---- sheet: Mains entry and load feed
-  # J101: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J101: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J101
     value: TAB1_LINE1
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained red lead (live out to the loads)
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J102: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J102: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J102
     value: TAB2_LINE_IN
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained brown lead (live in from the plug)
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J103: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J103: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J103
     value: TAB3_NEUTRAL_IN
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained blue lead (neutral from the plug)
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J106: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J106: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J106
     value: TAB6_COFVALVE
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained brown lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J107: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J107: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J107
     value: TAB7_COFFPUMP
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained white lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J108: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J108: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J108
     value: TAB8_STEAMPUMP
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained black lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J109: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J109: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J109
     value: TAB9_HOTVALVE
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, retained blue lead
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # J110: maker Dongguan Bozhong (BZXC); MPN BTC-3-PCB634908T; catalogue class extended
+  # J110: maker TE Connectivity; MPN 63849-1; catalogue class extended
   - reference: J110
     value: WB_RET
-    package: Tab_BZXC_BTC-3-PCB634908T
+    package: Tab_TE_63849-1
     rating: 6.3 x 0.8 mm blade, same part as the tabs; the wall board's return wire ends here
-    lcsc: C20626104
+    lcsc: C86469
     class: none
-  # F101: maker SETfuse (Xiamen SET Electronics); MPN SCT520T10A250V; catalogue class extended
+  # F101: maker SETfuse (Xiamen SET Electronics); MPN SCT520PT10A250V; catalogue class extended
   - reference: F101
     value: 10A_T_250V
-    package: Fuseholder_Clip-5x20mm_Bel_FC-203-22_Lateral_P17.80x5.00mm_D1.17mm_Horizontal
-    rating: SETfuse SCT520 plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5 x 20 mm leadless ceramic; fitted in two Littelfuse 0111 0501 (111 501) clips
-    lcsc: C22447847
+    package: Fuse_SETfuse_SCT520PT_Axial_P28.0mm
+    rating: SETfuse SCT520PT plain 10 A 250 VAC (breaking capacity 2 kA at 250 VAC and 5 kA at 250 VDC) slow-blow, 5.2 x 20 mm ceramic cartridge with 0.8 mm soldered pigtail leads, soldered in, no clips
+    lcsc: C22447834
     class: fuse
-  # JP101: maker none; MPN none (owner-fitted 1.5 mm2 wire); catalogue class none; LCSC field in schematic is empty
+  # JP101: maker none; MPN none (owner-fitted 1.5 mm2 wire); catalogue class none; LCSC field in schematic is empty; listed in the bill of materials without an assembler part number, not in the position file
   - reference: JP101
     value: LINK_LIVE
     package: JP101_WireLink_P10mm
@@ -145,7 +148,7 @@ positions:
   # RV101: maker Ruilon; MPN 14D471K; catalogue class extended
   - reference: RV101
     value: 14D471K
-    package: RV_Disc_D15.5mm_W5mm_P7.5mm
+    package: RV_Disc_14D471K_P7.5mm
     rating: 300 VAC max, 470 V class 14 mm disc, 423-517 V at 1 mA, 775 V clamp at 50 A
     lcsc: C8852
     class: varistor
@@ -250,29 +253,29 @@ positions:
   # H1: maker none; MPN none (a hole in the board); catalogue class none; not in the bill of materials or the position file
   - reference: H1
     value: MountingHole
-    package: MountingHole_3.1mm_Lid
-    rating: M3 lid screw, 3.1 mm non-plated hole
+    package: MountingHole_3.4mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
     lcsc: none
     class: none
   # H2: maker none; MPN none (a hole in the board); catalogue class none; not in the bill of materials or the position file
   - reference: H2
     value: MountingHole
-    package: MountingHole_3.1mm_Lid
-    rating: M3 lid screw, 3.1 mm non-plated hole
+    package: MountingHole_3.4mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
     lcsc: none
     class: none
   # H3: maker none; MPN none (a hole in the board); catalogue class none; not in the bill of materials or the position file
   - reference: H3
     value: MountingHole
-    package: MountingHole_3.1mm_Lid
-    rating: M3 lid screw, 3.1 mm non-plated hole
+    package: MountingHole_3.4mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
     lcsc: none
     class: none
   # H4: maker none; MPN none (a hole in the board); catalogue class none; not in the bill of materials or the position file
   - reference: H4
     value: MountingHole
-    package: MountingHole_3.1mm_Lid
-    rating: M3 lid screw, 3.1 mm non-plated hole
+    package: MountingHole_3.4mm_Lid
+    rating: M3 lid screw, 3.4 mm non-plated hole
     lcsc: none
     class: none
   # FID1: maker none; MPN none (a copper marker); catalogue class none; not in the bill of materials or the position file
@@ -298,22 +301,36 @@ positions:
     class: none
 
   # ---- sheet: Interlock
-  # K201: maker Hongfa (Xiamen Hongfa Electroacoustic); MPN HF115F-Q/005-1H; catalogue class none; LCSC field in schematic is empty
+  # K201: maker Hongfa (Xiamen Hongfa Electroacoustic); MPN HF115F-I/005-1HS3A; catalogue class extended
   - reference: K201
-    value: HF115F-Q/005-1H
-    package: Relay_HF115F-Q_1H_Vertical
-    rating: 440 VAC max, 1 Form A AgNi, coil 5 V 62 ohm +-10 %, 20 A 250 VAC, pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
-    lcsc: none
+    value: HF115F-I/005-1HS3A
+    package: Relay_HF115F-I_1HS3A
+    rating: 440 VAC max, 1 Form A AgSnO2, coil 5 V 62 ohm +-10 %, 16 A 250 VAC resistive (VDE 16 A at 85 C), pick-up 3.5 V max, drop-out 0.5 V min, release 8 ms max, operate 15 ms max
+    lcsc: C2976795
     class: relay and connector
-  # U201: maker Nexperia; MPN 74AHCT1G17GW; catalogue class extended
+  # U201: maker Texas Instruments; MPN SN74AHCT1G14DCKR; catalogue class extended
   - reference: U201
-    value: 74AHCT1G17
+    value: SN74AHCT1G14
     package: SOT-353_SC-70-5
-    rating: 7 V absolute maximum VCC, Schmitt non-inverting buffer, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; the symbol is KiCad's single-gate Schmitt buffer with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
-    lcsc: C554579
+    rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; first of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
+    lcsc: C7486
+    class: integrated circuit
+  # U203: maker Texas Instruments; MPN SN74AHCT1G14DCKR; catalogue class extended
+  - reference: U203
+    value: SN74AHCT1G14
+    package: SOT-353_SC-70-5
+    rating: 7 V absolute maximum VCC, Schmitt inverter, VCC 4.5-5.5 V, VT+ 2.0 V max, VT- 0.5 V min, 5.5 V-tolerant input; second of two inverters (U201, U203) that restore the original polarity; the symbol is KiCad's single-gate Schmitt inverter with the same pin numbers (1 NC, 2 A, 3 GND, 4 Y, 5 VCC)
+    lcsc: C7486
     class: integrated circuit
   # C201: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C201
+    value: 100n
+    package: C_0603_1608Metric
+    rating: X7R 50 V 0603 10 %
+    lcsc: C14663
+    class: capacitor
+  # C206: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
+  - reference: C206
     value: 100n
     package: C_0603_1608Metric
     rating: X7R 50 V 0603 10 %
@@ -328,6 +345,13 @@ positions:
     class: none
   # R202: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R202
+    value: 100k
+    package: R_0603_1608Metric
+    rating: 1 % 0603 100 mW
+    lcsc: C25803
+    class: none
+  # R208: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
+  - reference: R208
     value: 100k
     package: R_0603_1608Metric
     rating: 1 % 0603 100 mW
@@ -505,12 +529,12 @@ positions:
     rating: 85-305 Vac input, 5 V 4 A, 4.2 kVac in-out, 52.4x27.2x24 mm
     lcsc: C6280121
     class: integrated circuit
-  # JP303: maker none; MPN none (owner-fitted wire); catalogue class none; LCSC field in schematic is empty
+  # JP303: maker none; MPN none (owner-fitted wire); catalogue class none; LCSC field in schematic is empty; listed in the bill of materials without an assembler part number, not in the position file
   # JP303 requirement for the fitted wire, the same as JP101's: 1.5 mm2 copper, insulation rated for the 253 V rms working voltage and a 70 degC enclosure air; the inrush it carries is the logic supply module's 40 A typical (IRM-20-5, no maximum stated). open-items.md holds the same requirement.
   - reference: JP303
     value: LINK_MOD
     package: JP101_WireLink_P10mm
-    rating: 'two plated holes for a wire link (1.5 mm2 or a component-lead off-cut) between LINE and LINE_MOD: the link is fitted in service'
+    rating: 'two plated holes for a wire link between LINE and LINE_MOD: 1.5 mm2 copper wire, insulation rated for the mains working voltage of the LINE net (open-items.md, JP303 row), 70 degC enclosure air; the link is fitted in service'
     lcsc: none
     class: none
   # RT301: maker RUILON (Shenzhen Ruilongyuan Elec); MPN NTC 10D-9; catalogue class extended
@@ -521,6 +545,7 @@ positions:
     rating: NTC inrush limiter 10 ohm at 25 degC +/-20 %, 2 A maximum steady state, 0.46 ohm residual, B 2700 K, 150 uF maximum load capacitance, no voltage rating stated by the maker, 11 mm disc, 7.5 mm lead pitch (Ruilon NTC series, rev. A6 2023-10-16)
     lcsc: C3790
     class: none
+    fitted: "no"
   # C301: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C301
     value: 100 nF
@@ -591,12 +616,12 @@ positions:
     rating: 1x2 2.54 mm header with shorting jumper
     lcsc: C492401
     class: none
-  # FB301: maker TAI-TECH; MPN FCM1608KF-601T03; catalogue class extended
+  # FB301: maker TAI-TECH; MPN FCM1608KF-601T05; catalogue class extended
   - reference: FB301
     value: 600R@100MHz
     package: L_0603_1608Metric
-    rating: 0603, 0.50 ohm DC max, 350 mA, 25 %
-    lcsc: C141723
+    rating: 0603, 0.50 ohm DC max, 500 mA, 25 %
+    lcsc: C133937
     class: none
   # TP303: maker -; MPN -; catalogue class none
   - reference: TP303
@@ -1057,40 +1082,40 @@ positions:
     rating: X7R 50V 10% 0603
     lcsc: C1588
     class: capacitor
-  # F601: maker TAI-TECH; MPN FCM1608KF-601T03; catalogue class extended
+  # F601: maker TAI-TECH; MPN FCM1608KF-601T05; catalogue class extended
   - reference: F601
     value: 600R@100MHz
     package: L_0603_1608Metric
-    rating: 0603 350mA 0.5ohm
-    lcsc: C141723
+    rating: 0603 500mA 0.5ohm
+    lcsc: C133937
     class: none
-  # F602: maker TAI-TECH; MPN FCM1608KF-601T03; catalogue class extended
+  # F602: maker TAI-TECH; MPN FCM1608KF-601T05; catalogue class extended
   - reference: F602
     value: 600R@100MHz
     package: L_0603_1608Metric
-    rating: 0603 350mA 0.5ohm
-    lcsc: C141723
+    rating: 0603 500mA 0.5ohm
+    lcsc: C133937
     class: none
-  # C605: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C605: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C605
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C606: maker Samsung Electro-Mechanics; MPN CL10B102KB8NNNC; catalogue class basic
+  # C606: maker FH; MPN 0402B102K500NT; catalogue class basic
   - reference: C606
     value: 1n
-    package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1588
+    package: C_0402_1005Metric
+    rating: X7R 50V 10% 0402
+    lcsc: C1523
     class: capacitor
-  # C607: maker Walsin; MPN 1206N104J500CT; catalogue class extended
+  # C607: maker Murata; MPN GRM31C5C1H104JA01L; catalogue class extended
   - reference: C607
     value: 100n
     package: C_1206_3216Metric
-    rating: C0G 50V 5% 1206
-    lcsc: C170182
+    rating: C0G 50 V +-5 % 1206
+    lcsc: C97946
     class: capacitor
   # C608: maker Samsung Electro-Mechanics; MPN CL10B102KB8NNNC; catalogue class basic
   - reference: C608
@@ -1113,19 +1138,19 @@ positions:
     rating: X7R 25V 10% 0603
     lcsc: C106858
     class: capacitor
-  # C612: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C612: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C612
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C611: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C611: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C611
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # R609: maker UNI-ROYAL; MPN 0603WAF330JT5E; catalogue class basic
   - reference: R609
@@ -1232,25 +1257,25 @@ positions:
     class: none
   # TP610: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP610
-    value: TP_SPI2_MISO
+    value: TP_SPI3_MISO
     package: TestPoint_Pad_D1.0mm_Tight
     lcsc: none
     class: none
 
   # ---- sheet: Zero-crossing detector
-  # R630: maker FOJAN; MPN FRC2512F6042TS; catalogue class extended
+  # R630: maker UNI-ROYAL; MPN HP122WF5902T4E; catalogue class extended
   - reference: R630
-    value: 60.4k
+    value: 59k
     package: R_2512_6332Metric
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
-    lcsc: C5126066
+    rating: 1% 100ppm 2512 2W 300V
+    lcsc: C2775980
     class: resistor
-  # R631: maker FOJAN; MPN FRC2512F6042TS; catalogue class extended
+  # R631: maker UNI-ROYAL; MPN HP122WF5902T4E; catalogue class extended
   - reference: R631
-    value: 60.4k
+    value: 59k
     package: R_2512_6332Metric
-    rating: 1% 100ppm 2512 1W 200V working, 400V overload
-    lcsc: C5126066
+    rating: 1% 100ppm 2512 2W 300V
+    lcsc: C2775980
     class: resistor
   # U602: maker Lite-On; MPN LTV-814S-TA1-A; catalogue class extended
   - reference: U602
@@ -1316,12 +1341,12 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C1622
     class: capacitor
-  # D502: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D502: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D502
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP501: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP501
@@ -1365,12 +1390,12 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C1622
     class: capacitor
-  # D504: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D504: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D504
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP502: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP502
@@ -1414,12 +1439,12 @@ positions:
     rating: 10% X7R 50V 0603
     lcsc: C1622
     class: capacitor
-  # D506: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D506: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D506
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP503: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP503
@@ -1466,19 +1491,27 @@ positions:
     lcsc: C1622
     class: capacitor
   # R522: maker UNI-ROYAL; MPN 0603WAF0000T5E; catalogue class basic
-  # R522 is NOT fitted (do not populate): U520 carries FLOW_F to FLOW_IN. R572 and R576 are not fitted either (burden positions). U520 and C521 are fitted. The schematic symbols of R522, R572 and R576 still say dnp no (the schematic tools cannot set the flag); the board footprints carry dnp.
+  # R522 is NOT fitted (do not populate): U520 carries FLOW_F to FLOW_BUF and R545 carries that to FLOW_IN. R572 and R576 are not fitted either (burden positions). U520 and C521 are fitted. The schematic symbols carry the do-not-populate attribute, the board footprints carry dnp and the positions below carry fitted: "no"; the pre-order check holds the three to one answer.
   - reference: R522
     value: '0'
     package: R_0603_1608Metric
     rating: 0603 zero-ohm link
     lcsc: C21189
     class: none
-  # U520: maker Texas Instruments; MPN SN74LVC1G17DCKR; catalogue class extended; FITTED
+    fitted: "no"
+  # R545: maker UNI-ROYAL; MPN 0603WAF2200T5E; catalogue class basic
+  - reference: R545
+    value: '220'
+    package: R_0603_1608Metric
+    rating: 1% 100ppm/K 0603 100mW
+    lcsc: C22962
+    class: none
+  # U520: maker UMW; MPN SN74LVC1G17DCKR(UMW); catalogue class extended; FITTED
   - reference: U520
     value: SN74LVC1G17
     package: SOT-353_SC-70-5
-    rating: 6.5 V absolute maximum VCC, Schmitt buffer, 5.5V inputs
-    lcsc: C10425
+    rating: 7 V absolute maximum VCC and input, Schmitt buffer, 5.5V inputs
+    lcsc: C7394034
     class: integrated circuit
   # C521: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic; FITTED (decoupling of U520)
   - reference: C521
@@ -1550,19 +1583,19 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C4190
     class: none
-  # D523: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D523: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D523
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
-  # D524: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D524: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D524
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP522: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP522
@@ -1578,7 +1611,7 @@ positions:
     rating: pad 1.5mm
     lcsc: none
     class: none
-  # J522: maker not read; MPN 2.54mm 1x4 header; catalogue class extended
+  # J522 (display link header): maker not read; MPN 2.54mm 1x4 header; catalogue class extended
   - reference: J522
     value: BREW_D
     package: PinHeader_1x04_P2.54mm_Vertical
@@ -1641,19 +1674,19 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C4190
     class: none
-  # D527: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D527: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D527
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
-  # D528: maker Nexperia; MPN BAT54S,215; catalogue class extended
+  # D528: maker Nexperia; MPN BAT54SW,115; catalogue class extended
   - reference: D528
-    value: BAT54S
-    package: SOT-23
+    value: BAT54SW
+    package: SOT-323_SC-70
     rating: dual series Schottky 30V 200mA
-    lcsc: C47546
+    lcsc: C78606
     class: semiconductor
   # TP525: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP525
@@ -1916,6 +1949,7 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C25804
     class: none
+    fitted: "no"
   # R573: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R573
     value: 1k
@@ -1972,6 +2006,7 @@ positions:
     rating: 1% 100ppm/K 0603 100mW
     lcsc: C25804
     class: none
+    fitted: "no"
   # R577: maker UNI-ROYAL; MPN 0603WAF1001T5E; catalogue class basic
   - reference: R577
     value: 1k
@@ -2002,19 +2037,19 @@ positions:
     rating: X7R 50V 10% 0603
     lcsc: C1589
     class: capacitor
-  # C641: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C641: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C641
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C642: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C642: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C642
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # C645: maker Samsung Electro-Mechanics; MPN CL10B103KB8NNNC; catalogue class extended
   - reference: C645
@@ -2023,19 +2058,19 @@ positions:
     rating: X7R 50V 10% 0603
     lcsc: C1589
     class: capacitor
-  # C646: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C646: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C646
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C647: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C647: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C647
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # J620: maker ZHOURI (JST XH family); MPN XH-4PA; catalogue class extended
   - reference: J620
@@ -2044,19 +2079,19 @@ positions:
     rating: JST XH 2.5 mm 3 A 250 V
     lcsc: C5258885
     class: relay and connector
-  # J622: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J622: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J622
     value: PT1_2W_P
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
-  # J623: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J623: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J623
     value: PT1_23W_N
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
   # J625: maker ZHOURI (JST XH family); MPN XH-4PA; catalogue class extended
   - reference: J625
@@ -2065,19 +2100,19 @@ positions:
     rating: JST XH 2.5 mm 3 A 250 V
     lcsc: C5258885
     class: relay and connector
-  # J627: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J627: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J627
     value: PT2_2W_P
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
-  # J628: maker BOOMELE; MPN 2.54-1*40P (cut) with jumper cap 2.54Short Circuit Cap Closed; catalogue class extended
+  # J628: maker XFCN + BOOMELE; MPN PZ254V-11-02P + 2.54 Short Circuit Cap Closed; catalogue class extended
   - reference: J628
     value: PT2_23W_N
     package: PinHeader_1x02_P2.54mm_Vertical
-    rating: 2.54 mm header with jumper cap
-    lcsc: C2337
+    rating: 1x2 2.54 mm header with jumper cap
+    lcsc: C492401
     class: none
   # R640: maker Panasonic; MPN ERA3AEB4021V; catalogue class extended
   - reference: R640
@@ -2107,6 +2142,7 @@ positions:
     rating: 0603 0 ohm link
     lcsc: C21189
     class: none
+    fitted: "no"
   # R645: maker Panasonic; MPN ERA3AEB4021V; catalogue class extended
   - reference: R645
     value: 4.02k
@@ -2135,6 +2171,7 @@ positions:
     rating: 0603 0 ohm link
     lcsc: C21189
     class: none
+    fitted: "no"
   # TP620: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP620
     value: TP_PT1_BIAS
@@ -2211,7 +2248,7 @@ positions:
   # J630: maker Kinghelm (JST PH family); MPN KH-PH-5P-Z; catalogue class extended
   - reference: J630
     value: WT1_H
-    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     rating: JST PH 2.0 mm 2 A 250 V
     lcsc: C2898948
     class: relay and connector
@@ -2229,12 +2266,12 @@ positions:
     rating: 1% 0603 100mW
     lcsc: C22775
     class: none
-  # C670: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C670: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C670
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # C671: maker Samsung Electro-Mechanics; MPN CL21A106KAYNNNE; catalogue class basic
   - reference: C671
@@ -2243,19 +2280,19 @@ positions:
     rating: X5R 25V 10% 0805
     lcsc: C15850
     class: capacitor
-  # C672: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C672: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C672
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C673: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C673: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C673
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # R672: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R672
@@ -2286,7 +2323,7 @@ positions:
   # J635: maker Kinghelm (JST PH family); MPN KH-PH-5P-Z; catalogue class extended
   - reference: J635
     value: WT2_H
-    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical
+    package: JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85
     rating: JST PH 2.0 mm 2 A 250 V
     lcsc: C2898948
     class: relay and connector
@@ -2304,12 +2341,12 @@ positions:
     rating: 1% 0603 100mW
     lcsc: C22775
     class: none
-  # C675: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C675: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C675
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # C676: maker Samsung Electro-Mechanics; MPN CL21A106KAYNNNE; catalogue class basic
   - reference: C676
@@ -2318,19 +2355,19 @@ positions:
     rating: X5R 25V 10% 0805
     lcsc: C15850
     class: capacitor
-  # C677: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C677: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C677
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
-  # C678: maker Samsung Electro-Mechanics; MPN CL10B104KB8NNNC; catalogue class extended
+  # C678: maker YAGEO; MPN CC0603KRX7R9BB104; catalogue class basic
   - reference: C678
     value: 100n
     package: C_0603_1608Metric
-    rating: X7R 50V 10% 0603
-    lcsc: C1591
+    rating: X7R 50 V 10 % 0603
+    lcsc: C14663
     class: capacitor
   # R677: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
   - reference: R677
@@ -2354,12 +2391,12 @@ positions:
     rating: 5x20 mm (5.2 x 20) slow-blow 250 VAC cartridge in a 5x20 holder (listed 250 V, 6.3 A); branch fuse of the coffee pump
     lcsc: C3131
     class: fuse
-  # T701: maker WeEn Semiconductors; MPN BTA204S-600B,118; catalogue class extended
+  # T701: maker STMicroelectronics; MPN T835-800B; catalogue class extended
   - reference: T701
-    value: BTA204S-600B
+    value: T835-800B
     package: TO-252-2_TabPin2_Triac
-    rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
-    lcsc: C256462
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
+    lcsc: C2971290
     class: semiconductor
   # U701: maker onsemi; MPN MOC3052SVM; catalogue class extended
   - reference: U701
@@ -2417,12 +2454,12 @@ positions:
     rating: 5x20 mm (5.2 x 20) slow-blow 250 VAC cartridge in a 5x20 holder (listed 250 V, 6.3 A); branch fuse of the steam pump
     lcsc: C3131
     class: fuse
-  # T711: maker WeEn Semiconductors; MPN BTA204S-600B,118; catalogue class extended
+  # T711: maker STMicroelectronics; MPN T835-800B; catalogue class extended
   - reference: T711
-    value: BTA204S-600B
+    value: T835-800B
     package: TO-252-2_TabPin2_Triac
-    rating: 600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02
-    lcsc: C256462
+    rating: 800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))
+    lcsc: C2971290
     class: semiconductor
   # U711: maker onsemi; MPN MOC3052SVM; catalogue class extended
   - reference: U711
@@ -2473,20 +2510,13 @@ positions:
     rating: 30V 5.7A, RDS(on) <48 mohm at VGS 2.5 V, VGS(th) 0.65-1.45 V
     lcsc: C20917
     class: semiconductor
-  # R706: maker UNI-ROYAL; MPN 25121WF1000T4E; catalogue class extended
-  - reference: R706
-    value: '100'
-    package: R_2512_6332Metric
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    lcsc: C35218
-    class: resistor
-  # C701: maker KNSCHA; MPN MPX104K31C3KN15600; catalogue class extended
-  - reference: C701
-    value: 100nF_X2
-    package: C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    lcsc: C489079
-    class: mains-rated safety part
+  # D701: maker Littelfuse; MPN SMCJ400CA; catalogue class extended
+  - reference: D701
+    value: SMCJ400CA
+    package: D_SMC
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    lcsc: C151285
+    class: semiconductor
   # TP702: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP702
     value: TP_PUMP_C_MT2
@@ -2494,20 +2524,13 @@ positions:
     rating: mains copper
     lcsc: none
     class: none
-  # R716: maker UNI-ROYAL; MPN 25121WF1000T4E; catalogue class extended
-  - reference: R716
-    value: '100'
-    package: R_2512_6332Metric
-    rating: 1% 1W 200V 2512 thick film, 100 ohm
-    lcsc: C35218
-    class: resistor
-  # C711: maker KNSCHA; MPN MPX104K31C3KN15600; catalogue class extended
-  - reference: C711
-    value: 100nF_X2
-    package: C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4
-    rating: X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)
-    lcsc: C489079
-    class: mains-rated safety part
+  # D711: maker Littelfuse; MPN SMCJ400CA; catalogue class extended
+  - reference: D711
+    value: SMCJ400CA
+    package: D_SMC
+    rating: 400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15
+    lcsc: C151285
+    class: semiconductor
   # TP712: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
   - reference: TP712
     value: TP_PUMP_S_MT2
@@ -2943,12 +2966,12 @@ positions:
     rating: 1% 100mW 75V 0603
     lcsc: C22775
     class: resistor
-  # R822: maker UNI-ROYAL; MPN 0603WAF1003T5E; catalogue class basic
+  # R822: maker UNI-ROYAL; MPN 0603WAF1002T5E; catalogue class basic
   - reference: R822
-    value: 100k
+    value: 10k
     package: R_0603_1608Metric
     rating: 1% 100mW 75V 0603
-    lcsc: C25803
+    lcsc: C25804
     class: resistor
   # R823: maker UNI-ROYAL; MPN 0603WAF2202T5E; catalogue class basic
   - reference: R823
@@ -3134,7 +3157,7 @@ positions:
     rating: '4-way header, JST B4B-PH-K-S (2.00 mm; the harness measures 1.95 mm +/-0.1: family not identified)'
     lcsc: C131334
     class: none
-  # J862: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty
+  # J862: maker not stated; MPN not stated; catalogue class none; LCSC field in schematic is empty; not in the bill of materials or the position file; not in the bill of materials or the position file; not in the bill of materials or the position file; not in the bill of materials or the position file
   - reference: J862
     value: REED
     package: REED_PADS_P20.00mm

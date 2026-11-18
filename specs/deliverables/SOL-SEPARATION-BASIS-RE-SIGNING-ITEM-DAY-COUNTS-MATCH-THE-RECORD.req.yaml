@@ -1,0 +1,28 @@
+id: SOL-SEPARATION-BASIS-RE-SIGNING-ITEM-DAY-COUNTS-MATCH-THE-RECORD
+type: deliverable
+category: solution
+title: The record and its 42 exceptions read the owner's acceptance day 2026-11-18, and a test pins the count and the day
+status: active
+version: 3
+text: |
+  Pins the day the signed separation basis record carries and corrects the day counts the re-signing item once stated. The re-signing item's second criterion said the record's 42 exceptions read 2026-11-06 for 25, 2026-11-07 for 3 and 2026-11-14 for 14; the record held 23, 3 and 16, because the 14 November acceptance dated 16 entries, not 14, and the record's own test checked each entry's day against the rule that governs it, not the totals, so the wrong totals were never caught. Both that criterion and this item's first (the split 23, 3 and 16) are deprecated, because the owner then accepted the whole record in the working session on 2026-11-18 and the acceptance was entered on the record and on each of its 42 exceptions (commit 771eba09): every entry now reads 2026-11-18 and the earlier days are history. The criterion of this item governs the count and the day.
+
+  Settled for the build:
+  - A test of the separation basis record reads the committed record and asserts it holds 42 exceptions, each reading accepted_on 2026-11-18, and that the record's own accepted_on reads 2026-11-18; it fails on any other count, on any entry reading another day and on a record reading another day.
+  - By DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF this item owns only the count of entries and the day value they carry, pinned by that test. The header's statement of the acceptance and of the earlier days as history, and the records that restate the signature day, belong to SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING; the owner's acceptance and the commit that enters it belong to SOL-SEPARATION-BASIS-RECORD-MAINS-TO-MAINS-ACCEPTED-BY-OWNER; the record's exception set and the forms that make it up belong to SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.
+  - The record is not changed. Out of scope: any figure, pair, distance, reason, bound or signer of the record, and the days of the earlier acceptances, which are history.
+rationale: |-
+  Restores the behaviour REQ-ELECTRICAL-INSTALL-001.C15 asks of the signed record: the day each exception was accepted is stated as it is. The earlier criteria stated totals the record never held (25 and 14 where it held 23 and 16) and then a split that the acceptance of 2026-11-18 made history; both said the wrong thing for the record as it now stands and are deprecated with the reason named, while the count and the day that govern are pinned by a test here.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C15
+    type: targets
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING
+    type: depends-on
+  - target: DEC-SIGNED-BASIS-RECORD-FACTS-HAVE-ONE-OWNING-LEAF
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: d82d38c730cc372fb76e07502a83214948bda525c8690114738109bf9933b7e0
+  gating_profile: ""

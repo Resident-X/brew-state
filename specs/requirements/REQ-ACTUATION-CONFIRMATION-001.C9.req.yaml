@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C9
+type: criterion
+title: A pump is not kept running against a valve whose drive is not confirmed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A pump that runs into a valve which is not driven delivers nothing into a closed path, and is energised and confirmed by any electrical check while doing no work.
+
+  When a valve commanded to take part in a delivery is not confirmed as driven, the machine stops the pump rather than keeping it running against that valve. Out of scope: how the valve's drive is confirmed, which the first criterion governs.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

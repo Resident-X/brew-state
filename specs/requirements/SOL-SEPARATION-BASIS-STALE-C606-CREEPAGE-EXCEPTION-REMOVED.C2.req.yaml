@@ -1,0 +1,13 @@
+id: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED.C2
+type: criterion
+title: The tests and records that restate the record's entry count or the pair agree with it
+status: active
+version: 3
+measurement_type: binary
+verification: test
+scope: Statements of the count or of this pair; wording unrelated to them stays.
+text: |-
+  Every test and record under the repository that states the number of the record's accepted_exceptions entries states the number the record holds, and none lists the C606 pair among them. The record's own test pins that number and fails on a record whose count differs. Out of scope: the day each entry carries, which the finished header item's criterion on the re-signing day and later acceptances governs.
+links:
+  - target: SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED
+    type: criterion-of

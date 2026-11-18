@@ -1008,17 +1008,17 @@ HOLE_LAYOUT = """(kicad_pcb (version 20241229)
 
 
 class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
-    """SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole that breaches the separation from mains fails."""
+    """SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file."""
 
     def setUp(self):
         self.tree = sexpr.parse_one(HOLE_LAYOUT)
 
     def test_a_mounting_hole_is_a_footprint_of_drilled_pads_all_non_plated_or_left_out_of_the_bom(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole is a footprint whose pads are all drilled holes and which is all non-plated or left out of the bill of materials
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         self.assertEqual(board_check.hole_footprints(self.tree), ["H'3", "H1"])
 
     def test_plated_drilled_pads_make_a_hole_by_any_one_of_four_marks_and_by_no_other(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a footprint whose pads are all drilled holes which is all non-plated, carries exclude_from_bom, has a library item name beginning MountingHole or has exactly one pad
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         def holes(*pads, attr="", name="a:F"):
             body = "".join(f"(pad {text})" for text in pads)
             return board_check.hole_footprints(sexpr.parse_one(
@@ -1086,7 +1086,7 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
         self.assertEqual(holes(plated('(net 0)'), nets='(net 0 "") (net 1 "/MAINS_L")'), ["X1"], "the net numbered 0 is no net")
 
     def test_a_one_pad_plated_footprint_whose_net_cannot_be_read_is_unreadable_and_neither_passed_as_a_terminal_nor_failed_as_a_hole(self):
-        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4: a footprint of one plated drilled pad whose net is named twice, or written other than as (net "name"), gives a design_unreadable violation naming the layout, and is neither passed as a terminal nor failed as a hole. Out of scope: the unreadable-layout failures of the other rules.
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4: On a synthetic layout, a layout with no footprint and a layout whose footprints are all surface-mount give no mounting_hole violation and no error, and a footprint of one plated drilled pad whose net is named twice, or written other than as (net "name"), gives a design_unreadable violation naming the layout, and is neither passed as a terminal nor failed as a hole. Out of scope: the unreadable-layout failures of the other rules.
         design = board_check.Design("hardware/m/board/board.kicad_pro")
         for pad_net in ('(net "/A") (net "/B")', '(net "/A" "/B")', '(net ("/A"))'):
             tree = sexpr.parse_one('(kicad_pcb (version 1) (footprint "a:Tab" (layer "F.Cu") (at 0 0) (property "Reference" "X1" (at 0 0 0))'
@@ -1100,14 +1100,14 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
                 self.assertEqual(found[0].location, design.layout)
 
     def test_a_layout_with_no_footprint_and_one_whose_footprints_are_all_surface_mount_have_no_mounting_hole(self):
-        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4: a layout with no footprint and a layout whose footprints are all surface-mount give no mounting_hole violation and no error
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C4: On a synthetic layout, a layout with no footprint and a layout whose footprints are all surface-mount give no mounting_hole violation and no error, and a footprint of one plated drilled pad whose net is named twice, or written other than as (net "name"), gives a design_unreadable violation naming the layout, and is neither passed as a terminal nor failed as a hole. Out of scope: the unreadable-layout failures of the other rules.
         self.assertEqual(board_check.hole_footprints(sexpr.parse_one("(kicad_pcb (version 1))")), [])
         surface = sexpr.parse_one('(kicad_pcb (version 1) (footprint "a:R" (layer "F.Cu") (at 0 0) (property "Reference" "R1" (at 0 0 0))'
                                   ' (pad "1" smd rect (at 0 0) (size 1 1) (layers "F.Cu") (net "/A") (net "/B"))))')
         self.assertEqual(board_check.hole_footprints(surface), [])
 
     def test_the_rules_hold_the_larger_of_the_two_signed_figures_to_the_hole_edge_and_the_pad(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         text = board_check.hole_rules(4.0)
         self.assertEqual(text.count("(min 4mm)"), 3)
         self.assertIn("(constraint hole_clearance (min 4mm))\n\t(constraint physical_clearance (min 4mm))", text)
@@ -1117,14 +1117,14 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
         self.assertNotIn("(min 3mm)", text)
 
     def test_the_hole_rules_come_after_the_signed_rule_so_that_the_signed_rule_is_not_the_last_word_on_a_hole(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: After the signed Mains rule the check appends rules
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         appended = board_check.appended_rules((3.0, 4.0), "nonce") + board_check.hole_rules(4.0)
         self.assertLess(appended.index(board_check.SIGNED_RULE), appended.index(board_check.HOLE_RULE))
         self.assertLess(appended.index(board_check.SIGNED_RULE), appended.index(board_check.PLATED_RULE))
         self.assertIn(board_check.RESERVED, board_check.HOLE_RULE)
 
     def test_a_probe_is_written_for_each_kind_of_pad_the_layout_has_and_for_no_other(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the rules' pad-type conditions are shown to match before a clean result is believed
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         text, expected = board_check.hole_probes("n1", self.tree)
         self.assertEqual(expected, ["pre-order check n1: non-plated hole item", "pre-order check n1: plated hole item"])
         self.assertIn("A.Pad_Type == 'NPTH, mechanical' && A.Reference == 'H1'", text)
@@ -1134,7 +1134,7 @@ class AMountingHoleIsFoundAndHeldToTheLargerSignedFigure(unittest.TestCase):
         self.assertEqual(board_check.hole_probes("n1", none), ("", []))
 
     def test_a_rule_kicad_parses_but_never_matches_fails_the_design_instead_of_passing_it(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: a hole inside the distance is never passed unseen
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         design = board_check.Design("hardware/m/board/board.kicad_pro")
         marker = {"type": "assertion_failure", "description": f"Rule: (rule '{board_check.marker_rule('n1')}')", "items": []}
         probe = lambda rule: {"type": "assertion_failure", "description": f"Rule: (rule '{rule}')", "items": []}
@@ -1174,7 +1174,7 @@ def track(x1, y1, x2, y2, net="/MAINS_L", layer="F.Cu", width=0.25):
 
 
 class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.TestCase):
-    """SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A mounting hole that breaches the separation from mains fails.
+    """SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C3: On a synthetic layout, a mounting hole of each of the four marks fails mounting_hole when its pad copper stands inside the signed distance of a Mains pad, track, via or pour fill, or its courtyard stands inside it of a Mains pad, and passes at exactly that distance; a plated mounting pad on a protective-earth net that is excluded from the bill of materials fails the same way. The check's text report, which is its only report, names the rule mounting_hole, the design, the hole, the Mains net and the distance required. Out of scope: the mechanical strength of the fixing.
 
     The hole H1 has a pad 1.6 mm out from its centre and a courtyard 2 mm out;
     Mains copper is placed by its gap to the courtyard, which is 0.4 mm
@@ -1188,7 +1188,7 @@ class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.Test
         return board_check.fixing_gaps(self.design, tree, board_check.zone_fills(tree), board_check.hole_footprints(tree), set(mains), distance)
 
     def test_a_track_whose_edge_is_exactly_the_distance_from_the_courtyard_passes_and_0_01_mm_nearer_fails(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: measures the distance from each mounting-hole footprint's courtyard to every track of a Mains net, held to the same distance
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         self.assertEqual(self.gaps(fixing_layout(track(6.125, -9, 6.125, 9))), [])
         found = self.gaps(fixing_layout(track(6.115, -9, 6.115, 9)))
         self.assertEqual([(v.rule, v.design) for v in found], [("mounting_hole", "hardware/m/board/board.kicad_pro")])
@@ -1198,20 +1198,36 @@ class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.Test
         self.assertIn("3.990 mm", found[0].message)
         self.assertIn("4 mm", found[0].message)
 
+    def test_a_plated_pad_on_a_net_in_a_footprint_named_mounting_hole_is_measured_by_its_courtyard(self):
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C3: On a synthetic layout, a mounting hole of each of the four marks fails mounting_hole when its pad copper stands inside the signed distance of a Mains pad, track, via or pour fill, or its courtyard stands inside it of a Mains pad, and passes at exactly that distance; a plated mounting pad on a protective-earth net that is excluded from the bill of materials fails the same way. The check's text report, which is its only report, names the rule mounting_hole, the design, the hole, the Mains net and the distance required. Out of scope: the mechanical strength of the fixing.
+        def layout(x):
+            return sexpr.parse_one(
+                '(kicad_pcb (version 20241229) (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) (net 0 "") (net 1 "/MAINS_L") (net 2 "/PE")'
+                ' (footprint "MountingHole:MountingHole_3.2mm_M3_Pad" (layer "F.Cu") (at 0 0) (property "Reference" "H1" (at 0 0 0))'
+                ' (fp_rect (start -2 -2) (end 2 2) (layer "F.CrtYd"))'
+                ' (pad "1" thru_hole circle (at 0 0) (size 3.2 3.2) (drill 2) (layers "*.Cu") (net "/PE")))'
+                + track(x, -9, x, 9) + ")")
+        self.assertEqual(self.gaps(layout(6.125)), [])
+        found = self.gaps(layout(6.115))
+        self.assertEqual([v.rule for v in found], ["mounting_hole"])
+        self.assertIn("H1 courtyard", found[0].location)
+        self.assertIn("/MAINS_L", found[0].location)
+        self.assertIn("3.990 mm", found[0].message)
+
     def test_a_round_capped_track_end_is_measured_from_its_cap_not_its_centre_line(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every track of a Mains net
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         self.assertEqual(self.gaps(fixing_layout(track(6.2, 0, 9, 0, width=0.4))), [])
         self.assertEqual(len(self.gaps(fixing_layout(track(6.1, 0, 9, 0, width=0.4)))), 1, "4.1 mm to the centre line, 3.9 mm to the cap")
 
     def test_a_track_under_the_courtyard_and_the_pad_fails_both(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: the distance from each mounting-hole footprint's pad copper and courtyard
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         found = self.gaps(fixing_layout(track(0, -9, 0, 9)))
         self.assertEqual(sorted(v.location.split(" H1 ")[1].split(";")[0] for v in found), ["courtyard", "pad (unnumbered)"])
         self.assertEqual(len(found), 2)
         self.assertTrue(all("0.000 mm" in v.message for v in found), found)
 
     def test_a_pad_whose_copper_alone_is_inside_the_distance_fails_when_there_is_no_courtyard(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: If a footprint has no courtyard, the pad copper alone is measured
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         edge = 1.6 + 4.0 + 0.125
         self.assertEqual(self.gaps(fixing_layout(track(edge, -9, edge, 9), courtyard=False)), [])
         found = self.gaps(fixing_layout(track(edge - 0.01, -9, edge - 0.01, 9), courtyard=False))
@@ -1219,7 +1235,7 @@ class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.Test
         self.assertIn(" H1 pad (unnumbered);", found[0].location)
 
     def test_copper_on_either_layer_counts_and_copper_of_a_net_outside_mains_does_not(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every pad, track, via and pour fill of a Mains net on every layer
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         near = track(5.0, -9, 5.0, 9, layer="B.Cu")
         found = self.gaps(fixing_layout(near))
         self.assertEqual(len(found), 2, "the courtyard and the pad")
@@ -1228,7 +1244,7 @@ class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.Test
         self.assertEqual(len(self.gaps(fixing_layout(track(5.0, -9, 5.0, 9, net="/MAINS_N")))), 2)
 
     def test_a_via_is_measured_by_its_pad_circle(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every via of a Mains net
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         def via(x):
             return f'(via (at {x} 0) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "/MAINS_L"))'
         self.assertEqual(self.gaps(fixing_layout(via(6.4))), [])
@@ -1237,7 +1253,7 @@ class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.Test
         self.assertIn("via of /MAINS_L on F.Cu, B.Cu", found[0].location)
 
     def test_a_pour_fill_is_measured_by_its_outline_and_not_by_the_box_about_it(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: every pour fill of a Mains net
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         def pour(x, hole=""):
             return ('(zone (net "/MAINS_L") (net_name "/MAINS_L") (layer "B.Cu") (filled_polygon (layer "B.Cu") (pts '
                     f'(xy {x} -9) (xy {x + 5} -9) (xy {x + 5} 9) (xy {x} 9){hole})))')
@@ -1251,7 +1267,7 @@ class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.Test
         self.assertEqual(self.gaps(fixing_layout(notch)), [])
 
     def test_a_mains_pad_of_another_part_is_measured_and_the_fixings_own_mains_pad_and_net_are_not(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: out of this rule's scope for its own pad copper but its courtyard still must clear other Mains copper
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         part = ('(footprint "a:R" (layer "F.Cu") (at 5 0) (property "Reference" "R1" (at 0 0 0)) '
                 '(pad "1" thru_hole circle (at 0 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/MAINS_L")))')
         found = self.gaps(fixing_layout(part))
@@ -1262,7 +1278,7 @@ class AFixingIsMeasuredFromTheLayoutAgainstEveryPieceOfMainsCopper(unittest.Test
         self.assertEqual(len(self.gaps(fixing_layout(track(1, 0, 1, 3, net="/MAINS_N"), hole=own))), 2)
 
     def test_a_layout_with_no_hole_has_nothing_to_measure_and_a_zero_distance_nothing_to_fail(self):
-        # SOL-PRE-ORDER-CHECK-SEPARATION-FLOOR-AND-MOUNTING-HOLES.C2: A design with no mounting hole is not failed for that
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C1: A mounting hole is a footprint whose pads are all drilled holes and which has at least one mark of a fixing, namely every pad non-plated, exclusion from the bill of materials, a library item name beginning MountingHole, or exactly one pad that is plated and on no net. A plated pad on a net is an electrical terminal and is no mark of a fixing by its being the footprint's only pad, so a one-pad blade-tab terminal on a Mains or a low-voltage net is a part and not a hole. Every non-plated hole is held as well, in any footprint. A fixing's extent is the larger of its pad and its courtyard. After the signed Mains rule the check appends rules holding the hole clearance to the Mains class at no less than the larger of the signed clearance and the signed creepage on every layer, and measures from the layout file the distance from each mounting-hole footprint's pad copper and courtyard to every pad, track, via and pour fill of a Mains net on every layer, held to the same distance. The check fails a hole, its plating or fixing inside that distance of a Mains net, and a plated hole on a non-Mains net inside that distance. The signed figure governs whether or not the fixing is bonded to protective earth, and a fixing of any of the four marks keeps that distance whatever its net, while a plated pad on a net that has neither the exclusion nor the name is no fixing and keeps only the signed Mains rule and the plated-hole rule. A design with no mounting hole is not failed for that. Out of scope: the mechanical strength of the fixing and any fixing outside the board file.
         none = sexpr.parse_one('(kicad_pcb (version 1) (net 0 "") (net 1 "/MAINS_L"))')
         self.assertEqual(board_check.fixing_gaps(self.design, none, [], [], {"/MAINS_L"}, 4.0), [])
 
@@ -1297,6 +1313,27 @@ class TheRulesTableNamesTheNewRulesAndWhatExemptsADesign(unittest.TestCase):
         rows = self.rows()
         for name in ("separation_rule", "separation_basis", "derating_record", "pin_limits_record"):
             self.assertIn(name, rows)
+
+    def test_the_mounting_hole_paragraph_and_the_rule_row_each_state_the_four_marks_and_that_a_plated_pad_on_a_net_is_a_terminal(self):
+        # SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE.C5: The hardware notes' mounting-hole paragraph and the mounting_hole row of their rule table state the four marks as the first criterion of this leaf gives them, that a plated pad on a net is a terminal and not a fixing by being alone, and that a plated fixing on a net carries the bill-of-materials exclusion or the name "MountingHole" to be measured by its courtyard; they no longer say that a single pad is a mark of a fixing or that a one-pin through-hole part such as a test point on a net is held to the larger distance as a fixing. Inspection: read both places against each clause and find all present. Out of scope: the design method's layout-practice items.
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        start = text.index("The **mounting holes** (`mounting_hole`)")
+        paragraph = text[start:text.index("\n\n", start)]
+        places = {"paragraph": paragraph, "rule row": self.rows()["mounting_hole"]}
+        clauses = (
+            r"every pad (is )?non-plated",
+            r"`exclude_from_bom`",
+            r"begin(s|ning)( with)? `MountingHole`",
+            r"exactly one pad that is plated and on no net",
+            r"plated pad on a net is (a|an electrical) terminal and not a fixing by being the footprint's only pad",
+            r"plated fixing (that sits )?on a net.*carries (the )?`exclude_from_bom`( attribute)? or the name `MountingHole` to be measured by its courtyard",
+        )
+        for place, words in places.items():
+            for clause in clauses:
+                self.assertRegex(words, clause, place)
+            self.assertNotRegex(words, r"(?i)a single pad is a mark|single pad .{0,20}mark of a fixing", place)
+            self.assertNotRegex(words, r"(?i)test point on a net is held to the larger", place)
 
 
 # --- The design's own rules --------------------------------------------------
@@ -4277,7 +4314,7 @@ class TheReportStatesEachFigureRead(Tree):
         for path in ("a/a.kicad_pro", "a/a.kicad_sch", "a/a.kicad_pcb"):
             self.write(path, schematic() if path.endswith("sch") else "")
 
-        def check(design, repository, kicad_cli, yaml, today, already, read=None, accepted=None):
+        def check(design, repository, kicad_cli, yaml, today, already, read=None, accepted=None, warnings=None):
             read.append(("WORK-8 narrowing", "WORK_NECK_MM", "1 mm off its net's pads"))
             return [board_check.Violation(design.project, "workmanship_width", "here", "a neck")]
 
@@ -5811,6 +5848,180 @@ class TheCatalogueCarriesTheTestPadCourtyardRule(unittest.TestCase):
         # SOL-PRE-ORDER-CHECK-TEST-POINT-COURTYARD-DISTANCE.C1: The distance is a figure named by its role, set in each board's rules with the item's published source.
         self.assertIn("| `TEST_COURTYARD_MM` | `TEST-5` |", self.readme)
         self.assertIn("| `test_point_courtyard` |", self.readme)
+
+
+# --- A part's plated hole is measured round the barrier slots ---------------------------------------------------
+
+LONG_SLOT = (22.0, 2.0, 23.0, 38.0)
+SHORT_SLOT = (22.0, 18.0, 23.0, 22.0)
+NEAR_SLOT = (21.0, 2.0, 21.4, 38.0)
+
+
+def route_board(item: str, slot: tuple = None, *more: str) -> list:
+    """A 60 by 40 mm layout with a part K1 whose plated pad 1 (0.8 mm drill) is on /LV at (20, 20), its pad 2 on /FAR, `item` of the Mains net /M and a slot."""
+    cuts = "" if slot is None else (f'(gr_rect (start {slot[0]} {slot[1]}) (end {slot[2]} {slot[3]}) '
+                                    '(stroke (width 0.1) (type default)) (fill no) (layer "Edge.Cuts"))')
+    edge = "".join(f'(gr_line (start {a}) (end {b}) (stroke (width 0.1) (type default)) (layer "Edge.Cuts"))'
+                   for a, b in (("0 0", "60 0"), ("60 0", "60 40"), ("60 40", "0 40"), ("0 40", "0 0")))
+    k1 = ('(footprint "a:K" (layer "F.Cu") (at 0 0) (property "Reference" "K1" (at 0 0 0)) '
+          '(pad "1" thru_hole circle (at 20 20) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/LV")) '
+          '(pad "2" thru_hole circle (at 55 35) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/FAR")))')
+    return sexpr.parse_one('(kicad_pcb (version 20260206) (layers (0 "F.Cu" signal) (2 "B.Cu" signal)) '
+                           '(net 0 "") (net 1 "/M") (net 2 "/LV") (net 3 "/FAR") ' + edge + cuts + k1 + item + "".join(more) + ")")
+
+
+def mains_item(kind: str, edge: float) -> str:
+    """Mains copper of one kind on /M whose nearest side stands at x = `edge`, 20 mm tall about y = 20 where it is not a point."""
+    if kind == "track":
+        return f'(segment (start {edge + 0.125} 10) (end {edge + 0.125} 30) (width 0.25) (layer "F.Cu") (net "/M"))'
+    if kind == "via":
+        return f'(via (at {edge + 0.4} 20) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "/M"))'
+    if kind == "pad":
+        return ('(footprint "a:M" (layer "F.Cu") (at 0 0) (property "Reference" "M1" (at 0 0 0)) '
+                f'(pad "1" smd rect (at {edge + 0.5} 20) (size 1 20) (layers "F.Cu") (net "/M")))')
+    box = f"(pts (xy {edge} 10) (xy {edge + 5} 10) (xy {edge + 5} 30) (xy {edge} 30))"
+    return f'(zone (net "/M") (net_name "/M") (layer "B.Cu") (polygon {box}) (filled_polygon (layer "B.Cu") {box}))'
+
+
+KINDS = ("track", "via", "pad", "zone fill")
+
+
+def gaps(tree: list, clearance: float = 3.0, creepage: float = 10.0) -> list:
+    return board_check.plated_hole_gaps(tree, board_check.zone_fills(tree), {"/M"}, clearance, creepage)
+
+
+class APartsPlatedHoleIsMeasuredRoundTheBarrierSlots(unittest.TestCase):
+    """The plated hole of a part on a net outside Mains is held to the signed clearance straight and the signed creepage round the slots, for each kind of Mains copper."""
+
+    def test_a_pair_over_the_clearance_straight_and_over_the_creepage_round_the_slot_passes_for_each_kind_of_mains_copper(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                self.assertEqual(gaps(route_board(mains_item(kind, 25.4), LONG_SLOT)), [])
+
+    def test_the_same_pair_with_the_slot_absent_fails_naming_the_hole_the_item_and_the_distance_for_each_kind(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                (gap,) = gaps(route_board(mains_item(kind, 25.4)))
+                self.assertEqual((gap.reference, gap.number, gap.net, gap.piece.kind), ("K1", "1", "/LV", kind))
+                self.assertAlmostEqual(gap.straight, 5.0, delta=0.05)
+                self.assertAlmostEqual(gap.route, gap.straight, delta=0.001)
+                (found,) = board_check.plated_hole_violations(board_check.Design("hardware/m/board/board.kicad_pro"), [gap],
+                                                              board_check.Signed(3.0, 10.0, {}))
+                self.assertEqual(found.rule, "mounting_hole")
+                self.assertIn("pad 1 [/LV] of K1", found.location)
+                self.assertIn(f"{kind} of /M", found.location)
+                for words in ("5.0", "signed clearance of 3 mm", "signed creepage of 10 mm"):
+                    self.assertIn(words, found.message)
+
+    def test_a_pair_whose_route_round_the_slot_is_under_the_creepage_fails_for_each_kind_and_names_the_route(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                (gap,) = gaps(route_board(mains_item(kind, 25.4), SHORT_SLOT))
+                self.assertAlmostEqual(gap.straight, 5.0, delta=0.05)
+                self.assertGreater(gap.route, gap.straight)
+                self.assertLess(gap.route, 10.0)
+                self.assertEqual(gap.rounds, 1)
+                (found,) = board_check.plated_hole_violations(board_check.Design("hardware/m/board/board.kicad_pro"), [gap],
+                                                              board_check.Signed(3.0, 10.0, {}))
+                self.assertIn(f"{gap.route:.3f} mm by the shortest way round the barrier slots", found.message)
+
+    def test_a_pair_under_the_clearance_straight_fails_for_each_kind_although_its_route_round_the_slot_is_long(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        for kind in KINDS:
+            with self.subTest(kind=kind):
+                (gap,) = gaps(route_board(mains_item(kind, 22.4), NEAR_SLOT))
+                self.assertAlmostEqual(gap.straight, 2.0, delta=0.05)
+                (found,) = board_check.plated_hole_violations(board_check.Design("hardware/m/board/board.kicad_pro"), [gap],
+                                                              board_check.Signed(3.0, 10.0, {}))
+                self.assertIn("2.0", found.message)
+                self.assertIn("signed clearance of 3 mm", found.message)
+
+    def test_the_figures_are_not_relaxed_a_pair_just_under_each_figure_fails_and_at_it_passes(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        # Straight clearance: the hole's edge is 3 mm from the track's edge at the figure, no slot in the way and the creepage lowered to match.
+        self.assertEqual(gaps(route_board(mains_item("track", 23.4), LONG_SLOT), creepage=4.0), [])
+        self.assertEqual(len(gaps(route_board(mains_item("track", 23.38), LONG_SLOT), creepage=4.0)), 1)
+        # Creepage by the route: a slot's long way round passes and the same pair across a slot too short for the figure fails.
+        self.assertEqual(gaps(route_board(mains_item("track", 25.4), LONG_SLOT)), [])
+        self.assertEqual(len(gaps(route_board(mains_item("track", 25.4), SHORT_SLOT))), 1)
+
+    def test_a_pad_on_no_net_and_an_oval_drill_are_held_the_same_way(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        oval = ('(footprint "a:O" (layer "F.Cu") (at 20 30) (property "Reference" "K2" (at 0 0 0)) '
+                '(pad "1" thru_hole oval (at 0 0 90) (size 1.6 3) (drill oval 0.8 2) (layers "*.Cu")) '
+                '(pad "2" thru_hole circle (at 30 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/FAR")))')
+        tree = route_board(mains_item("track", 25.4), None, oval)
+        self.assertEqual({gap.reference for gap in gaps(tree)}, {"K1", "K2"})
+
+    def test_mains_copper_and_a_fixing_are_not_a_part_hole(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        tree = route_board(mains_item("track", 25.4))
+        self.assertEqual([hole[:3] for hole in board_check.part_plated_holes(tree, [], {"/M"})],
+                         [("K1", "1", "/LV"), ("K1", "2", "/FAR")])
+        self.assertEqual([hole[:3] for hole in board_check.part_plated_holes(tree, ["K1"], {"/M"})], [])
+        self.assertEqual([hole[:3] for hole in board_check.part_plated_holes(tree, [], {"/LV", "/FAR", "/M"})], [])
+
+
+class KiCadsStraightLineForAPartsPlatedHoleIsReplacedByTheRouteMeasure(unittest.TestCase):
+    """mounting_holes drops KiCad's straight-line line for a part's plated hole and keeps it for a fixing's and for a non-plated hole."""
+
+    design = board_check.Design("hardware/m/board/board.kicad_pro")
+
+    def run_check(self, tree: list, held=("PTH pad 1 [/LV] of K1",)) -> list:
+        _, expected = board_check.hole_probes("n1", tree)
+        probe = lambda rule: {"type": "assertion_failure", "description": f"Rule: (rule '{rule}')", "items": []}
+        entry = lambda rule, hole: {"type": "hole_clearance", "description": f"Hole clearance violation (rule '{rule}' min 10 mm; actual 5.0000 mm)",
+                                    "items": [{"description": hole, "pos": {"x": 1, "y": 2}}, {"description": "Track [/M] on F.Cu", "pos": {"x": 3, "y": 2}}]}
+        reports = [probe(board_check.marker_rule("n1"))] + [probe(rule) for rule in expected]
+        reports += [entry(board_check.PLATED_RULE, hole) for hole in held]
+        reports += [entry(board_check.PLATED_RULE, "PTH pad 1 [/PE] of F1"),
+                    entry(board_check.HOLE_RULE, "NPTH pad of H1")]
+        with tempfile.TemporaryDirectory() as scratch, mock.patch.object(board_check, "run_report", return_value=({"violations": reports}, "")):
+            return board_check.mounting_holes("kicad", self.design, scratch, "board.kicad_pcb", os.path.join(scratch, "board.kicad_dru"),
+                                              "(version 1)\n", board_check.Signed(3.0, 10.0, {}), "n1", None, tree, {"/M"}, board_check.zone_fills(tree))
+
+    def layout(self, slot, more="") -> list:
+        extra = more + ('(footprint "a:F" (layer "F.Cu") (at 45 5) (property "Reference" "F1" (at 0 0 0)) (attr exclude_from_bom) '
+                 '(pad "1" thru_hole circle (at 0 0) (size 3 3) (drill 2) (layers "*.Cu") (net "/PE")))'
+                 '(footprint "a:H" (layer "F.Cu") (at 50 5) (property "Reference" "H1" (at 0 0 0)) '
+                 '(pad "" np_thru_hole circle (at 0 0) (size 3 3) (drill 3) (layers "*.Cu")))')
+        return route_board(mains_item("track", 25.4), slot, extra)
+
+    def test_a_part_hole_across_a_long_slot_gives_no_line_while_a_fixings_and_a_non_plated_hole_keep_the_straight_line(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        found = self.run_check(self.layout(LONG_SLOT))
+        text = [v.message + " " + v.location for v in found if v.rule == "mounting_hole"]
+        self.assertFalse([t for t in text if "of K1" in t], text)
+        self.assertEqual(len([t for t in text if "of F1" in t]), 1, text)
+        self.assertEqual(len([t for t in text if "NPTH pad of H1" in t]), 1, text)
+
+    def test_a_part_hole_with_no_slot_between_gives_one_line_naming_the_hole_the_item_and_both_figures_and_not_kicads(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        found = [v for v in self.run_check(self.layout(None)) if v.rule == "mounting_hole" and "of K1" in v.location]
+        self.assertEqual(len(found), 1, found)
+        for words in ("pad 1 [/LV] of K1", "track of /M on F.Cu", "5.0", "signed clearance of 3 mm", "signed creepage of 10 mm"):
+            self.assertIn(words, found[0].location + " " + found[0].message)
+        self.assertNotIn("actual", found[0].message)
+
+    def test_a_line_of_a_hole_that_a_reference_or_pad_number_does_not_name_alone_is_kept(self):
+        # SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS.C1: On a synthetic layout with a barrier slot between a plated hole of a part's pad on a net outside Mains and a Mains-class item (a pad, track, via or pour fill), where the straight-line distance between them is at or above the signed clearance but under the signed creepage and the shortest route round the slot is at or above the signed creepage, the check gives no mounting_hole violation for the pair. Each of these fails naming the hole, the Mains item and the distance measured: the same pair with the slot absent, a pair whose route round the slot is under the signed creepage, and a pair whose straight-line distance is under the signed clearance although its route round the slot is at or above the creepage. The same holds for each kind of Mains item, so a build that reads only pads fails: a track, a via and a pour fill each get the same three failing cases and the passing case. A plated hole of a fixing and every non-plated hole keep the straight measure they have now. Out of scope is a fixing's own pad and courtyard, and the signed figures.
+        # two footprints sharing a reference, and a footprint repeating a pad number: the key names no one measured hole
+        twin = ('(footprint "a:T" (layer "F.Cu") (at 60 5) (property "Reference" "K1" (at 0 0 0)) '
+                '(pad "1" thru_hole circle (at 0 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/LV")))')
+        repeated = ('(footprint "a:R" (layer "F.Cu") (at 70 5) (property "Reference" "K3" (at 0 0 0)) '
+                    '(pad "1" thru_hole circle (at 0 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/LV")) '
+                    '(pad "1" thru_hole circle (at 3 0) (size 1.6 1.6) (drill 0.8) (layers "*.Cu") (net "/LV")))')
+        held = ("PTH pad 1 [/LV] of K1", "PTH pad 1 [/LV] of K3")
+        found = self.run_check(self.layout(LONG_SLOT, twin + repeated), held)
+        text = [v.message + " " + v.location for v in found if v.rule == "mounting_hole"]
+        self.assertEqual(len([t for t in text if "pad 1 [/LV] of K1" in t and "Mains-class item," in t]), 1, text)
+        self.assertEqual(len([t for t in text if "pad 1 [/LV] of K3" in t and "Mains-class item," in t]), 1, text)
+        # the same pad of an unshared reference with a unique number is still dropped
+        found = self.run_check(self.layout(LONG_SLOT, repeated), ("PTH pad 1 [/LV] of K1",))
+        self.assertFalse([v for v in found if v.rule == "mounting_hole" and "of K1" in v.location], found)
 
 
 if __name__ == "__main__":

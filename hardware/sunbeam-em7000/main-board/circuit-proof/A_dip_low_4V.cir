@@ -1,0 +1,31 @@
+Interlock supply ramp A_dip_low_4V.cir: output low, rising in 1 ms, slowest corner, drawn 21-part drive
+.include A_interlock.cir
+.include A_models.inc
+Vsup +5V GND PWL(0 5.25 1m 5.25 2m 4.0 3m 4.0 4m 5.25 4 5.25)
+* relay coil, a deck-added load (K201 is excluded from simulation): 62 ohm -10 % = 55.8 ohm
+Rcoil +5V POL_COIL_LO 55.8
+* FET input capacitance at its datasheet maximum, 50 pF (NX3008NBK Table 7), one per gate
+Cg201 POL_GATE_A GND 50p
+Cg202 POL_GATE_B GND 50p
+Rcl1 POL_CLAMP_1 GND 100Meg
+Rcl2 POL_CLAMP_2 GND 100Meg
+Rmid POL_MID GND 100Meg
+Vpol POL_OUT GND 0
+.options reltol=1e-4 abstol=1e-10 gmin=1e-12 itl4=200 method=gear
+.tran 5u 1500m 0 5u
+.control
+alter R203 = 5.6896Meg
+alter R204 = 5.6896Meg
+alter C203 = 4.9645n
+alter C205 = 4.9645n
+alter C202 = 105.6n
+alter C204 = 105.6n
+run
+meas tran vgmaxA MAX v(POL_GATE_A)
+meas tran vgmaxB MAX v(POL_GATE_B)
+meas tran vbufmax MAX v(POL_BUF)
+meas tran tabove06a TRIG v(POL_GATE_A) VAL=0.6 RISE=1 TARG v(POL_GATE_A) VAL=0.6 FALL=1
+meas tran tabove073a TRIG v(POL_GATE_A) VAL=0.73 RISE=1 TARG v(POL_GATE_A) VAL=0.73 FALL=1
+meas tran tabove18a TRIG v(POL_GATE_A) VAL=1.8 RISE=1 TARG v(POL_GATE_A) VAL=1.8 FALL=1
+.endc
+.end

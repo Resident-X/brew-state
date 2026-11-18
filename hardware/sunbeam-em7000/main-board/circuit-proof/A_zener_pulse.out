@@ -1,0 +1,12 @@
+coil current I0 = 5.25 V / 55.8 ohm = 94.09 mA; zener voltage at I0 at most 12.70 + 25 x 0.0891 = 14.93 V; peak power 1.404 W (one zener, no sharing)
+stored energy 0.5 x L x I0^2 = 4.43 mJ per henry
+limit by peak power held for the whole pulse, constant-energy extrapolation: L at most 30 mJ / (1.404 W x 6.159 ms/H) = 3.47 H
+limit by energy (stored energy against 30 mJ): L at most 6.78 H
+for comparison, the plotted tp^-0.5 slope continued gives L at most 7.41 H (not used)
+L 1.00 H: pulse 6.2 ms, peak 1.404 W against the curve's 3.823 W (ratio 0.37); energy 4.4 mJ against 30 mJ
+L 1.60 H: pulse 9.9 ms, peak 1.404 W against the curve's 3.022 W (ratio 0.46); energy 7.1 mJ against 30 mJ
+L 3.00 H: pulse 18.5 ms, peak 1.404 W against the curve's 1.624 W (ratio 0.86); energy 13.3 mJ against 30 mJ
+L 3.47 H: pulse 21.4 ms, peak 1.404 W against the curve's 1.404 W (ratio 1.00); energy 15.4 mJ against 30 mJ
+L 4.73 H: pulse 29.1 ms, peak 1.404 W against the curve's 1.030 W (ratio 1.36); energy 20.9 mJ against 30 mJ
+information: the M28 bound 4.73 H is outside the conservative extrapolation (ratio 1.36); the bound holds for every coil inductance up to 3.47 H without knowing it, and no source bounds the coil's inductance, so the bring-up reading (M34) must confirm it is under 3.4 H
+PASS  M34 limit 3.4 H: clamp pulse 20.9 ms, peak 1.404 W against the extrapolated line's 1.433 W (ratio 0.98)

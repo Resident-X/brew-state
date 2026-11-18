@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED.C4
+type: criterion
+title: Each layout practice item the redraw left failing is put right or recorded as a signed relaxation with its reason
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Each item of the layout practice that the first review recorded as failing on the first routing is, on the final board, met on its measure, or carried by an entry of the relaxations decision that names the net, the rule and the reason this board does not need it, signed by the owner. An item that is neither fails. Out of scope: items the first review passed.
+links:
+  - target: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED
+    type: criterion-of

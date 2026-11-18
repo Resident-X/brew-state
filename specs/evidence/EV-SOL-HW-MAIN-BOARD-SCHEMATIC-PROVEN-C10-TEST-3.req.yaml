@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C10-TEST-3
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T14:25:51.332694Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_main_board_schematic_records.py::test_the_ten_way_header_and_the_neutral_landing_are_drawn_and_each_crossing_channel_has_its_controller_pin
+  artifact_version: 83938560b5bbae372eeca04f2011b04655286708
+attested_by: crun-6c364a3e2ae1007e
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C10
+    type: satisfies

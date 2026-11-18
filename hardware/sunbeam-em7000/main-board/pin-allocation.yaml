@@ -85,7 +85,7 @@ channels:
     controller_pin: PC5
   - channel: tank_level
     net: TANK_LEVEL
-    controller_pin: PE12
+    controller_pin: PE0
     connector: J862
     connector_pin: '2'
   - channel: knob_hot
@@ -101,36 +101,36 @@ channels:
   - channel: mains_pres_c
     net: MAINS_PRES_C
     controller_pin: PE15
-  - channel: brew_scl
+  - channel: display_tx
     net: BREW_SCL
-    controller_pin: PB10
-  - channel: brew_sda
+    controller_pin: PB6
+  - channel: display_rx
     net: BREW_SDA
-    controller_pin: PB11
+    controller_pin: PB7
   - channel: pt1_cs
     net: PT1_CS
-    controller_pin: PB12
-  - channel: spi2_sck
-    net: SPI2_SCK
-    controller_pin: PB13
-  - channel: spi2_miso
-    net: SPI2_MISO
-    controller_pin: PB14
-  - channel: spi2_mosi
-    net: SPI2_MOSI
-    controller_pin: PB15
+    controller_pin: PD0
+  - channel: spi3_sck
+    net: SPI3_SCK
+    controller_pin: PC10
+  - channel: spi3_miso
+    net: SPI3_MISO
+    controller_pin: PC11
+  - channel: spi3_mosi
+    net: SPI3_MOSI
+    controller_pin: PC12
   - channel: pt2_cs
     net: PT2_CS
-    controller_pin: PD8
+    controller_pin: PD1
   - channel: amc_cs
     net: AMC_CS
-    controller_pin: PD9
+    controller_pin: PA15
   - channel: amc_drdy
     net: AMC_DRDY
-    controller_pin: PD10
+    controller_pin: PC6
   - channel: amc_reset
     net: AMC_RESET
-    controller_pin: PD11
+    controller_pin: PC8
   - channel: gauge_step1
     net: GAUGE_STEP1
     controller_pin: PD14
@@ -139,16 +139,16 @@ channels:
     controller_pin: PD15
   - channel: flow_in
     net: FLOW_IN
-    controller_pin: PC6
+    controller_pin: PB10
   - channel: pol_out
     net: POL_OUT
     controller_pin: PC7
   - channel: wt1_data
     net: WT1_DATA
-    controller_pin: PC8
+    controller_pin: PD5
   - channel: wt1_clk
     net: WT1_CLK
-    controller_pin: PC9
+    controller_pin: PD6
   - channel: pump_s_gate
     net: PUMP_S_GATE
     controller_pin: PA8
@@ -180,34 +180,34 @@ channels:
     connector_pin: '4'
   - channel: wt2_data
     net: WT2_DATA
-    controller_pin: PC11
+    controller_pin: PD2
   - channel: wt2_clk
     net: WT2_CLK
-    controller_pin: PC12
+    controller_pin: PD3
   - channel: gauge_dir1
     net: GAUGE_DIR1
-    controller_pin: PD0
+    controller_pin: PD8
   - channel: gauge_dir2
     net: GAUGE_DIR2
-    controller_pin: PD1
+    controller_pin: PD9
   - channel: heat_c_drv
     net: HEAT_C_DRV
-    controller_pin: PD2
+    controller_pin: PD11
   - channel: heat_s_drv
     net: HEAT_S_DRV
-    controller_pin: PD3
+    controller_pin: PD12
   - channel: valve_2w_drv
     net: VALVE_2W_DRV
-    controller_pin: PD4
+    controller_pin: PD13
   - channel: valve_3w_drv
     net: VALVE_3W_DRV
-    controller_pin: PD5
+    controller_pin: PB12
   - channel: gauge_rst
     net: GAUGE_RST
-    controller_pin: PD6
+    controller_pin: PD10
   - channel: mains_pres_s
     net: MAINS_PRES_S
-    controller_pin: PD7
+    controller_pin: PB11
   - channel: swo
     net: '/Controller/SWO'
     controller_pin: PB3
@@ -224,10 +224,10 @@ channels:
     controller_pin: PB9
   - channel: lowwater_k
     net: LOWWATER_K
-    controller_pin: PE0
+    controller_pin: PE12
   - channel: buzzer
     net: BUZZER
-    controller_pin: PE1
+    controller_pin: PB2
   - channel: j401_1_dbg_vtref
     net: '/Controller/DBG_VTREF'
     rail: DBG_VTREF

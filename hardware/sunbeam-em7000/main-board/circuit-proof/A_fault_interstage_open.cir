@@ -1,0 +1,68 @@
+Interlock fault A_fault_interstage_open.cir: link between U201 pin 4 and the R208 / U203 pin 2 node opens (R208 on U203's side), controller toggling, fault applied at 50 ms, slowest corner
+.include A_models.inc
+* Interlock drive, sheet "Interlock": netlist with the reference designators and values of the sheet.
+* Naming of the SPICE lines (KiCad's export prefixes the device letter): XU201 = U201, XU203 = U203, MQ201 = Q201,
+* DZ201 = Z201. K201 (relay), the test points and the connectors are excluded from simulation; each
+* deck adds the relay's coil as a load across +5V and POL_COIL_LO, which is not a part of the sheet.
+* Models are in each deck (A_models.inc) because they carry the datasheet limits the deck moves.
+* U201 and U203 are two inverting Schmitt gates in series (SN74AHCT1G14), so POL_BUF follows POL_OUT as the record's
+* non-inverting buffer does. POL_INV is the net between them; R208 holds it low if the link between the gates opens.
+* Each deck adds the controller's output as a source on POL_OUT, behind R207.
+C201 +5V GND 100n
+C206 +5V GND 100n
+R207 POL_OUT POL_IN 1k
+R201 POL_IN GND 100k
+R202 POL_IN GND 100k
+XU201 POL_IN POL_INA +5V GND AHCT1G14
+Slk POL_INA POL_INV CTLB GND SWB
+R208 POL_INV GND 100k
+XU203 POL_INV POL_BUF +5V GND AHCT1G14
+* channel A
+C202 POL_BUF POL_NODE_A 100n
+D201 GND POL_NODE_A DSCH
+D202 POL_NODE_A POL_GATE_A DSI
+C203 POL_GATE_A GND 4.7n
+R203 POL_GATE_A GND 5.6Meg
+R205 POL_NODE_A GND 100k
+MQ201 POL_MID POL_GATE_A GND GND NM
+* channel B
+C204 POL_BUF POL_NODE_B 100n
+D203 GND POL_NODE_B DSCH
+D204 POL_NODE_B POL_GATE_B DSI
+C205 POL_GATE_B GND 4.7n
+R204 POL_GATE_B GND 5.6Meg
+R206 POL_NODE_B GND 100k
+MQ202 POL_COIL_LO POL_GATE_B POL_MID POL_MID NM
+* coil clamp, two branches, each zener (cathode on the coil's low node) in series with a diode (cathode on +5V)
+DZ201 POL_CLAMP_1 POL_COIL_LO DZ12
+D205 POL_CLAMP_1 +5V DCL
+DZ202 POL_CLAMP_2 POL_COIL_LO DZ12
+D206 POL_CLAMP_2 +5V DCL
+VctlB CTLB GND PWL(0 1 0.05 1 0.050001 0)
+.model SWB SW(vt=0.5 vh=0.1 ron=0.01 roff=1e12)
+Vsup +5V GND 5.25
+Vpol POL_OUT GND PWL(0 0 0.010000000 0 0.010000010 3.3 0.015000000 3.3 0.015000010 0 0.020000000 0 0.020000010 3.3 0.025000000 3.3 0.025000010 0 0.030000000 0 0.030000010 3.3 0.035000000 3.3 0.035000010 0 0.040000000 0 0.040000010 3.3 0.045000000 3.3 0.045000010 0 0.050000000 0 0.050000010 3.3 0.055000000 3.3 0.055000010 0 0.060000000 0 0.060000010 3.3 0.065000000 3.3 0.065000010 0 0.070000000 0 0.070000010 3.3 0.075000000 3.3 0.075000010 0 0.080000000 0 0.080000010 3.3 0.085000000 3.3 0.085000010 0 0.090000000 0 0.090000010 3.3 0.095000000 3.3 0.095000010 0 0.100000000 0 0.100000010 3.3 0.105000000 3.3 0.105000010 0 0.110000000 0 0.110000010 3.3 0.115000000 3.3 0.115000010 0 0.120000000 0 0.120000010 3.3 0.125000000 3.3 0.125000010 0 0.130000000 0 0.130000010 3.3 0.135000000 3.3 0.135000010 0 0.140000000 0 0.140000010 3.3 0.145000000 3.3 0.145000010 0 0.150000000 0 0.150000010 3.3 0.155000000 3.3 0.155000010 0 0.160000000 0 0.160000010 3.3 0.165000000 3.3 0.165000010 0 0.170000000 0 0.170000010 3.3 0.175000000 3.3 0.175000010 0 0.180000000 0 0.180000010 3.3 0.185000000 3.3 0.185000010 0 0.190000000 0 0.190000010 3.3 0.195000000 3.3 0.195000010 0 0.200000000 0 0.200000010 3.3 0.205000000 3.3 0.205000010 0)
+* FET input capacitance at its datasheet maximum, 50 pF (NX3008NBK Table 7), one per gate
+Cg201 POL_GATE_A GND 50p
+Cg202 POL_GATE_B GND 50p
+* relay coil, a deck-added load (K201 is excluded from simulation): 62 ohm -10 % = 55.8 ohm
+Rcoil +5V POL_COIL_LO 55.8
+.options reltol=1e-5 abstol=1e-15 gmin=1e-15
+Vctl CTL GND PWL(0 0 0.050000 0 0.050001 1)
+.model SWF SW(vt=0.5 vh=0.1 ron=0.01 roff=1e12)
+.tran 5u 1500m 0 20u
+.control
+alter R203 = 5.6896Meg
+alter R204 = 5.6896Meg
+alter C203 = 4.9645n
+alter C205 = 4.9645n
+alter C202 = 105.6n
+alter C204 = 105.6n
+run
+meas tran vpreA MAX v(POL_GATE_A) FROM=0.03 TO=0.050000
+meas tran tdecA TRIG AT=0.050000 TARG v(POL_GATE_A) VAL=0.6 FALL=1
+meas tran tdecB TRIG AT=0.050000 TARG v(POL_GATE_B) VAL=0.6 FALL=1
+meas tran vlateA MAX v(POL_GATE_A) FROM=0.5 TO=1.5
+meas tran vlateB MAX v(POL_GATE_B) FROM=0.5 TO=1.5
+.endc
+.end

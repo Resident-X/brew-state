@@ -419,14 +419,14 @@
 				(pin passive line
 					(at -7.62 2.54 0)
 					(length 2.54)
-					(name "A/K"
+					(name "K/A"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "1"
+					(number "2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -437,14 +437,14 @@
 				(pin passive line
 					(at -7.62 -2.54 0)
 					(length 2.54)
-					(name "K/A"
+					(name "A/K"
 						(effects
 							(font
 								(size 1.27 1.27)
 							)
 						)
 					)
-					(number "2"
+					(number "1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1187,7 +1187,7 @@
 				)
 			)
 		)
-		(property "Value" "60.4k"
+		(property "Value" "59k"
 			(at 50.8 74.93 0)
 			(effects
 				(font
@@ -1222,7 +1222,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C5126066"
+		(property "LCSC" "C2775980"
 			(at 50.8 77.47 0)
 			(hide yes)
 			(effects
@@ -1231,7 +1231,7 @@
 				)
 			)
 		)
-		(property "MPN" "FRC2512F6042TS"
+		(property "MPN" "HP122WF5902T4E"
 			(at 50.8 77.47 0)
 			(hide yes)
 			(effects
@@ -1240,7 +1240,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "FOJAN"
+		(property "Manufacturer" "UNI-ROYAL"
 			(at 50.8 77.47 0)
 			(hide yes)
 			(effects
@@ -1258,7 +1258,7 @@
 			)
 		)
 	
-		(property "Rating" "1% 100ppm 2512 1W 200V working, 400V overload"
+		(property "Rating" "1% 100ppm 2512 2W 300V"
 			(at 50.8 77.47 0)
 			(hide yes)
 			(effects
@@ -1283,7 +1283,7 @@
 				)
 			)
 		)
-		(property "Value" "60.4k"
+		(property "Value" "59k"
 			(at 68.58 74.93 0)
 			(effects
 				(font
@@ -1318,7 +1318,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C5126066"
+		(property "LCSC" "C2775980"
 			(at 68.58 77.47 0)
 			(hide yes)
 			(effects
@@ -1327,7 +1327,7 @@
 				)
 			)
 		)
-		(property "MPN" "FRC2512F6042TS"
+		(property "MPN" "HP122WF5902T4E"
 			(at 68.58 77.47 0)
 			(hide yes)
 			(effects
@@ -1336,7 +1336,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "FOJAN"
+		(property "Manufacturer" "UNI-ROYAL"
 			(at 68.58 77.47 0)
 			(hide yes)
 			(effects
@@ -1354,7 +1354,7 @@
 			)
 		)
 	
-		(property "Rating" "1% 100ppm 2512 1W 200V working, 400V overload"
+		(property "Rating" "1% 100ppm 2512 2W 300V"
 			(at 68.58 77.47 0)
 			(hide yes)
 			(effects

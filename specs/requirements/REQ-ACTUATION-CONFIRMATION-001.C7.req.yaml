@@ -1,0 +1,14 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C7
+type: criterion
+title: Power to the loads that does not become available on command is retried for a bounded time and then reported as a fault
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  An element that makes power available to the loads can be slow to close when the machine is warm, as after a reset or a short power cut soon after running, and until it closes nothing runs. A single unconfirmed closure is therefore not yet a fault, and a closure retried without end is one nobody is told about.
+
+  When power commanded available to the loads is not confirmed by the independent observation the first criterion requires, the machine commands it again at a bounded interval, tells the user that it is waiting, and reports a fault once a bounded time has passed. Out of scope: the interval and the time, which the design states.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

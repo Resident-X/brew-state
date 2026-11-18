@@ -1,0 +1,15 @@
+id: EV-SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER-C3-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-14T23:28:26Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_dnp_agreement.py::TheTextFieldAgreesWithTheAttribute.test_a_symbol_whose_text_field_says_do_not_populate_while_its_attribute_says_fitted_fails_naming_it
+  artifact_version: 446c53a97f3156986fedc2c9632d25021043fc5e
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C3
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C2
+type: criterion
+title: A part the parts record states as not fitted and the layout or the schematic marks as fitted, or the reverse, fails the design, naming the part
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A position of the parts specification record that carries the key fitted with the value no, which states it is not fitted, fails the design when the layout or the schematic marks the reference fitted, and a reference both mark not populated fails when the record leaves it fitted. A position without the key is fitted. Any other value of the key, a bare YAML no included, fails the record read under the name parts_record, naming the key. A design with no usable record is judged on the layout and the schematic alone, and the record's own failure is reported for itself. Out of scope: the other keys of the record.
+links:
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+    type: criterion-of

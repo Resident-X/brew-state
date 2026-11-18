@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C2
+type: criterion
+title: The low-voltage parts changed with the mains side are named as decided in the schematic, parts list and placement file
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  C606 is a 0402 part, U520 is the UMW 74LVC1G17, the headers J622, J623, J627 and J628 carry a 1x2 part number, and the reed J862 is absent from the placement file and the parts list and carries a fitting note stating its lead and pitch checks, in the schematic, the parts list and the placement file alike. A part that differs in any of the three fails. Out of scope: the mains parts and the supplier's stock.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK
+    type: criterion-of

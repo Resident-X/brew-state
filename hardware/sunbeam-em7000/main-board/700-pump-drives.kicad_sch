@@ -915,7 +915,7 @@
 							)
 						)
 					)
-					(number "4"
+					(number "6"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -952,7 +952,7 @@
 							)
 						)
 					)
-					(number "6"
+					(number "4"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1582,42 +1582,41 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "Device:C"
+		(symbol "Device:D_TVS"
 			(pin_numbers
 				(hide yes)
 			)
 			(pin_names
-				(offset 0.254)
+				(offset 1.016)
+				(hide yes)
 			)
 			(exclude_from_sim no)
 			(in_bom yes)
 			(on_board yes)
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
-			(property "Reference" "C"
-				(at 0.635 2.54 0)
+			(property "Reference" "D"
+				(at 0 2.54 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
-					(justify left)
 				)
 			)
-			(property "Value" "C"
-				(at 0.635 -2.54 0)
+			(property "Value" "D_TVS"
+				(at 0 -2.54 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
-					(justify left)
 				)
 			)
 			(property "Footprint" ""
-				(at 0.9652 -3.81 0)
+				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(hide yes)
@@ -1638,7 +1637,7 @@
 					)
 				)
 			)
-			(property "Description" "Unpolarized capacitor"
+			(property "Description" "Bidirectional transient-voltage-suppression diode"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1649,7 +1648,7 @@
 					)
 				)
 			)
-			(property "ki_keywords" "cap capacitor"
+			(property "ki_keywords" "diode TVS thyrector"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1660,7 +1659,7 @@
 					)
 				)
 			)
-			(property "ki_fp_filters" "C_*"
+			(property "ki_fp_filters" "TO-???* *_Diode_* *SingleDiode* D_*"
 				(at 0 0 0)
 				(show_name no)
 				(do_not_autoplace no)
@@ -1671,14 +1670,13 @@
 					)
 				)
 			)
-			(symbol "C_0_1"
+			(symbol "D_TVS_0_1"
 				(polyline
 					(pts
-						(xy -2.032 0.762)
-						(xy 2.032 0.762)
+						(xy -2.54 1.27) (xy -2.54 -1.27) (xy 2.54 1.27) (xy 2.54 -1.27) (xy -2.54 1.27)
 					)
 					(stroke
-						(width 0.508)
+						(width 0.254)
 						(type default)
 					)
 					(fill
@@ -1687,11 +1685,22 @@
 				)
 				(polyline
 					(pts
-						(xy -2.032 -0.762)
-						(xy 2.032 -0.762)
+						(xy 0.508 1.27) (xy 0 1.27) (xy 0 -1.27) (xy -0.508 -1.27)
 					)
 					(stroke
-						(width 0.508)
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 0) (xy -1.27 0)
+					)
+					(stroke
+						(width 0)
 						(type default)
 					)
 					(fill
@@ -1699,11 +1708,11 @@
 					)
 				)
 			)
-			(symbol "C_1_1"
+			(symbol "D_TVS_1_1"
 				(pin passive line
-					(at 0 3.81 270)
-					(length 2.794)
-					(name ""
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "A1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -1719,9 +1728,9 @@
 					)
 				)
 				(pin passive line
-					(at 0 -3.81 90)
-					(length 2.794)
-					(name ""
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "A2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -2052,7 +2061,7 @@
 	(wire
 		(pts
 			(xy 227.33 68.58)
-			(xy 227.33 73.66)
+			(xy 227.33 71.12)
 		)
 		(uuid "7b63df43-b055-4c02-b266-26d22e24b3e2")
 	)
@@ -2066,23 +2075,9 @@
 	(wire
 		(pts
 			(xy 227.33 158.75)
-			(xy 227.33 163.83)
+			(xy 227.33 161.29)
 		)
 		(uuid "7053c9f6-fe0e-41df-8980-5793ecbe08fd")
-	)
-	(wire
-		(pts
-			(xy 227.33 81.28)
-			(xy 227.33 83.82)
-		)
-		(uuid "a622617a-40bf-4d5e-a900-e1f02630c6c7")
-	)
-	(wire
-		(pts
-			(xy 227.33 171.45)
-			(xy 227.33 173.99)
-		)
-		(uuid "102f4767-7793-487b-83f3-11ed24dd2d9c")
 	)
 	(label "PUMP_C_GATE_G"
 		(at 54.61 66.04 0)
@@ -2404,7 +2399,7 @@
 		)
 		(uuid "6819f06e-b830-48a6-9209-a18ed6a13eef")
 	)
-	(label "PUMP_C_SNUB"
+	(label "NEUTRAL"
 		(at 227.33 71.12 0)
 		(effects
 			(font
@@ -2414,7 +2409,7 @@
 		)
 		(uuid "e1e3d0d0-7dac-478f-8570-3177991d31ff")
 	)
-	(label "PUMP_S_SNUB"
+	(label "NEUTRAL"
 		(at 227.33 161.29 0)
 		(effects
 			(font
@@ -2423,26 +2418,6 @@
 			(justify left bottom)
 		)
 		(uuid "be7a2fbf-7ada-4dca-9212-d7ec9c2c7d07")
-	)
-	(label "NEUTRAL"
-		(at 227.33 83.82 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "7d151822-012a-445b-8b53-0134a1c7e527")
-	)
-	(label "NEUTRAL"
-		(at 227.33 173.99 0)
-		(effects
-			(font
-				(size 1.27 1.27)
-			)
-			(justify left bottom)
-		)
-		(uuid "ed3592ce-a5ba-4198-ade6-576d588b2f88")
 	)
 	(hierarchical_label "PUMP_C_GATE"
 		(shape input)
@@ -3203,7 +3178,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BTA204S-600B"
+		(property "Value" "T835-800B"
 			(at 219.71 69.85 0)
 			(effects
 				(font
@@ -3239,7 +3214,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C256462"
+		(property "LCSC" "C2971290"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -3248,7 +3223,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTA204S-600B,118"
+		(property "MPN" "T835-800B"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -3257,7 +3232,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "WeEn Semiconductors"
+		(property "Manufacturer" "STMicroelectronics"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -3275,7 +3250,7 @@
 			)
 		)
 	
-		(property "Rating" "600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02"
+		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
 			(at 214.63 69.85 0)
 			(hide yes)
 			(effects
@@ -4073,7 +4048,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BTA204S-600B"
+		(property "Value" "T835-800B"
 			(at 219.71 160.02 0)
 			(effects
 				(font
@@ -4109,7 +4084,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C256462"
+		(property "LCSC" "C2971290"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
@@ -4118,7 +4093,7 @@
 				)
 			)
 		)
-		(property "MPN" "BTA204S-600B,118"
+		(property "MPN" "T835-800B"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
@@ -4127,7 +4102,7 @@
 				)
 			)
 		)
-		(property "Manufacturer" "WeEn Semiconductors"
+		(property "Manufacturer" "STMicroelectronics"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
@@ -4145,7 +4120,7 @@
 			)
 		)
 	
-		(property "Rating" "600 V 4 A snubberless 3Q Hi-Com triac, WeEn Rev.02"
+		(property "Rating" "800 V 8 A snubberless 3Q triac, ST DS2114 Rev 15 (VDRM 800 V (features p.1, ordering p.19), IT(RMS) 8 A, ITSM 80 A at 20 ms (Table 1 p.2), IGT 35 mA, IH 35 mA, IL 50 mA, (dI/dt)c 4.5 A/ms without snubber (Table 2 p.2), VTM 1.55 V at 11 A, IDRM 1 mA at 125 degC (Table 4 p.3), Rth(j-a) 70 K/W typical at 1 cm2 copper under the tab (Table 5 p.3))"
 			(at 214.63 160.02 0)
 			(hide yes)
 			(effects
@@ -4617,104 +4592,6 @@
 		)
 	)
 	(symbol
-		(lib_id "Device:C")
-		(at 227.33 77.47 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp yes)
-		(uuid "b13e4a31-e2e7-46b5-a248-9de41b7b2586")
-		(property "Reference" "C701"
-			(at 227.965 74.93 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "100nF_X2"
-			(at 227.965 80.01 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4"
-			(at 227.33 77.47 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 227.33 77.47 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor"
-			(at 227.33 77.47 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "C489079"
-			(at 227.33 77.47 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "MPX104K31C3KN15600"
-			(at 227.33 77.47 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "KNSCHA"
-			(at 227.33 77.47 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/47e9a4a3-362b-493f-94f4-03763acb1d51"
-					(reference "C701")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)"
-			(at 227.33 77.47 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
 		(lib_id "Connector:TestPoint")
 		(at 233.68 60.96 0)
 		(unit 1)
@@ -4803,200 +4680,6 @@
 	
 		(property "Rating" "mains copper"
 			(at 233.68 60.96 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Device:R")
-		(at 227.33 154.94 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp yes)
-		(uuid "56547453-c5d0-48bb-a6a1-6396726f975d")
-		(property "Reference" "R716"
-			(at 229.362 154.94 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "100"
-			(at 227.33 154.94 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "Resistor_SMD:R_2512_6332Metric"
-			(at 227.33 154.94 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 227.33 154.94 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Resistor"
-			(at 227.33 154.94 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "C35218"
-			(at 227.33 154.94 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "25121WF1000T4E"
-			(at 227.33 154.94 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "UNI-ROYAL"
-			(at 227.33 154.94 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/47e9a4a3-362b-493f-94f4-03763acb1d51"
-					(reference "R716")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "1% 1W 200V 2512 thick film, 100 ohm"
-			(at 227.33 154.94 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Device:C")
-		(at 227.33 167.64 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp yes)
-		(uuid "eccb1017-5b19-4b22-ac57-51aa02aba6d3")
-		(property "Reference" "C711"
-			(at 227.965 165.1 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "100nF_X2"
-			(at 227.965 170.18 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "Capacitor_THT:C_Rect_L13.0mm_W6.0mm_P10.00mm_FKS3_FKP3_MKS4"
-			(at 227.33 167.64 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 227.33 167.64 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Unpolarized capacitor"
-			(at 227.33 167.64 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "LCSC" "C489079"
-			(at 227.33 167.64 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "MPX104K31C3KN15600"
-			(at 227.33 167.64 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "KNSCHA"
-			(at 227.33 167.64 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(instances
-			(project "main-board"
-				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/47e9a4a3-362b-493f-94f4-03763acb1d51"
-					(reference "C711")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "Rating" "X2, 0.1 uF +-10 %, 310 VAC, -40..110 C, P=10 mm; safety-rated, mains-class capacitor (the part of the entry filter C101)"
-			(at 227.33 167.64 0)
 			(hide yes)
 			(effects
 				(font
@@ -5101,30 +4784,30 @@
 			)
 		))
 	(symbol
-		(lib_id "Device:R")
-		(at 227.33 64.77 0)
+		(lib_id "Device:D_TVS")
+		(at 227.33 64.77 270)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
-		(dnp yes)
-		(uuid "526e4ce4-2548-428e-b8fe-47c4a4358017")
-		(property "Reference" "R706"
-			(at 229.362 64.77 90)
+		(dnp no)
+		(uuid "7bf3f9a0-4314-5cf0-b96f-546332645140")
+		(property "Reference" "D701"
+			(at 229.87 63.5 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Value" "100"
-			(at 227.33 64.77 90)
+		(property "Value" "SMCJ400CA"
+			(at 229.87 66.04 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
 		)
-		(property "Footprint" "Resistor_SMD:R_2512_6332Metric"
+		(property "Footprint" "Diode_SMD:D_SMC"
 			(at 227.33 64.77 0)
 			(hide yes)
 			(effects
@@ -5142,7 +4825,43 @@
 				)
 			)
 		)
-		(property "Description" "Resistor"
+		(property "Description" "Bidirectional transient-voltage-suppression diode"
+			(at 227.33 64.77 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C151285"
+			(at 227.33 64.77 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "SMCJ400CA"
+			(at 227.33 64.77 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Littelfuse"
+			(at 227.33 64.77 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15"
 			(at 227.33 64.77 0)
 			(hide yes)
 			(effects
@@ -5154,14 +4873,38 @@
 		(instances
 			(project "main-board"
 				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/47e9a4a3-362b-493f-94f4-03763acb1d51"
-					(reference "R706")
+					(reference "D701")
 					(unit 1)
 				)
 			)
 		)
-	
-		(property "LCSC" "C35218"
-			(at 227.33 64.77 0)
+	)
+	(symbol
+		(lib_id "Device:D_TVS")
+		(at 227.33 154.94 270)
+		(unit 1)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "5fa05852-78e3-529a-9366-7d241816ab1e")
+		(property "Reference" "D711"
+			(at 229.87 153.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "SMCJ400CA"
+			(at 229.87 156.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Diode_SMD:D_SMC"
+			(at 227.33 154.94 0)
 			(hide yes)
 			(effects
 				(font
@@ -5169,8 +4912,8 @@
 				)
 			)
 		)
-		(property "MPN" "25121WF1000T4E"
-			(at 227.33 64.77 0)
+		(property "Datasheet" ""
+			(at 227.33 154.94 0)
 			(hide yes)
 			(effects
 				(font
@@ -5178,8 +4921,8 @@
 				)
 			)
 		)
-		(property "Manufacturer" "UNI-ROYAL"
-			(at 227.33 64.77 0)
+		(property "Description" "Bidirectional transient-voltage-suppression diode"
+			(at 227.33 154.94 0)
 			(hide yes)
 			(effects
 				(font
@@ -5187,13 +4930,49 @@
 				)
 			)
 		)
-		(property "Rating" "1% 1W 200V 2512 thick film, 100 ohm"
-			(at 227.33 64.77 0)
+		(property "LCSC" "C151285"
+			(at 227.33 154.94 0)
 			(hide yes)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(property "MPN" "SMCJ400CA"
+			(at 227.33 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Littelfuse"
+			(at 227.33 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "400 V stand-off bidirectional TVS, 1500 W at 10/1000 us; VBR 447 to 494 V at 1 mA, VC 648 V at 2.3 A, IR 1 uA at VR; DO-214AB (SMC); Littelfuse SMCJ series datasheet revised 11/20/15"
+			(at 227.33 154.94 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(instances
+			(project "main-board"
+				(path "/a338d47e-e900-4559-bf27-f47b8623c8bb/47e9a4a3-362b-493f-94f4-03763acb1d51"
+					(reference "D711")
+					(unit 1)
+				)
+			)
+		)
+	)
 )

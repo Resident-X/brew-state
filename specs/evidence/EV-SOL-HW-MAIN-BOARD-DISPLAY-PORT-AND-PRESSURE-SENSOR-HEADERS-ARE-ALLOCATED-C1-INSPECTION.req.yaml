@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T00:15:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board-v2/main-board.kicad_pcb
+  artifact_version: 0b7429798b0a982955a821e409e44d32296a23d3
+text: |
+  Read the pad nets of hardware/sunbeam-em7000/main-board-v2/main-board.kicad_pcb (sha256 9bcc3ebdd8a3c3f7e6d080947431c5375577251747638e63996a7dbebbad506e) at commit 0b7429798b0a982955a821e409e44d32296a23d3. J522 pad 3 is net BREW_SCL_X and pad 4 is BREW_SDA_X; each reaches the controller through one series resistor, R527 to net BREW_SCL on controller pin 92 and R528 to net BREW_SDA on pin 93. The controller pin table names pin 92 as PB6 and pin 93 as PB7. The alternate function that makes PB6 and PB7 the first serial port's transmit and receive (AF7) is the datasheet's, DS12110 Table 10, as recorded in the component specification; the pin table lists I2C4 (AF6) for the pair and not USART1, and the datasheet table was not re-read here. J522 pad 1 is net BRWD_3V3, the 3.3 V feed, and pad 2 is GND; the logic is 3.3 V because the controller pins are 3.3 V parts on the 3.3 V rail.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C1
+    type: satisfies

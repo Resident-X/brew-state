@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C19-ANALYSIS-2
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C19
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-15T00:05:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board-v2/leak-detection.md::Result; What the channel can resolve; The idle baseline
+  artifact_version: 0cb6e81cb021517202300bc01cddf656ebb0774b
+  verifier: claude (AI agent)
+text: |
+  Read hardware/sunbeam-em7000/main-board-v2/leak-detection.md at the commit stated in the artifact version against each clause, and recomputed its figures. Inputs checked against the version-2 records: shunt R105 is 1 mohm (parts-specification.yaml, WSK2512, 4-terminal), so 1 uV of signal is 1 mA; the converter is the AMC131M02 (U601); the front end R607 and R608 are 470 ohm with C602 4.7 nF across the pair, corner 1 / (2 pi x 940 ohm x 4.7 nF) = 36.0 kHz, far above 50 or 60 Hz. Gain 32 (the record's stated choice; gain 64 would clip at the 15 A rms overload). Noise, from the datasheet figure the record cites (1.75 uV rms at 4 kSPS, channel 0, gain 32, inputs shorted, typical; the record says it states none for channel 1, no maximum and nothing for circuit pickup): one estimate from N samples has an error of 1.75 mA / sqrt(N), and a change between two estimates taken the same way is sqrt(2) larger. For a 20 ms window, N = 80: 1.75 / 8.944 = 0.196 mA, 3 sigma 0.587 mA, of a change 0.83 mA. For 200 ms, N = 800: 0.0619 mA, 3 sigma 0.186 mA, of a change 0.263 mA. For 1 s, N = 4000: 0.0277 mA, 3 sigma 0.083 mA, of a change 0.117 mA. A 50 mA leak is 50 / 0.83 = 60 times the 20 ms change figure and 50 / 0.263 = 190 times the 200 ms one; 10 mA is 12 and 38 times; these match the record's table. Idle current: the record states it is an estimate derived there (about 30 to 55 mA, mostly the supply module: 20 to 40 mA, C101 7.9 mA, zero-crossing detector 1.8 mA, divider 0.28 mA, discharge strings 0.25 mA, summing to 30.2 to 50.2 mA at the stated parts, which the record rounds to 30 to 55 mA) until the bring-up measurement replaces it, and it states that the baseline's repeatability, a few mA to ten mA, is a guess, which is why 50 mA is called clear and 10 mA marginal. The record states what the channel does not resolve: 10 mA (marginal), a leak below the heater current's error while a heater is on (gain error 1.6 % of 5 A is 80 mA), which output leaks (only by toggling outputs one at a time), and current to protective earth. The pump-triac row follows the board as it now stands (no snubber, TVS clamps D701 and D711 passing at most 1 uA at their stand-off, triac off-state leakage at most 1 mA at VDRM and 125 degC against the 50 mA resolved). Not claimed: any measured noise or idle current, and the datasheet figures themselves were not re-fetched in this reading; they are taken as the record cites them.
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C19
+    type: satisfies

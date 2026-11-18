@@ -4,7 +4,7 @@ category: constraint
 title: The install keeps mains separated, contained and serviceable
 status: active
 priority: must
-version: 2
+version: 3
 text: |
   The retrofit puts a hobbyist-built assembly in a wet, hot, thermally cycling environment and asks it to switch several kilowatts for years. The install is where that either holds or does not.
 
@@ -17,6 +17,8 @@ rationale: |
   Serviceability is included because a build that must be partly dismantled to reach a routine service point will eventually be reassembled wrong, and the reassembly is what defeats the isolation. This is a safety criterion wearing maintenance clothes.
 
   Silent on enclosure material, ingress rating, wire gauge, gland type and layout. All are decisions with cost and availability consequences, and no bill of materials has been committed to yet.
+
+  The valve switch criterion is stated against the warmest enclosure air and a switch just released from being held, because a part that needs more drive to operate when warm is proven on a cold bench by a figure that does not describe the machine in service.
 links:
   - target: OBL-ELECTRICAL-THERMAL-SAFETY-001.C6
     type: derives-from

@@ -1,0 +1,19 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C18-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C18
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-15T00:05:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board-v2/main-board.pretty/TO-252-2_TabPin2_Triac.kicad_mod; hardware/sunbeam-em7000/separation-basis.yaml accepted_exceptions[0..3]; round gate log hw:verify ACCEPTED lines
+  artifact_version: 0cb6e81cb021517202300bc01cddf656ebb0774b
+  verifier: claude (AI agent)
+text: |
+  Checked at the commit stated in the artifact version, clause by clause. (1) The board's own library holds hardware/sunbeam-em7000/main-board-v2/main-board.pretty/TO-252-2_TabPin2_Triac.kicad_mod, whose electrical pads are 1 at (-5.04, -2.28) size 2.2 x 1.2, 2 (the tab, 6.4 x 5.8) at (1.26, 0) and 3 at (-5.04, 2.28): the middle-lead position carries no pad. (2) The schematic footprint fields of T701 and T711 in 700-pump-drives.kicad_sch both read main-board:TO-252-2_TabPin2_Triac, and the board file places two footprints of that name. (3) parts-specification.yaml lists T701 and T711 as ST T835-800B and layout-plan.md row BOARD-3 states the two-lead land with no middle-lead pad. (4) Distances computed from the footprint: tab pad left edge 1.26 - 3.20 = -1.94 mm, lead pad right edge -5.04 + 1.10 = -3.94 mm, a gap of 2.00 mm from the tab pad to each lead pad; lead pads 1 and 3 centres 4.56 mm apart less the 1.2 mm pad height is 3.36 mm. These match the figures in separation-basis.yaml. The 2.00 mm tab-to-lead gaps are below the signed 2.6 mm creepage and are covered by the four signed between entries accepted_exceptions[0] to [3] (T701.2 with T701.1 and T701.3, T711.2 with T711.1 and T711.3, creepage 2.0 mm), and the round gate's hw:verify report on commit 446c53a9 (the same board, sha256 0360f7ac9bef96288742e0b3bbebc238a0d12cacd1f65a1b6276a82803a7313a) prints ACCEPTED lines for exactly those four pairs, so the entries are used; the 3.36 mm lead-to-lead gap needs no entry. (5) separation-basis.yaml holds no entry citing 1.08 mm (grep finds none), so the four entries that excused a middle-lead pad 2 against pads 1 and 3 are gone, and its comment names the 3.36 mm and 2.00 mm distances measured on this land. The layout-rule check's own clearance figure for the land was not read separately; the gate's pass of hw:verify with no violation line and the four ACCEPTED lines is the report's evidence. Not claimed: that the 2.00 mm gaps meet the unamended basis (they do not, which is why the signed entries exist).
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C18
+    type: satisfies

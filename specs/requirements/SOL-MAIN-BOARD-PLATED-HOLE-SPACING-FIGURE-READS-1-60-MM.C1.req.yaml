@@ -1,12 +1,12 @@
 id: SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM.C1
 type: criterion
-title: The board's plated-hole spacing figure reads 1.60 mm in its rules table and its rules file
+title: The plated-hole spacing figure stays at 1.5 mm for this order and what a 1.60 mm figure would need is on record
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |-
-  The main board's design-rules.md row "Plated hole spacing" and the rule of that name in main-board.kicad_dru state 1.60 mm, with the working (twice the widest annulus, twice the ground zones' thermal-relief gap, the zone's minimum thickness) shown in the table, and a new layout review round is recorded on the changed design.
+  Resolution, 2026-11-07, signed by Claude on the owner's standing instruction (writer string 'david (signed by Claude on his standing instruction of 2026-11-07)'): the board's plated-hole spacing figure stays at 1.5 mm in design-rules.md and main-board.kicad_dru for this order and this item is not built, because about 55 pin pairs on 26 standard 2.54 mm headers sit at 1.54 to 1.55 mm hole edge to edge and a 1.60 mm figure would need a new same-connector exception class; no mains figure is involved. What the 1.60 mm figure would need, kept on record: the rules table row and the rule of that name state 1.60 mm with the working (twice the widest annulus, twice the ground zones' thermal-relief gap, the zone's minimum thickness) shown in the table, the exception class for those header pairs is signed, and a new layout review round is recorded on the changed design. Out of scope: moving copper, and the signed exceptions for connector pairs at their own pitch.
 links:
   - target: SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM
     type: criterion-of

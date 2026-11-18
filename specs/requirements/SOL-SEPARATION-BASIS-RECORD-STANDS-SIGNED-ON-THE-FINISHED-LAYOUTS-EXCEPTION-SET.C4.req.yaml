@@ -1,12 +1,12 @@
 id: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4
 type: criterion
-title: The same-part entries are creepage entries at the layout's gap and the record holds no clearance entry between two pads
+title: The same-part entries state the layout's gap, as creepage entries and as clearance entries for the twelve pairs the layout reports short
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  The committed record holds nine same-part creepage entries, for C606, the four sense-pad pairs of R105 and R605 to R608, each with accepted_mm equal to the pair's edge-to-edge pad gap in the layout, each below 1.5 mm and below the signed creepage, each of pair mains_to_mains, naming the part and the set N of neutral-referenced nets with a working voltage under 10 V in its reason and the entry fuse and branch fuses in its bounding element; it holds no between entry of constraint clearance, and none for the eighteen pairs of the twenty-seven under 1.5 mm that the finished layout reports no shortfall for. Out of scope is a pair of 1.5 mm or more.
+  The committed record holds six same-part creepage entries, for the two sense-pad pairs of R105 (pad 1 with pad 2 and pad 4 with pad 3) and R605 to R608, and none for C606 or for the R105 pairs pad 1 with pad 3 and pad 4 with pad 2, whose entries were removed as stale on 2026-11-07 (C606, SOL-SEPARATION-BASIS-STALE-C606-CREEPAGE-EXCEPTION-REMOVED) and on 2026-11-14 (R105), each with accepted_mm equal to the pair's edge-to-edge pad gap in the layout, each below 1.5 mm and below the signed creepage, each of pair mains_to_mains, naming the part and the set N of neutral-referenced nets with a working voltage under 10 V in its reason and the entry fuse and branch fuses in its bounding element. It also holds twelve same-part clearance entries, each between two pads of one part, for R101 to R104, R704, R705, R714 and R715 at 1.8 mm and for pad 5 of U701 and of U711 with pads 4 and 6 at 0.76 mm, each of pair mains_to_mains, each with accepted_mm equal to the pair's gap in the layout and below the signed terminal clearance of 2.0 mm, each stating in its reason that the gap is the part's own pad gap and the entry excuses only that pair. It holds no same-part entry for a pair under 1.5 mm that the finished layout reports no shortfall for, the C606 pair and the two R105 pairs named above included. Out of scope is a pair of 1.5 mm or more.
 links:
   - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET
     type: criterion-of

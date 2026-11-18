@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD-C3-TEST
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-17T08:48:44.811001Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_main_board_clamp_and_side.py::test_r301_stands_on_the_front_clear_of_the_crystal_with_no_exemption_and_joined_to_its_nets
+  artifact_version: a5ad8e938b7fb02a008aaa5a0c84f9117d7fc912
+attested_by: crun-a2de17f8c76e08aa
+links:
+  - target: SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C3
+    type: satisfies

@@ -6,7 +6,7 @@ import importlib.util, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location("G", os.path.join(HERE, "C_gen_sheets.py"))
 G = importlib.util.module_from_spec(spec); spec.loader.exec_module(G)
-PINS = {"Device:R": 2, "Device:C": 2, "Device:D_TVS": 2, "Diode:BAT54S": 3, "Device:Polyfuse": 2, "Connector_Generic:Conn_01x02": 2,
+PINS = {"Device:R": 2, "Device:C": 2, "Device:D_TVS": 2, "Diode:BAT54SW": 3, "Device:Polyfuse": 2, "Connector_Generic:Conn_01x02": 2,
         "Connector_Generic:Conn_01x03": 3, "Connector_Generic:Conn_01x04": 4, "Connector:TestPoint": 1, "74xGxx:74LVC1G17": 5}
 bad = 0
 seen_refs = set()

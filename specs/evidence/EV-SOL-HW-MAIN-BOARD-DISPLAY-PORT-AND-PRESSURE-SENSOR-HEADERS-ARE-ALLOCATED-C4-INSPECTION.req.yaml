@@ -1,0 +1,18 @@
+id: EV-SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED-C4-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C4
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-17T00:15:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: docs/sunbeam-em7000/controller-io.md::Allocated display and pressure channels
+  artifact_version: 895f48794d4f26dd09050686ce27cf6e8fbdb8a0
+text: |
+  Read docs/sunbeam-em7000/controller-io.md § Allocated display and pressure channels against the criterion. The section carries one row each for the display serial port (J522 pins 3 and 4, PB6 and PB7), the steam-path pressure sensor (J521 pins 3 and 4, PB8 and PB9) and the brew-path pressure sensor (J524 pin 4, PA6), each with direction, signal kind, count, header and controller pins, controller hardware and origin.
+links:
+  - target: SOL-HW-MAIN-BOARD-DISPLAY-PORT-AND-PRESSURE-SENSOR-HEADERS-ARE-ALLOCATED.C4
+    type: satisfies

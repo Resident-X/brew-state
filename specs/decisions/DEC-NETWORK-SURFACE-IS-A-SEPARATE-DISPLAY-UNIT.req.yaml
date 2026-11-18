@@ -2,7 +2,7 @@ id: DEC-NETWORK-SURFACE-IS-A-SEPARATE-DISPLAY-UNIT
 type: decision
 title: The network-facing surface is a separate display unit that reaches the controller only through a defined serial protocol
 status: active
-version: 1
+version: 2
 decided_by: david
 text: |-
   The display, the connected interface, sign-in, view and edit rights and the profile library belong to a separate display unit. The controller is reachable only through a defined serial protocol.
@@ -13,9 +13,9 @@ rationale: |
 
   Reversibility: The unit can be replaced or omitted without changing the controller, because the controller already works with no consumer present. Moving the network stack onto the controller later would reverse the segregation and is a harder step than the one taken here.
 
-  Consequences: The controller offers state and accepts requests only through the defined protocol, checks every profile it receives, and runs a delivery from its own memory without taking instructions from the display unit during it. The display unit holds sign-in, the view and edit rights and the profile library, and its absence or failure changes nothing about delivery. A display and its hardware channel are not in the enumerated channels of the controller design, so the display unit's task records that gap (DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C1). A delivery is started only by a control on the machine's own panel; the display unit and the connected interface choose what that control runs and never start a delivery (REQ-NO-REMOTE-ACTUATION-001.C4). The scheme for sign-in is not decided here.
+  Consequences: The controller offers state and accepts requests only through the defined protocol, checks every profile it receives, and runs a delivery from its own memory without taking instructions from the display unit during it. The display unit holds sign-in, the view and edit rights and the profile library, and its absence or failure changes nothing about delivery. The display unit's hardware channel is serial header J522 on the main controller board, the controller's first serial port at 3.3 V logic with 3.3 V and ground on the same header, which the board provides (SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C13); the display unit's task records that channel in the controller design's enumerated channels (DEL-DISPLAY-UNIT-AND-PROFILE-EDITOR.C1). A delivery is started only by a control on the machine's own panel; the display unit and the connected interface choose what that control runs and never start a delivery (REQ-NO-REMOTE-ACTUATION-001.C4). The scheme for sign-in is not decided here.
 options_considered:
-  - option: A separate display unit owns the network surface and reaches the controller only through a defined serial protocol
+  - option: A separate display unit owns the network surface and reaches the controller only through a defined serial protocol on the controller board's serial header J522
     reason_rejected: ""
   - option: The network stack runs on the controller
     reason_rejected: puts the largest and least trustworthy code on the unit that must stay correct, sharing its processor, memory and update path
@@ -23,7 +23,7 @@ options_considered:
     reason_rejected: simplest, but gives up editing, sharing and remote viewing
   - option: A pass-through exposing the controller's own surface to the network
     reason_rejected: makes the network the controller's interface and removes the checking point
-chosen: A separate display unit owns the network surface and reaches the controller only through a defined serial protocol
+chosen: A separate display unit owns the network surface and reaches the controller only through a defined serial protocol on the controller board's serial header J522
 links:
   - target: REQ-MACHINE-INTERFACE-001.C3
     type: addresses
