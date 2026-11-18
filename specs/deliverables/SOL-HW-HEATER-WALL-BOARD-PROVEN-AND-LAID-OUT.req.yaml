@@ -86,5 +86,5 @@ links:
     type: depends-on
 brief_confirmation:
   confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: cbf07cecdf1187acb57d377a3381dbb10e6cc2ef50e7b659ce91de5ec7980cde
+  fingerprint: 07b092ebc66661c68229f71ce0fae20bc1cb6fb3b75059311c570f2e1a8bd5ba
   gating_profile: ""
