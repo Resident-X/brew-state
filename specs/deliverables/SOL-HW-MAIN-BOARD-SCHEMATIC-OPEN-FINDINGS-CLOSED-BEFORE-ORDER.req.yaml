@@ -33,5 +33,5 @@ links:
     type: justified-by
 brief_confirmation:
   confirmer: claude-sonnet-5-5 independent brief reviewer
-  fingerprint: d3eb33fdc34bf2df950677cf2730e5e28a23befba62fffb69c9b0cbd707b1a99
+  fingerprint: acd443c4bf5eaf6177a4ad2fd3af42bd33859d9d2c6ef907ee9628a99bc23690
   gating_profile: ""
