@@ -1222,6 +1222,15 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
                        "before mains is connected", "coated before"):
             self.assertNotIn(phrase, header, phrase)
 
+    STALE_DAY_STATEMENTS = ("every other entry keeps its signer and", "they carry accepted_on 2026-11-14", "The record's top-level accepted_on reads 2026-11-07",
+                            "carry accepted_by naming that acceptance and accepted_on 2026-11-07.", "is entered on 2026-11-06", "is entered on 2026-11-05",
+                            "except the three entries the header names as accepted on 2026-11-07")
+
+    @staticmethod
+    def comment_text(text):
+        """Every comment line of the record, header and body, whitespace-normalised and joined."""
+        return " ".join(" ".join(line.strip().lstrip("#").split()) for line in text.splitlines() if line.strip().startswith("#"))
+
     def test_the_record_and_every_exception_carry_the_re_signing_day_and_the_header_states_it(self):
         # SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C4: The committed record's top-level accepted_on and the accepted_on of each of its 42 accepted_exceptions entries read 2026-11-18, the day the owner accepted the whole record in the working session, and the accepted_by of the record and of every entry names the owner's acceptance of that day in the session and quotes its words; no exception is dated later than the record. The header states that the owner accepted the whole record on 2026-11-18 in the working session, that Claude entered the acceptance in the record and in each of the 42 entries, and that no figure, pair, distance, reason or bound changed with the date, and states the earlier acceptances of 2026-11-05, 2026-11-06, 2026-11-07 and 2026-11-14 as history, each superseded on every entry by the acceptance of 2026-11-18, with no sentence stating an earlier day as the one the record or an entry now carries. The check's reader on the committed record finds it and every exception signed. The test fails on a record or an exception dated or signed otherwise, an exception dated after the record, or a header that does not state the acceptance and keep the earlier days as history. Out of scope is the derating policy and any field of the record other than accepted_by, accepted_on and the header.
         _, data = committed()
@@ -1248,10 +1257,19 @@ class CoatAfterBringUpAndTheReSigning(unittest.TestCase):
                        "now state the 0.51 mm gap", "the record's own accepted_on read 2026-11-14 as the latest acceptance",
                        "every other entry kept its signer and day", "HF115F-I/005-1HS3A now fitted as K201"):
             self.assertIn(phrase, header, phrase)
-        # no sentence of the header states a day other than 2026-11-18 as the one the record or an entry now carries
-        for stale in ("every other entry keeps its signer and", "they carry accepted_on 2026-11-14", "The record's top-level accepted_on reads 2026-11-07",
-                      "carry accepted_by naming that acceptance and accepted_on 2026-11-07."):
+        # no comment line of the record, header or body, states a day other than 2026-11-18 as the one the record or an entry now carries
+        for stale in self.STALE_DAY_STATEMENTS:
             self.assertNotIn(stale, header, stale)
+        comments = self.comment_text(record_text())
+        for stale in self.STALE_DAY_STATEMENTS:
+            self.assertNotIn(stale, comments, stale)
+        # the scan is real: a body comment that says an earlier day is the day an entry carries is caught
+        faulty = record_text().replace("  # accepted_by and accepted_on was entered on 2026-11-06", "  # accepted_by and accepted_on is entered on 2026-11-06", 1)
+        self.assertNotEqual(faulty, record_text())
+        self.assertIn("is entered on 2026-11-06", self.comment_text(faulty))
+        with self.assertRaises(AssertionError):
+            for stale in self.STALE_DAY_STATEMENTS:
+                self.assertNotIn(stale, self.comment_text(faulty), stale)
         signed, problems = reading()
         self.assertIsNotNone(signed)
         assert_reads_clean(self, problems)

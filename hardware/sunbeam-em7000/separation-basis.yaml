@@ -679,7 +679,7 @@ accepted_exceptions:
   # is covered by the first two entries; the lead pads 1 and 3 of T701 and T711 stand 3.36 mm apart on their two-lead
   # land and the U701 and U711 pins 3.3 mm or more, no shortfall against 2.6 mm, and each triac's tab pad stands 2.00 mm
   # from each of its lead pads, which the first four accepted_exceptions entries excuse at 2.0 mm of creepage. Every
-  # accepted_by and accepted_on is entered on 2026-11-06 (first entered 2026-11-05, see the header), except the three entries the header names as accepted on 2026-11-07.
+  # accepted_by and accepted_on was entered on 2026-11-06 (first entered 2026-11-05, three entries on 2026-11-07, see the header); every entry now reads 2026-11-18 by the owner's acceptance of that day.
   - pair: mains_to_mains
     constraint: creepage
     nets_a: ["/NEUTRAL", "/Mains entry and load feed/NEUTRAL_IN", "/SHUNT_SENSE_IN", "/SHUNT_SENSE_NEUTRAL", "/Supply voltage and current measurement/AMC_AIN0P", "/Supply voltage and current measurement/AMC_AIN0N", "/Supply voltage and current measurement/AMC_AIN1P", "/Supply voltage and current measurement/AMC_AIN1N", "/Supply voltage and current measurement/AMC_DCDC_OUT", "/Supply voltage and current measurement/AMC_DCDC_HGND", "/Supply voltage and current measurement/AMC_HGND", "/Supply voltage and current measurement/AMC_HLDO_IN", "/Supply voltage and current measurement/AMC_HLDO_OUT", "/Supply voltage and current measurement/VMEAS_DIV", "unconnected-(U601-GPO-Pad6)"]

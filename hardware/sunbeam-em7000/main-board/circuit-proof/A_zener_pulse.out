@@ -8,4 +8,5 @@ L 1.60 H: pulse 9.9 ms, peak 1.404 W against the curve's 3.022 W (ratio 0.46); e
 L 3.00 H: pulse 18.5 ms, peak 1.404 W against the curve's 1.624 W (ratio 0.86); energy 13.3 mJ against 30 mJ
 L 3.47 H: pulse 21.4 ms, peak 1.404 W against the curve's 1.404 W (ratio 1.00); energy 15.4 mJ against 30 mJ
 L 4.73 H: pulse 29.1 ms, peak 1.404 W against the curve's 1.030 W (ratio 1.36); energy 20.9 mJ against 30 mJ
-NOTE  clamp pulse at the M28 bound 4.73 H: outside the conservative extrapolation; the bound holds for every coil inductance up to 3.47 H without knowing it, and the bring-up reading (M34) confirms the coil is under it
+information: the M28 bound 4.73 H is outside the conservative extrapolation (ratio 1.36); the bound holds for every coil inductance up to 3.47 H without knowing it, and no source bounds the coil's inductance, so the bring-up reading (M34) must confirm it is under 3.4 H
+PASS  M34 limit 3.4 H: clamp pulse 20.9 ms, peak 1.404 W against the extrapolated line's 1.433 W (ratio 0.98)

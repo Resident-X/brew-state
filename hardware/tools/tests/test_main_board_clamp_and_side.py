@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import itertools
 import json
 import datetime
 import math
@@ -728,6 +729,92 @@ def pad_courtyard_gaps():
     return TEST_POINT_PITCH_MM - pad_radius - reach, TEST_POINT_PITCH_MM - 2 * reach
 
 
+def courtyard_clear_pitch_mm():
+    """From the footprint file and the rule: the centre-to-centre pitch, in mm, under which a test point's pad stands nearer than the rule to the courtyard of the next one."""
+    pad_gap_at_pitch, _ = pad_courtyard_gaps()
+    return TEST_POINT_PITCH_MM - (pad_gap_at_pitch - courtyard_rule_mm())
+
+
+MAINS_TEST_POINTS = tuple(f"TP{n}" for n in (*range(101, 109), *range(603, 609), 702, 712))
+#: The signed minimum pitch of two low-voltage test points and of any pair with a mains-side test point, in mm (layout plan TEST-1, owner-sign-off S-80).
+SIGNED_LOW_VOLTAGE_PITCH_MM = 1.5
+MAINS_TEST_POINT_PITCH_MM = 2.5
+#: The pitch under which a pair of low-voltage test points is a pair the workmanship record signs, in mm.
+SIGNED_PAIR_ABOVE_MM = 1.8
+
+
+def test_point_centres(tree):
+    """The pad centre of each test point of the board, by reference."""
+    table = board_geometry.net_table(tree)
+    centres = {}
+    for reference, footprint in footprints(tree).items():
+        if reference.startswith("TP"):
+            pads = board_geometry.footprint_pads(footprint, table)
+            if len(pads) != 1:
+                raise AssertionError(f"{reference} has {len(pads)} pads, not one")
+            centres[reference] = (pads[0].centre[0], pads[0].centre[1])
+    return centres
+
+
+def signed_test_point_pairs(text):
+    """The pairs S-80 of the sign-off record lists, as ({frozenset pair: mm}, [(first, last, mm)]): the pairs written TPa/TPb d and the range written TPa to TPb d."""
+    row = next((line for line in text.splitlines() if line.startswith("- S-80.")), None)
+    if row is None:
+        raise AssertionError("no S-80 row in the sign-off record")
+    listed = row[row.index("(TP"):]
+    pairs, ranges = {}, []
+    for segment in re.findall(r"(TP\d+(?:/TP\d+)?(?: and TP\d+/TP\d+)*(?: to TP\d+)? \d\.\d+)", listed):
+        figure = float(segment.rsplit(" ", 1)[1])
+        for a, b in re.findall(r"(TP\d+)/(TP\d+)", segment):
+            pairs[frozenset((a, b))] = figure
+        ranges += [(a, b, figure) for a, b in re.findall(r"(TP\d+) to (TP\d+)", segment)]
+    return pairs, ranges
+
+
+def test_point_pair_problems(centres, signed_text):
+    """What the board's test-point pitches lack of the signed record: a pair nearer than the signed figure, a pair under 1.8 mm that S-80 does not list, a listed pair that is not under it or whose figure differs from the board's, and a mains-side pair nearer than 2.5 mm."""
+    pairs, ranges = signed_test_point_pairs(signed_text)
+    problems = []
+    measured = {}
+    names = sorted(centres)
+    for position, first in enumerate(names):
+        for second in names[position + 1:]:
+            measured[frozenset((first, second))] = math.dist(centres[first], centres[second])
+    near = {pair: d for pair, d in measured.items() if d < SIGNED_PAIR_ABOVE_MM}
+    for pair, d in sorted(measured.items(), key=lambda item: item[1]):
+        if d < SIGNED_LOW_VOLTAGE_PITCH_MM - 1e-6:
+            problems.append(f"{'/'.join(sorted(pair))} stands {d:.3f} mm apart, under the signed {SIGNED_LOW_VOLTAGE_PITCH_MM} mm")
+        if d < MAINS_TEST_POINT_PITCH_MM and pair & set(MAINS_TEST_POINTS):
+            problems.append(f"{'/'.join(sorted(pair))} involves a mains-side test point and stands {d:.3f} mm apart, under {MAINS_TEST_POINT_PITCH_MM} mm")
+    covered = set()
+    for pair, d in pairs.items():
+        if pair not in measured:
+            problems.append(f"S-80 lists {'/'.join(sorted(pair))}, which the board does not hold")
+        elif abs(measured[pair] - d) > 0.0051:
+            problems.append(f"S-80 lists {'/'.join(sorted(pair))} at {d} mm, the board has {measured[pair]:.3f} mm")
+        covered.add(pair)
+    for first, last, d in ranges:
+        low, high = int(first[2:]), int(last[2:])
+        members = {f"TP{n}" for n in range(low, high + 1)}
+        inside = {pair for pair, value in near.items() if pair <= members and abs(value - d) <= 0.0051}
+        if not inside:
+            problems.append(f"S-80 lists {first} to {last} at {d} mm and the board holds no such pair")
+        covered |= inside
+    for pair, d in sorted(near.items(), key=lambda item: item[1]):
+        if pair not in covered:
+            problems.append(f"{'/'.join(sorted(pair))} stands {d:.3f} mm apart, under {SIGNED_PAIR_ABOVE_MM} mm, and S-80 does not list it")
+    for pair in sorted(covered, key=sorted):
+        if pair not in near:
+            problems.append(f"S-80 lists {'/'.join(sorted(pair))}, which stands at {measured.get(pair, 0):.3f} mm, not under {SIGNED_PAIR_ABOVE_MM} mm")
+    return problems
+
+
+def courtyard_pair_lines(lines):
+    """The test_point_courtyard lines of a check run that name a test point against another test point, as frozenset pairs."""
+    return {frozenset(m.groups()) for m in (re.search(r"point (TP\d+) is [\d.]+ mm from the [FB]\.CrtYd courtyard of (TP\d+)", line)
+                                          for line in lines if "test_point_courtyard" in line) if m}
+
+
 def courtyard_rule_mm():
     """The test-point-to-courtyard distance the committed project holds, its text variable TEST_COURTYARD_MM."""
     with open(os.path.join(REPO, PROJECT), encoding="utf-8") as handle:
@@ -1129,11 +1216,36 @@ class FullCheck(Committed):
         self.assertAlmostEqual(yard_gap, 1.0)
         self.assertAlmostEqual(pad_gap, 1.25)
         self.assertGreaterEqual(pad_gap + 1e-9, rule)
-        # Fault: a pitch of 2.2 mm leaves the courtyards 0.7 mm apart, under the rule; the stated pitch is the footprint's own description.
-        self.assertLess(TEST_POINT_PITCH_MM - 0.3 - 2 * 0.75, rule)
+        # The pitch under which the rule is broken is derived from the footprint file and the rule; the library's stated pitch clears it, and the board's own pitches are measured.
+        self.assertAlmostEqual(courtyard_clear_pitch_mm(), 2.25)
+        self.assertLess(courtyard_clear_pitch_mm(), TEST_POINT_PITCH_MM)
         self.assertIn(f"can stand {TEST_POINT_PITCH_MM:g} mm apart", read_text("main-board.pretty", TEST_POINT_FOOTPRINT + ".kicad_mod"))
+        centres = test_point_centres(self.tree)
+        self.assertEqual(len(centres), TEST_POINT_COUNT)
+        sign_off = read_text("owner-sign-off.md")
+        self.assertEqual(test_point_pair_problems(centres, sign_off), [])
+        listed, ranges = signed_test_point_pairs(sign_off)
+        self.assertEqual((len(listed), ranges), (6, [("TP831", "TP835", 1.55)]))
+        # Fault: a test point moved beside another makes a new pair under 1.8 mm that S-80 does not list, or under the signed 1.5 mm; a mains-side one nearer than 2.5 mm is caught.
+        moved = dict(centres, TP501=(centres["TP502"][0] + 1.7, centres["TP502"][1]))
+        self.assertTrue(any(problem.startswith("TP501/TP502 stands 1.700 mm apart, under 1.8 mm") for problem in test_point_pair_problems(moved, sign_off)))
+        closer = dict(centres, TP501=(centres["TP502"][0] + 1.4, centres["TP502"][1]))
+        self.assertTrue(any("under the signed 1.5 mm" in problem for problem in test_point_pair_problems(closer, sign_off)))
+        mains = dict(centres, TP101=(centres["TP501"][0] + 2.0, centres["TP501"][1]))
+        self.assertTrue(any("mains-side" in problem for problem in test_point_pair_problems(mains, sign_off)))
+        # Fault: a pair S-80 lists that the board has moved apart, and a sign-off record without the row, are each found.
+        apart = dict(centres, TP792=(centres["TP792"][0] + 1.0, centres["TP792"][1]))
+        self.assertTrue(test_point_pair_problems(apart, sign_off))
+        self.assertRaises(AssertionError, test_point_pair_problems, centres, sign_off.replace("- S-80.", "- S-79."))
         # The same full-check run as the test above: no hole_to_hole violation, and each pair of plated pads at 2.0 mm of each of the five headers accepted by exactly one line.
         lines, _, _ = full_check_lines()
+        # Each pair of test points the check reports against each other's courtyard is a pair S-80 signs, and the check reports at least one.
+        reported = courtyard_pair_lines(lines)
+        self.assertTrue(reported)
+        signed_near = {frozenset(pair) for pair in itertools.combinations(sorted(centres), 2)
+                       if math.dist(centres[pair[0]], centres[pair[1]]) < courtyard_clear_pitch_mm()}
+        self.assertLessEqual(reported, signed_near)
+        self.assertEqual(courtyard_pair_lines(["WARNING | x | test_point_courtyard | pad | point TP1 is 0.25 mm from the B.CrtYd courtyard of C1"]), set())
         self.assertEqual(plated_hole_problems(lines, self.tree), [])
         for header in SAME_CONNECTOR_HEADERS:
             accepted, failed = plated_hole_lines(lines, header)

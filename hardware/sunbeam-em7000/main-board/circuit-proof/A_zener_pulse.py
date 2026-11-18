@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pulse load of the interlock coil clamp Z201 / Z202 (BZX84-C12) by power and energy, for any K201 coil inductance.
 
-Run:  python3 -I A_zener_pulse.py > A_zener_pulse.out   (exit 0 when the bound at the M28 inductance holds; it prints the inductance at which it is reached)
+Run:  python3 -I A_zener_pulse.py > A_zener_pulse.out   (exit 0 when the M34 limit of 3.4 H, the inductance bring-up must read the coil under, holds against the extrapolated pulse-power line; exit 1 when it does not. The 3.47 H bound and the pulse at the 4.73 H bound of M28 are printed as information)
 
 Circuit (sheet 102, interlock): the K201 coil runs from +5V (A1) to POL_COIL_LO (A2), switched low by Q202. Two clamp branches in parallel,
 each a BZX84-C12 (cathode on POL_COIL_LO) in series with a BAS116 to +5V. When the switch opens the coil current circulates through a branch
@@ -32,6 +32,7 @@ VZ = 12.70 + 25 * (I0 - 5e-3)
 P_PEAK = VZ * I0
 T_PER_H = 6.159e-3
 L_M28 = 4.73
+L_M34 = 3.4
 P_10MS, E_10MS = 3.0, 3.0 * 10e-3
 
 
@@ -58,7 +59,9 @@ for L in (1.0, 1.6, 3.0, L_POWER, L_M28):
     tp = T_PER_H * L
     print("L %.2f H: pulse %.1f ms, peak %.3f W against the curve's %.3f W (ratio %.2f); energy %.1f mJ against %.0f mJ"
           % (L, tp * 1e3, P_PEAK, curve(tp), P_PEAK / curve(tp), 0.5 * L * I0 ** 2 * 1e3, E_10MS * 1e3))
-ok = P_PEAK <= curve(T_PER_H * L_M28)
-print("%s  clamp pulse at the M28 bound %.2f H: %s; the bound holds for every coil inductance up to %.2f H without knowing it, and the bring-up reading (M34) confirms the coil is under it"
-      % ("PASS" if ok else "NOTE", L_M28, "inside" if ok else "outside the conservative extrapolation", L_POWER))
-sys.exit(0)
+ok = P_PEAK <= curve(T_PER_H * L_M34)
+print("information: the M28 bound %.2f H is %s the conservative extrapolation (ratio %.2f); the bound holds for every coil inductance up to %.2f H without knowing it, and no source bounds the coil's inductance, so the bring-up reading (M34) must confirm it is under %.1f H"
+      % (L_M28, "inside" if P_PEAK <= curve(T_PER_H * L_M28) else "outside", P_PEAK / curve(T_PER_H * L_M28), L_POWER, L_M34))
+print("%s  M34 limit %.1f H: clamp pulse %.1f ms, peak %.3f W against the extrapolated line's %.3f W (ratio %.2f)"
+      % ("PASS" if ok else "FAIL", L_M34, T_PER_H * L_M34 * 1e3, P_PEAK, curve(T_PER_H * L_M34), P_PEAK / curve(T_PER_H * L_M34)))
+sys.exit(0 if ok else 1)

@@ -8,12 +8,12 @@ The files below were written per group of sheets: A mains entry and interlock, B
 
 | Group | PASS rows | FINDING rows | N/A rows |
 |---|---|---|---|
-| A | 41 | 18 | 0 |
+| A | 40 | 19 | 0 |
 | B | 39 | 13 | 6 |
 | C | 111 | 44 | 0 |
 | D | 173 | 35 | 0 |
 | E | 58 | 4 | 0 |
-| Total | 428 | 114 | 6 |
+| Total | 427 | 115 | 6 |
 
 ## Board-level items
 
@@ -59,7 +59,7 @@ Datasheets read 2026-10-29, saved under the work package's scratch folder, cited
 | R203, R204 | PARTS-1, DERATE-2 | PASS | 5.6 Mohm 1 % 0603: 75 V max working against 5.25 V; dissipation 5 uW |
 | R205, R206 | PARTS-1, FAULT-1 | PASS (departure F1) | 100 kohm node discharges added to the record's design to remove the held-high holding; shown in `circuit-proof/A_removal_gate_high_rec.cir` against `_fix.cir` |
 | Q201, Q202 | PINV-1, PARTS-1, DERATE-2, FAULT-1 | FINDING (F3, F2) | NX3008NBK: drain stress at turn-off at most 5.25 + 12.7 + diode drop = about 19.2 V across the stack (30 V, 64 %) and shared by two in series; gate at most 5.25 V against +-8 V; VGSth max 1.1 V (line: 1.0 V), RDSon given at 10 mA not 90 mA, gate leakage 1 uA (timeout row F2); stock 3753 on 2026-10-29 |
-| Z201, Z202 | POLAR-1, PARTS-1, DERATE-2 | PASS (pulse bound to 3.47 H; inductance carried to bring-up as M34) | BZX84-C12: cathode on POL_COIL_LO, anode toward the diode; 250 mW continuous. Flyback pulse by power and energy (`circuit-proof/A_zener_pulse.py`): one zener taking the whole 94.1 mA at 14.93 V is 1.404 W peak, held for the whole flyback (6.159 ms/H x L); against the maker's Fig. 1 (Tj 150 degC, about 3 W at 10 ms where it ends, extrapolated beyond at constant energy, 30 mJ) the pulse is inside for every coil inductance up to 3.47 H; the stored energy is 4.43 mJ/H. The coil's inductance is in no source: bring-up row M34 (`open-items.md`) reads it on a spare relay before mains against at most 3.4 H, with a footprint-compatible zener swap as the fallback; the two parallel branches are not counted as sharing |
+| Z201, Z202 | POLAR-1, PARTS-1, DERATE-2 | FINDING (open: pulse inside the maker's curve only to 3.47 H, the record's worst case is 4.73 H, no source bounds the coil's inductance; carried to bring-up as M34) | BZX84-C12: cathode on POL_COIL_LO, anode toward the diode; 250 mW continuous. Flyback pulse by power and energy (`circuit-proof/A_zener_pulse.py`): one zener taking the whole 94.1 mA at 14.93 V is 1.404 W peak, held for the whole flyback (6.159 ms/H x L); against the maker's Fig. 1 (Tj 150 degC, about 3 W at 10 ms where it ends, extrapolated beyond at constant energy, 30 mJ) the pulse is inside for every coil inductance up to 3.47 H; the stored energy is 4.43 mJ/H. The coil's inductance is in no source: bring-up row M34 (`open-items.md`) reads it on a spare relay before mains against at most 3.4 H, with a footprint-compatible zener swap as the fallback; the two parallel branches are not counted as sharing |
 | D205, D206 | POLAR-1, DERATE-2 | PASS | BAS116 in the clamp: anode on the zener's anode, cathode on +5V; forward current at most 94 mA against 215 mA (sheet continuous); reverse 5.25 V against 85 V |
 | TP201-TP206 | PINV-1 | PASS | one pad each, on the net named; TP206 is on +5V at the coil |
 
