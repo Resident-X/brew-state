@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import datetime
 import math
 import os
@@ -691,6 +692,72 @@ def covered_shortfall_problems(accepted):
             if "accepted exception:" not in line or "reason: " not in line or "bounded by: " not in line]
 
 
+#: The small test-point footprint the board's own library holds, the number of test points the board carries, the centre-to-centre
+#: pitch the board holds them to (the footprint's own description says "can stand 2.5 mm apart"), and the five harness headers
+#: whose plated holes the separation basis record accepts by a same_connector_pins entry.
+TEST_POINT_FOOTPRINT = "TestPoint_Pad_D1.0mm_Tight"
+TEST_POINT_COUNT = 84
+TEST_POINT_PITCH_MM = 2.5
+SAME_CONNECTOR_HEADERS = ("J630", "J635", "J791", "J821", "J861")
+
+
+def pad_footprints_of_test_points(tree):
+    """The library item of each footprint whose reference begins TP, by reference."""
+    return {reference: library_item(footprint) for reference, footprint in footprints(tree).items() if reference.startswith("TP")}
+
+
+def pad_footprint_problems(items):
+    """What the test points of a board lack of the criterion: the count, or any that is not the small library footprint."""
+    problems = []
+    if len(items) != TEST_POINT_COUNT:
+        problems.append(f"{len(items)} test points, not {TEST_POINT_COUNT}")
+    problems += [f"{reference} uses {item}" for reference, item in sorted(items.items()) if item != TEST_POINT_FOOTPRINT]
+    return problems
+
+
+def pad_courtyard_gaps():
+    """From the library file of the small test-point footprint: the pad-to-courtyard gap and the courtyard-to-courtyard gap, in mm, of two at the board's pitch."""
+    with open(os.path.join(BOARD, "main-board.pretty", TEST_POINT_FOOTPRINT + ".kicad_mod"), encoding="utf-8") as handle:
+        module = sexpr.parse_one(handle.read())
+    circles = [item for item in sexpr.children(module, "fp_circle") if str(sexpr.child(item, "layer")[1]) == "F.CrtYd"]
+    if len(circles) != 1:
+        raise AssertionError(f"{len(circles)} courtyard circles in the footprint, not one")
+    reach = math.dist(board_geometry.xy(sexpr.child(circles[0], "center"), "the courtyard"), board_geometry.xy(sexpr.child(circles[0], "end"), "the courtyard"))
+    pad = sexpr.children(module, "pad")[0]
+    pad_radius = float(sexpr.child(pad, "size")[1]) / 2
+    return TEST_POINT_PITCH_MM - pad_radius - reach, TEST_POINT_PITCH_MM - 2 * reach
+
+
+def courtyard_rule_mm():
+    """The test-point-to-courtyard distance the committed project holds, its text variable TEST_COURTYARD_MM."""
+    with open(os.path.join(REPO, PROJECT), encoding="utf-8") as handle:
+        return float(json.load(handle)["text_variables"]["TEST_COURTYARD_MM"])
+
+
+def plated_hole_lines(lines, header):
+    """The report lines that accept the plated-hole spacing of one header, and those that fail it: a spacing_exception line naming the connector."""
+    named = [line for line in lines if line_rule(line) == "spacing_exception" and f"plated-hole spacing of connector {header} " in line]
+    return [line for line in named if line.startswith("ACCEPTED")], [line for line in named if line.startswith("VIOLATION")]
+
+
+def plated_pairs_at_pitch(tree, header, pitch_mm=2.0):
+    """How many pairs of plated pads of one header of the layout stand pitch_mm apart centre to centre: the plated-hole shortfalls the rule can report for it."""
+    centres = board_check.plated_pad_centres(footprints(tree)[header])
+    return sum(1 for position, one in enumerate(centres) for other in centres[position + 1:]
+               if abs(math.dist(one, other) - pitch_mm) <= board_check.PITCH_TOLERANCE_MM + 1e-9)
+
+
+def plated_hole_problems(lines, tree):
+    """What a full-check result lacks of the plated-hole rule: a hole_to_hole violation, or a header whose pairs at its pitch are not each accepted by one line."""
+    problems = [f"hole_to_hole violation: {line}" for line in lines if line.startswith("VIOLATION") and "hole_to_hole" in line]
+    for header in SAME_CONNECTOR_HEADERS:
+        accepted, failed = plated_hole_lines(lines, header)
+        pairs = plated_pairs_at_pitch(tree, header)
+        if pairs < 2 or len(accepted) != pairs or failed:
+            problems.append(f"{header}: {len(accepted)} accepted and {len(failed)} failed plated-hole lines for {pairs} pairs at pitch")
+    return problems
+
+
 def full_check_lines():
     """The lines of the repository's own pre-order check of the main board design alone, as the report prints them."""
     accepted, warned = [], []
@@ -1022,7 +1089,7 @@ class SheetFigures(Committed):
 
 class FullCheck(Committed):
     # SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4: The full pre-order check on the committed main board passes with no violation line other than its signed accepted lines, and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The evidence names the gate run and the commit it ran on. Out of scope: the owner's decision on vias in pads.
-    # SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8: The pre-order check, run on the finished layout against the records the schematic leaf authored, passes, and a failing rule is resolved by a change to the design or to a record, never by judging the failure unimportant. The run includes the plated-hole spacing rule with no hole_to_hole violation outside the same_connector_pins entries of the record, each such entry and each mains exception entry confirmed against the finished layout, and the test-point courtyard rule, which the board's 96 test points meet by using a small test-point footprint in the board's own library whose courtyard clears that rule at their pitch. Authoring the records, and comparing the cable between the two boards' headers pin for pin, are out of scope.
+    # SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8: The pre-order check, run on the finished layout against the records the schematic leaf authored, passes, and a failing rule is resolved by a change to the design or to a record, never by judging the failure unimportant. The run includes the plated-hole spacing rule with no hole_to_hole violation outside the same_connector_pins entries of the record, each such entry and each mains exception entry confirmed against the finished layout, and the test-point courtyard rule, which the board's 84 test points meet by using a small test-point footprint in the board's own library whose courtyard clears that rule at their pitch. Authoring the records, and comparing the cable between the two boards' headers pin for pin, are out of scope.
     def test_the_full_pre_order_check_of_the_committed_main_board_has_no_violation_line_beyond_its_accepted_ones(self):
         # SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR.C1: A run of the pre-order check on the finished main board lists no mains-to-mains shortfall pair that no draft entry of the separation basis record covers, and each pair added to the record has a draft entry stating its ground and the element bounding the fault. Out of scope is signing any entry.
         lines, accepted, warned = full_check_lines()
@@ -1046,6 +1113,37 @@ class FullCheck(Committed):
         for token in ("bounded by: ", "reason: ", "accepted exception:"):
             self.assertEqual(covered_shortfall_problems([covering.replace(token, "")]),
                              [f"covering line without ground or bound: {covering.replace(token, '')}"])
+
+    # SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C8: The pre-order check, run on the finished layout against the records the schematic leaf authored, passes, and a failing rule is resolved by a change to the design or to a record, never by judging the failure unimportant. The run includes the plated-hole spacing rule with no hole_to_hole violation outside the same_connector_pins entries of the record, each such entry and each mains exception entry confirmed against the finished layout, and the test-point courtyard rule, which the board's 84 test points meet by using a small test-point footprint in the board's own library whose courtyard clears that rule at their pitch. Authoring the records, and comparing the cable between the two boards' headers pin for pin, are out of scope.
+    def test_the_84_test_points_use_the_small_footprint_that_clears_the_courtyard_rule_and_each_same_connector_header_pair_is_accepted_once(self):
+        # The test points: all 84 on the board's own small footprint.
+        items = pad_footprints_of_test_points(self.tree)
+        self.assertEqual(pad_footprint_problems(items), [])
+        self.assertIn("83 test points, not 84", pad_footprint_problems({k: items[k] for k in sorted(items)[1:]}))
+        renamed = dict(items, **{sorted(items)[0]: "TestPoint_Pad_D1.0mm_Drill0.5mm"})
+        self.assertEqual(pad_footprint_problems(renamed), [f"{sorted(items)[0]} uses TestPoint_Pad_D1.0mm_Drill0.5mm"])
+        # The courtyard arithmetic: the footprint's drawn courtyard at the board's pitch leaves the rule's distance, pad to courtyard and courtyard to courtyard.
+        rule = courtyard_rule_mm()
+        pad_gap, yard_gap = pad_courtyard_gaps()
+        self.assertEqual(rule, 1.0)
+        self.assertAlmostEqual(yard_gap, 1.0)
+        self.assertAlmostEqual(pad_gap, 1.25)
+        self.assertGreaterEqual(pad_gap + 1e-9, rule)
+        # Fault: a pitch of 2.2 mm leaves the courtyards 0.7 mm apart, under the rule; the stated pitch is the footprint's own description.
+        self.assertLess(TEST_POINT_PITCH_MM - 0.3 - 2 * 0.75, rule)
+        self.assertIn(f"can stand {TEST_POINT_PITCH_MM:g} mm apart", read_text("main-board.pretty", TEST_POINT_FOOTPRINT + ".kicad_mod"))
+        # The same full-check run as the test above: no hole_to_hole violation, and each pair of plated pads at 2.0 mm of each of the five headers accepted by exactly one line.
+        lines, _, _ = full_check_lines()
+        self.assertEqual(plated_hole_problems(lines, self.tree), [])
+        for header in SAME_CONNECTOR_HEADERS:
+            accepted, failed = plated_hole_lines(lines, header)
+            self.assertEqual((len(accepted), failed), (plated_pairs_at_pitch(self.tree, header), []), header)
+            self.assertGreaterEqual(len(accepted), 2, header)
+            # Fault: the run without one of that header's lines, and with a line repeated, are each found.
+            self.assertEqual(len(plated_hole_problems([line for line in lines if line != accepted[0]], self.tree)), 1)
+            self.assertEqual(len(plated_hole_problems(lines + accepted[:1], self.tree)), 1)
+        synthetic = board_check.Violation("main-board", "hole_to_hole", "J630", "a synthetic fault").line()
+        self.assertEqual(len(plated_hole_problems(lines + [synthetic], self.tree)), 1)
 
     # SOL-MAIN-BOARD-BACK-SIDE-PARTS-AND-VIAS-IN-PADS-MOVED-BY-THE-PLACEMENT-METHOD.C4: The full pre-order check on the committed main board passes with no violation line other than its signed accepted lines, and the locked critical copper at the seven clamps, the NTC_COF, NTC_STM and NTC_WAND copper, carries the copper lock flag on the committed board. The evidence names the gate run and the commit it ran on. Out of scope: the owner's decision on vias in pads.
     def test_the_locked_critical_copper_of_the_thermistor_nets_carries_the_copper_lock_flag_on_the_committed_board(self):
