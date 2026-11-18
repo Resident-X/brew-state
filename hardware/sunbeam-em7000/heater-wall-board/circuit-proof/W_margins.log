@@ -53,6 +53,21 @@ PASS  partial-failure current above the carried threshold: 2.69 A against the fi
    Reading 2, the plot is concave, not straight, so the chord understates it: the dissipation that keeps Tj at 125 degC at that case temperature is 8.94 W (18.8 K / 2.1 K/W); solving P = VTO x 0.9 I + RD I^2 (0.9 = mean of |sine|, a derivation that reproduces the sheet's 4.84 W at 5.38 A and 18.6 W at 16 A) gives 9.0 A, the 0.5 current share 4.51 A; read directly off the curve at that case temperature about 8 to 9 A [reading]
 NOTE  triac current share at the best-case case temperature: the 0.5 share is 3.85 A (chord) to 4.51 A (model) against the steam element's 5.38 A: SHORT under either reading; the 8 A of row (e) is the rating at Tc 86 degC and is not the share at this case temperature. Owner-held (D11); recorded in owner-sign-off.md W-5
 
+== (e) amendment 2026-11-19: case temperature and current share at the external air (25 and 40 degC), continuous full power on both triacs (9.09 W)
+   air 25 degC, h = 10, Rc = 0 K/W: steam triac junction 96.4 degC, case 86.2 degC; 0.5 current share 7.96 A (chord, capped at the 16 A rating's share) to 7.95 A (model) against the steam element's 5.38 A
+   air 25 degC, h = 10, Rc = 1 K/W: steam triac junction 105.5 degC, case 95.3 degC; 0.5 current share 6.09 A (chord, capped at the 16 A rating's share) to 6.49 A (model) against the steam element's 5.38 A
+   air 25 degC, h = 10, Rc = 3 K/W: steam triac junction 123.6 degC, case 113.5 degC; 0.5 current share 2.37 A (chord, capped at the 16 A rating's share) to 3.00 A (model) against the steam element's 5.38 A
+   air 25 degC, h = 5, Rc = 0 K/W: steam triac junction 123.8 degC, case 113.6 degC; 0.5 current share 2.33 A (chord, capped at the 16 A rating's share) to 2.96 A (model) against the steam element's 5.38 A
+   air 25 degC, h = 5, Rc = 1 K/W: steam triac junction 132.9 degC, case 122.7 degC; 0.5 current share 0.46 A (chord, capped at the 16 A rating's share) to 0.67 A (model) against the steam element's 5.38 A
+   air 25 degC, h = 5, Rc = 3 K/W: steam triac junction 151.1 degC, case 140.9 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
+   air 40 degC, h = 10, Rc = 0 K/W: steam triac junction 111.4 degC, case 101.2 degC; 0.5 current share 4.88 A (chord, capped at the 16 A rating's share) to 5.46 A (model) against the steam element's 5.38 A
+   air 40 degC, h = 10, Rc = 1 K/W: steam triac junction 120.5 degC, case 110.3 degC; 0.5 current share 3.02 A (chord, capped at the 16 A rating's share) to 3.69 A (model) against the steam element's 5.38 A
+   air 40 degC, h = 10, Rc = 3 K/W: steam triac junction 138.6 degC, case 128.5 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
+   air 40 degC, h = 5, Rc = 0 K/W: steam triac junction 138.8 degC, case 128.6 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
+   air 40 degC, h = 5, Rc = 1 K/W: steam triac junction 147.9 degC, case 137.7 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
+   air 40 degC, h = 5, Rc = 3 K/W: steam triac junction 166.1 degC, case 155.9 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
+NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (division record); Rc is an unsourced assumption; bring-up measures the case temperature (DEL-HW-BRING-UP.C13)
+
 == (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2
    sheet-implied junction-to-ambient 340 K/W; the LED's 31.6 mW (VF 1.5 V, IF 29.5 mA at the top rail) heats the junction by about 10.7 K (a derivation)
    air 45 degC: headroom to the TOPR ambient limit 85 degC = 40 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 32.3 K after self-heating

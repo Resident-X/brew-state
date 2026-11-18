@@ -196,6 +196,24 @@ e_model = (-E_VTO * 0.9 + math.sqrt((E_VTO * 0.9) ** 2 + 4 * E_RD * e_pallow)) /
 print("   Reading 2, the plot is concave, not straight, so the chord understates it: the dissipation that keeps Tj at 125 degC at that case temperature is %.2f W (%.1f K / %.1f K/W); solving P = VTO x 0.9 I + RD I^2 (0.9 = mean of |sine|, a derivation that reproduces the sheet's 4.84 W at 5.38 A and 18.6 W at 16 A) gives %.1f A, the 0.5 current share %.2f A; read directly off the curve at that case temperature about 8 to 9 A [reading]" % (e_pallow, E_TJ_MAX - E_TC_BEST, E_RTH_JC, e_model, e_model / 2))
 print("NOTE  triac current share at the best-case case temperature: " + "the 0.5 share is %.2f A (chord) to %.2f A (model) against the steam element's 5.38 A: SHORT under either reading; the 8 A of row (e) is the rating at Tc 86 degC and is not the share at this case temperature. Owner-held (D11); recorded in owner-sign-off.md W-5" % (e_chord / 2, e_model / 2))
 
+# 2026-11-19 amendment: the wall path's far-face air is the external household air (owner, 2026-11-19), 25 degC nominal and 40 degC as the stated
+# hot-kitchen bound, not the enclosure air. The path resistances are the division record's own (80 x 30 mm, 304 stainless k 15 W/(m.K) 2.5 mm, bracket 0.139 K/W,
+# paste film 0.027 K/W); Rc is an added bolted-joint contact resistance, an unsourced assumption.
+print("\n== (e) amendment 2026-11-19: case temperature and current share at the external air (25 and 40 degC), continuous full power on both triacs (9.09 W)")
+E_R_WALL = {10: 6.30, 5: 9.32}
+E_R_LEG = 0.139 + 0.027
+E_SHARE_STEAM, E_SHARE_TOTAL = 4.84, 9.09
+for e_air in (25.0, 40.0):
+    for e_h in (10, 5):
+        for e_rc in (0.0, 1.0, 3.0):
+            e_tj = e_air + E_SHARE_TOTAL * (E_R_WALL[e_h] + E_R_LEG + e_rc) + E_SHARE_TOTAL * 0.5325 * (0.50 + E_RTH_JC)
+            e_tc = e_tj - E_P_STEAM * E_RTH_JC
+            e_ch = min(E_I_RATED * max(E_TJ_MAX - e_tc, 0.0) / e_span, E_I_RATED) / 2
+            e_pa = (E_TJ_MAX - e_tc) / E_RTH_JC
+            e_md = (-E_VTO * 0.9 + math.sqrt((E_VTO * 0.9) ** 2 + 4 * E_RD * e_pa)) / (2 * E_RD) / 2 if e_pa > 0 else 0.0
+            print("   air %.0f degC, h = %d, Rc = %.0f K/W: steam triac junction %.1f degC, case %.1f degC; 0.5 current share %.2f A (chord, capped at the 16 A rating's share) to %.2f A (model) against the steam element's 5.38 A" % (e_air, e_h, e_rc, e_tj, e_tc, e_ch, e_md))
+print("NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (division record); Rc is an unsourced assumption; bring-up measures the case temperature (DEL-HW-BRING-UP.C13)")
+
 # ---- (f) opto-triac temperature (finding 1.9)
 print("\n== (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2")
 SLOPE_TOTAL = 2.94e-3  # onsemi p.3: total device power 250 mW at 25 degC, derate 2.94 mW/degC: implies a junction-to-ambient resistance of 1/2.94 mW/degC = 340 K/W (a derivation from the sheet, not a stated thermal resistance)
