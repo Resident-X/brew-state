@@ -5,7 +5,7 @@ title: The heater wall board and its element harness are designed, proven agains
 status: active
 priority: must
 level: task
-version: 1
+version: 2
 text: |
   The heater wall board is the off-board assembly that switches the two heaters on the machine's metal wall: a designed board for the two heaters, its triacs standing on a right-angle bracket whose one leg is fixed to the board and whose other leg bolts to the wall, with the element harness to the wall. It carries neither the interlock nor any reserved headroom, which the division record places on the main board. This task designs the board, proves it against its design records and the signed separation basis, and has it made.
 
