@@ -1,0 +1,35 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C17-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C17
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T04:30:48.343205Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/fabrication-notes.md, hardware/sunbeam-em7000/separation-basis.yaml
+  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  verifier: claude (AI agent)
+attested_by: crun-53ff47a01c39164b
+text: |-
+  SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT C17 (inspection) - evidence body, checked at commit 123d64ad
+  Records: hardware/sunbeam-em7000/main-board/fabrication-notes.md (FN), hardware/sunbeam-em7000/separation-basis.yaml (SB), layout-plan.md, main-board.kicad_pcb (sha256 8ca1288b..., unchanged). C17 version 4 re-shown. Since 94ffd973 FN changed only at line 96 (ENV-1 citation) and in the copper-layers row; since 0b3712a6 FN is unchanged and SB changed one body comment line (accepted_on wording), no figure or condition.
+  Verdict: PASS.
+
+  1 Names the coat that supports the pollution degree 2 credit, which rests on the enclosure: FN 92-96 section "Conformal coat (graph criterion C17)": the coat "is a supporting measure and earns no part of the pollution degree 2 credit, which stands on the enclosure". SB 59-72 conditions 1 and 2 state the same; SB 192 pollution_degree: 2. PASS.
+  2 With its type: FN 100 "one-part acrylic conformal coating in an aerosol can"; product FN 102 MG Chemicals 419D Acrylic Conformal Coating, aerosol, 419D-340G; fallback FN 103 Techspray Turbo-Coat Acrylic 2108-12S. PASS.
+  3 And the maker's current datasheet: FN 108 "419D Aerosol, Acrylic Conformal Coating", technical data sheet, 3 pages, 31 July 2025, Ver. 4.0, https://mgchemicals.com/downloads/tds/tds-419d-a.pdf, fetched 2026-11-17; fallback FN 110 Techspray 2108 Rev. D (3/21), URL given. Printed figures relied on tabulated FN 113-125 (dielectric strength, -65 to 125 C, cure, 25-75 um); FN 127 states the sheet gives no creepage or pollution-degree credit and none is taken. PASS.
+  4 Applied after bring-up, once the machine is deemed functional from a hardware perspective: FN 131 "After bring-up, once the machine is deemed functional from a hardware perspective (owner, 2026-11-06)"; SB 61-64. PASS.
+  5 Covers the gaps between the board's mains pads: FN 131 (both faces; the layout plan's mains region and the mains-referenced B.Cu test pads; "the whole board face except the keep-outs"); inspection for bare gaps between mains pads FN 140. All 84 test points are on B.Cu (parsed from the pcb); mains region LP line 26. PASS.
+  6 Keep-outs listed by reference designator: FN 143-155. All 52 listed designators exist in the 446-footprint board file (none missing). The board holds 34 J-class parts; FN lists 8 tab blades + J401, J402 + 23 headers/sockets + J862 = 34, none omitted. FN 157 not-keep-outs agree with the board (FID1-3, Y401/Y402/Y601, T701/T711, 84 TPs). H3 at (6.5, 5.5) lies inside the mains rectangle (1.3, 1.9)-(57.5, 48.4) of LP line 26, as FN 154 says; the footprint is a 3.4 mm non-plated hole, as FN 154 and LP CONN-4 state. PASS.
+  7 States the consequence (first connection to mains and the bring-up bench tests run on the uncoated board, in a clean room; the coat is no part of the bound on any fault between mains pads until applied): FN 131; SB 61-65. PASS.
+  8 Choosing the supplier and applying the coat out of scope: FN 159. PASS.
+  Arithmetic: board 131.0 x 125.6 mm (Edge.Cuts x 1 to 132, y 2 to 127.6) = 164.5 cm2 per face, 329.1 cm2 both faces; 5 700 cm2 per can / 329.1 = 17.3 boards, so FN 138 "one can is enough" holds.
+  ENV-1: the stale citation is fixed. FN 96 now reads "(separation-basis.yaml condition 2)" (SB 70-72: "no coating test is planned and none is claimed"). layout-plan.md has no ENV-1 row and nothing cites one.
+  Remark, no clause affected: SMD fuses F401, F520-F524, F601, F602 and RT301 are named in neither list (RT301 is in step 1, FN 135); the whole-face rule coats them.
+
+  Checked against the committed records and tests at commit 123d64ad (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C17
+    type: satisfies

@@ -1,0 +1,46 @@
+id: EV-SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT-C6-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T04:30:48.183693Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/{layout-plan.md,layout-review.md,owner-sign-off.md,main-board.kicad_pcb,main-board.kicad_dru}, hardware/sunbeam-em7000/separation-basis.yaml, docs/sunbeam-em7000/controller-board-division.md
+  artifact_version: 123d64addf8c484580735900e8e9f387770dc1ad
+  verifier: claude (AI agent)
+attested_by: crun-53ff47a01c39164b
+text: |-
+  SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C6 (inspection, version 1): VERDICT PASS.
+  Criterion: "A barrier that the signed basis does not list is reported, and the owner re-declares the basis before the part forming it is ordered; a distance is never relaxed to fit the layout. Signing a basis amendment is the owner's and out of scope." (title: the finished layout meets the signed separation basis on every layer and a barrier the basis does not list is reported)
+  Inspected at HEAD 123d64ad; main-board.kicad_pcb sha256 8ca1288b... (rounds 6 and 7 judged this file). Decisions read: DEC-BOARD-SEPARATION-BASIS-RECORD, DEC-MAIN-BOARD-TWO-MAINS-NETS-ARE-ROUTED-ON-IN3.
+
+  1. The finished layout meets the signed basis on every layer.
+   - Signed figures: separation-basis.yaml mains_to_low_voltage clearance_mm 3.0, creepage_mm 10.0 (lines 315-316); mains_to_mains clearance_mm 1.5, terminal_clearance_mm 2.0, creepage_mm 2.6 (lines 328-331); working voltage 253 V rms (line 191); overvoltage category 2 (line 195); accepted_by David Baker (owner), 2026-11-18, "I accept the separation basis record as signed." (lines 557-558), each of the 42 accepted_exceptions from line 560 dated the same day; entered by commit 771eba09.
+   - Rules file: main-board.kicad_dru lines 6-9, rule "Mains separation", clearance (min 3mm), creepage (min 10mm); design-rules.md lines 24, 25 and 107; layout-plan.md MAINS-1 line 172 and BOARD-6 line 221.
+   - Layers carrying mains copper: F.Cu, B.Cu, In2.Cu (NEUTRAL pour and runs), In3.Cu (HOTVALVE, ZC_LED_A); In1.Cu and In4.Cu none (my track and zone scan; layout-plan.md line 9).
+   - My plan-view recomputation, mains-class against non-mains copper on all layers (389 mains items against 3 339 others; tracks, vias, connected pads; conservative circles; pours and unconnected NC pads excluded): smallest gaps 4.575 mm (PUMP_S_OPTO_MT to +5V), 4.707, 4.708, 4.879, 5.226 mm: all over 3.0. Including pours the reviewers find 3.747 mm (U711 pad 4 to the F.Cu GND pour): layout-review.md BOARD-5 lines 5670, 6002; BOARD-6 lines 5671, 6003.
+   - Creepage 10.0 mm by path (needs KiCad): pre-order check of the finished board, "DESIGN ... main-board.kicad_pro | PASS | 265 warnings", no clearance, creepage or separation_basis line, "RESULT | PASS | all 6 designs passed", quoted in layout-review.md round 5 (line 5568), round 6 (5748), round 7 (5900), MAINS-1 pass at lines 5627, 5807, 5959; the cited logs are outside the repository. Tightest pair C601 pad 2 to K201 A2: 10.414 mm by three methods (pre-order-check-result.md); K201 LINE to LINE1 3.02 mm straight, 10.79 mm round the slot (owner-sign-off.md S-36, line 74).
+   - Mains to mains: In3.Cu 2.620 to 2.656 mm against 2.6 (C5 file); the pairs under 2.6 on F.Cu, B.Cu and In2.Cu are covered by signed entries (layout-review.md line 5533: none between nets the entries do not name, none below an entry's figure).
+   - Round 7 result (line 6035): CLEAN, "No mains figure is relaxed and no ISSUE-SAFETY".
+   Result: met.
+
+  2. A barrier the basis does not list is reported; the owner re-declares before the part is ordered.
+   - Board scan: footprints with pads on both a Mains-class net and a non-Mains net: U601, K201, K731, K741, U602, U301, U701, U711. Basis barriers (separation-basis.yaml line 197 onward): supply-module (U301), heater-switch, pump-drive (U701, U711), supply-timing-front-end (U602), mains-presence-confirm, valve-switch (K731, K741), interlock-relay (K201), isolated-measurement (U601), pressure-sensor-water-path; each of the eight parts is named in a formed_by. No unlisted barrier part is on the board.
+   - The reporting path was used: open-items.md lines 63, 95 and 186 record the interlock relay and the AMC131M02 as barriers not listed when found, re-declared by the owner (line 14, (e)). Layout rounds 4-7 raise none (BOARD-4 pass at layout-review.md lines 5520, 5669, 5849, 6001).
+   Result: met.
+
+  3. A distance is never relaxed to fit the layout.
+   - owner-sign-off.md S-25 (line 57): mains clearance and creepage kept strictly. The rules file carries 3 mm and 10 mm unchanged. Reductions exist only as the 42 signed basis entries (reason, bounded_by, accepted_by, accepted_on 2026-11-18; owner-sign-off.md S-71, line 102). AMC_HLDO_OUT outside the mains rectangles (S-76, line 107) keeps 11.347 mm and 11.615 mm to non-mains copper against 3.0 and 10.0. Where two nets had no route the floorplan took In3.Cu, "No entry of the separation basis changes" (decision text).
+   Result: met.
+
+  4. Signing a basis amendment is the owner's, out of scope: entries read the owner's own words and date; not assessed further.
+
+  Open suggestion (not a defect): pre-order-check-result.md line 3 says later runs of 2026-11-17 supersede it but carries no final-board PASS line; the PASS lines are in layout-review.md rounds 5-7, citing logs kept outside the repository.
+
+  Checked against the committed records and tests at commit 123d64ad (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT.C6
+    type: satisfies
