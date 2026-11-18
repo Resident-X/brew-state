@@ -27,3 +27,7 @@ links:
     type: justified-by
   - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: a7b4aec5f6f8aafd68bd80adac62fde787400e39cae431a615dcdd7ca703f651
+  gating_profile: ""
