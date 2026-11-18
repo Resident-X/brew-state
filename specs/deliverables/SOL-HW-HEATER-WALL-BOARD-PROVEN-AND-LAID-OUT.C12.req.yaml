@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C12
+type: criterion
+title: The board's drive into the mains-presence confirms stays between 3.2 V and 5.29 V and no source of a header line stands while the main board's +3V3 is absent
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The board's records state, with the arithmetic, that its drive into each mains-presence confirm is at least 3.2 V when on and at most 5.29 V, the ceiling being the 4.0 V pin limit with the controller unpowered over the main board's divider ratio of 0.756, and that no line it can drive from the header is driven from a supply that can stand while the main board's +3V3 is absent. Each figure carries its source. Making the main board enforce either limit is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of
