@@ -1,0 +1,57 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C9-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C9
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-18T07:48:52.952748Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/open-items.md (row M34), hardware/sunbeam-em7000/main-board/circuit-proof/A_zener_pulse.py, hardware/sunbeam-em7000/main-board/circuit-proof/A_zener_pulse.out, hardware/sunbeam-em7000/main-board/circuit-verdicts.md (Z201/Z202), hardware/sunbeam-em7000/main-board/bring-up/A.yaml, hardware/sunbeam-em7000/main-board/bring-up-provision.md
+  artifact_version: ae25e6378002dc77cd80be2c4dbebbef7a8e7b37
+  verifier: claude (AI agent)
+attested_by: crun-5b763c064d63b15a
+text: |-
+  Analysis of SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C9 against the committed records at HEAD. Paths are repository-relative; B = hardware/sunbeam-em7000/main-board. Each clause is checked against the cited lines, and every figure is recomputed by hand here, independently of the script, then compared with the script's committed output.
+
+  Re-run: `python3 -I B/circuit-proof/A_zener_pulse.py`, run read-only from its own folder with the output redirected to scratch, exits 0 and its output is byte-identical to the committed B/circuit-proof/A_zener_pulse.out. The script's exit status is 0 when the 3.4 H limit holds (B/circuit-proof/A_zener_pulse.py:62, 67).
+
+  Inputs (stated in B/circuit-proof/A_zener_pulse.py:11-17, 29-36 and B/open-items.md:250)
+  - Coil 62 ohm -10 % = 55.8 ohm; rail 5.25 V. I0 = 5.25 / 55.8 = 0.094086 A = 94.09 mA.
+  - Zener at its highest voltage 12.70 V plus rdif 25 ohm x (I0 - 5 mA) = 12.70 + 25 x 0.089086 = 14.927 V. Peak power = 14.927 x 0.094086 = 1.4044 W (one zener carries the whole current, no sharing).
+  - Flyback duration per henry: t = (L/R) ln((I0 + Vc/R) / (I_do + Vc/R)) with Vc = 11.4 V, I_do = 7.3 mA: Vc/R = 0.20430 A; ln(0.29839 / 0.21160) = 0.34383; 0.34383 / 55.8 = 6.1593 ms/H, matching the 6.159 ms/H of the interlock removal-time row (B/circuit-proof.md:95, with the 7.3 mA drop-out current and 11.4 V clamp inputs; the row itself is the source the script uses, B/circuit-proof/A_zener_pulse.py:17).
+  - Stored energy per henry = 0.5 x 0.094086^2 = 4.426 mJ/H (committed 4.43).
+  - Zener curve: maker's Fig. 1, curve (2), Tj 150 degC before the surge, maximum values, read as about 30 W at 0.1 ms falling as tp^-0.5 to about 3 W at 10 ms where the plot ends (B/circuit-proof/A_zener_pulse.py:13-15; B/open-items.md:250). Check of the read slope: 3 x sqrt(10 ms / 0.1 ms) = 30 W, consistent.
+
+  Clause 1: the pulse is compared with the curve by power AND energy, the curve extrapolated conservatively beyond 10 ms and said so. MET.
+  - Power: the pulse is taken as a square pulse of 1.404 W for the whole flyback, 6.159 ms/H x L (B/circuit-proof/A_zener_pulse.py:21; B/open-items.md:250; B/circuit-verdicts.md:62). The real pulse decays, so this over-states it.
+  - Extrapolation beyond 10 ms: constant energy, 3 W x 10 ms = 30 mJ, power falling as 1/tp, steeper than the plotted tp^-0.5 slope, therefore under-stating what the part takes, and the script says so in its method text (B/circuit-proof/A_zener_pulse.py:22-23) and the code (lines 39-41), and the record repeats it (B/open-items.md:250, B/circuit-verdicts.md:62). The plotted slope continued is printed beside it for comparison only: 7.41 H, check (3/1.4044)^2 x 10 ms / 6.159 ms/H = 4.5632 x 1.6237 = 7.41 H (B/circuit-proof/A_zener_pulse.out:5).
+  - Energy: stored energy 0.5 x L x I0^2 (4.426 mJ/H) against the same 30 mJ is an upper bound on what the zener absorbs, since no supply energy enters the loop (B/circuit-proof/A_zener_pulse.py:7-8, 24). Limit by energy: 30 / 4.426 = 6.78 H (B/circuit-proof/A_zener_pulse.out:4).
+  Caveat stated by the record, not a defect: the 3 W and 30 W figures are read off the plot, not tabulated by the maker (B/circuit-proof/A_zener_pulse.py:13-15).
+
+  Clause 2: the coil inductance up to which the pulse stays within the curve is stated. MET.
+  - Square pulse meets the extrapolated line when 1.4044 W = 30 mJ / (6.159 ms/H x L): L = 0.030 / (1.4044 x 0.006159) = 0.030 / 0.0086497 = 3.468 H, printed 3.47 H (B/circuit-proof/A_zener_pulse.out:3; B/circuit-proof/A_zener_pulse.py:52; B/open-items.md:250; B/circuit-verdicts.md:62).
+  - The carried reading limit is 3.4 H, below the 3.47 H bound: pulse 3.4 x 6.159 = 20.94 ms; curve at that length 30 mJ / 20.94 ms = 1.4326 W; 1.4044 / 1.4326 = 0.980 (printed ratio 0.98, 1.433 W; B/circuit-proof/A_zener_pulse.out:12). Stored energy at 3.4 H = 15.05 mJ, 50 % of 30 mJ. The script's exit status is the check of this limit (B/circuit-proof/A_zener_pulse.py:4, 62, 67).
+
+  Clause 3: the record's own worst case 4.73 H is compared and the result stated. MET.
+  - The 4.73 H figure is M28's bound for the removal time (B/open-items.md:244; B/circuit-proof.md:95).
+  - Pulse 4.73 x 6.159 = 29.13 ms; curve 30 mJ / 29.13 ms = 1.0298 W; ratio 1.4044 / 1.0298 = 1.364, printed 1.36 (B/circuit-proof/A_zener_pulse.out:10-11, "outside the conservative extrapolation"). Also 4.73 / 3.468 = 1.364. By energy alone it is inside: 0.5 x 4.73 x 0.094086^2 = 20.94 mJ against 30 mJ (0.70). The result is stated in B/open-items.md:250 ("At the 4.73 H bound the square pulse is 1.36 times the extrapolated line, so the bound holds for every coil inductance up to 3.47 H without knowing it") and in the verdict row (B/circuit-verdicts.md:62: "the record's worst case is 4.73 H").
+
+  Clause 4: no source bounds the inductance; the spare relay's coil inductance is carried to a bring-up reading with the limit, and the part change that follows a reading above it is named. MET.
+  - No-source statement: "No source bounds the coil's inductance (the Hongfa sheet prints none), so the reading is carried" (B/open-items.md:250); "no source bounds the coil's inductance" (B/circuit-verdicts.md:62; B/circuit-proof/A_zener_pulse.out:11); same fact for the removal time (B/open-items.md:244).
+  - Reading carried: B/open-items.md:250 (row M34, in "Bring-up measurements carried", heading at B/open-items.md:207) gives the method (spare relay from the same reel, unpowered, LCR meter at 1 kHz or ring-down tau = L / (R + Rcoil)), the limit "at most 3.4 H", the timing "Before mains (unpowered spare)". It is carried into the bring-up step B/bring-up/A.yaml:14 and B/bring-up-provision.md:43 (both: spare relay, LCR or ring-down, "inductance at most 3.4 H", pointing to B/open-items.md for the limit, fallback and source). Ring-down check: L = tau x (R + Rcoil); at 3.4 H with R = 47 and Rcoil = 55.8 the time constant is 3.4 / 102.8 = 33 ms, readable on a bench scope.
+  - Part change: "If it exceeds 3.4 H ... the fallback is a BOM value change on the same SOT-23 footprint: a 12 V zener whose published pulse curve covers 6.159 ms/H x L (29 ms at 4.73 H), chosen from the catalogue at that point, with no new copper; the removal time is unchanged by the swap" (B/open-items.md:250); "a footprint-compatible zener swap as the fallback" (B/circuit-verdicts.md:62).
+  - Verdict row Z201/Z202 is FINDING, open, carried to M34, not PASS (B/circuit-verdicts.md:62), consistent with an unmeasured inductance. Out of scope per the criterion: the reading itself and choosing a different zener unless a reading exceeds the limit.
+
+  Defect found in a derived record (does not affect any clause above): B/schematic-review.md:8513 (row 7.50) still labels the item "(C6)", the criterion deprecated for C9; the row's substance (3.47 H, the three records) is correct.
+  Not a defect: the bring-up step names the limit and sends the reader to M34 for the fallback instead of repeating the zener swap; the swap is named in M34 and the verdict row.
+
+  Result: all four clauses are met by the committed records; the unmeasured inductance is carried, not closed.
+
+  Note: the closure row for 7.50 in hardware/sunbeam-em7000/main-board/schematic-review.md (line about 8513) still carries the label "(C6)", the deprecated criterion; C9 supersedes it and the carrying decision now names C9. The row's substance is unchanged.
+
+  Checked against the committed records at commit ae25e637 (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C9
+    type: satisfies

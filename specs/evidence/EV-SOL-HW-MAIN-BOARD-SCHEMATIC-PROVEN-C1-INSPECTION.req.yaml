@@ -2,7 +2,7 @@ id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN-C1-INSPECTION
 type: evidence
 title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C1
 status: active
-version: 2
+version: 3
 result: pass
 method: inspection
 observed_at: "2026-11-18T02:32:03.470577Z"
@@ -24,7 +24,7 @@ text: |-
   7.13b | owner decision; wall-board requirement; figure also under item 5.8 | DEC v7; open-items.md row and M23 | OPEN-FINDINGS.C2; DEL-HW-BRING-UP.C15
   7.19 | owner decision; window and arithmetic recorded, reading carried (limit 3.52 uF for the pair) | DEC v7 item 7.19; open-items.md 'VCAP capacitor curve...' and M8 | OPEN-FINDINGS.C1 (recomputed 2.2 x 0.90 x 0.85 = 1.683 uF vs 1.76 uF)
   7.34 | owner decision, carried open, no hardware bound added | DEC v7 item 7.34; acceptance (i) of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER | OPEN-FINDINGS.C7. Stated limit: the detection REQ-ACTUATION-CONFIRMATION-001.C6 has no delivering node; the record says so
-  7.50 | owner decision; pulse judged by power/energy for any L up to 3.47 H, L carried to bring-up (limit 3.4 H) | DEC v7; open-items.md M34; circuit-proof/A_zener_pulse.py (exists; now an executable check of the 3.4 H limit, 4.73 H printed as information; circuit-verdicts rows Z201/Z202 read 'FINDING (open: pulse inside the curve only to 3.47 H ...; carried to bring-up as M34)', i.e. open and carried, which is the closing form); circuit-verdicts Z201/Z202 | OPEN-FINDINGS.C6 (recomputed I0 = 5.25/55.8 = 94.1 mA; 30 mJ / (1.404 W x 6.159 ms/H) = 3.47 H; 3.4 H x 6.159 = 20.9 ms, 30 mJ/20.9 ms = 1.43 W)
+  7.50 | owner decision; pulse judged by power/energy for any L up to 3.47 H, L carried to bring-up (limit 3.4 H) | DEC v7; open-items.md M34; circuit-proof/A_zener_pulse.py (exists; now an executable check of the 3.4 H limit, 4.73 H printed as information; circuit-verdicts rows Z201/Z202 read 'FINDING (open: pulse inside the curve only to 3.47 H ...; carried to bring-up as M34)', i.e. open and carried, which is the closing form); circuit-verdicts Z201/Z202 | OPEN-FINDINGS.C9 (recomputed I0 = 5.25/55.8 = 94.1 mA; 30 mJ / (1.404 W x 6.159 ms/H) = 3.47 H; 3.4 H x 6.159 = 20.9 ms, 30 mJ/20.9 ms = 1.43 W) Note: the closure row for 7.50 in schematic-review.md (line about 8513) still carries the old label '(C6)', the deprecated criterion; the carrying decision (now naming C9) supersedes it.
   7.52 | owner decision; wire requirement (insulation for the LINE net working voltage, 253 V rms held in the open-items JP303 row) and inrush arithmetic recorded | DEC v7; open-items.md JP303 row and M11; parts-specification.yaml JP303 rating field | OPEN-FINDINGS.C3 (recomputed 500/40^2 = 0.3125 s)
   7.53 | owner decision (v7 names it) -> C302 ripple carried to bring-up under DEC-UNPUBLISHED, limit rests on maker's 48 mArms | DEC v7 entry; open-items.md M36; circuit-verdicts.md row C302; bring-up/B.yaml step 'Carried: C302 ripple current (row M36)'; bring-up-provision.md line 62 | OPEN-FINDINGS.C8 (ripple limits C302/C792); DEL-HW-BRING-UP.C15
   7.59 | owner decision (v7 names it) -> buzzer >= 36 ohm wall-board requirement | DEC v7 item '7.12, 7.13 and 7.59'; open-items.md limit (d) | OPEN-FINDINGS.C2 (recomputed Rb >= 35.55 ohm; 35.87 ohm at R828 -1 %)
