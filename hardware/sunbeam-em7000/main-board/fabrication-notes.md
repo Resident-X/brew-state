@@ -26,7 +26,7 @@ Maker figures are from JLCPCB's published capabilities page (https://jlcpcb.com/
 
 The board has 541 vias, read from the board file on 2026-11-15, after the four ground vias beside the tab of U302 were placed; the counts of `design-rules.md`, "Via sizes in the layout", are the same. Every drill is 0.3 mm, over the maker's 0.15 mm minimum drill, and every via pad is 0.30 mm or more over its hole. No via stands inside a surface-mount pad. The board setup's minimum annular width is 0.15 mm, the ring of the 466 vias of 0.6 mm pad; the deviation from the recommended 0.20 mm is signed, on the owner's behalf under his standing instruction of 2026-11-07, as S-24 of `owner-sign-off.md` (`design-rules.md`, Minimum annular width; `layout-plan.md` MFG-1). No 0.2 mm drill is placed, so the maker's capability charge for it and its four-wire test do not arise (`design-rules.md`, Via sizes in the layout).
 
-## Laminate and comparative tracking index (graph criterion C16)
+## Laminate and comparative tracking index
 
 The requirement: the notes specify a laminate whose published comparative tracking index (CTI) is at least 175 (material group IIIa or better), the figure the basis's material group rests on, and cite the laminate maker's document for that index and the revision read. A family whose maker publishes no index in the documents read is listed as such and is not specified. A family specified with no such document cited is not specified. At pollution degree 2 the material group III column covers IIIa and IIIb alike, so a published index below 175 changes no figure of the basis and is not a precondition; the order stops only for a laminate published below 100 (no material group in IEC 60664-1) or a pollution degree 3 fallback taken without an index of 175 or more recorded. The criterion was reworded once: its first text asked for the maker's current document, which the repository cannot show (the makers' sites could not be reached and the copies read are distributors'); the maker's written laminate identity and certificate, which would settle it, are asked for by a criterion of the order leaf and recorded before payment.
 
@@ -89,7 +89,7 @@ Criterion C16, as amended, is **met on paper**; the shipped laminate is **not ve
 
 What remains unverified, and is a pre-order action for the owner: the identity and CTI of the laminate the maker will ship, until the maker answers the request; that the maker's pages let the order fix a laminate at all (nothing read shows it); and that the distributor copies are the makers' current revisions (the makers' sites could not be reached). The maker's written laminate identity and CTI certificate, or the owner's re-declared material-group basis, are recorded before payment as a criterion of the order leaf. Choosing the laminate's supplier and receiving the certificate are out of scope of criterion C16.
 
-## Conformal coat (graph criterion C17)
+## Conformal coat
 
 The requirement: the notes name the coat that supports the basis's pollution degree 2 credit (which rests on the enclosure), with its type and the maker's current datasheet, and state that it is applied after bring-up, once the machine is deemed functional from a hardware perspective, and covers the gaps between the board's mains pads, except keep-outs for contacts listed by reference designator.
 
