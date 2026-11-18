@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING-C5-INSPECTION
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C5
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:31:48.87634Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_record_and_every_exception_carry_the_re_signing_day_and_the_header_states_it
+  artifact_version: 4eaf4c9f
+attested_by: crun-c4621e669c278dc4
+links:
+  - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C5
+    type: satisfies

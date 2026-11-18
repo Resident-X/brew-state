@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET-C8-INSPECTION
+type: evidence
+title: inspection evidence for SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C8
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:31:48.825823Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_record_and_every_exception_carry_the_re_signing_day_and_the_header_states_it
+  artifact_version: 4eaf4c9f
+attested_by: crun-0031785d43e1346b
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C8
+    type: satisfies

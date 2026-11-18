@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET-C4-TEST-3
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-18T02:31:48.996205Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_separation_basis_record.py::test_each_same_part_clearance_entry_states_its_own_ground_and_bounding_element
+  artifact_version: 4eaf4c9f
+attested_by: crun-0031785d43e1346b
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C4
+    type: satisfies

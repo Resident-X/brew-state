@@ -1,0 +1,16 @@
+id: EV-SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET-C7-TEST-2
+type: evidence
+title: test evidence for SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-18T02:31:48.737146Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_derating_policy_record.py::test_the_checks_own_reader_accepts_the_policy_and_refuses_a_broken_entry
+  artifact_version: 4eaf4c9f
+attested_by: crun-0031785d43e1346b
+links:
+  - target: SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET.C7
+    type: satisfies
