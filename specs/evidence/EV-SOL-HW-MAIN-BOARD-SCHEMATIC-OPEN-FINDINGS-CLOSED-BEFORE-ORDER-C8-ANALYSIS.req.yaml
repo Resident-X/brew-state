@@ -1,0 +1,31 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C8-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C8
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-18T02:32:49.636664Z"
+artifact:
+  kind: external
+  reference: 'hardware/sunbeam-em7000/main-board/open-items.md (rows M35, M36), hardware/sunbeam-em7000/main-board/circuit-verdicts.md (rows C302, C792), hardware/sunbeam-em7000/main-board/bring-up/B.yaml, bring-up/D.yaml and bring-up-provision.md (rows "Carried: C302 ripple current", "Carried: C792 ripple current")'
+  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  verifier: claude (AI agent)
+attested_by: crun-835fae660c6adc31
+text: |-
+  Clause-by-clause check, criterion C8 (analysis). Records read at commit 54793e31, folder hardware/sunbeam-em7000/main-board/.
+
+  8a. C302 ripple limit from the maker's sheet. Record: open-items.md row M36: Samyoung BDS(MVK) 16 V 47 uF, rated 48 mArms at 105 degC and 120 Hz; the 1.08 multiplier at 100 kHz is not used; no temperature multiplier above 1 stated; limit 48 mArms. circuit-verdicts.md row C302 repeats it. PASS.
+  8b. No maker publishes the ripple C302 carries. Record: M36 ("Neither the module's maker (Mean Well, IRM-20) nor the capacitor's maker publishes the ripple current the capacitor carries, and the board's records hold no figure for it"). PASS.
+  8c. C302 reading with a stated limit that does not rely on an unpublished figure; test point; part change. Record: M36 and bring-up/B.yaml, bring-up-provision.md row "Carried: C302 ripple current (row M36)": scope across C302 at TP301 at 1.06 A load (4.7 ohm 10 W; 5 V / 4.7 = 1.064 A, under the rail's stated 1.070 A), read Vpp and f; impedance Z of a spare from the same reel at f (LCR meter or function generator through 10 ohm); Irms at most Vpp / (2 Z) for any waveform (square wave is the highest rms for a given peak-to-peak, Vrms = Vpp / 2); limit Vpp / (2 Z) at most 48 mArms, ripple at most 96 mA x Z (48 mVpp at Z = 0.5 ohm). The limit uses only the published 48 mArms and two readings. Failing reading: replace by a higher-ripple 47 uF 16 V part on the same footprint. PASS.
+  8d. C792 ripple limit from the maker's sheet. Record: M35: KNSCHA RST47UF16V034, 33 mArms at 105 degC and 120 Hz, no 70 degC multiplier, ESR at 100 kHz not published (DF 0.20 at 120 Hz); limit 33 mArms. circuit-verdicts.md row C792. PASS.
+  8e. No maker publishes the ripple C792 carries. Record: M35 (calculation from the gauge driver's manual; "the datasheet does not say whether the output stage chops"). PASS.
+  8f. C792: calculation bounding it below the limit, or a reading with a limit not relying on an unpublished figure. Record: M35 now says the chopped-drive calculation is not proven (1.8 times margin) and that the 0.5 ohm lowest ESR is not a limit; the reading carried is: scope Vpp and f at TP791, plus impedance Z of a spare C792 from the same reel at f (LCR meter at 100 kHz, or function generator through 10 ohm, Z = Vcap / (Vres / 10 ohm)); limit Vpp / (2 Z) at most 33 mArms, ripple at most 66 mA x Z (33 mVpp at Z = 0.5 ohm, 13 mVpp at Z = 0.2 ohm; recomputed 2 x 33 = 66; 66 x 0.5 = 33; 66 x 0.2 = 13.2). Same method as C302. Uses only the published 33 mArms and two readings; bring-up/D.yaml, bring-up-provision.md and circuit-verdicts.md carry the same text. PASS.
+  8g. C792 test point and part change. Record: TP791; failing reading fits a low-ripple polymer 47 uF 16 V on the same footprint (M35, circuit-verdicts.md, bring-up/D.yaml). PASS.
+
+  Overall C8: PASS.
+
+  Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C8
+    type: satisfies

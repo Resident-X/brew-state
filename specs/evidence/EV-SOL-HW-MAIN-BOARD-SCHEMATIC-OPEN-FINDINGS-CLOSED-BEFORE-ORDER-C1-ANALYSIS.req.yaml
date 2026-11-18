@@ -1,0 +1,33 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C1-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C1
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-18T02:32:48.892381Z"
+artifact:
+  kind: external
+  reference: 'hardware/sunbeam-em7000/main-board/open-items.md (row M8), hardware/sunbeam-em7000/main-board/circuit-proof.md (VCAP rows), hardware/sunbeam-em7000/main-board/bring-up/B.yaml and bring-up-provision.md (row "Carried: VCAP capacitance")'
+  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  verifier: claude (AI agent)
+attested_by: crun-835fae660c6adc31
+text: |-
+  Clause-by-clause check, criterion C1 (analysis, v2). Records read at commit 54793e31, folder hardware/sunbeam-em7000/main-board/. The records for this criterion are unchanged since the earlier check (no later commit touches row M8, the VCAP rows or the bring-up VCAP row).
+
+  1a. Window for each of C412 and C413: 2.2 uF, plus or minus 20 percent tolerated, 1.76 to 2.64 uF effective. Record: open-items.md row M8; circuit-proof.md row "VCAP capacitors, C412, C413". Arithmetic: 2.2 x 0.8 = 1.76; 2.2 x 1.2 = 2.64. PASS.
+  1b. ESR below 100 milliohm. Record: open-items.md M8 and circuit-proof.md same row. PASS.
+  1c. Part at the maker's tolerance and temperature limits before DC-bias loss is 1.68 uF, below the floor. Record: open-items.md M8; circuit-proof.md same row. Arithmetic: 2.2 x 0.90 x 0.85 = 1.683 uF, 0.077 uF under 1.76 uF. PASS.
+  1d. Equally so for any 10 percent X5R or X7R ceramic, both carrying a 15 percent temperature limit. Record: open-items.md M8 ("Any 10 % ceramic of the X5R or X7R class (X7R also carries 15 % over temperature) fails the same stacking"); circuit-proof.md same row. Arithmetic: 0.90 x 0.85 = 0.765; 2.2 x 0.765 = 1.683 uF for either class. PASS.
+  1e. The maker's catalogue states no DC-bias or temperature curve for the part. Record: open-items.md M8 and circuit-proof.md same row ("states no DC-bias or per-part temperature curve", LCSC copy read 2026-11-18). PASS.
+  1f. The floor is settled by the carried reading of the effective capacitance on the built board, with its limit. Record: open-items.md M8, limit column: pair total at least 3.52 uF and at most 5.28 uF, window per capacitor 1.76 to 2.64 uF; margin line 4.14 uF. Arithmetic: 2 x 1.76 = 3.52; 2 x 2.64 = 5.28; 2 x (1.76 / 0.85) = 2 x 2.0706 = 4.14. The pair sits on one net (VCAP and GND), so a reading across either capacitor is the pair in parallel, nominally 4.4 uF; the record says so and says a weak single capacitor cannot be told from the pair. Item 5.7 and finding 7.19 named in the row. PASS.
+  1g. Method for a home builder before mains. Record: open-items.md M8 (multimeter capacitance range across C412 or C413, in circuit, board unpowered; "Before mains"); bring-up/B.yaml and bring-up-provision.md row "Carried: VCAP capacitance (row M8)". PASS.
+  1h. The part change that follows a reading below the limit. Record: open-items.md M8 fallback (replace both by hand with the 2.2 uF X7R 0603 CL10B225KP8NNNC, LCSC C100082, same footprints, no copper). The record states plainly that this part fails the same paper stacking, so the claim rests on the reading, which is what the criterion asks. PASS.
+  1i. Part and footprint stay as drawn. Check: no commit since the start changes C412 or C413 in any .kicad_sch or .kicad_pcb. PASS.
+
+  Overall C1: PASS.
+
+  Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C1
+    type: satisfies

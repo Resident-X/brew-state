@@ -1,0 +1,29 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C6-ANALYSIS
+type: evidence
+title: analysis evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C6
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-18T02:32:49.429111Z"
+artifact:
+  kind: external
+  reference: 'hardware/sunbeam-em7000/main-board/open-items.md (rows M34, M28), hardware/sunbeam-em7000/main-board/circuit-proof/A_zener_pulse.py and A_zener_pulse.out, hardware/sunbeam-em7000/main-board/circuit-proof.md (interlock removal-time row), hardware/sunbeam-em7000/main-board/circuit-verdicts.md (row Z201, Z202), hardware/sunbeam-em7000/main-board/bring-up/A.yaml and bring-up-provision.md (row "Carried: relay coil inductance against the zener pulse curve")'
+  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  verifier: claude (AI agent)
+attested_by: crun-835fae660c6adc31
+text: |-
+  Clause-by-clause check, criterion C6 (analysis). Records read at commit 54793e31, folder hardware/sunbeam-em7000/main-board/. I re-ran circuit-proof/A_zener_pulse.py with python3 -I to scratch: exit 0, output identical to circuit-proof/A_zener_pulse.out.
+
+  6a. Inductance measured on the owner's coil or bounded from a stated source. Record: open-items.md row M34: "No source bounds the coil's inductance (the Hongfa sheet prints none), so the reading is carried"; reading before mains on a spare relay, two home-bench methods, limit 3.4 H; bring-up/A.yaml and bring-up-provision.md row "Carried: relay coil inductance against the zener pulse curve (row M34)". The inductance itself is neither measured nor sourced; the record bounds the pulse for every inductance up to 3.47 H without knowing it, which is the bound the criterion's second sentence needs. PASS on that reading (the first sentence is met by a carried reading with a limit and a stated reason no source bounds it).
+  6b. Pulse is L x 6.159 ms per henry. Record: circuit-proof.md interlock removal-time row. Recomputed t = (L / R) ln((Vc + R I0) / (Vc + R Ido)) with R 55.8, Vc 11.4, I0 94.09 mA, Ido 7.3 mA: 6.157 ms/H (record 6.159, 0.03 percent). Budget: 61.88 + 1.0 + 8.0 = 70.88 ms; 70.88 + 6.159 x 4.73 = 100.0 ms. PASS.
+  6c. The curve stops at 10 ms, about 1.6 H. Record: M34, A_zener_pulse.py header (Fig. 1, maximum values, curve at Tj 150 degC, about 3 W at 10 ms where it ends). Arithmetic: 10 / 6.159 = 1.62 H. The Fig. 1 readings are read off the plot by the record's author and cited; I did not re-read the datasheet. PASS.
+  6d. Where the bound exceeds the curve, how the pulse is judged beyond it. Record: A_zener_pulse.py and M34: peak power I0 x (12.70 V + 25 ohm x (I0 - 5 mA)) = 0.09409 x 14.93 = 1.404 W held for the whole flyback (square pulse, over-states the decaying pulse), the zener at its highest voltage, no sharing counted; beyond 10 ms the curve is extrapolated at constant energy (30 mJ, power falling as 1/tp), steeper than the plotted tp^-0.5 slope so it under-states what the part takes; stored energy 4.43 mJ per henry reaches 30 mJ at 6.78 H. Square pulse meets the line at 30 mJ / (1.404 W x 6.159 ms/H) = 3.47 H. PASS.
+  6e. The 4.73 H worst case compared with the curve, result stated. Record: M34 and A_zener_pulse.out: 29.1 ms pulse, 1.404 W against the extrapolated 1.030 W, ratio 1.36, energy 20.9 mJ against 30 mJ; outside the conservative bound at 4.73 H; inside for every L up to 3.47 H; bring-up limit 3.4 H (3.4 x 6.159 = 20.9 ms; 30 mJ / 20.9 ms = 1.433 W against 1.404 W); fallback a footprint-compatible 12 V zener whose curve covers the pulse. circuit-verdicts.md row Z201, Z202 now carries the result and points at M34. PASS.
+
+  Overall C6: PASS.
+
+  Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C6
+    type: satisfies

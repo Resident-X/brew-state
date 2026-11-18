@@ -1,0 +1,30 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C3-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:32:49.115471Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/parts-specification.yaml (JP303), hardware/sunbeam-em7000/main-board/30-logic-supply.kicad_sch and main-board.kicad_pcb (JP303 Rating property), hardware/sunbeam-em7000/main-board/open-items.md (row "The fitted wire of the module's inrush link JP303", row M11), hardware/sunbeam-em7000/main-board/fabrication-notes.md
+  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  verifier: claude (AI agent)
+attested_by: crun-835fae660c6adc31
+text: |-
+  Clause-by-clause check, criterion C3 (inspection). Records read at commit 54793e31, folder hardware/sunbeam-em7000/main-board/.
+
+  3a. (Criterion v2) Rating field states 1.5 mm2 copper, insulation rated for the mains working voltage of the LINE net and 70 degC enclosure air, with 253 V rms held in the record row the field points to. Record: parts-specification.yaml JP303 entry. Since the earlier check the field reads "1.5 mm2 copper wire, insulation rated for the mains working voltage of the LINE net (open-items.md, JP303 row), 70 degC enclosure air": the figure 253 V is no longer in the field itself (changed so the derated-voltage rule does not read a voltage rating on a part with no class). The 253 V rms figure is stated in the comment block directly above the entry (parts-specification.yaml line 533: "insulation rated for the 253 V rms working voltage and a 70 degC enclosure air"), in open-items.md row "The fitted wire of the module's inrush link JP303" and in fabrication-notes.md step 2. The field, the schematic (30-logic-supply.kicad_sch line 4880), the board (main-board.kicad_pcb line 60285), sheets/30-logic-supply.yaml and schematic-spec.yaml carry identical text. The field points at "open-items.md, JP303 row"; that row ("The fitted wire of the module's inrush link JP303") states "insulation rated for the 253 V rms working voltage". PASS, text and record agree.
+  3b. Inrush arithmetic in the board's record. Record: open-items.md same row: fuse pre-arcing 500 A2s (SCT520), inrush 40 A typical. PASS.
+  3c. 0.31 s a flat 40 A takes to use 500 A2s. Arithmetic: 40^2 = 1600; 500 / 1600 = 0.3125 s. PASS.
+  3d. 50 A2s limit bring-up holds the integral to. Record: same row and open-items.md M11 ("at most 50 A2s (10 % of the fuse's 500 A2s)"). Arithmetic: 0.10 x 500 = 50. PASS.
+  3e. Measurement stays with bring-up. Record: M11 method and timing columns (first current-limited connection). PASS.
+  Extra: wire withstand 115^2 x 1.5^2 = 29,756.25 A2s reproduces; the record states k = 115 was quoted as recalled and not re-read.
+
+  Overall C3: PASS.
+
+  Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C3
+    type: satisfies

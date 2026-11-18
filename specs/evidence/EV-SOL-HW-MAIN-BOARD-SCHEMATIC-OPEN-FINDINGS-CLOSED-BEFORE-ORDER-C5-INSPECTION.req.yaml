@@ -1,0 +1,28 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C5-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C5
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:32:49.317165Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/main-board.kicad_sch, hardware/sunbeam-em7000/main-board/720-heater-led-drive-and-wall-board-header.kicad_sch, hardware/sunbeam-em7000/main-board/700-pump-drives.kicad_sch, hardware/sunbeam-em7000/main-board/open-items.md (USB row, row "Sheet ports and hierarchical labels agree across the sheets"), hardware/sunbeam-em7000/main-board/owner-sign-off.md (S-87), hardware/sunbeam-em7000/main-board/circuit-proof.md (USB rows)
+  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  verifier: claude (AI agent)
+attested_by: crun-835fae660c6adc31
+text: |-
+  Clause-by-clause check, criterion C5 (inspection). Records read at commit 54793e31, folder hardware/sunbeam-em7000/main-board/. No later commit changes the root sheet pins, 700-pump-drives.kicad_sch, 720-heater-led-drive-and-wall-board-header.kicad_sch or the USB rows.
+
+  5a. USB is a service path only because the serial-wire header carrying SWDIO and SWCLK programs the controller. Record: open-items.md row "Does the ST bootloader's DFU enumerate with no VBUS sense?" ("USB is a service path ... J401 (SWDIO on PA13, SWCLK on PA14, with NRST) programs the controller"); owner-sign-off.md S-87; circuit-proof.md USB rows; sheets/31-controller.yaml line 1109 (J401 pins 2 SWDIO, 4 SWCLK, 10 reset). PASS.
+  5b. A fault on USB does not stop a programming route. Record: same row ("a USB failure never blocks loading firmware"; load over SWD if it does not enumerate); S-87. PASS.
+  5c. MAINS_PRES_C and MAINS_PRES_S same direction on root sheet and sub-sheet. Check: main-board.kicad_sch lines 3810 and 3814 (sheet 720) read output; 720 sheet hierarchical labels lines 1815 and 1826 read output. Controller sheet: root pins and labels both bidirectional. Scripted comparison of every root pin against its sub-sheet label direction: 141 pins, 0 mismatches. PASS.
+  5d. (Criterion v2) The two NEUTRAL labels are against one sheet pin and are kept, each carrying one pump branch's neutral wire, with that reason and the finding that removing one drops a branch off the net recorded, net list unchanged. Check: 700-pump-drives.kicad_sch has 6 hierarchical labels, the root block 5 pins; the two NEUTRAL labels (lines 2466, 2477) sit at the two pump branches (T701 y about 68, T711 y about 158) against the one root pin NEUTRAL (line 3674); 700-pump-drives.kicad_sch is unchanged by every delivered commit. Record: open-items.md row "Sheet ports and hierarchical labels agree across the sheets (finding 7.84)": the two labels attach to the one sheet pin, each carries its own pump branch's neutral wire (coffee branch T701, D701; steam branch T711, D711), and "deleting the second label was tried and dropped T711 pin A1 off the NEUTRAL net, so the net was restored". PASS.
+
+  Overall C5: PASS.
+
+  Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C5
+    type: satisfies

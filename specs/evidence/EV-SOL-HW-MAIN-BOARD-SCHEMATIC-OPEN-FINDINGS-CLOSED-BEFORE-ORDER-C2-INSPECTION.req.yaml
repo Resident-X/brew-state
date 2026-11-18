@@ -1,0 +1,30 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:32:49.006885Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/open-items.md (row "Wall board interface limits"), hardware/sunbeam-em7000/main-board/circuit-proof.md (rows "Mains-presence inputs from the wall board", "Key line sink current", "Buzzer stage", "Anode rail gate")
+  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  verifier: claude (AI agent)
+attested_by: crun-835fae660c6adc31
+text: |-
+  Clause-by-clause check, criterion C2 (inspection, v2). Records read at commit 54793e31, folder hardware/sunbeam-em7000/main-board/.
+
+  2a. Wall board not designed here; its limits recorded as requirements of its design, each with arithmetic. Record: open-items.md row "Wall board interface limits (findings 7.12, 7.13, 7.59), each a requirement of the wall board's design", four limits (a) to (d), closing cell "the main board adds no part for any of them"; circuit-proof.md rows for the same limits. No wall board file is added. PASS.
+  2b. Mains-presence levels at or below the 4.0 V pin limit with the controller unpowered; ratio 0.7485 to 0.756; 4.0 V at the pin for about 5.29 V. Record: open-items.md limit (a). Arithmetic: 82 / 109 = 0.7523 nominal; with 1 percent parts 0.99 x 82 / (0.99 x 82 + 1.01 x 27) = 0.7485 and 1.01 x 82 / (1.01 x 82 + 0.99 x 27) = 0.7560; 4.0 / 0.756 = 5.291 V; 4.0 / 0.7485 = 5.344 V; at 5.5 V the pin takes 4.117 to 4.158 V; high level 0.7 x 3.4 = 2.38 V, 2.38 / 0.7485 = 3.18 V. PASS.
+  2c. Indicator drive holds its sink current at the forward-voltage worst case. Record: open-items.md limit (b) and circuit-proof.md row "Key line sink current": at least 0.95 V for a two-element line. Arithmetic (pin low 1.3 V, rail 5.25 V, two 300 ohm elements = 150 ohm): (5.25 - 1.3) / 150 = 26.3 mA at VF 0; (5.25 - 1.3 - 1.0) / 150 = 19.7 mA; (5.25 - 1.3 - 1.5) / 150 = 16.3 mA; one element 3.95 / 300 = 13.2 mA; 20 mA x 150 = 3.0 V so VF = 5.25 - 1.3 - 3.0 = 0.95 V. PASS.
+  2d. The anode rail's brown-out fall is bounded before the controller's supply falls. Record: open-items.md limit (c) now reads: rail never above +5V; off within 78 us typical and 140 us worst of a controller reset (circuit-proof/D_holdoff.py), "which exceeds the 46 to 78 us available before VDD reaches 1.25 V when +3V3 is lost alone, so that case is not inside the pin limit and is a fault-only residual accepted by the owner, held at bring-up by the rule not to remove +3V3 while firmware drives ANODE_GATE"; and the wall board does not drive the anode rail or key lines from any supply that can stand while +3V3 is absent. Stated honestly with its source row. PASS.
+  2e. Buzzer 36 ohm or more, since 0.6 of the 250 mW rating of the series resistor R828 is 150 mW, which at 5.25 V (the rail's highest steady value) through R828's 100 ohm needs a buzzer of at least 36 ohm. Record: open-items.md limit (d), circuit-proof.md row "Buzzer stage". The criterion text (v3) reads 5.25 V through R828's 100 ohm; record: open-items.md (d) "R828 (100 ohm, 1206, 250 mW) is in series with it. At 5.25 V ..."; the rail's 5.25 V as the top of the 4.75 to 5.25 V band is stated in circuit-proof.md (interlock and rail rows, "Rail 5.25 V (top of the record's assumed 4.75-5.25 V band)"), not in the limit (d) text itself (note, not a defect). Arithmetic: 0.6 x 250 = 150 mW; 5.25^2 x 100 / 0.15 = 18,375; sqrt = 135.56; minus 100 = 35.56 ohm (35.87 ohm with R828 at 99 ohm); at 36 ohm P = 5.25^2 x 100 / 136^2 = 0.149 W, under 0.150 W; shorted buzzer 5.25^2 / 100 = 0.2756 W. All reproduce. PASS.
+  2f. A limit the record does not already hold is added before the wall board's design starts. Check: all four limits are written in open-items.md and circuit-proof.md (none was in the division record, docs/sunbeam-em7000/controller-board-division.md, which is unchanged; read as the main board's records the solution scope names). PASS.
+
+  Overall C2: PASS.
+
+  Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C2
+    type: satisfies

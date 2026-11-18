@@ -1,0 +1,29 @@
+id: EV-SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER-C7-INSPECTION
+type: evidence
+title: inspection evidence for SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C7
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-18T02:32:49.538795Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/open-items.md (item (i) of "Owner risk acceptances"), hardware/sunbeam-em7000/main-board/schematic-review.md (section "Closure after round 7", row 7.34)
+  artifact_version: 4eaf4c9fa96be38053475babc019a58347d4d547
+  verifier: claude (AI agent)
+attested_by: crun-835fae660c6adc31
+text: |-
+  Clause-by-clause check, criterion C7 (inspection). Records read at commit 54793e31, folder hardware/sunbeam-em7000/main-board/.
+
+  7a. The record states a controller fault can leave the pump on. Record: open-items.md item (i) of "Owner risk acceptances": finding 7.34 "is wider than those part faults: a controller fault can leave the pump on too. A controller that keeps driving a pump gate, PA9 (PUMP_C_GATE) or PA8 (PUMP_S_GATE), stuck high or held on by firmware, while it keeps refreshing the proof of life, holds K201 closed and the pump runs on". The pump gate nets are on those pins (sheets/31-controller.yaml lines 961 and 965). PASS.
+  7b. Conflict with the requirement that a spacing shortfall's fault be bounded by an independent element, where the bound is the pump's series relay. Record: same item: "an open conflict with [that requirement] where the bound is the pump's series relay K201". PASS.
+  7c. The relay is not independent of the controller because the controller commands it. Record: "a firmware hang that stops the refresh is bounded by K201, which opens, but a controller fault that keeps driving the gate and the refresh is not, because the controller that drives the pump also commands K201"; "K201 is not independent of the controller". PASS.
+  7d. The owner's decision carrying it is cited. Record: same item cites by id the residual-risk decision (item (i), quoted) and the carrying decision, entry of 2026-11-18 ("the owner decides it and no hardware bound is invented here"); schematic-review.md closure table row 7.34 repeats both. PASS.
+  7e. No hardware bound is added. Record: "No hardware bound is added on this board for it"; no commit changes K201, the pump drives or the interlock. The finding is stated as open, not closed by a part. PASS.
+
+  Overall C7: PASS.
+
+  Checked against the committed records at commit 4eaf4c9f (round gate passed on that commit).
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C7
+    type: satisfies
