@@ -130,3 +130,24 @@ Scope: every file under `hardware/sunbeam-em7000/` and `docs/sunbeam-em7000/` ex
 Fixed in this round, with the line counts: `owner-sign-off.md` (rebuilt, entries unchanged except the W-3 figure and the W-5c source sentence; the 'Look at these first' bullet for W-5c now names the section for behalf signings); `open-items.md` 4 lines (3, 26, 29, 94); `circuit-proof.md` 3 lines (23, 24, 72); `layout-hedges.md` 1 line (13); `controller-board-division.md` 1 line (1000); `constraints-figures.md` 1 line (20, two cells); `circuit-proof/W_margins.py` 2 lines (the section (d) print and the section (e) note; re-run with every result identical, the log differing in exactly those two note lines); `circuit-proof/W_margins.log` 2 lines; this file 2 rows. 15 lines in 8 files in all, besides the rebuilt record.
 
 8.3 (the source of what David Baker was shown): `owner-sign-off.md` now ends with the section 'What was put to the owner before W-5c', which quotes the thermal-records message of 2026-11-19 verbatim, states the content of the earlier message of the same day and his three statements verbatim, says both were sent before his reply and that the figure files (commit 4d8469bc) precede it, and says the record cannot prove he read them while the session transcript holds both messages and his replies. W-5c cites that section.
+
+## 2026-11-19 round 10 (findings 10.1 to 10.3 and the two plain errors of the suggestions)
+
+Scope: every `.md`, `.yaml`, `.py` and `.log` file under `hardware/sunbeam-em7000/` and `docs/sunbeam-em7000/`, searched after the corrections below on the working tree, excluding this heater wall board's `schematic-review.md` (round text, frozen) and this file. Counts are lines (files).
+
+| Pattern | Hits | Classification |
+|---|---|---|
+| `D11.{0,120}(accepted\|his words\|own words)` | 10 (4) | 3 hits in `circuit-proof.md`, `W_margins.py`, `W_margins.log` are the corrected text (D11 accepted as preliminary on 2026-10-28; finding 2.7 accepted 2026-11-19); the other 7 are `controller-board-division.md` (D11 row, owner-intent row, its own checks): correct, 2026-10-28 |
+| `(accepted\|his words\|own words).{0,120}D11` | 8 (4) | `circuit-proof.md` row (e) corrected; `controller-board-division.md`, `controller-board-design-constraints.md`, `controller-board-function-forms.md`: the 2026-10-26 to 2026-10-28 cut acceptance, correct |
+| `wall cut.{0,80}(accepted\|his words).{0,60}2026-11-19` | 2 (2) | the two W_margins notes, now corrected (fixed: 2 lines) |
+| `D11.{0,200}2026-11-19` | 4 (4) | `circuit-proof.md` row (e), `W_margins.py`, `W_margins.log`: corrected, each now says 2026-10-28 for D11 and 2026-11-19 for finding 2.7; `open-items.md` 77: the revisit of the cut, no acceptance dated: correct |
+| `2026-11-19.{0,200}D11` | 0 | none |
+| `two readings` | 6 (6) | `owner-sign-off.md` 98 now says the two readings are not in message 1 (fixed); the other 5 are different matters (main-board M36, the bracket's two forms, component-specification, design constraints, connector pinouts): false hits |
+| `h = 5.{0,60}(shown\|put to\|tables)` | 1 (1) | `owner-sign-off.md` 98, the corrected appendix line |
+| `(shown\|put to him).{0,200}h = 5` | 7 (4) | `owner-sign-off.md` 19, 36 (fixed to message 1's content) and 98; `circuit-proof.md` 24, `constraints-figures.md` 12, `controller-board-division.md` 877, 969, 971: derived figures of the amendment, none says he was shown them: legitimate |
+| `firmware reports` | 0 | the 10.3 sentence is gone |
+| `same run` | 5 (4) | `bring-up-provision.md` 22 and 23 (23 is the corrected row), `constraints-figures.md` 20, `open-items.md` 94: other matters: legitimate |
+| `2\.0 A.{0,80}(checked\|tested\|measured)` | 0 | no other statement says the 2.0 A threshold is tested at bring-up; `open-items.md` 29 states it as a design requirement with no firmware: legitimate |
+| `\band and\b` | 0 | the `and and` of `owner-sign-off.md` 42 fixed; no other |
+
+Fixed in this round, with line counts: `owner-sign-off.md` 4 lines (19, 36, 42, 98: what he was shown cut to message 1's content; the appendix says a subset, not the amendment's figures); `circuit-proof.md` 2 lines (24 D11 date; the Result paragraph cites W-5c as the owner's decision for row (e)); `circuit-proof/W_margins.py` 1 line (197) and `circuit-proof/W_margins.log` 1 line (54), `W_margins.py` re-run, output identical to the log; `bring-up-provision.md` 1 line (23: the threshold detection cannot be tested until the firmware of `REQ-ACTUATION-CONFIRMATION-001.C6` and `.C10` exists; bring-up measures the all-outputs-off current, `DEL-HW-BRING-UP.C23`, and reads a deliberately held-on heater's current as evidence for the firmware's thresholds). Total 9 lines in 5 files, plus 3 rows in `schematic-review.md`.
