@@ -83,7 +83,7 @@ class Notes(unittest.TestCase):
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C11: Each tool in this set has a test that runs it on a synthetic design built by the test, and the hardware notes describe each tool's command, its inputs, the board folder table it reads and the manual step of fetching an assembler's library footprints. Checked by reading the hardware notes against the list of tools clause by clause. This does not apply to the fetch of an assembler's library footprints, which stays a documented manual step.
     def test_the_prerequisites_are_declared_beside_kicad_and_the_tool_has_tests_that_run_it(self):
         needs = section(read(README), "What you need")
-        row = next(line for line in needs.splitlines() if "numpy, shapely and Pillow" in line)
+        row = next(line for line in needs.splitlines() if "numpy, shapely, Pillow and PyYAML" in line)
         for word in ("silkscreen", "pip install", "CANNOT RUN"):
             self.assertIn(word, row)
         for name in ("test_silkscreen_rebuild.py", "test_silkscreen_refusal.py", "test_silkscreen_environment.py"):

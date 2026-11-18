@@ -167,9 +167,7 @@ class TheChainRebuildsTheCommittedBoard(unittest.TestCase):
                 findings = [line.split(" | ")[0] for line in out.getvalue().splitlines() if " | " in line]
             for kind in ("ADDED", "MISSING", "CHANGED", "UNLOCKED"):
                 self.assertNotIn(kind, findings, (form, status, out.getvalue()[:600]))
-            # what the compare still reports, the board's unnetted rule areas lying on its copper, is the committed board's own
-            self.assertLessEqual(set(findings) - {"RESULT"}, {"NEAR"}, (form, findings))
-            self.assertEqual(status, 1 if "NEAR" in findings else 0, (form, status))
+            self.assertEqual((status, findings), (0, ["RESULT"] if form == "text" else []), (form, out.getvalue()[:600]))
 
     def test_every_mains_zone_fills_as_the_committed_board_does_and_the_ground_planes_to_within_a_quarter_square_millimetre(self):
         """the rebuilt board's zone fills are the committed board's, per zone and layer"""

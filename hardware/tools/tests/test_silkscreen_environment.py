@@ -112,6 +112,26 @@ class Environment(fx.Work):
         return subprocess.run([sys.executable, "-c", driver], capture_output=True, text=True, env=env, timeout=120)
 
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
+    def test_a_missing_pyyaml_stops_build_prove_and_check_naming_it_never_with_a_traceback(self):
+        board = self.board()
+        for command in (["build", "--board", board, "--out", self.path("out.kicad_pcb")], ["check", "--board", board],
+                        ["prove", "--input", board, "--output", board]):
+            for extra in ([], ["--format", "json"]):
+                status, out, err = self.run_blocked("yaml", *command, *extra)
+                self.assertEqual(status, 2, (command, out, err))
+                self.assertNotIn("Traceback", err + out)
+                message = err if not extra else json.loads(out)["detail"]
+                self.assertIn("the Python package PyYAML is not installed", message)
+                self.assertIn("task hw:silkscreen", message)
+                self.assertIn("SILKSCREEN_PYTHON", message)
+                if extra:
+                    self.assertEqual(json.loads(out)["result"], "CANNOT RUN")
+                else:
+                    self.assertTrue(err.startswith("CANNOT RUN | "), err)
+                    self.assertEqual(out, "")
+        self.assertFalse(os.path.exists(self.path("out.kicad_pcb")))
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
     def test_a_python_lacking_a_package_runs_again_under_silkscreen_python_when_that_has_them(self):
         wrapper = self.write("other-python", '#!/bin/sh\nexec "%s" "$@"\n' % sys.executable)
         os.chmod(wrapper, 0o755)
@@ -127,7 +147,7 @@ class Environment(fx.Work):
             self.assertTrue(done.stdout.startswith("STAYED ['numpy']"), (value, done.stdout + done.stderr))
 
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
-    def test_the_proof_and_the_table_need_neither_package_nor_the_interpreter(self):
+    def test_the_proof_and_the_table_need_neither_numpy_nor_the_interpreter(self):
         board = self.board()
         status, out, err = self.run_blocked("numpy", "prove", "--input", board, "--output", board, env=self.env())
         self.assertEqual((status, err), (0, ""))

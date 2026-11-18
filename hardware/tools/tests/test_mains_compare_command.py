@@ -57,6 +57,24 @@ def lv_track(y, layer="F.Cu", x0=0, x1=5, width=0.25, net="/LV", number=9):
             f'(uuid "00000000-0000-4000-8000-{number:012d}"))')
 
 
+def part(reference, x, y, pads, layer="F.Cu"):
+    """A footprint at (x, y) holding `pads`, each (number, net, kind, size, dx, layers)."""
+    body = "".join(f'(pad "{number}" {kind} rect (at {dx} 0) (size {size} {size})' + (" (drill 0.5)" if kind == "thru_hole" else "")
+                   + f' (layers {layers}) (net "{net}") (uuid "00000000-0000-4000-8000-{900 + index:012d}")) '
+                   for index, (number, net, kind, size, dx, layers) in enumerate(pads))
+    return (f'(footprint "test:P" (layer "{layer}") (uuid "00000000-0000-4000-8000-{int(x * 100 + y):012d}") (at {x} {y}) '
+            f'(property "Reference" "{reference}" (at 0 -2 0) (layer "F.SilkS") (uuid "00000000-0000-4000-8000-{int(x * 100 + y) + 1:012d}") '
+            f'(effects (font (size 1 1) (thickness 0.15)))) {body})')
+
+
+def rule_area(name, layers, corners, net=None):
+    points = " ".join(f"(xy {x} {y})" for x, y in corners)
+    return (f'(zone {f"(net {net})" if net else ""} (layers {layers}) (uuid "00000000-0000-4000-8000-{abs(hash(name)) % 10**12:012d}") '
+            f'(name "{name}") (hatch edge 0.5) (connect_pads (clearance 0.5)) (min_thickness 0.25) '
+            '(keepout (tracks not_allowed) (vias not_allowed) (pads allowed) (copperpour not_allowed) (footprints allowed)) '
+            f'(polygon (pts {points})))')
+
+
 class MainsCompare(unittest.TestCase):
     """Two boards, each with the project file beside it, in folders of their own."""
 
@@ -253,6 +271,69 @@ class MainsCompare(unittest.TestCase):
         self.assertTrue(lines[-1].startswith("RESULT | FAIL | the input cannot be read"), lines)
         status, found = self.compare(second=bad, fmt="json")
         self.assertEqual((status, found["result"], found["findings"][0]["finding"]), (1, "FAIL", "UNREADABLE"))
+
+    def test_a_low_voltage_pad_on_mains_copper_is_near_and_a_pad_exactly_at_the_distance_passes(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        lv = lambda x, layers='"F.Cu"', kind="smd": part("U1", x, 0, [("1", "/LV", kind, 1, 0, layers)])
+        # The /AC track ends at x 5, 0.25 wide to either side; a 1 mm square pad centred at x 5.3 overlaps it.
+        for fmt in (None, "json"):
+            status, report = self.compare(distance=0.5, second=self.make("second", base("lv") + [lv(5.3)]), fmt=fmt)
+            self.assertEqual(status, 1, report)
+            near = ([line for line in (l.split(" | ") for l in report) if line[0] == "NEAR"] if fmt is None
+                    else [[f["finding"], f["item"], f["detail"]] for f in report["findings"] if f["finding"] == "NEAR"])
+            self.assertEqual(len(near), 1, report)
+            self.assertIn("pad [/LV] U1 pad 1", near[0][1])
+            self.assertIn("is 0 mm from track [/AC]", near[0][2])
+        # Track edge at x 5.25; a pad whose near edge is at x 6.25 (centre 6.75, 1 wide) is exactly 1 mm away.
+        second = self.make("second", base("lv") + [lv(6.75)])
+        self.assertEqual(self.compare(distance=1, second=second)[0], 0)
+        self.assertEqual(self.compare(distance=1.001, second=second)[0], 1)
+
+    def test_a_through_hole_pad_is_on_every_layer_and_a_surface_pad_only_on_its_own(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        in2 = ('(segment (start 0 30) (end 5 30) (width 0.5) (locked yes) (layer "In2.Cu") (net "/AC") '
+               '(uuid "00000000-0000-4000-8000-000000000040"))')
+        inner = self.make("first", base("lv") + [in2])
+        through = part("J1", 5, 30, [("1", "/LV", "thru_hole", 1.5, 0.5, '"*.Cu" "*.Mask"')])
+        surface = part("J1", 5, 30, [("1", "/LV", "smd", 1.5, 0.5, '"F.Cu" "F.Mask"')])
+        for pads, expected in ((through, 1), (surface, 0)):
+            second = self.make("second", base("lv") + [in2, pads])
+            status, lines = self.compare(distance=0.5, first=inner, second=second)
+            self.assertEqual(len(self.findings(lines, "NEAR")), expected, lines)
+
+    def test_a_mains_pad_added_removed_or_moved_fails_naming_it_in_text_and_json(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        pad = lambda x=10: part("J2", x, 60, [("1", "/AC", "smd", 1, 0, '"F.Cu" "F.Mask"')])
+        first = self.make("first", base() + [pad()])
+        cases = {"MISSING": self.make("a", base()), "CHANGED": self.make("b", base() + [pad(12)]),
+                 "ADDED": None}
+        for finding, second in cases.items():
+            with self.subTest(finding=finding):
+                a, b = (self.make("c", base()), self.make("d", base() + [pad()])) if finding == "ADDED" else (first, second)
+                status, lines = self.compare(first=a, second=b)
+                self.assertEqual(status, 1, lines)
+                found = self.findings(lines, finding)
+                self.assertEqual(len(found), 1, lines)
+                self.assertIn("pad [/AC] J2 pad 1", found[0][1])
+                status, report = self.compare(first=a, second=b, fmt="json")
+                self.assertEqual([f["finding"] for f in report["findings"]], [finding])
+        status, found = self.compare(first=first, second=first, fmt="json")
+        self.assertEqual((status, found["mains_items_first"], found["mains_items_second"]), (0, 5, 5))
+
+    def test_a_rule_area_is_not_copper_and_an_unnetted_pour_is(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        corners = [(-1, -1), (6, -1), (6, 1), (-1, 1)]
+        area = rule_area("mains", '"F.Cu"', corners)
+        pour = area.replace('(keepout (tracks not_allowed) (vias not_allowed) (pads allowed) (copperpour not_allowed) (footprints allowed)) ',
+                            '(fill (thermal_gap 0.5) (thermal_bridge_width 0.5)) ').replace('(name "mains") ', "")
+        self.assertNotIn("keepout", pour)
+        for fmt in (None, "json"):
+            status, report = self.compare(distance=1, second=self.make("second", base() + [area]), fmt=fmt)
+            self.assertEqual(status, 0, report)
+            status, report = self.compare(distance=1, second=self.make("second", base() + [pour]), fmt=fmt)
+            self.assertEqual(status, 1, report)
+            kinds = ([l.split(" | ")[0] for l in report if " | " in l][:1] if fmt is None else [f["finding"] for f in report["findings"]])
+            self.assertEqual(kinds, ["NEAR"])
 
 
 if __name__ == "__main__":

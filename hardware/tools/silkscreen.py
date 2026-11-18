@@ -21,8 +21,9 @@ part is listed as unplaced. The same board and table always give the same bytes.
 against the fabricator's limits (clearances, keep-ins, height and stroke, angle,
 run-together text, ambiguous owner) and exits 1 when any measure is broken.
 
-`build` and `check` need numpy, shapely and Pillow beside KiCad's interpreter, and
-stop naming whichever is missing.
+`build` and `check` need numpy, shapely and Pillow beside KiCad's interpreter, and every
+subcommand, `prove` included, needs PyYAML for the table; each stops naming whichever
+is missing.
 
 Exit status: 0 when the board is written (`build`), proved silkscreen-only (`prove`) or
 clean (`check`); 1 when the command refuses its input, the proof fails or a measure is
@@ -43,6 +44,7 @@ from typing import List, Optional
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import kicad_scripting  # noqa: E402
+import silkscreen_python  # noqa: E402
 import silkscreen_patch  # noqa: E402
 import silkscreen_table  # noqa: E402
 from board_check import CannotRun  # noqa: E402
@@ -262,6 +264,17 @@ def check(board: str, work: Optional[str], kicad_python: Optional[str], out, as_
             scratch.cleanup()
 
 
+def require_table_packages() -> None:
+    """Run again under SILKSCREEN_PYTHON when that holds the table's package; else CannotRun naming the package.
+
+    Every subcommand reads the table's YAML, the proof included, so the stop comes before any of them starts.
+    """
+    silkscreen_python.rerun_under_silkscreen_python(needed=silkscreen_python.TABLE_PACKAGES)
+    missing = silkscreen_python.missing_packages(silkscreen_python.TABLE_PACKAGES)
+    if missing:
+        raise CannotRun(silkscreen_python.missing_message(missing[0]))
+
+
 def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = parser.add_subparsers(dest="command", required=True)
@@ -286,6 +299,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     args = parser.parse_args(argv)
     as_json = args.format == "json"
     try:
+        require_table_packages()
         if args.command == "build":
             return build(args.board, args.out, args.table, args.work, args.kicad_python, args.resolution, out, as_json)
         if args.command == "prove":

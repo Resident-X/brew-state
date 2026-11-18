@@ -212,12 +212,17 @@ def read_layout(path: str) -> list:
     return tree
 
 
-def copper(layout: list, path: str) -> List[dict]:
-    """Every track, arc, via and zone the layout carries at its top level, each read in full."""
+def copper(layout: list, path: str, rule_areas: bool = True) -> List[dict]:
+    """Every track, arc, via and zone the layout carries at its top level, each read in full.
+
+    A rule area (a zone carrying a (keepout ...)) holds no copper; it is left out when `rule_areas` is false.
+    """
     table = net_table(layout)
     found = []
     for node in layout:
         if sexpr.head(node) in KIND_OF:
+            if not rule_areas and sexpr.head(node) == "zone" and sexpr.children(node, "keepout"):
+                continue
             try:
                 found.append(read_item(node, table))
             except Unreadable as error:
@@ -835,6 +840,8 @@ def copper_shape(item: dict) -> Tuple[List[List[Tuple[float, float]]], float, bo
     drawn as, with no width: its outline, not its fill, which KiCad recomputes.
     """
     kind = item["kind"]
+    if kind == "pad":
+        return [item["pad"].outline()], 0.0, True
     if kind == "track":
         return [[mm_point(item["start"]), mm_point(item["end"])]], item["width"] / 2_000_000, False
     if kind == "arc":
@@ -856,6 +863,13 @@ def copper_shape(item: dict) -> Tuple[List[List[Tuple[float, float]]], float, bo
 
 def on_a_shared_layer(one: dict, other: dict) -> bool:
     """Whether two items have copper on one layer: a via is on every layer, a track or arc on its own, a zone on its layers."""
+    if "pad" in (one["kind"], other["kind"]):
+        pad, rest = (one, other) if one["kind"] == "pad" else (other, one)
+        if rest["kind"] == "via":
+            return True
+        layers = rest["pad"].layers if rest["kind"] == "pad" else item_layers(rest)
+        return any(pad["pad"].on(layer) for layer in layers) or (
+            rest["kind"] == "pad" and any(rest["pad"].on(layer) for layer in pad["pad"].layers))
     if "via" in (one["kind"], other["kind"]):
         return True
     return bool(set(item_layers(one)) & set(item_layers(other)))
@@ -867,6 +881,19 @@ def item_layers(item: dict) -> List[str]:
 
 def pieces(line: List[Tuple[float, float]]) -> List[Tuple[Tuple[float, float], Tuple[float, float]]]:
     return [(line[0], line[0])] if len(line) == 1 else list(zip(line, line[1:]))
+
+
+def copper_box(item: dict) -> Tuple[float, float, float, float]:
+    """(left, top, right, bottom) in mm of an item's copper, its width or diameter included: nothing of it lies outside."""
+    lines, half, _ = copper_shape(item)
+    xs = [point[0] for line in lines for point in line]
+    ys = [point[1] for line in lines for point in line]
+    return min(xs) - half, min(ys) - half, max(xs) + half, max(ys) + half
+
+
+def boxes_apart(one: Tuple[float, float, float, float], other: Tuple[float, float, float, float]) -> float:
+    """The least distance in mm between two boxes, 0 where they touch or overlap; never more than the copper's own gap."""
+    return max(0.0, other[0] - one[2], one[0] - other[2], other[1] - one[3], one[1] - other[3])
 
 
 def copper_gap(one: dict, other: dict) -> float:
@@ -886,6 +913,52 @@ def copper_gap(one: dict, other: dict) -> float:
         return max(0.0, min(found) - half)
     gap = min(board_geometry.segment_distance(a, b, c, d) for a, b in pieces(lines_a[0]) for c, d in pieces(lines_b[0]))
     return max(0.0, gap - half_a - half_b)
+
+
+#: What a pad is compared by in the mains compare, in the order a report names them. Pads are copper here, though the
+#: locked-copper record, the views and the history do not hold them.
+PAD_PROPERTIES = ("net", "layers", "at", "size", "angle", "shape")
+
+
+def pad_items(layout: list) -> List[dict]:
+    """Every pad of the layout as an item of kind pad, with the properties it is compared by."""
+    found = []
+    for pad in board_geometry.pads(layout):
+        found.append({"kind": "pad", "pad": pad, "net": pad.net, "uuid": "", "locked": True,
+                      "layers": sorted(pad.layers),
+                      "at": [round(pad.centre[0] * 1_000_000), round(pad.centre[1] * 1_000_000)],
+                      "size": [round(pad.size[0] * 1_000_000), round(pad.size[1] * 1_000_000)],
+                      "angle": round(pad.angle, 6), "shape": pad.shape,
+                      "name": f"{pad.reference or '?'} pad {pad.number or '(unnumbered)'}"})
+    return found
+
+
+def describe_pad(item: dict) -> str:
+    return (f"pad [{item['net']}] {item['name']} at {where(item['at'])} mm, size "
+            f"{mm(item['size'][0])} x {mm(item['size'][1])} mm on {' '.join(item['layers'])}")
+
+
+def pad_findings(first: List[dict], second: List[dict]) -> List[Tuple[str, str, str]]:
+    """How the second board's Mains-class pads depart from the first's, matched by part reference and pad number."""
+    findings = []
+    now = {}
+    for item in second:
+        now.setdefault(item["name"], []).append(item)
+    for item in first:
+        pool = now.get(item["name"])
+        if not pool:
+            findings.append(("MISSING", describe_pad(item), "is on a Mains-class net of the first board and not of the second"))
+            continue
+        twin = pool.pop(0)
+        changed = [f"{name} {shown(name, item[name]) if name in ('at', 'layers') else item[name]} -> "
+                   f"{shown(name, twin[name]) if name in ('at', 'layers') else twin[name]}"
+                   for name in PAD_PROPERTIES if item[name] != twin[name]]
+        if changed:
+            findings.append(("CHANGED", describe_pad(item), "; ".join(changed)))
+    for pool in now.values():
+        for item in pool:
+            findings.append(("ADDED", describe_pad(item), "is on a Mains-class net of the second board and not of the first"))
+    return findings
 
 
 def mains_copper_compare(before_board: str, before_project: str, after_board: str, after_project: str,
@@ -909,28 +982,36 @@ def mains_copper_compare(before_board: str, before_project: str, after_board: st
     for layout, board, project in layouts:
         nets.append(set().union(*members(kicad_cli, board, project, layout, classes).values()))
     mains = nets[0] | nets[1]
-    first = [item for item in copper(layouts[0][0], before_board) if item["net"] in mains]
-    second_all = copper(layouts[1][0], after_board)
+    first = [item for item in copper(layouts[0][0], before_board, rule_areas=False) if item["net"] in mains]
+    second_all = copper(layouts[1][0], after_board, rule_areas=False)
+    first_pads = [item for item in pad_items(layouts[0][0]) if item["net"] in mains]
+    second_pads = pad_items(layouts[1][0])
+    second_all = second_all + second_pads
     second = [item for item in second_all if item["net"] in mains]
+    first_count = len(first) + len(first_pads)
+    second_count = len(second)
     reword = {"MISSING": "is on a Mains-class net of the first board and not of the second",
               "ADDED": "is on a Mains-class net of the second board and not of the first",
               "UNLOCKED": "was locked on the first board and is not locked on the second"}
-    for finding, item, detail in compare_items(first, second):
+    for finding, item, detail in compare_items(first, [item for item in second if item["kind"] != "pad"]):
         findings.append((finding, item, reword.get(finding, detail)))
+    findings += pad_findings(first_pads, [item for item in second if item["kind"] == "pad"])
+    boxes = {id(other): copper_box(other) for other in second}
     for item in second_all:
         if item["net"] in mains:
             continue
         nearest = None
+        box = copper_box(item)
         for other in second:
-            if not on_a_shared_layer(item, other):
+            if boxes_apart(box, boxes[id(other)]) >= distance or not on_a_shared_layer(item, other):
                 continue
             gap = copper_gap(item, other)
             if nearest is None or gap < nearest[0]:
                 nearest = (gap, other)
         if nearest is not None and nearest[0] < distance - NEAR_TOLERANCE:
-            findings.append(("NEAR", describe(item), f"is {mm(round(nearest[0] * 1_000_000))} mm from {describe(nearest[1])}, "
+            findings.append(("NEAR", describe_pad(item) if item["kind"] == "pad" else describe(item), f"is {mm(round(nearest[0] * 1_000_000))} mm from {describe_pad(nearest[1]) if nearest[1]['kind'] == 'pad' else describe(nearest[1])}, "
                                                      f"nearer than {board_check.coordinate(distance)} mm"))
-    return findings, len(first), len(second)
+    return findings, first_count, second_count
 
 
 def mains_compare(args, kicad_cli: str, out) -> int:

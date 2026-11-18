@@ -22,8 +22,6 @@ from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from board_check import CannotRun
 
-PACKAGES = (("numpy", "numpy"), ("shapely", "shapely"), ("PIL", "Pillow"))
-
 
 def check_packages() -> None:
     """Run again under SILKSCREEN_PYTHON when that holds the packages; else raise CannotRun naming the first missing one."""
@@ -32,13 +30,11 @@ def check_packages() -> None:
     import silkscreen_python
     silkscreen_python.rerun_under_silkscreen_python()
 
-    for module, package in PACKAGES:
+    for module, package in silkscreen_python.PACKAGES:
         try:
             importlib.import_module(module)
         except ImportError as error:
-            raise CannotRun(f"the Python package {package} is not installed, and the silkscreen command needs numpy, "
-                            f"shapely and Pillow (hardware/README.md names them beside KiCad); "
-                            f"{silkscreen_python.where_to_find()}") from error
+            raise CannotRun(silkscreen_python.missing_message(package)) from error
 
 
 check_packages()

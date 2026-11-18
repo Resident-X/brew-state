@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ast
 import os
 import re
 import unittest
@@ -33,6 +34,29 @@ NAMED = {
 def read(*parts: str) -> str:
     with open(os.path.join(ROOT, *parts), encoding="utf-8") as handle:
         return handle.read()
+
+
+def subcommands(script: str) -> set[str]:
+    """The names a tool's argparse parser registers with add_parser, read from its source: a literal, or each literal of the
+    tuple a loop walks."""
+    with open(os.path.join(TOOLS, script), encoding="utf-8") as handle:
+        tree = ast.parse(handle.read())
+    found: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For) and isinstance(node.target, ast.Name):
+            for call in ast.walk(node):
+                if (isinstance(call, ast.Call) and isinstance(call.func, ast.Attribute) and call.func.attr == "add_parser"
+                        and call.args and isinstance(call.args[0], ast.Name) and call.args[0].id == node.target.id
+                        and isinstance(node.iter, (ast.Tuple, ast.List))):
+                    found |= {e.value for e in node.iter.elts if isinstance(e, ast.Constant) and isinstance(e.value, str)}
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "add_parser"
+                and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)):
+            found.add(node.args[0].value)
+    return found
+
+
+#: The words after a tool's script name, the options with their values skipped, that a document gives as its subcommand.
+INVOCATION = re.compile(r"hardware/tools/([A-Za-z0-9_]+\.py)((?:\s+(?:--[\w-]+(?:[= ]\S+)?|\"\$\w+\"))*)\s+([a-z][a-z-]*)\b")
 
 
 def slugs(markdown: str) -> set[str]:
@@ -67,6 +91,32 @@ class TheMethodAndTheNotesNameTheTrackedTools(unittest.TestCase):
             for script in sorted(named):
                 with self.subTest(document=document[-1], script=script):
                     self.assertTrue(os.path.isfile(os.path.join(TOOLS, script)), script)
+
+    def test_every_subcommand_the_method_and_notes_name_exists_in_the_tool_they_name_it_for(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C13: The board design method names each tracked tool's command in place of the working files it used to name, and the hardware notes list each tool's command, inputs, outputs and the table it reads from the board's folder. A check over the method and the notes finds no remaining reference to a working file outside the repository and no tool command the method names that does not exist in the tooling folder.
+        seen = set()
+        for document in (("docs", "board-design-method.md"), ("hardware", "README.md")):
+            for script, _, word in INVOCATION.findall(read(*document)):
+                known = subcommands(script)
+                if not known:
+                    continue
+                with self.subTest(document=document[-1], script=script, subcommand=word):
+                    self.assertIn(word, known, f"{script} has the subcommands {sorted(known)}")
+                seen.add((script, word))
+        # the subcommands of the tracked layout tools the documents are expected to show in use
+        for expected in (("locked_copper.py", "mains-compare"), ("silkscreen.py", "build"), ("footprint_audit.py", "gaps"),
+                         ("footprint_audit.py", "pads"), ("footprint_audit.py", "rotation")):
+            self.assertIn(expected, seen)
+
+    def test_the_subcommand_check_would_find_a_name_the_tool_lacks(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C13: The board design method names each tracked tool's command in place of the working files it used to name, and the hardware notes list each tool's command, inputs, outputs and the table it reads from the board's folder. A check over the method and the notes finds no remaining reference to a working file outside the repository and no tool command the method names that does not exist in the tooling folder.
+        self.assertEqual(subcommands("footprint_audit.py"), {"gaps", "pads", "rotation"})
+        self.assertIn("mains-compare", subcommands("locked_copper.py"))
+        self.assertEqual(subcommands("silkscreen.py"), {"build", "prove", "check"})
+        self.assertNotIn("compare-mains", subcommands("locked_copper.py"))
+        self.assertEqual(subcommands("acceptance_entries.py"), set())
+        found = INVOCATION.findall('python3 hardware/tools/locked_copper.py --kicad-cli "$KICAD_CLI" mains-compare --board x')
+        self.assertEqual([(script, word) for script, _, word in found], [("locked_copper.py", "mains-compare")])
 
     def test_the_method_names_the_command_of_each_tracked_tool(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C13: The board design method names each tracked tool's command in place of the working files it used to name, and the hardware notes list each tool's command, inputs, outputs and the table it reads from the board's folder. A check over the method and the notes finds no remaining reference to a working file outside the repository and no tool command the method names that does not exist in the tooling folder.

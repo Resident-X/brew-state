@@ -19,6 +19,7 @@ sys.path.insert(0, TESTS)
 
 import acceptance_entries  # noqa: E402
 import board_check  # noqa: E402
+import sexpr  # noqa: E402
 import board_prove  # noqa: E402
 from layout_tool_fixtures import Work, board_text  # noqa: E402
 
@@ -183,25 +184,77 @@ class MainsLinesAreRefused(Generator):
         status, lines, report = self.both(log(line("workmanship_pad_corner", "/SLOW_A", (5, 5))), "--mains-region", "mains")
         self.assertEqual((status, len(report["entries"])), (0, 1))
         status, lines = self.generate(log(line("workmanship_pad_corner", "/SLOW_A", (55, 55))), "--mains-region", "second")
-        self.assertEqual(status, 2, "a region named by argument must exist")
+        self.assertEqual(status, 2, "a region named by argument must exist while MAINS is present")
 
-    def test_a_region_the_rules_file_names_or_the_command_line_names_must_exist_on_the_board(self):
+    def declare(self, value, classes=("Default", "Mains", "Mains_Entry")):
+        """Rewrite the project file with MAINS declared `value` (None: not declared) and the net classes it defines."""
+        data = {"net_settings": {"classes": [{"name": name} for name in classes],
+                                 "netclass_assignments": {"/LINE_X": "Mains"},
+                                 "netclass_patterns": [{"netclass": "Mains", "pattern": "/MAINS_*"}]},
+                "text_variables": {} if value is None else {"MAINS": value}}
+        self.write("b/low.kicad_pro", json.dumps(data))
+
+    def refusal(self, text, *extra):
+        """(exit status, stderr) of a run in each format; both stop with exit 2 and the same message on stderr."""
+        messages = []
+        for fmt in ("text", "json"):
+            done = subprocess.run([sys.executable, os.path.join(TOOLS, "acceptance_entries.py"), *self.argv(text, *extra),
+                                   "--format", fmt], capture_output=True, text=True)
+            self.assertEqual(done.returncode, 2, done.stderr)
+            self.assertEqual(done.stdout == "", fmt == "text", done.stdout)
+            self.assertTrue(done.stderr.startswith("CANNOT RUN | "), done.stderr)
+            messages.append(done.stderr)
+        self.assertEqual(messages[0], messages[1])
+        return messages[0]
+
+    def test_a_board_declaring_mains_present_must_hold_the_mains_region_whatever_it_is_named(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        text = log(line("workmanship_pad_corner", "/SLOW_A", (55, 55)))
+        self.write("b/low.kicad_pcb", board_text([REGION.replace('(name "mains")', '(name "HV_AREA")')]))
+        message = self.refusal(text)
+        self.assertIn("no rule area named mains", message)
+        self.assertIn("holds the rule areas HV_AREA", message)
+        self.assertIn("--mains-region", message)
+        self.assertEqual(self.generate(text)[0], 2)
+        self.assertEqual(self.record_text(), "", "nothing is entered for a line whose region could not be told")
+        status, lines, report = self.both(text, "--mains-region", "HV_AREA")
+        self.assertEqual((status, len(report["refused"]), report["entries"]), (1, 1, []))
+        self.assertIn("lies in the mains region HV_AREA", report["refused"][0]["why"])
+        self.write("b/low.kicad_pcb", board_text([]))
+        self.assertIn("holds no rule area", self.refusal(text))
+
+    def test_a_board_declaring_no_mains_needs_no_region_and_an_undeclared_one_is_refused(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        text = log(line("workmanship_pad_corner", "/SLOW_A", (55, 55)))
+        self.write("b/low.kicad_pcb", board_text([]))
+        self.declare("none")
+        status, lines, report = self.both(text)
+        self.assertEqual((status, len(report["entries"])), (0, 1), lines)
+        os.remove(self.record)
+        status, lines, report = self.both(text, "--mains-region", "absent")
+        self.assertEqual((status, len(report["entries"])), (0, 1), lines)
+        for value in (None, "maybe"):
+            self.declare(value)
+            self.assertIn("the project variable MAINS", self.refusal(text))
+
+    def test_a_board_declaring_mains_present_must_define_a_class_the_mains_pattern_matches(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
         text = log(line("workmanship_pad_corner", "/SLOW_A"))
-        status, out = self.generate(text, "--mains-region", "absent")
-        self.assertEqual(status, 2)
-        self.write("b/low.kicad_dru", '(version 1)\n(rule "region parts"\n\t(condition "A.Type == \'Footprint\' && A.intersectsArea(\'gone\')"))\n')
-        status, out = self.generate(text)
-        self.assertEqual(status, 0, "the default region is mains, which the board has; the rules file names a region the default does not ask for")
-        self.write("b/low.kicad_dru", '(version 1)\n(rule "region parts"\n\t(condition "A.Type == \'Footprint\' && A.intersectsArea(\'mains\')"))\n')
+        self.declare("present", classes=("Default", "HighVoltage"))
+        message = self.refusal(text)
+        self.assertIn("defines no net class matching Mains*", message)
+        self.assertIn("HighVoltage", message)
+        self.assertEqual(self.generate(text, "--mains-class", "HighVoltage")[0], 0)
+        os.remove(self.record)
+        self.declare("none", classes=("Default", "HighVoltage"))
+        self.assertEqual(self.generate(text)[0], 0)
+
+    def test_a_region_named_on_the_command_line_must_exist_when_mains_is_present(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        text = log(line("workmanship_pad_corner", "/SLOW_A"))
+        self.assertIn("no rule area named absent", self.refusal(text, "--mains-region", "absent"))
         self.write("b/low.kicad_pcb", board_text([]))
-        status, out = self.generate(text)
-        self.assertEqual(status, 2, "the rules file names the mains region and the board has none: a mains line could not be told")
-        self.assertEqual(out, [])
-        done = subprocess.run([sys.executable, os.path.join(TOOLS, "acceptance_entries.py"), *self.argv(text)], capture_output=True, text=True)
-        self.assertEqual(done.returncode, 2)
-        self.assertTrue(done.stderr.startswith("CANNOT RUN | the board "), done.stderr)
-        self.assertIn("no rule area named mains", done.stderr)
+        self.assertIn("no rule area named mains", self.refusal(text))
 
 
 class EntriesFollowTheTable(Generator):
@@ -363,7 +416,7 @@ class TheToolCannotRunOnInputsItCannotTrust(Generator):
         self.write("b/low.kicad_pcb", board_text([REGION]))
         self.write("b/low.kicad_pro", "{")
         self.cannot(self.argv(text), "project file")
-        self.write("b/low.kicad_pro", "{}")
+        self.write("b/low.kicad_pro", json.dumps({"text_variables": {"MAINS": "none"}}))
         self.write("b/workmanship-acceptance.yaml", "accepted_workmanship: nothing\n")
         self.cannot(self.argv(text), "holding an accepted_workmanship list")
         self.write("b/workmanship-acceptance.yaml", "accepted_workmanship:\n  - {rule: workmanship_detour, scope: x, count: 1, reason: r, bounded_by: b, accepted_by: a, accepted_on: '2026-01-01'}\n")
@@ -380,6 +433,7 @@ class TheRealCheckAcceptsTheEntries(unittest.TestCase):
         self.seed = board_prove.prepare(self.scratch)
         board_prove.right_angle(self.seed)
         self.seed.layout(self.jog)
+        self.seed.layout(self.region)
 
     @staticmethod
     def jog(tree):
@@ -388,6 +442,12 @@ class TheRealCheckAcceptsTheEntries(unittest.TestCase):
         points = [(40, 10), (42, 10), (42.3, 10.3), (45, 10.3)]
         for index, (a, b) in enumerate(zip(points, points[1:])):
             tree.insert(len(tree) - 1, board_prove.segment("/LV_A", *a, *b, f"0b0e5c1a-0000-4000-8000-0000000009{index:02d}"))
+
+    @staticmethod
+    def region(tree):
+        """The mains rule area the board's MAINS declaration requires, off every net's copper."""
+        tree.insert(len(tree) - 1, sexpr.parse_one(REGION.replace("(xy 50 50) (xy 60 50) (xy 60 60) (xy 50 60)",
+                                                                  "(xy 90 90) (xy 91 90) (xy 91 91) (xy 90 91)")))
 
     def checked(self):
         status, lines, stderr = board_prove.check(self.seed, KICAD_CLI)

@@ -14,7 +14,12 @@ import copy
 import re
 from typing import Any, Dict, List
 
-import yaml
+from board_check import CannotRun
+
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 
 class TableError(ValueError):
@@ -78,6 +83,8 @@ def _sizes(value, where: str) -> List[float]:
 
 def load(text: str) -> Dict[str, Any]:
     """The table in `text` (YAML) completed with the defaults, or TableError naming what is wrong."""
+    if yaml is None:
+        raise CannotRun("the Python package PyYAML is not installed, and the table is read as YAML")
     try:
         given = yaml.safe_load(text) if text.strip() else {}
     except yaml.YAMLError as error:

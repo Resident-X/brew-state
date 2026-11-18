@@ -114,8 +114,7 @@ def wildcard(pattern: str):
 class Mains:
     """What makes a net or a position mains: the net classes named, and the rule areas named."""
 
-    def __init__(self, project: dict, layout: list, class_patterns: Sequence[str], regions: Sequence[str],
-                 required: Sequence[str], board: str):
+    def __init__(self, project: dict, layout: list, class_patterns: Sequence[str], regions: Sequence[str], board: str):
         settings = board_check.setting(project, "net_settings")
         settings = settings if isinstance(settings, dict) else {}
         assigned = settings.get("netclass_assignments") or {}
@@ -129,6 +128,20 @@ class Mains:
             if isinstance(entry, dict) and isinstance(entry.get("pattern"), str) and isinstance(entry.get("netclass"), str):
                 self.patterns.append((wildcard(entry["pattern"]), entry["netclass"]))
         self.class_patterns = list(class_patterns)
+        variables = project.get("text_variables")
+        declared = variables.get("MAINS") if isinstance(variables, dict) else None
+        if declared not in ("present", "none"):
+            said = "is not set" if declared is None else f"is {json.dumps(declared)}"
+            raise CannotRun(f"the project variable MAINS {said}; every board declares it as exactly present or none, so set it "
+                            "in the project file before a mains line can be told")
+        if declared == "present":
+            wanted = [re.compile("".join(".*" if c == "*" else "." if c == "?" else re.escape(c) for c in each))
+                      for each in class_patterns]
+            defined = sorted(locked_copper.defined_classes(project, layout))
+            if not any(pattern.fullmatch(name) for pattern in wanted for name in defined):
+                raise CannotRun(f"the board {board} declares MAINS present and defines no net class matching "
+                                f"{', '.join(class_patterns)} (it defines {', '.join(defined) or 'none'}), so a line on a mains net "
+                                "cannot be told; name the mains classes with --mains-class, or fix the board")
         self.areas: List[Tuple[str, List[Tuple[float, float]]]] = []
         for zone in sexpr.children(layout, "zone"):
             name = sexpr.child(zone, "name")
@@ -141,10 +154,14 @@ class Mains:
                         points.append((xy[0] / 1_000_000, xy[1] / 1_000_000))
                 self.areas.append((str(name[1]), points))
         found = {name for name, _ in self.areas}
-        missing = [name for name in required if name not in found]
-        if missing:
-            raise CannotRun(f"the board {board} has no rule area named {', '.join(missing)}, so a line inside a mains region "
-                            "cannot be told; name the region with --mains-region, or fix the board")
+        missing = [name for name in regions if name not in found]
+        if declared == "present" and missing:
+            held = sorted({str(sexpr.child(zone, "name")[1]) for zone in sexpr.children(layout, "zone")
+                           if sexpr.children(zone, "keepout") and sexpr.child(zone, "name") is not None
+                           and len(sexpr.child(zone, "name")) > 1})
+            raise CannotRun(f"the board {board} declares MAINS present and has no rule area named {', '.join(missing)}, so a line "
+                            f"inside a mains region cannot be told; it holds {'the rule areas ' + ', '.join(held) if held else 'no rule area'}"
+                            "; name the mains region with --mains-region, or fix the board")
 
     def classes_of(self, net: str) -> List[str]:
         value = self.assigned.get(net)
@@ -414,16 +431,6 @@ def design_of(lines: Sequence[Line], designs: Sequence[str], given: Optional[str
     return designs[0]
 
 
-def named_by_rules(board: str, region: str) -> bool:
-    """Whether the board's rules file, beside it, names the rule area `region` in a condition."""
-    path = os.path.splitext(board)[0] + ".kicad_dru"
-    try:
-        with open(path, encoding="utf-8") as handle:
-            return f"intersectsArea('{region}')" in handle.read()
-    except OSError:
-        return False
-
-
 def run(args, out) -> int:
     log, designs = read_log(args.log)
     design = design_of(log, designs, args.design)
@@ -437,8 +444,7 @@ def run(args, out) -> int:
     project = locked_copper.read_project(args.project)
     layout = locked_copper.read_layout(args.board)
     regions = args.mains_regions or [MAINS_REGION_DEFAULT]
-    mains = Mains(project, layout, args.mains_classes or [MAINS_CLASS_DEFAULT], regions,
-                  [name for name in regions if args.mains_regions is not None or named_by_rules(args.board, name)], args.board)
+    mains = Mains(project, layout, args.mains_classes or [MAINS_CLASS_DEFAULT], regions, args.board)
     record = args.record or os.path.join(os.path.dirname(os.path.abspath(args.board)), RECORD_NAME)
     text_lines, existing = read_record(record)
     result = plan(log, design, mains, table, existing)
@@ -479,7 +485,7 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
                         help=f"a net class, or a pattern of class names, that is mains; give each (default: {MAINS_CLASS_DEFAULT})")
     parser.add_argument("--mains-region", dest="mains_regions", action="append", metavar="NAME",
                         help=f"the name of a rule area of the layout that is a mains region; give each (default: {MAINS_REGION_DEFAULT}, "
-                             "required to exist when given, or when the board's rules file names it)")
+                             "required to exist when the project declares MAINS present)")
     parser.add_argument("--accepted-on", metavar="DATE", help="the date each entry is signed, YYYY-MM-DD (default: today)")
     parser.add_argument("--partial", action="store_true", help="write the entries that can be justified even when other lines are refused")
     parser.add_argument("--dry-run", action="store_true", help="report what would be written and write nothing")
