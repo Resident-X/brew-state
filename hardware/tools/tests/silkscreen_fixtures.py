@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import board_check  # noqa: E402
 import kicad_scripting  # noqa: E402
 import layout_tool_fixtures  # noqa: E402
+import silkscreen_python  # noqa: E402
 
 PACKAGES = (("numpy", "numpy"), ("shapely", "shapely"), ("PIL", "Pillow"))
 
@@ -33,12 +34,13 @@ PACKAGES = (("numpy", "numpy"), ("shapely", "shapely"), ("PIL", "Pillow"))
 def require_tools() -> str:
     """KiCad's interpreter and the three packages, or stop the module naming what is missing."""
     layout_tool_fixtures.require_kicad_python()
+    silkscreen_python.rerun_under_silkscreen_python()
     for module, package in PACKAGES:
         try:
             importlib.import_module(module)
         except ImportError:
             print(f"CANNOT RUN | the Python package {package} is not installed; the silkscreen command needs numpy, "
-                  f"shapely and Pillow (hardware/README.md)", file=sys.stderr, flush=True)
+                  f"shapely and Pillow; {silkscreen_python.where_to_find()} (hardware/README.md)", file=sys.stderr, flush=True)
             raise
     return kicad_scripting.interpreter()
 

@@ -26,16 +26,19 @@ PACKAGES = (("numpy", "numpy"), ("shapely", "shapely"), ("PIL", "Pillow"))
 
 
 def check_packages() -> None:
-    """Raise CannotRun naming the first of numpy, shapely and Pillow that cannot be imported."""
+    """Run again under SILKSCREEN_PYTHON when that holds the packages; else raise CannotRun naming the first missing one."""
     import importlib
+
+    import silkscreen_python
+    silkscreen_python.rerun_under_silkscreen_python()
 
     for module, package in PACKAGES:
         try:
             importlib.import_module(module)
         except ImportError as error:
             raise CannotRun(f"the Python package {package} is not installed, and the silkscreen command needs numpy, "
-                            f"shapely and Pillow (hardware/README.md names them beside KiCad); install {package} "
-                            f"into the Python that runs this command") from error
+                            f"shapely and Pillow (hardware/README.md names them beside KiCad); "
+                            f"{silkscreen_python.where_to_find()}") from error
 
 
 check_packages()

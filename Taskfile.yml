@@ -40,6 +40,17 @@ vars:
   GERBONARA_PYTHON:
     sh: 'if [ -n "${GERBONARA_PYTHON:-}" ]; then echo "$GERBONARA_PYTHON"; elif [ -x "{{.GERBONARA_VENV}}/bin/python" ]; then echo "{{.GERBONARA_VENV}}/bin/python"; else echo python3; fi'
 
+  # The virtual environment numpy, shapely, Pillow and PyYAML are installed in, which the
+  # silkscreen command and its tests import: `task hw:silkscreen` creates it here,
+  # and SILKSCREEN_VENV=... puts it elsewhere (hardware/README.md says more).
+  SILKSCREEN_VENV:
+    sh: 'echo "${SILKSCREEN_VENV:-${XDG_CACHE_HOME:-$HOME/.cache}/brew-state/silkscreen}"'
+  # The Python that runs them: SILKSCREEN_PYTHON=... when set, else the Python of
+  # that environment once it exists, else the bare python3. The command and its
+  # tests run themselves again under it when the Python they started in lacks a package.
+  SILKSCREEN_PYTHON:
+    sh: 'if [ -n "${SILKSCREEN_PYTHON:-}" ]; then echo "$SILKSCREEN_PYTHON"; elif [ -x "{{.SILKSCREEN_VENV}}/bin/python" ]; then echo "{{.SILKSCREEN_VENV}}/bin/python"; else echo python3; fi'
+
   # The Freerouting 2.5.0 jar the board design method routes with: `task hw:freerouting`
   # fetches it here, and FREEROUTING_JAR=... points at one placed by hand.
   FREEROUTING_JAR:
@@ -634,6 +645,14 @@ tasks:
       - '"{{.GERBONARA_VENV}}/bin/python" -m pip install --quiet gerbonara==1.6.3'
       - '"{{.GERBONARA_VENV}}/bin/python" -c "import gerbonara; assert gerbonara.__version__ == \"1.6.3\", gerbonara.__version__; print(\"gerbonara\", gerbonara.__version__, \"in {{.GERBONARA_VENV}}\")"'
 
+  hw:silkscreen:
+    desc: Create the virtual environment numpy 2.5.0, shapely 2.2.0, Pillow 12.3.0 and PyYAML 6.0.3 are installed in, at SILKSCREEN_VENV (by default a folder in your user cache, outside the repository), and read the versions back, so the silkscreen command and its tests find them without SILKSCREEN_PYTHON being set. Safe to run again. Needs Python 3.9 or newer with venv and pip, and network access to the Python package index
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - python3 -m venv "{{.SILKSCREEN_VENV}}"
+      - '"{{.SILKSCREEN_VENV}}/bin/python" -m pip install --quiet numpy==2.5.0 shapely==2.2.0 Pillow==12.3.0 pyyaml==6.0.3'
+      - '"{{.SILKSCREEN_VENV}}/bin/python" -c "import numpy, shapely, PIL, yaml; print(\"numpy\", numpy.__version__, \"shapely\", shapely.__version__, \"Pillow\", PIL.__version__, \"PyYAML\", yaml.__version__, \"in {{.SILKSCREEN_VENV}}\")"'
+
   hw:freerouting:
     desc: Fetch the Freerouting 2.5.0 release jar the board design method routes with to FREEROUTING_JAR (by default a file in your user cache, outside the repository), keeping it only when its sha256 matches the release's, and leave a matching file alone. Safe to run again. Needs Python 3.9 or newer and network access the first time; running the jar needs a Java runtime 25 or newer
     dir: "{{.ROOT_DIR}}"
@@ -647,6 +666,7 @@ tasks:
       KICAD_CLI: "{{.KICAD_CLI}}"
       RESVG: "{{.RESVG}}"
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
+      SILKSCREEN_PYTHON: "{{.SILKSCREEN_PYTHON}}"
     cmds:
       # Each test file runs in a process of its own, side by side, from this
       # directory as the serial discover run did; the runner fails when it finds
@@ -661,6 +681,7 @@ tasks:
       KICAD_CLI: "{{.KICAD_CLI}}"
       RESVG: "{{.RESVG}}"
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
+      SILKSCREEN_PYTHON: "{{.SILKSCREEN_PYTHON}}"
       BOARD_TESTS_WITHOUT_PROOF: "1"
     cmds:
       # Each test file runs in a process of its own, side by side, from this

@@ -209,6 +209,32 @@ jobs:
           fi
           echo "GERBONARA_PYTHON=${RUNNER_TEMP}/gerbonara/bin/python" >> "${GITHUB_ENV}"
 
+      # The libraries the silkscreen command and its tests import (PyYAML for its table), at pinned
+      # versions, in a virtual environment of its own as the renderer's is. The
+      # step reads the versions back, so a runner that installs others fails here
+      # as provisioning, and hands the environment's Python to the verification
+      # as SILKSCREEN_PYTHON, which the board tasks read.
+      - name: Install the silkscreen command's libraries
+        env:
+          # renovate: datasource=pypi depName=numpy
+          NUMPY_VERSION: "2.5.0"
+          # renovate: datasource=pypi depName=shapely
+          SHAPELY_VERSION: "2.2.0"
+          # renovate: datasource=pypi depName=Pillow
+          PILLOW_VERSION: "12.3.0"
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/silkscreen"
+          "${RUNNER_TEMP}/silkscreen/bin/python" -m pip install "numpy==${NUMPY_VERSION}" "shapely==${SHAPELY_VERSION}" "Pillow==${PILLOW_VERSION}" "pyyaml==${PYYAML_VERSION}"
+          installed="$("${RUNNER_TEMP}/silkscreen/bin/python" -c 'import numpy, shapely, PIL, yaml; print(numpy.__version__, shapely.__version__, PIL.__version__, yaml.__version__)')"
+          if [ "${installed}" != "${NUMPY_VERSION} ${SHAPELY_VERSION} ${PILLOW_VERSION} ${PYYAML_VERSION}" ]; then
+            echo "numpy, shapely, Pillow and PyYAML are installed at ${installed:-nothing}, not ${NUMPY_VERSION} ${SHAPELY_VERSION} ${PILLOW_VERSION} ${PYYAML_VERSION}" >&2
+            exit 1
+          fi
+          echo "SILKSCREEN_PYTHON=${RUNNER_TEMP}/silkscreen/bin/python" >> "${GITHUB_ENV}"
+
       - name: Run the complete verification, the sweep left out for its own jobs
         run: |
           set -euo pipefail

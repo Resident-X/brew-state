@@ -42,7 +42,7 @@ class Environment(fx.Work):
         return self.write("in.kicad_pcb", fx.board_text([fx.resistor("R1", 8, 8)]))
 
     def env(self, **changes):
-        env = {k: v for k, v in os.environ.items() if k != "KICAD_PYTHON"}
+        env = {k: v for k, v in os.environ.items() if k not in ("KICAD_PYTHON", "SILKSCREEN_PYTHON", "SILKSCREEN_PYTHON_RERUN")}
         env.update(changes)
         return env
 
@@ -92,12 +92,39 @@ class Environment(fx.Work):
                 status, out, err = self.run_blocked(module, *command)
                 self.assertEqual(status, 2, (module, command))
                 self.assertTrue(err.startswith(f"CANNOT RUN | the Python package {package} is not installed"), err)
+                self.assertIn("task hw:silkscreen", err)
+                self.assertIn("SILKSCREEN_PYTHON", err)
                 self.assertEqual(out, "")
                 status, out, err = self.run_blocked(module, *command, "--format", "json")
                 report = json.loads(out)
                 self.assertEqual((status, report["result"]), (2, "CANNOT RUN"))
                 self.assertIn(f"the Python package {package} is not installed", report["detail"])
+                self.assertIn("task hw:silkscreen", report["detail"])
         self.assertFalse(os.path.exists(self.path("out.kicad_pcb")))
+
+    def run_rerun(self, silkscreen_python_value):
+        """A process in which numpy cannot be imported asks to run `target` again; what the target printed, or the failure."""
+        target = self.write("target.py", "import numpy, os\nprint('RERAN', os.environ.get('SILKSCREEN_PYTHON_RERUN'))\n")
+        driver = ("import sys\nsys.path.insert(0, %r)\nsys.modules['numpy'] = None\nimport silkscreen_python\n"
+                  "silkscreen_python.rerun_under_silkscreen_python([sys.executable, %r])\nprint('STAYED', silkscreen_python.missing_packages())\n"
+                  % (TOOLS, target))
+        env = self.env(KICAD_PYTHON=PYTHON, **({"SILKSCREEN_PYTHON": silkscreen_python_value} if silkscreen_python_value else {}))
+        return subprocess.run([sys.executable, "-c", driver], capture_output=True, text=True, env=env, timeout=120)
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
+    def test_a_python_lacking_a_package_runs_again_under_silkscreen_python_when_that_has_them(self):
+        wrapper = self.write("other-python", '#!/bin/sh\nexec "%s" "$@"\n' % sys.executable)
+        os.chmod(wrapper, 0o755)
+        done = self.run_rerun(wrapper)
+        self.assertEqual(done.stdout.strip(), "RERAN 1", done.stdout + done.stderr)
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
+    def test_a_silkscreen_python_that_is_unset_missing_a_package_or_not_a_file_is_not_used(self):
+        lacking = self.write("lacking-python", '#!/bin/sh\nexec "%s" -c "import sys; sys.exit(1)"\n' % sys.executable)
+        os.chmod(lacking, 0o755)
+        for value in (None, "", self.path("no-such-python"), self.path("."), lacking):
+            done = self.run_rerun(value)
+            self.assertTrue(done.stdout.startswith("STAYED ['numpy']"), (value, done.stdout + done.stderr))
 
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
     def test_the_proof_and_the_table_need_neither_package_nor_the_interpreter(self):
