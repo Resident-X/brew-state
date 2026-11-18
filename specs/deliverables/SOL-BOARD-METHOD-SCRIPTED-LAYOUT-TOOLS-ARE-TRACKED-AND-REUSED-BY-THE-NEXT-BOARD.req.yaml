@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The scripted layout tools the board method relies on are tracked in the repository and reused by the next board
 status: active
-version: 1
+version: 2
 text: |
   The board design method that DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK records says the next board reuses the checks, the chain-script pattern, the silkscreen script, the picture renderer and the sign-off list form. Of those, the repository tracks the checks, the picture renderer, the locked-copper tool and the sign-off list form. The silkscreen rebuild, the mains-copper compare, the safe zone refill with its fill-difference report, the acceptance-entry generator, the chain runner, the main board's own block scripts and tables, and the footprint body-gap and rotation audit exist only as working files outside the repository. A reader on another machine therefore cannot rebuild the main board's copper or silkscreen from the repository, and the wall board cannot follow the practised method from the repository alone. This solution tracks those tools so that each is generic in the tooling folder, keeps whatever is specific to one board in that board's own folder, and is proven on synthetic designs.
 
@@ -18,6 +18,12 @@ text: |
   - Footprint audit: the body-gap measure and the pad-table dump are generic and measure real part bodies. The body table and the maker readings per part are a table in the board's folder. The rotation solver is generic.
   - The fetch of an assembler's library footprints is an outside service and stays a documented manual step in the hardware notes, not a tracked tool.
   - Each tool is described in the hardware notes with the command that runs it, and the board design method names the tooling folder commands in place of the working files.
+  - Where each tool lives: a tool is a script in the tooling folder with its tests beside the other tooling tests, and a board's tables and build scripts live in that board's folder, as the main board's folder already does. The mains-copper compare and the acceptance generator extend the locked-copper tool and the pre-order check's acceptance-entry reader and writer rather than forking their parsers.
+  - Silkscreen dependencies: the silkscreen command may use numpy, shapely and Pillow, which the rest of the board tooling does not. They are declared in the hardware notes beside KiCad and the rasteriser, and a round that needs them and lacks one stops naming the missing package. No tool vendors a copy of them.
+  - KiCad scripting in tests: a tool that needs KiCad's scripting interface runs it in a subprocess of the KiCad-bundled interpreter, located by an environment variable that the hardware notes document, and a test that needs it fails naming that variable when it is absent. Every path to a tool, interpreter or board is an argument or an environment variable, never a fixed location on one machine.
+  - Rebuild of the committed main board: before the chain is relied on, the chain's output is compared with the committed board. Where they differ, the committed board is authoritative and the chain's steps are corrected until it reproduces it; the committed board is not regenerated from the chain.
+  - Choosing the main board's scripts: of the several versioned copies of a block script, the one the board's import order uses last is the one tracked; superseded copies are not tracked.
+  - Built as one leaf, in the order above, with each tool's tests and notes landing with the tool.
 rationale: |
   Why this exists: the decision states as settled that a design's scripts, their tables and its sign-off list are tracked in the board's folder, and that the next board reuses the silkscreen script and the chain-script pattern. No criterion required that and no delivered work provided it, so the statement described the practised method and not the repository. The method's followability criterion on the existing method solution covers the text, not the tools the text relies on.
 
@@ -25,7 +31,7 @@ rationale: |
 
   Placement: each tool is split into a generic part, which any board can run, and a board specific table, which carries that board's choices. A generic part holding a board's figures would break the method's rule of carrying nothing specific to one machine, and a table held in the tooling folder would couple every board to one board's choices.
 
-  Size: about five build leaves of work in all, of which the silkscreen command is the largest. The order puts the small tools first because every later board step uses them.
+  Size: about five tools' worth of work, of which the silkscreen command is the largest, built as one leaf so that the board tier of the round gate runs once for all of it and not once per tool. The order puts the small tools first because every later board step uses them.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
