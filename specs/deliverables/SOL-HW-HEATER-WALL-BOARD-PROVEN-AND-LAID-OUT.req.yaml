@@ -85,6 +85,6 @@ links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
     type: depends-on
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 (independent brief reviewer)
-  fingerprint: 28acd3a1d75c6305ce0d28e2fbcb6510a1bf710552e346f4a6f9d76c2a388c58
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 3ae5d90d0d255ef4d61cdaf4e4c0e0dc7066ea17a5917dddec65878fc95d4361
   gating_profile: ""

@@ -1,0 +1,39 @@
+sheet: Low-voltage header
+function: 'The three-way low-voltage cable header to the main board: the LED supply and the two LED returns.'
+parts:
+- ref: J301
+  lib_id: Connector_Generic:Conn_01x03
+  value: WB_LV3
+  rating: 1x3 2.54 mm pin header, 3 A, vertical (the main board's JP301 part)
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical
+  mpn: PZ254V-11-03P
+  maker: XFCN
+  lcsc: C2937625
+  class: extended
+  hand: false
+  function: three-way low-voltage cable header to the main board's J761, positions 1 to 3
+  mains: false
+  sim_exclude: true
+  pinmap:
+    '1': +5V_WB
+    '2': HEAT_C_LED_K
+    '3': HEAT_S_LED_K
+  pinmap_source: the main board's JP301 part (parts-specification.yaml, XFCN PZ254V-11-03P, footprint PinHeader_1x03_P2.54mm_Vertical, pads 1..3); pin order is the first three ways of the main board's J761 (sheets/720 of the main board); the maker's drawing is not read here
+nets:
+  +5V_WB:
+    scope: global
+    pins:
+    - J301.1
+  HEAT_C_LED_K:
+    scope: global
+    pins:
+    - J301.2
+  HEAT_S_LED_K:
+    scope: global
+    pins:
+    - J301.3
+no_connect: []
+custom_symbols: []
+custom_footprints: []
+power_flags: []
+notes: 'Header at the right edge of the sheet; no mains on this sheet. The cable lands on positions 1 to 3 of the main board''s ten-way J761: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K. +5V_WB supplies the two opto-triac LED anodes on the switch sheets and is power-leaving at the main board''s end (JP761); nothing on this board sources it. HEAT_C_LED_K and HEAT_S_LED_K are the LED returns sunk by the main board''s Q761 and Q771. The board has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'
