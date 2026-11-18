@@ -1,7 +1,7 @@
 # The board rules record of the Sunbeam EM7000 heater wall board: the figures the pre-order check reads
 # for sensing clearance, connector ground returns and the finished outer copper weight.
 #
-# This board has no sensing net class and no ground net: its three-way header J301 carries the LED
+# This board has no sensing net class and no ground net: its three-way header J931 carries the LED
 # supply and two LED returns (heater-wall-board/pin-allocation.yaml), all low-voltage supply or return
 # nets, and the mains nets sit on the switch sheets. So the sensing and ground-return sections list no
 # class the board uses; the classes named are the project's own class names, kept so the record is in the
@@ -12,8 +12,8 @@
 # separation basis (../separation-basis.yaml) is not copied here; the nets of the net class Mains are the
 # nine nets the schematic specification lists as mains_class_nets: OUT_C, OUT_S, RET, HEAT_C_OPTO_MT,
 # HEAT_S_OPTO_MT, HEAT_C_GATE_R, HEAT_S_GATE_R, HEAT_C_TRIAC_G and HEAT_S_TRIAC_G. The nets +5V_WB,
-# HEAT_C_LED_K and HEAT_S_LED_K are low voltage, on the cable header J301, and are held apart from them
-# by the barrier of the heater-switch parts U101 and U201.
+# HEAT_C_LED_K and HEAT_S_LED_K are low voltage, on the cable header J931, and are held apart from them
+# by the barrier of the heater-switch parts U911 and U921.
 sensing:
   classes:
     - Sense
@@ -36,7 +36,7 @@ ground_returns:
   signal_classes:
     - class: Default
       signal_pins_per_return: 1
-      source: "the main board's own figure, carried unchanged (main-board/board-rules.yaml ground_returns): none exists in the repository's published practice; 1 signal pin per ground-return pin is the strictest whole number. The board's one signal connector J301 has +5V_WB as a supply and two LED-return nets, and no ground net (the LED current returns through the main board), so the check finds it states no signal pin against a return unless the project file puts them in the Default class; see the report of the pre-order check for the result"
+      source: "the main board's own figure, carried unchanged (main-board/board-rules.yaml ground_returns): none exists in the repository's published practice; 1 signal pin per ground-return pin is the strictest whole number. The board's one signal connector J931 has +5V_WB as a supply and two LED-return nets, and no ground net (the LED current returns through the main board), so the check finds it states no signal pin against a return unless the project file puts them in the Default class; see the report of the pre-order check for the result"
     - class: Fast
       signal_pins_per_return: 1
       source: "the main board's own figure, carried unchanged (main-board/board-rules.yaml ground_returns): 1 signal pin per ground-return pin, the strictest whole number; the board has no Fast net"
@@ -45,4 +45,4 @@ ground_returns:
       source: "the main board's own figure, carried unchanged (main-board/board-rules.yaml ground_returns): 1 signal pin per ground-return pin, the strictest whole number; the board has no Sense net"
 fabrication:
   outer_copper_oz: 1
-  source: "1 oz finished outer copper, the weight JLCPCB's standard two-layer order carries without a surcharge (docs/board-manufacturer-jlcpcb.md, Layers, thickness, copper and board size: finished outer copper 1, 2, 2.5, 3.5 or 4.5 oz on 2-layer boards, 1 oz the default; the copper-weight cost constraint keeps the board on the introductory price). The heater return carries 5.38 A steam plus 4.80 A coffee at most together, through the blade J401 and its pour, so the copper width at layout is sized for that current at 1 oz; the layout leaf holds that figure"
+  source: "1 oz finished outer copper, the weight JLCPCB's standard two-layer order carries without a surcharge (docs/board-manufacturer-jlcpcb.md, Layers, thickness, copper and board size: finished outer copper 1, 2, 2.5, 3.5 or 4.5 oz on 2-layer boards, 1 oz the default; the copper-weight cost constraint keeps the board on the introductory price). The heater return carries 5.38 A steam plus 4.80 A coffee at most together, through the blade J941 and its pour, so the copper width at layout is sized for that current at 1 oz; the layout leaf holds that figure"

@@ -1,7 +1,7 @@
 sheet: Low-voltage header
 function: 'The three-way low-voltage cable header to the main board: the LED supply and the two LED returns.'
 parts:
-- ref: J301
+- ref: J931
   lib_id: Connector_Generic:Conn_01x03
   value: WB_LV3
   rating: 1x3 2.54 mm pin header, 3 A, vertical (the main board's JP301 part)
@@ -23,15 +23,15 @@ nets:
   +5V_WB:
     scope: global
     pins:
-    - J301.1
+    - J931.1
   HEAT_C_LED_K:
     scope: global
     pins:
-    - J301.2
+    - J931.2
   HEAT_S_LED_K:
     scope: global
     pins:
-    - J301.3
+    - J931.3
 no_connect: []
 custom_symbols: []
 custom_footprints: []

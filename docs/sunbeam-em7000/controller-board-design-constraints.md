@@ -741,6 +741,8 @@ Channel: § What each channel requires, *Heater gate drive, both channels*. Defa
 | Opto-triac with zero-crossing detection, 800 V. Searched "MOC3083" | 2; build 4 | C115474, MOC3083S-TA1, Lite-On | SMD-6P | Extended | 50 050 | 0.2917 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | SMT Assembly | https://jlcpcb.com/partdetail/LiteOn-MOC3083STA1/C115474 | 2026-10-13 |
 | As above | 2; build 4 | C10797, MOC3083, Lite-On | DIP-6 | Extended | 16 378 | 0.2897 USD (1–49) | 3.07 USD Economic; 1.53 USD Standard | Wave Soldering | https://jlcpcb.com/partdetail/LiteOn-MOC3083/C10797 | 2026-10-13 |
 
+*Amended 2026-11-18:* the heater wall board now fits the ST BTA16-800BWRG (C10065) as its triac and the onsemi MOC3083M (C23552) as its opto-triac, in place of the C9100 and C10797 rows read on 2026-10-13 above (the design opinion of that day and `hardware/sunbeam-em7000/heater-wall-board/`); the new numbers' stock, price and library class were not read, and the readings above stay as the readings of their day.
+
 ### Coffee and steam pump switching
 
 Channels: § What each channel requires, *Coffee pump switching* and *Steam pump switching*. Default: the OEM `MOC3021` opto-triac into a triac on each, as the floor column names it.

@@ -1,0 +1,19 @@
+# Layout hedges: Sunbeam EM7000 heater wall board
+
+One list of what the layout plan carries from the design opinion of 2026-11-18 (`.stage0/wall-design-opinion.md`, read as the design authority for that change). Nothing here is drawable yet: the board outline, footprints and copper do not exist. Each hedge cheaply removes a one-shot risk, and each names its source section or action in that opinion. References are the 9xx series of `schematic-spec.yaml`. Figures marked unsourced are the opinion's engineering knowledge, not read from a document, and are not used as the only support for a verdict.
+
+| # | Hedge | Why | Source in the opinion |
+|---|---|---|---|
+| 1 | Place the return blade J941 between the two triacs T911 and T921, so each branch carries one heater current to it | RET carries 10.18 A where both heaters merge; this keeps the merge short | section 5.1, action A14 |
+| 2 | Copper for RET and for each element lead OUT_C and OUT_S on both layers, at least 5 mm wide on each layer (effectively 2 oz), runs short (under 30 mm) | 10.18 A needs about 4.8 mm of 1 oz outer copper at a 20 K rise (IPC-2221 external formula, from memory, unsourced); 5.38 A needs about 2.0 mm; the board stays at the 1 oz introductory price | section 5.1, A14 |
+| 3 | Connect the blades J911, J921, J941 and the triac pins solid, with no thermal relief; fit all blade legs with plated holes and a generous annulus | thermal relief spokes would carry 5 to 10 A; hand soldering these joints wants an iron of at least 60 W | section 5.2, A15; 5.3 |
+| 4 | Oval triac pads, elongated across the row (for example 1.5 x 2.5 mm), so the gap between adjacent pins is at least 1.0 mm; list the three pin pairs under D15 and coat | 2.54 mm pitch with 1.8 mm round pads leaves 0.74 mm between A2 and A1 or G at 358 V peak | section 5.5, A16 |
+| 5 | Under each opto-triac, a slot 1.5 mm wide, open at the board edge; no copper on either layer between the opto rows except the pads (the division record draws 1.0 mm) | free, and keeps the pollution-degree-3 fallback in the basis (condition 4); the slot lengthens only the board path, not the path over the moulding | section 2, action A6 |
+| 6 | Keep the low-voltage header J931 at least 10 mm from all mains copper | already drawn so; the heater-switch barrier | section 2 |
+| 7 | Keep each varistor body clear of the opto-triac and of the header: no low-voltage part within about 5 mm of the disc | a partly failed varistor can reach 340 W at 2.7 A | section 1, action A17 |
+| 8 | Keep the triac pads exactly at the 24.6 mm tab spacing and the tab-hole height of 17.25 mm; keep the opto-triacs 20.0 mm from the triac bodies | a replacement bracket then fits the same board; the thermal answer is the bracket, not the board | section 4 |
+| 9 | Fitting note: support the board when the push-on terminals are fitted onto the blades; fit the blades after the other parts | a 6.3 mm push-on takes tens of newtons (unsourced), carried by the solder joints | section 5.3, action A19 |
+| 10 | Fitting and bring-up note: a toothed washer under one wall bolt; measure the bracket-to-protective-earth resistance at bring-up | the triac tab barrier (basic, on ST's UL1557 2500 Vrms) relies on the wall being earthed | section 2, section 5.10, action A18 |
+| 11 | Coat both faces after bring-up, with the keep-outs of `fabrication-notes.md` | already planned; the owner's order is bring-up first | sections 2 and 5.11 |
+
+Not hedged, by the opinion's own reasons: a board fuse (every fault but an element-to-OUT short is limited by the element; the entry fuse clears that one through the triac), a gate-MT1 resistor or snubber (resistive load, zero-cross firing, the BW grade's 1000 V/us static dV/dt), a lower-voltage varistor, wide-body or 10 mm opto-triacs, and a bigger triac for heat (section 6, actions A10, A11, A20 to A22).

@@ -2,24 +2,28 @@
 # number the parts-specification.yaml gives a position that this record could read.
 #
 # Entries copied from the main board's extract (main-board/catalogue-extract.yaml), unchanged, with the read dates
-# that extract states: C18002 (UNI-ROYAL 1206W4F2000T5E, the four gate resistors R101, R102, R201, R202),
-# C86469 (TE Connectivity 63849-1, the blade terminals J101, J201, J401) and C2937625 (XFCN PZ254V-11-03P,
-# the header J301). Each was read from JLCPCB's parts library through the search service the main board's
+# that extract states: C18002 (UNI-ROYAL 1206W4F2000T5E, the four gate resistors R911, R912, R921, R922),
+# C86469 (TE Connectivity 63849-1, the blade terminals J911, J921, J941) and C2937625 (XFCN PZ254V-11-03P,
+# the header J931). Each was read from JLCPCB's parts library through the search service the main board's
 # extract names, on 2026-11-14 (the extract's read_on); each entry's lifecycle read_on is that day. library_class,
 # stock and unit_price are those readings. The extract allows itself 14 days (max_age_days), so it
 # is stale after 2026-11-28 and is read again before the order.
 #
 # NOT READ, so not listed: JLCPCB's parts library was not read in the session that wrote this record (no
-# parts-library database was available offline and the library's search service was not called), so no stock,
-# price, library class or lifecycle is stated for these three catalogue numbers, and none is invented:
-#   C9100      STMicroelectronics BTA16-600BRG, the triacs T101 and T201 (extended per the schematic's class field)
-#   C10797     Lite-On MOC3083, the opto-triacs U101 and U201 (extended per the schematic's class field)
-#   C49072860  Zhuhai Hongjiacheng 07D471K, the varistors RV101 and RV201 (extended per the schematic's class field)
+# parts-library database was available offline and the library's search service was not called; in the
+# 2026-11-18 design-change session the JLCPCB catalogue could not be read live either, the call being refused by the
+# permission classifier, and the only local snapshot is dated 2026-10-12), so no stock, price, library class
+# or lifecycle is stated for these three catalogue numbers, and none is invented:
+#   C10065     STMicroelectronics BTA16-800BWRG, the triacs T911 and T921 (replaces C9100, BTA16-600BRG, by the
+#              design change of 2026-11-18, open-items.md D7)
+#   C23552     onsemi MOC3083M, the opto-triacs U911 and U921 (replaces C10797, the Lite-On MOC3083, by the same change)
+#   C49072860  Zhuhai Hongjiacheng 07D471K, the varistors RV911 and RV921 (extended per the schematic's class field)
 # Until the library is read and the three entries are added with their category (the opto-triac's first category
 # name is the one the check lists as a part with no supply pin), the check lists each position that uses
-# one of them as a number the extract does not list. For C10797 alone, LCSC's own product listing (a different
-# catalogue from JLCPCB's, so not entered here) showed Lite-On, DIP-6, tube, stock 7855 on 2026-11-18 at 0.2911 USD
-# at 5 pieces, category "Triac, SCR Output Optoisolators"; it is a lead for the JLCPCB reading, not that reading.
+# one of them as a number the extract does not list. Leads for that reading, not readings: the design opinion of
+# 2026-11-18 (.stage0/wall-design-opinion.md) states C10065 in stock at 6,197 and C23552 in stock at 8,800 from the
+# catalogue read through the Konnect tools that day (library class, price and category not stated there), and LCSC's own
+# listing showed the retired C10797 (Lite-On) at stock 7855, 0.2911 USD at 5 pieces, category "Triac, SCR Output Optoisolators".
 read_on: 2026-11-14
 max_age_days: 14
 source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), as read for the main board on 2026-11-14; entries copied from main-board/catalogue-extract.yaml

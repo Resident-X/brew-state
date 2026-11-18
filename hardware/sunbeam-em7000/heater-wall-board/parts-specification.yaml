@@ -10,129 +10,138 @@
 # figure in V, VDC or VAC as the rated maximum); class is a class of derating-policy.yaml for a part
 # whose rating states a figure in V, VDC or VAC and none for a part whose rating states none.
 #
-# Classes used: triac (the two BTA16 triacs: the shares the assembly judgements carry, see
+# Classes used: triac (the two BTA16-800BWRG triacs: the shares the assembly judgements carry, see
 # derating-policy.yaml), integrated circuit (the two opto-triacs, as the main board classes its
 # MOC3052SVM), resistor (the four 1206 gate resistors), varistor (the two 07D471K). The three blade
 # terminals and the three-way header state no voltage in their rating, so they take none; their current
 # ratings are not stated by the maker's drawing (unsourced), see open-items.md.
 #
+# Design change of 2026-11-18 (the design opinion of that day, .stage0/wall-design-opinion.md; open-items.md D7):
+# the triacs BTA16-600BRG (C9100) became BTA16-800BWRG (ST, C10065), the opto-triacs Lite-On MOC3083 (C10797)
+# became onsemi MOC3083M (C23552), and the references moved to the 9xx series so that none equals a reference of
+# the main board or of the shared separation basis's exceptions. The drawn Rating fields of the four parts
+# are to carry the rating strings below when the schematic is next redrawn; catalogue figures of C10065
+# and C23552 are not read (catalogue-extract.yaml).
+#
 # Sources of the rated figures (datasheet, revision, address that opened it):
-#   ST BTA16-600BRG, Doc ID 7471 Rev 9: the revision the schematic's Rating field cites. The assembly
-#     judgements (docs/sunbeam-em7000/controller-board-division.md, The heater wall assembly, judged)
-#     read the same family as DS2114 Rev 11, May 2018 (P3); the two revisions are not reconciled here.
-#   Lite-On MOC3083 series, DS70-2001-027 Rev B (page 6 of 8 of the sheet, 9 PDF pages): the LCSC-hosted copy
-#     for C10797, https://datasheet.lcsc.com/datasheet/pdf/79a9fbf489164b818fbd18454ca1712e.pdf, read 2026-11-18
+#   ST BTA16-800BWRG: DS2114 Rev 11, May 2018 (T1610, T1635, T1650, BTA16, BTB16), the Internet Archive's copy of
+#     https://www.st.com/resource/en/datasheet/bta16.pdf, read 2026-11-18, the BW column of Table 4 (p.3), Tables 1, 2, 5, 8 and 9.
+#     The sheet's revision history shows no electrical change between Rev 9 (Dec 2009) and Rev 11 (May 2018) other than
+#     the status/summary and the T1650 package; the earlier cited Doc ID 7471 Rev 9 was not opened again, so its
+#     agreement is the revision history's and the B-grade figures the records carried (checked against Tables 1 to 5).
+#   onsemi MOC3083M: MOC3083M/D Rev. 2, September 2022 (MOC3081M, MOC3082M, MOC3083M),
+#     https://www.onsemi.com/pdf/datasheet/moc3083m-d.pdf, read 2026-11-18
 #   UNI-ROYAL 1206W4F2000T5E (C18002): the catalogue part page figures, 250 mW and 200 V; the maker's
 #     datasheet (overload voltage, pulse rating) was not opened (main-board/circuit-proof.md, pump gate
 #     resistor pulse rating row)
 #   Zhuhai Hongjiacheng 07D series Rev 1.2 (C49072860), as the schematic cites it
 #   TE Connectivity 63849-1 drawing C-63849 rev F1: datasheet.lcsc.com d78aaa5668ef44d19432bad6ab97dbf2.pdf
-#   XFCN PZ254V-11-03P (C2937625): the main board's JP301 part; the maker's drawing is not read here
+#   XFCN PZ254V-11-03P (C2937625): the main board's JP301 part; the maker's drawing REV A1 p.1 (3 A, -40 to +105 degC, 500 V AC withstanding) as the schematic review round 1 read it
 positions:
   # ---- sheet: Coffee heater switch
-  # T101: maker STMicroelectronics; MPN BTA16-600BRG; catalogue class extended; hand-fitted
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9 (VDRM/VRRM 600 V (Table 1 p.1); IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, VDSM VDRM+100 V, Tj -40 to +125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III and 100 mA IV, VGT 1.3 V max, IH 50 mA max, dV/dt 400 V/us min, (dV/dt)c 10 V/us min, 'B' column (Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 6 p.3); insulated tab rated 2500 Vrms (features p.1))
-  - reference: T101
-    value: "BTA16-600BRG"
+  # T911: maker STMicroelectronics; MPN BTA16-800BWRG; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V 16 A insulated TO-220AB snubberless (3-quadrant, BW grade) triac, ST DS2114 Rev 11, May 2018 (VDRM/VRRM 800 V (product summary p.1, Table 8 p.15), VDSM VDRM+100 V = 900 V, IGM 4 A at 20 us, PG(AV) 1 W, IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
+  - reference: T911
+    value: "BTA16-800BWRG"
     package: TO-220-3_Vertical
-    rating: "600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9; insulated tab 2500 Vrms"
-    lcsc: C9100
+    rating: "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
+    lcsc: C10065
     class: triac
-  # U101: maker Lite-On (stocked equivalent of onsemi MOC3083M); MPN MOC3083; catalogue class extended; hand-fitted
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, Lite-On MOC3083 series DS70-2001-027 Rev B (VDRM 800 V min, ITSM 1 A at 100 us 120 pps, VISO 5000 Vrms, TA -40 to +100 degC (p.5); VF 1.4 V max at IF 20 mA, IFT 5 mA max, inhibit voltage 20 V max, IDRM2 500 uA max (p.6); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 substrate, 6 main terminal (p.2))
-  - reference: U101
-    value: "MOC3083"
+  # U911: maker onsemi; MPN MOC3083M; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage >= 7 mm, external clearance >= 7 mm, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
+  - reference: U911
+    value: "MOC3083M"
     package: DIP-6_W7.62mm
-    rating: "800 V zero-cross opto-triac driver, DIP-6, Lite-On DS70-2001-027 Rev B; VF 1.4 V max at 20 mA, IFT 5 mA max, TA -40 to +100 degC"
-    lcsc: C10797
+    rating: "800 V zero-cross opto-triac driver, DIP-6, onsemi MOC3083M/D Rev. 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance >= 7 mm"
+    lcsc: C23552
     class: integrated circuit
-  # R101: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
-  - reference: R101
+  # R911: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R911
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW 200V 1206"
     lcsc: C18002
     class: resistor
-  # R102: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
-  - reference: R102
+  # R912: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R912
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW 200V 1206"
     lcsc: C18002
     class: resistor
-  # RV101: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
+  # RV911: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (p.1-2); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
-  - reference: RV101
+  - reference: RV911
     value: "07D471K"
     package: RV_Disc_D9mm_W5.2mm_P5mm
     rating: "07D471K 470 V disc varistor, 5 mm lead pitch, 300 VAC / 385 VDC max, clamp 775 V at 10 A 8/20 us, non-polar"
     lcsc: C49072860
     class: varistor
-  # J101: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
-  - reference: J101
+  # J911: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  - reference: J911
     value: "TAB_OUT_C"
     package: Tab_TE_63849-1
     rating: "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced)"
     lcsc: C86469
     class: none
   # ---- sheet: Steam heater switch
-  # T201: maker STMicroelectronics; MPN BTA16-600BRG; catalogue class extended; hand-fitted
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9 (VDRM/VRRM 600 V (Table 1 p.1); IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, VDSM VDRM+100 V, Tj -40 to +125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III and 100 mA IV, VGT 1.3 V max, IH 50 mA max, dV/dt 400 V/us min, (dV/dt)c 10 V/us min, 'B' column (Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 6 p.3); insulated tab rated 2500 Vrms (features p.1))
-  - reference: T201
-    value: "BTA16-600BRG"
+  # T921: maker STMicroelectronics; MPN BTA16-800BWRG; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V 16 A insulated TO-220AB snubberless (3-quadrant, BW grade) triac, ST DS2114 Rev 11, May 2018 (VDRM/VRRM 800 V (product summary p.1, Table 8 p.15), VDSM VDRM+100 V = 900 V, IGM 4 A at 20 us, PG(AV) 1 W, IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
+  - reference: T921
+    value: "BTA16-800BWRG"
     package: TO-220-3_Vertical
-    rating: "600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9; insulated tab 2500 Vrms"
-    lcsc: C9100
+    rating: "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
+    lcsc: C10065
     class: triac
-  # U201: maker Lite-On (stocked equivalent of onsemi MOC3083M); MPN MOC3083; catalogue class extended; hand-fitted
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, Lite-On MOC3083 series DS70-2001-027 Rev B (VDRM 800 V min, ITSM 1 A at 100 us 120 pps, VISO 5000 Vrms, TA -40 to +100 degC (p.5); VF 1.4 V max at IF 20 mA, IFT 5 mA max, inhibit voltage 20 V max, IDRM2 500 uA max (p.6); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 substrate, 6 main terminal (p.2))
-  - reference: U201
-    value: "MOC3083"
+  # U921: maker onsemi; MPN MOC3083M; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage >= 7 mm, external clearance >= 7 mm, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
+  - reference: U921
+    value: "MOC3083M"
     package: DIP-6_W7.62mm
-    rating: "800 V zero-cross opto-triac driver, DIP-6, Lite-On DS70-2001-027 Rev B; VF 1.4 V max at 20 mA, IFT 5 mA max, TA -40 to +100 degC"
-    lcsc: C10797
+    rating: "800 V zero-cross opto-triac driver, DIP-6, onsemi MOC3083M/D Rev. 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance >= 7 mm"
+    lcsc: C23552
     class: integrated circuit
-  # R201: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
-  - reference: R201
+  # R921: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R921
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW 200V 1206"
     lcsc: C18002
     class: resistor
-  # R202: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
-  - reference: R202
+  # R922: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  - reference: R922
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW 200V 1206"
     lcsc: C18002
     class: resistor
-  # RV201: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
+  # RV921: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (p.1-2); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
-  - reference: RV201
+  - reference: RV921
     value: "07D471K"
     package: RV_Disc_D9mm_W5.2mm_P5mm
     rating: "07D471K 470 V disc varistor, 5 mm lead pitch, 300 VAC / 385 VDC max, clamp 775 V at 10 A 8/20 us, non-polar"
     lcsc: C49072860
     class: varistor
-  # J201: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
-  - reference: J201
+  # J921: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  - reference: J921
     value: "TAB_OUT_S"
     package: Tab_TE_63849-1
     rating: "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced)"
     lcsc: C86469
     class: none
   # ---- sheet: Low-voltage header
-  # J301: maker XFCN; MPN PZ254V-11-03P; catalogue class extended
+  # J931: maker XFCN; MPN PZ254V-11-03P; catalogue class extended
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 1x3 2.54 mm pin header, 3 A, vertical (the main board's JP301 part)
-  - reference: J301
+  - reference: J931
     value: "WB_LV3"
     package: PinHeader_1x03_P2.54mm_Vertical
     rating: "1x3 2.54 mm pin header, 3 A, vertical"
     lcsc: C2937625
     class: none
   # ---- sheet: Return landing
-  # J401: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
-  - reference: J401
+  # J941: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  - reference: J941
     value: "TAB_RET"
     package: Tab_TE_63849-1
     rating: "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced); carries the heater return current, 5.38 A steam plus 4.80 A coffee at most together"

@@ -21,6 +21,8 @@
 # part-by-part grading at 70 degC and at the 100 degC triac ceiling is in circuit-proof.md, "Grading every part
 # against the enclosure air", and in constraints-figures.md.
 #
+# The header J931 (XFCN PZ254V-11-03P) is graded against the class relay and connector below (design change of 2026-11-18, schematic review finding 1.7); the blade and joiner class stays as it was: no maker rating is read, so its shares stay the owner-held, carried and unsourced 15 A (open-items.md).
+#
 # No accepted_exceptions are entered: every position's working voltage is inside its class limit by the pin-limit
 # record's reading (the gate resistors carry half the 357.8 V peak, 178.9 V, against 200 V). An exception is the owner's
 # to sign and none is drafted here.
@@ -49,10 +51,10 @@ classes:
 - class: triac
   voltage:
     share: 0.75
-    source: 'PD-ED-1201 Table 1, Semiconductor Devices, max of 75 % of rated voltage, the main board policy semiconductor class carried unchanged (the heater wall assembly judgements state no voltage share; they state two others, the temperature and current shares below). Applied to the maker VDRM/VRRM 600 V: 450 V against the 357.8 V peak of the 253 V rms top of the declared span.'
+    source: 'PD-ED-1201 Table 1, Semiconductor Devices, max of 75 % of rated voltage, the main board policy semiconductor class carried unchanged (the heater wall assembly judgements state no voltage share; they state two others, the temperature and current shares below). Applied to the maker VDRM/VRRM 800 V of the BTA16-800BWRG (DS2114 Rev 11, product summary p.1 and Table 8): 600 V against the 357.8 V peak of the 253 V rms top of the declared span (x1.68; x1.26 at the 600 V grade it replaces, design change of 2026-11-18).'
   power:
     share: 0.5
-    source: 'The current share the heater wall assembly judgement carries unchanged (docs/sunbeam-em7000/controller-board-division.md, The heater wall assembly judged, The shares this judgement is made against): 0.5 of the maker rated current at its case temperature, 8 A for the BTA16-600BRG (IT(RMS) 16 A at Tc 86 degC). A stated reason and not a figure read from any document, as that record says; PD-ED-1201 Table 1 gives 50 % of rated power for semiconductor devices, the same fraction.'
+    source: 'The current share the heater wall assembly judgement carries unchanged (docs/sunbeam-em7000/controller-board-division.md, The heater wall assembly judged, The shares this judgement is made against): 0.5 of the maker rated current at its case temperature, 8 A for the BTA16-800BWRG (IT(RMS) 16 A at Tc 86 degC, DS2114 Rev 11 Table 1; the same 16 A as the 600 V B grade it replaces). A stated reason and not a figure read from any document, as that record says; PD-ED-1201 Table 1 gives 50 % of rated power for semiconductor devices, the same fraction.'
   temperature:
     share: 0.8
     source: 'The temperature share the heater wall assembly judgement carries unchanged (same section): 0.8 of the maker junction limit, 0.8 x 125 = 100 degC, a conventional 25 K margin for an ambient and a wall nobody has measured. A stated reason and not read from any document. It differs from the semiconductor class share 0.88 (110 degC) the main board carries; the triac is held to the judged 100 degC.'
@@ -76,3 +78,13 @@ classes:
   temperature:
     share: 1
     source: No temperature factor is stated for blade terminals or joiners; the maker rated temperature would be the limit and the TE drawing states none (unsourced)
+- class: relay and connector
+  voltage:
+    share: 1
+    source: PD-ED-1201 Table 1 states no voltage factor for relays and connectors, so the maker's rated voltage is the limit (the main board's class of that name, carried unchanged). The XFCN PZ254V-11 drawing REV A1 p.1 states 500 V AC as a withstanding voltage, a test figure and not a working rating, so the position's rating (the header J931, parts-specification.yaml) states no voltage and takes the class none that the form requires of a rating without one; the class is held here so that the header's current and temperature are graded against stated figures
+  power:
+    share: 1
+    source: PD-ED-1201 Table 1, Relays and Connectors, states max of 50 % of rated current; the owner relaxed it on 2026-10-29 (hobbyist project, 'adopt'), so connectors are held to the maker's rating (main-board/derating-policy.yaml); the header's maker rating is 3 A (XFCN PZ254V-11 drawing REV A1 p.1, read in the schematic review round 1)
+  temperature:
+    share: 1
+    source: PD-ED-1201 Table 1 states no temperature factor for relays and connectors, so the maker's rated temperature is the limit; the header's is -40 to +105 degC (XFCN PZ254V-11 drawing REV A1 p.1)

@@ -1,25 +1,50 @@
-== (a) heater LED stage: main board R763/R773 = 180 ohm, Q761/Q771, +5V_WB, wall board Lite-On MOC3083 LED
-PASS  heater LED IF_min (cable resistance 0): IF_min 18.42 mA vs needed 9.00 mA (5 mA x1.5 x1.2): margin 9.42 mA (x2.05). Main board with the onsemi figures: 17.87 mA vs 9.0 mA (x1.99)
-PASS  heater LED cable allowance: loop resistance the cable may add (+5V_WB conductor and LED-return conductor together) = 190 ohm at the lowest rail (main board: 179 ohm)
-PASS  Fig. 3 sensitivity (no cold factor): Fig. 3 reading 6.7 mA x1.2 = 8.04 mA: margin x2.29; with the carried cold factor 1.5 on top 12.06 mA: margin x1.53, cable allowance 96 ohm
-PASS  heater LED upper limits: IF bound (VF=0) 29.5 mA vs 50 mA, and vs 37.2 mA at 70 degC air by Fig. 1 (x1.26); emitter power at VF 1.4 V 30.2 mW vs 89.3 mW (120 mW scaled by Fig. 1's derating: the sheet states no power derating)
-NOTE  IF bound 29.5 mA against 18 mA at 100 degC by Fig. 1: over; the opto-triac stands in 45 degC (owner) or 70 degC (conservative) air, not 100 degC
+== (a) heater LED stage: main board R763/R773 = 180 ohm, Q761/Q771, +5V_WB, wall board onsemi MOC3083M LED
+PASS  heater LED IF_min (cable resistance 0): IF_min 17.87 mA vs needed 9.00 mA (5 mA x1.5 x1.2): margin 8.87 mA (x1.99); the main board's own proof of this stage gives 17.87 mA vs 9.0 mA (x1.99)
+PASS  heater LED cable allowance: loop resistance the cable may add (+5V_WB conductor and LED-return conductor together) = 179 ohm at the lowest rail (main board: 179 ohm)
+PASS  heater LED upper limits: IF bound (VF=0) 29.5 mA vs IF 60 mA (x2.04); emitter power at VF 1.5 V 31.6 mW (the maximum, the product VF x IF rising with VF over the range)
+   emitter power limit at 45 degC air: 91.8 mW (120 mW less 1.41 mW/degC): the 31.6 mW above is x2.91 under it; at the integrated-circuit class's power share 0.75 (68.8 mW) x2.18
+   emitter power limit at 70 degC air: 56.5 mW (120 mW less 1.41 mW/degC): the 31.6 mW above is x1.79 under it; at the integrated-circuit class's power share 0.75 (42.4 mW) x1.34
+   emitter power limit at 85 degC air: 35.4 mW (120 mW less 1.41 mW/degC): the 31.6 mW above is x1.12 under it; at the integrated-circuit class's power share 0.75 (26.6 mW) x0.84
+PASS  emitter power at 70 degC air within the class share: 31.6 mW against 0.75 x 56.5 mW = 42.4 mW
 
-== (b) gate network R101+R102 / R201+R202 = 2 x 200 ohm 1206 (UNI-ROYAL C18002) in series
-PASS  opto-triac surge limit: R = VPK / ITSM: minimum 357.8 ohm; fitted 400 ohm (-1% = 396): peak 0.904 A <= 1 A (x1.11)
-PASS  gate drive reaches IGT: line voltage that drives IGT max through 404 ohm = 24.5 V (4.6 deg after the crossing at 216 V rms); the opto fires below 20 V, its gate current then keeps rising with the line (the opto stays latched, IH typ 0.4 mA); peak gate current 0.90 A <= IGM
+== (b) gate network R911+R912 / R921+R922 = 2 x 200 ohm 1206 (UNI-ROYAL C18002) in series
+PASS  opto-triac surge limit: R = VPK / ITSM: minimum 357.8 ohm; fitted 400 ohm (-1% = 396): peak 0.904 A <= 1 A (x1.11); the rating is a single 60 Hz cycle, so it bounds a longer pulse than the 100 us the Lite-On sheet gave
+PASS  gate drive reaches IGT: line voltage that drives IGT max through 404 ohm = 24.5 V (4.6 deg after the crossing at 216 V rms); the opto fires below 20 V, its gate current then keeps rising with the line (the opto stays latched, IH typ 0.5 mA); peak gate current 0.90 A <= IGM 4 A (x4.4)
 PASS  working voltage per 1206: each resistor carries half of the peak: 178.9 V vs 200 V rated (C18002 catalogue page): margin 21.1 V (10.6 %); class share 1
    power: during the firing ramp each resistor passes at most IGT 50 mA: 0.505 W for the ramp from the opto's turn-on (<= 20 V) to the triac's latch (24.5 V), (24.5 - 20) V at the line's slope 2 pi f VPK = 112 V/ms gives 0.040 ms, 2.02 mW average at 100 firings a second (250 mW rated; the share 0.6 gives 150 mW)
-   gate-to-MT1 short fault (a shorted triac gate): 0.62 A rms through the 400 ohm, peak 0.89 A, 156 W in the two resistors: they open; the heater stays off (fails off); the opto-triac's 1 A is a 100 us rating and its single-cycle rating is not stated by the sheet
+PASS  triac latches at firing: main current at the firing point at least 24.5 V / 52.7 ohm (the element's top resistance) = 0.46 A against IL 70 mA max (x6.6)
+   gate-to-MT1 short fault (a shorted triac gate): 0.62 A rms through the 400 ohm, peak 0.89 A, 156 W in the two resistors: they open; the heater stays off (fails off); the opto-triac's 1 A is a single-cycle rating and the time the resistors take to open is not sourced
 
 == (c) hold-off in reset, unpowered and with the cable loose; no gate-MT1 resistor
-PASS  leakage x gate network against VGT: IDRM2 500 uA x 404 ohm = 0.202 V vs VGT 1.3 V max: margin x6.44; gate current 0.5 mA vs IGT 50 mA (x100). With the LED off the sheet's figure is IDRM1 500 nA: 0.202 mV
+PASS  off-state leakage against the triac's trigger current: LED off: IDRM1 500 nA vs the triac's guaranteed minimum trigger current 5 % x 50 mA = 2.5 mA: x5000; the leakage's voltage across 404 ohm = 0.202 mV vs VGD 0.2 V min: x990
+   IDRM1 at 85 degC: the sheet's Fig. 5 (p.5, a typical curve, read off the plot) stays under about 1 uA there: x2500 under 2.5 mA, not a rated figure
+   IDRM2 2 mA flows only while the LED is on and the line is above the inhibit voltage (the commanded state): it is not a hold-off figure. Against the minimum trigger current 2.5 mA it is x1.25; across 404 ohm it is 0.81 V. So a command that starts mid-half-cycle could fire before the next zero: a non-zero-cross turn-on, no hazard (the heater was commanded on)
    LED current in reset / unpowered: at most 5 uA (main board row), 1000 times under IFT max 5 mA; cable loose: +5V_WB or HEAT_x_LED_K open gives 0 A
 
-== (d) varistor 07D471K (Zhuhai Hongjiacheng Rev 1.2) across each triac
+== (d) varistor 07D471K (Zhuhai Hongjiacheng Rev 1.2) across each triac; surge reaching the wall branch through the element
 PASS  stays off in service: V1mA min 423 V vs peak 357.8 V: x1.18; 300 VAC vs 253 V: x1.19
-   clamp 775 V at 10 A vs triac VDRM 600 V: x1.29 over (VDSM 700 V for 10 ms: x1.11 over); vs opto-triac VDRM 800 V: 25 V under (3.1 %)
-   2.5 kV surge (separation-basis overvoltage category II basic): current (2500 - 775) / Z; 1200 A is met for Z >= 1.44 ohm; at 2 ohm (not read) 862 A
-   opto-triac through the 396 ohm gate network at the clamp voltage: 1.96 A against ITSM 1 A (100 us rating, microsecond withstand not stated)
+PASS  clamp under the triac and the opto-triac: clamp 775 V at 10 A vs triac VDRM 800 V: 25 V under (3.1 %; VDSM 900 V for 10 ms, 125 V under) and vs opto-triac VDRM 800 V: 25 V under (a thin margin at the sheet's 10 A point, comfortable at the 3 to 8 A of the table below)
+   the wall varistor is fed from the main board's entry clamp (14D471K) through the element, R_el 47.0 to 52.7 ohm; it never faces the generator's own source impedance, so the earlier 1200 A / 1.44 ohm arithmetic is moot
+   surge table (line to neutral, 2 ohm combination-wave source [unsourced: IEC 61000-4-5 not read]): inputs marked [unsourced] are engineering estimates, not read from a document
+   1 kV                         entry varistor current (1000 - 720)/2 = 140 A; wall varistor current (850 - 700)/47 = 3.2 A; triac sees at most 775 V (sheet point 775 V at 10 A); entry varistor voltage ~720 V [unsourced], entry clamp ~850 V [unsourced, 14D curve not read], wall varistor ~700 V at this current [unsourced]
+PASS  wall varistor current in the surge, 1 kV: 3.2 A, far under the 1200 A single-pulse rating (x376)
+   2.5 kV                       entry varistor current (2500 - 1100)/2 = 700 A; wall varistor current (1100 - 750)/47 = 7.4 A; triac sees at most 775 V (sheet point 775 V at 10 A); entry clamp ~1000 to 1100 V [unsourced], wall varistor ~750 V [unsourced]
+PASS  wall varistor current in the surge, 2.5 kV: 7.4 A, far under the 1200 A single-pulse rating (x161)
+   2.5 kV, entry clamp 1300 V   entry varistor current (2500 - 1300)/2 = 600 A; wall varistor current (1300 - 750)/47 = 11.7 A; triac sees about 780 V (just past the 10 A point); entry clamp as bad as 1300 V [unsourced], wall varistor ~750 V [unsourced]
+PASS  wall varistor current in the surge, 2.5 kV, entry clamp 1300 V: 11.7 A, far under the 1200 A single-pulse rating (x103)
+PASS  wall varistor surge energy: 775 V x 10 A x 50 us = 0.39 J against the 29 J rating (10/1000 us) (x75); an estimate, the pulse shape is not the rated one
+   no varistor, 800 V triac: the triac would see the entry clamp, 850 to 1100 V [unsourced], over its VDSM 900 V at 2.5 kV: it breaks over. The wall varistor is kept
+   opto-triac at the clamp voltage: it blocks 800 V (VDRM) and the clamp is at most 775 V, so it is not told to fire and the 775 V / 396 ohm = 1.96 A of the earlier record does not arise; if the branch passed 800 V it would break over into the triac gate, the benign way a triac turns on
+   I2t of that breakover event: 2 A^2 x 2 us [turn-on time unsourced] = 8.0e-06 A2s against the opto-triac's one cycle 1 A at 60 Hz, half-cycle I2t = 1 A^2 x 8.33 ms / 2 = 4.2e-03 A2s (x521): a comparison by I2t is an inference, not a maker figure
+   varistor failed partly (fed through the element): worst dissipation at matched resistance, 253 V rms: 340 W at 2.69 A rms, which no fuse clears; the stuck-on current threshold has to catch 2.7 A (the open item: a threshold of 2.0 A or less)
+PASS  partial-failure current above the carried threshold: 2.69 A against the firmware threshold the record asks (at most 2.0 A, x1.35)
+
+== (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2
+   sheet-implied junction-to-ambient 340 K/W; the LED's 31.6 mW (VF 1.5 V, IF 29.5 mA at the top rail) heats the junction by about 10.7 K (a derivation)
+   air 45 degC: headroom to the TOPR ambient limit 85 degC = 40 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 32.3 K after self-heating
+   air 50 degC: headroom to the TOPR ambient limit 85 degC = 35 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 27.3 K after self-heating
+   air 70 degC: headroom to the TOPR ambient limit 85 degC = 15 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 7.3 K after self-heating
+NOTE  at 45 to 50 degC air (the owner's working figure for the wall board, 2026-10-28, unmeasured) 35 to 40 K of neighbour rise is permitted against the 85 degC ambient limit; the rise is not measured
+NOTE  at 70 degC air the neighbour rise permitted is 15 K (ambient limit) and 7.3 K (junction share): the division record's A8 takes 15 K as the allowance for an 85 degC part, an assumption, unmeasured; DEL-HW-BRING-UP.C13 reads it
 
 exit 0

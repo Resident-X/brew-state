@@ -12,7 +12,7 @@ Maker figures are from JLCPCB's published capabilities page as `docs/board-manuf
 | Copper layers | two: F.Cu and B.Cu | `manufacturer-limits.yaml` |
 | Copper weight | 1 oz finished outer copper, the maker's introductory-price default | `board-rules.yaml` `fabrication.outer_copper_oz: 1`; `manufacturer-limits.yaml` |
 | Thickness, surface finish, panel, tolerance and delivery options | not chosen in any record of this board; set at the quote | none |
-| Parts | through-hole parts fitted by hand by the owner: T101, T201, U101, U201, J101, J201, J401 (seven hand-fitted references); the four 1206 gate resistors, the two varistors and the header J301 are the only other parts | `schematic-spec.yaml` totals |
+| Parts | through-hole parts fitted by hand by the owner: T911, T921, U911, U921, J911, J921, J941 (seven hand-fitted references); the four 1206 gate resistors, the two varistors and the header J931 are the only other parts | `schematic-spec.yaml` totals |
 | Controlled impedance | none asked | `manufacturer-limits.yaml` |
 
 ## Laminate and comparative tracking index
@@ -45,13 +45,13 @@ The same coat as the main board, so that one can serves both boards: a one-part 
 
 After bring-up, once the machine is deemed functional from a hardware perspective (owner, 2026-11-06). Until then the board is uncoated: the first connection of this board's mains side and the bring-up bench tests run on the uncoated board, in a clean room, and the coat is no part of the bound on any fault between mains pads until it is applied. The owner applies it at home.
 
-It is applied to **both faces of the board**, covering the gaps between this board's mains pads: the pads of the nets `OUT_C`, `OUT_S`, `RET`, `HEAT_C_OPTO_MT`, `HEAT_S_OPTO_MT`, `HEAT_C_GATE_R`, `HEAT_S_GATE_R`, `HEAT_C_TRIAC_G` and `HEAT_S_TRIAC_G` (the Mains class) on the parts T101, T201, U101, U201, R101, R102, R201, R202, RV101, RV201, J101, J201 and J401, and in practice the whole board face except the keep-outs. The mains region is not yet drawn: the layout plan fixes it, and this paragraph is corrected to the drawn region when the layout is.
+It is applied to **both faces of the board**, covering the gaps between this board's mains pads: the pads of the nets `OUT_C`, `OUT_S`, `RET`, `HEAT_C_OPTO_MT`, `HEAT_S_OPTO_MT`, `HEAT_C_GATE_R`, `HEAT_S_GATE_R`, `HEAT_C_TRIAC_G` and `HEAT_S_TRIAC_G` (the Mains class) on the parts T911, T921, U911, U921, R911, R912, R921, R922, RV911, RV921, J911, J921 and J941, and in practice the whole board face except the keep-outs. The mains region is not yet drawn: the layout plan fixes it, and this paragraph is corrected to the drawn region when the layout is.
 
 **Keep-outs for contacts, by reference designator** (proposed; confirmed against the drawn pads at layout):
-- J101, J201 and J401: the blade contact surfaces and the push-on mating area (coat on a blade defeats the push-on contact).
-- J301: the header's pins and the cable connector's mating area.
-- T101 and T201: the insulated tab faces and the bracket contact area under the compound and the M3 screw (the heat path and the bolted joint stay bare); the leads and pads are coated.
-- U101 and U201 if fitted in sockets: the socket contacts.
+- J911, J921 and J941: the blade contact surfaces and the push-on mating area (coat on a blade defeats the push-on contact).
+- J931: the header's pins and the cable connector's mating area.
+- T911 and T921: the insulated tab faces and the bracket contact area under the compound and the M3 screw (the heat path and the bolted joint stay bare); the leads and pads are coated.
+- U911 and U921 if fitted in sockets: the socket contacts.
 
 ### Home application steps
 
