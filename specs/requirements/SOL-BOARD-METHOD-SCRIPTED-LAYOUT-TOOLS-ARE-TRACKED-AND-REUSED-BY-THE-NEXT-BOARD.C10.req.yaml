@@ -2,11 +2,11 @@ id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BO
 type: criterion
 title: The body-gap audit measures real part bodies from a table in the board's folder
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. Tests cover bodies apart, touching and overlapping, a rotated part and a missing table entry, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+  Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
 links:
   - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
     type: criterion-of

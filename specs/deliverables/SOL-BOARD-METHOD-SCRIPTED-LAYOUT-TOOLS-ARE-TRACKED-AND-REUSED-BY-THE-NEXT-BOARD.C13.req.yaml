@@ -1,0 +1,12 @@
+id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C13
+type: criterion
+title: The board design method and the hardware notes name every tracked layout tool's command and no working file outside the repository
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The board design method names each tracked tool's command in place of the working files it used to name, and the hardware notes list each tool's command, inputs, outputs and the table it reads from the board's folder. A check over the method and the notes finds no remaining reference to a working file outside the repository and no tool command the method names that does not exist in the tooling folder.
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
+    type: criterion-of

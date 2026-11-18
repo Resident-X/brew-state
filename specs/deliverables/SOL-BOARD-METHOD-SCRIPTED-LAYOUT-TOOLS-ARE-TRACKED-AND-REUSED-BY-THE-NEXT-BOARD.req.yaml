@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The scripted layout tools the board method relies on are tracked in the repository and reused by the next board
 status: active
-version: 2
+version: 3
 text: |
   The board design method that DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK records says the next board reuses the checks, the chain-script pattern, the silkscreen script, the picture renderer and the sign-off list form. Of those, the repository tracks the checks, the picture renderer, the locked-copper tool and the sign-off list form. The silkscreen rebuild, the mains-copper compare, the safe zone refill with its fill-difference report, the acceptance-entry generator, the chain runner, the main board's own block scripts and tables, and the footprint body-gap and rotation audit exist only as working files outside the repository. A reader on another machine therefore cannot rebuild the main board's copper or silkscreen from the repository, and the wall board cannot follow the practised method from the repository alone. This solution tracks those tools so that each is generic in the tooling folder, keeps whatever is specific to one board in that board's own folder, and is proven on synthetic designs.
 
