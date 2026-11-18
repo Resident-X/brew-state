@@ -145,7 +145,8 @@ class Mains:
         self.areas: List[Tuple[str, List[Tuple[float, float]]]] = []
         for zone in sexpr.children(layout, "zone"):
             name = sexpr.child(zone, "name")
-            if not sexpr.children(zone, "keepout") or name is None or len(name) < 2 or str(name[1]) not in regions:
+            if not sexpr.children(zone, "keepout") or name is None or len(name) < 2 or not any(
+                    region.lower() in str(name[1]).lower() for region in regions):
                 continue
             for corners in locked_copper.outline(zone, f"the region {name[1]}"):
                 points = []
@@ -153,8 +154,8 @@ class Mains:
                     for xy in (corner[1:] if corner and corner[0] == "arc" else [corner]):
                         points.append((xy[0] / 1_000_000, xy[1] / 1_000_000))
                 self.areas.append((str(name[1]), points))
-        found = {name for name, _ in self.areas}
-        missing = [name for name in regions if name not in found]
+        found = [name.lower() for name, _ in self.areas]
+        missing = [region for region in regions if not any(region.lower() in name for name in found)]
         if declared == "present" and missing:
             held = sorted({str(sexpr.child(zone, "name")[1]) for zone in sexpr.children(layout, "zone")
                            if sexpr.children(zone, "keepout") and sexpr.child(zone, "name") is not None
@@ -484,8 +485,8 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser.add_argument("--mains-class", dest="mains_classes", action="append", metavar="PATTERN",
                         help=f"a net class, or a pattern of class names, that is mains; give each (default: {MAINS_CLASS_DEFAULT})")
     parser.add_argument("--mains-region", dest="mains_regions", action="append", metavar="NAME",
-                        help=f"the name of a rule area of the layout that is a mains region; give each (default: {MAINS_REGION_DEFAULT}, "
-                             "required to exist when the project declares MAINS present)")
+                        help=f"text a rule area's name contains, in any case, for it to be a mains region: every rule area whose name contains it is one; give each (default: {MAINS_REGION_DEFAULT}, "
+                             "and a rule area must match each when the project declares MAINS present)")
     parser.add_argument("--accepted-on", metavar="DATE", help="the date each entry is signed, YYYY-MM-DD (default: today)")
     parser.add_argument("--partial", action="store_true", help="write the entries that can be justified even when other lines are refused")
     parser.add_argument("--dry-run", action="store_true", help="report what would be written and write nothing")

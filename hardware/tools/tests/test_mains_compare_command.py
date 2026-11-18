@@ -301,6 +301,27 @@ class MainsCompare(unittest.TestCase):
             status, lines = self.compare(distance=0.5, first=inner, second=second)
             self.assertEqual(len(self.findings(lines, "NEAR")), expected, lines)
 
+    def test_a_pad_with_no_copper_layer_is_not_copper_and_is_never_near(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        mains = part("J2", 10, 60, [("1", "/AC", "smd", 1, 0, '"F.Cu" "F.Mask" "F.Paste"')])
+        for layers in ('"F.Paste"', '"F.Mask"', '"F.Paste" "F.Mask"'):
+            for net in ("/LV", ""):
+                aperture = part("T1", 10.7, 60, [("", net, "smd", 0.5, 0, layers)])
+                with self.subTest(layers=layers, net=net):
+                    first = self.make("first", base() + [mains])
+                    second = self.make("second", base() + [mains, aperture])
+                    for fmt in (None, "json"):
+                        status, report = self.compare(distance=3, first=first, second=second, fmt=fmt)
+                        self.assertEqual(status, 0, report)
+        # the same pad with copper is near, so the pad above is passed for its layers and not for its place
+        copper = part("T1", 10.7, 60, [("", "/LV", "smd", 0.5, 0, '"F.Cu" "F.Paste"')])
+        status, lines = self.compare(distance=3, first=self.make("first", base() + [mains]), second=self.make("second", base() + [mains, copper]))
+        self.assertEqual((status, len(self.findings(lines, "NEAR"))), (1, 1), lines)
+        # a mains pad that is itself paste-only is no mains copper either: it is not held, and nothing is near it
+        paste_mains = part("J3", 10, 60, [("1", "/AC", "smd", 1, 0, '"F.Paste"')])
+        status, report = self.compare(distance=3, first=self.make("first", base() + [paste_mains]), second=self.make("second", base() + [paste_mains]), fmt="json")
+        self.assertEqual((status, report["mains_items_first"]), (0, 4), report)
+
     def test_a_mains_pad_added_removed_or_moved_fails_naming_it_in_text_and_json(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
         pad = lambda x=10: part("J2", x, 60, [("1", "/AC", "smd", 1, 0, '"F.Cu" "F.Mask"')])
@@ -334,6 +355,66 @@ class MainsCompare(unittest.TestCase):
             self.assertEqual(status, 1, report)
             kinds = ([l.split(" | ")[0] for l in report if " | " in l][:1] if fmt is None else [f["finding"] for f in report["findings"]])
             self.assertEqual(kinds, ["NEAR"])
+
+    def test_the_indexed_search_finds_what_a_search_of_every_pair_finds(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        import random
+        rng = random.Random(7)
+        items, number = [], 100
+        for index in range(120):
+            net = rng.choice(["/AC", "/AC2", "/LV", "/LV", "/LV2"])
+            layer = rng.choice(["F.Cu", "B.Cu"])
+            x, y = rng.uniform(0, 80), rng.uniform(0, 80)
+            number += 1
+            kind = rng.choice(["track", "track", "via", "pad", "zone"])
+            if kind == "track":
+                items.append(f'(segment (start {x:.3f} {y:.3f}) (end {x + rng.uniform(-8, 8):.3f} {y + rng.uniform(-8, 8):.3f}) '
+                             f'(width 0.25) (layer "{layer}") (net "{net}") (uuid "00000000-0000-4000-8000-{number:012d}"))')
+            elif kind == "via":
+                items.append(f'(via (at {x:.3f} {y:.3f}) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (net "{net}") '
+                             f'(uuid "00000000-0000-4000-8000-{number:012d}"))')
+            elif kind == "pad":
+                items.append(part(f"P{index}", round(x, 2), round(y, 2), [("1", net, "smd", rng.uniform(0.5, 2), 0, f'"{layer}" "{layer[0]}.Paste"')]))
+            else:
+                w, h = rng.uniform(2, 20), rng.uniform(2, 20)
+                items.append(f'(zone (net "{net}") (layer "{layer}") (uuid "00000000-0000-4000-8000-{number:012d}") (hatch edge 0.5) '
+                             '(connect_pads (clearance 0.5)) (min_thickness 0.25) (fill (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
+                             f'(polygon (pts (xy {x:.2f} {y:.2f}) (xy {x + w:.2f} {y:.2f}) (xy {x + w:.2f} {y + h:.2f}) (xy {x:.2f} {y + h:.2f}))))')
+        board = self.make("random", items)
+        lay = locked_copper.read_layout(board)
+        every = locked_copper.copper(lay, board, rule_areas=False) + locked_copper.pad_items(lay)
+        mains = [i for i in every if i["net"] in ("/AC", "/AC2")]
+        others = [i for i in every if i["net"] not in ("/AC", "/AC2")]
+        self.assertGreater(len(mains), 20)
+        self.assertGreater(len(others), 40)
+        for distance in (0.3, 3.0, 12.0):
+            with self.subTest(distance=distance):
+                indexed = locked_copper.near_findings(others, mains, distance, indexed=True)
+                every_pair = locked_copper.near_findings(others, mains, distance, indexed=False)
+                self.assertEqual(indexed, every_pair)
+                self.assertGreater(len(indexed), 0, "the board holds what is near, so the comparison is not of two empty lists")
+                self.assertLess(len(indexed), len(others), "and what is not")
+
+    def test_the_capped_polygon_gap_is_the_exact_gap_wherever_that_is_under_the_cap(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        import random
+        import board_geometry
+        rng = random.Random(3)
+        def polygon():
+            x, y = rng.uniform(0, 30), rng.uniform(0, 30)
+            return [(x + rng.uniform(0, 3), y + rng.uniform(0, 3)), (x + 5 + rng.uniform(0, 3), y + rng.uniform(0, 3)),
+                    (x + 5 + rng.uniform(0, 3), y + 5 + rng.uniform(0, 3)), (x + rng.uniform(0, 3), y + 5 + rng.uniform(0, 3))]
+        seen = 0
+        for _ in range(300):
+            one, other = polygon(), polygon()
+            exact = board_geometry.polygon_distance(one, other)
+            capped = locked_copper.polygons_gap([one], [other], 4.0)
+            if exact < 4.0:
+                seen += 1
+                self.assertAlmostEqual(capped, exact, places=9)
+            else:
+                self.assertGreaterEqual(capped, 4.0)
+        self.assertGreater(seen, 30)
 
 
 if __name__ == "__main__":

@@ -66,6 +66,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 import secrets
 import shutil
@@ -861,18 +862,36 @@ def copper_shape(item: dict) -> Tuple[List[List[Tuple[float, float]]], float, bo
     return rings, 0.0, True
 
 
+ALL_COPPER = "*"
+
+
+def copper_layers(item: dict):
+    """The copper layers an item has: a set of names, or ALL_COPPER for a through-hole pad and a via, which are on every one.
+
+    A layer that carries no copper, such as a paste or mask aperture, is no layer of the item's copper.
+    """
+    if item["kind"] == "via":
+        return ALL_COPPER
+    if item["kind"] != "pad":
+        return set(item_layers(item))
+    layers = set()
+    for layer in item["pad"].layers:
+        if layer == "*.Cu":
+            return ALL_COPPER
+        if layer == "F&B.Cu":
+            layers |= {"F.Cu", "B.Cu"}
+        elif layer.endswith(".Cu"):
+            layers.add(layer)
+    return layers
+
+
 def on_a_shared_layer(one: dict, other: dict) -> bool:
-    """Whether two items have copper on one layer: a via is on every layer, a track or arc on its own, a zone on its layers."""
-    if "pad" in (one["kind"], other["kind"]):
-        pad, rest = (one, other) if one["kind"] == "pad" else (other, one)
-        if rest["kind"] == "via":
-            return True
-        layers = rest["pad"].layers if rest["kind"] == "pad" else item_layers(rest)
-        return any(pad["pad"].on(layer) for layer in layers) or (
-            rest["kind"] == "pad" and any(rest["pad"].on(layer) for layer in pad["pad"].layers))
-    if "via" in (one["kind"], other["kind"]):
-        return True
-    return bool(set(item_layers(one)) & set(item_layers(other)))
+    """Whether two items have copper on one layer: a via and a through-hole pad are on every copper layer, a track or arc
+    on its own, a zone on its layers, and a pad on the copper layers it has, never on a paste or mask layer."""
+    first, second = copper_layers(one), copper_layers(other)
+    if first == ALL_COPPER or second == ALL_COPPER:
+        return bool(first) and bool(second)
+    return bool(first & second)
 
 
 def item_layers(item: dict) -> List[str]:
@@ -896,12 +915,47 @@ def boxes_apart(one: Tuple[float, float, float, float], other: Tuple[float, floa
     return max(0.0, other[0] - one[2], one[0] - other[2], other[1] - one[3], one[1] - other[3])
 
 
-def copper_gap(one: dict, other: dict) -> float:
-    """The least distance in mm between the copper of two items, 0 where they touch or overlap."""
+def edges_near(rings: List[List[Tuple[float, float]]], box: Tuple[float, float, float, float], limit: float):
+    """The sides of the polygons, each with its box, that lie within `limit` mm of a box."""
+    found = []
+    for ring in rings:
+        for a, b in pieces(ring + ring[:1]):
+            edge = (min(a[0], b[0]), min(a[1], b[1]), max(a[0], b[0]), max(a[1], b[1]))
+            if boxes_apart(edge, box) < limit:
+                found.append((a, b, edge))
+    return found
+
+
+def polygons_gap(rings_a: List[List[Tuple[float, float]]], rings_b: List[List[Tuple[float, float]]], limit: float) -> float:
+    """The least distance in mm between two sets of polygons where it is under `limit`, 0 where they touch or overlap, and
+    `limit` where they are no nearer than that (the same as board_geometry.polygon_distance wherever that is under `limit`)."""
+    for a in rings_a:
+        for b in rings_b:
+            if any(board_geometry.within(point, b) for point in a) or any(board_geometry.within(point, a) for point in b):
+                return 0.0
+    box_a = (min(p[0] for r in rings_a for p in r), min(p[1] for r in rings_a for p in r),
+             max(p[0] for r in rings_a for p in r), max(p[1] for r in rings_a for p in r))
+    box_b = (min(p[0] for r in rings_b for p in r), min(p[1] for r in rings_b for p in r),
+             max(p[0] for r in rings_b for p in r), max(p[1] for r in rings_b for p in r))
+    edges_a, edges_b = edges_near(rings_a, box_b, limit), edges_near(rings_b, box_a, limit)
+    best = limit
+    for a, b, box in edges_a:
+        for c, d, other in edges_b:
+            if boxes_apart(box, other) >= best:
+                continue
+            best = min(best, board_geometry.segment_distance(a, b, c, d))
+            if best == 0.0:
+                return 0.0
+    return best
+
+
+def copper_gap(one: dict, other: dict, limit: float = math.inf) -> float:
+    """The least distance in mm between the copper of two items, 0 where they touch or overlap; where it is `limit` or
+    more, any value of `limit` or more."""
     lines_a, half_a, is_poly_a = copper_shape(one)
     lines_b, half_b, is_poly_b = copper_shape(other)
     if is_poly_a and is_poly_b:
-        return min(board_geometry.polygon_distance(a, b) for a in lines_a for b in lines_b)
+        return polygons_gap(lines_a, lines_b, limit)
     if is_poly_a or is_poly_b:
         rings, line, half = (lines_a, lines_b[0], half_b) if is_poly_a else (lines_b, lines_a[0], half_a)
         found = []
@@ -924,8 +978,10 @@ def pad_items(layout: list) -> List[dict]:
     """Every pad of the layout as an item of kind pad, with the properties it is compared by."""
     found = []
     for pad in board_geometry.pads(layout):
+        if not any(layer.endswith(".Cu") for layer in pad.layers):
+            continue
         found.append({"kind": "pad", "pad": pad, "net": pad.net, "uuid": "", "locked": True,
-                      "layers": sorted(pad.layers),
+                      "layers": sorted(layer for layer in pad.layers if layer.endswith(".Cu")),
                       "at": [round(pad.centre[0] * 1_000_000), round(pad.centre[1] * 1_000_000)],
                       "size": [round(pad.size[0] * 1_000_000), round(pad.size[1] * 1_000_000)],
                       "angle": round(pad.angle, 6), "shape": pad.shape,
@@ -959,6 +1015,59 @@ def pad_findings(first: List[dict], second: List[dict]) -> List[Tuple[str, str, 
         for item in pool:
             findings.append(("ADDED", describe_pad(item), "is on a Mains-class net of the second board and not of the first"))
     return findings
+
+
+#: The side in mm of a cell of the grid that finds the Mains-class copper near an item, never less than the distance.
+GRID_CELL = 5.0
+
+
+def cells(box: Tuple[float, float, float, float], size: float):
+    """The grid cells a box covers."""
+    for x in range(math.floor(box[0] / size), math.floor(box[2] / size) + 1):
+        for y in range(math.floor(box[1] / size), math.floor(box[3] / size) + 1):
+            yield x, y
+
+
+def nearest_mains(items: List[dict], mains: List[dict], distance: float, indexed: bool = True) -> List[Tuple[dict, Optional[Tuple[float, dict]]]]:
+    """For each item, the nearest of the `mains` items sharing a copper layer with it and nearer than `distance` mm, as
+    (item, (gap, mains item)) or (item, None); the first of equally near items in `mains` order is the one named.
+
+    `indexed` looks only at the mains items whose cells the item's box, grown by the distance, reaches; with False every
+    mains item is looked at, which finds the same items and is the reference the indexed search is held to.
+    """
+    boxes = [copper_box(other) for other in mains]
+    size = max(GRID_CELL, distance)
+    grid: Dict[Tuple[int, int], List[int]] = {}
+    if indexed:
+        for index, box in enumerate(boxes):
+            for cell in cells(box, size):
+                grid.setdefault(cell, []).append(index)
+    result = []
+    for item in items:
+        box = copper_box(item)
+        if indexed:
+            grown = (box[0] - distance, box[1] - distance, box[2] + distance, box[3] + distance)
+            candidates = sorted({index for cell in cells(grown, size) for index in grid.get(cell, ())})
+        else:
+            candidates = range(len(mains))
+        nearest = None
+        for index in candidates:
+            if boxes_apart(box, boxes[index]) >= distance or not on_a_shared_layer(item, mains[index]):
+                continue
+            gap = copper_gap(item, mains[index], distance)
+            if nearest is None or gap < nearest[0]:
+                nearest = (gap, mains[index])
+        result.append((item, nearest if nearest is not None and nearest[0] < distance - NEAR_TOLERANCE else None))
+    return result
+
+
+def near_findings(items: List[dict], mains: List[dict], distance: float, indexed: bool = True) -> List[Tuple[str, str, str]]:
+    """A NEAR finding for each of the items nearer than `distance` mm to Mains-class copper on a shared layer."""
+    def shown_item(item: dict) -> str:
+        return describe_pad(item) if item["kind"] == "pad" else describe(item)
+    return [("NEAR", shown_item(item), f"is {mm(round(nearest[0] * 1_000_000))} mm from {shown_item(nearest[1])}, "
+                                       f"nearer than {board_check.coordinate(distance)} mm")
+            for item, nearest in nearest_mains(items, mains, distance, indexed) if nearest is not None]
 
 
 def mains_copper_compare(before_board: str, before_project: str, after_board: str, after_project: str,
@@ -996,21 +1105,7 @@ def mains_copper_compare(before_board: str, before_project: str, after_board: st
     for finding, item, detail in compare_items(first, [item for item in second if item["kind"] != "pad"]):
         findings.append((finding, item, reword.get(finding, detail)))
     findings += pad_findings(first_pads, [item for item in second if item["kind"] == "pad"])
-    boxes = {id(other): copper_box(other) for other in second}
-    for item in second_all:
-        if item["net"] in mains:
-            continue
-        nearest = None
-        box = copper_box(item)
-        for other in second:
-            if boxes_apart(box, boxes[id(other)]) >= distance or not on_a_shared_layer(item, other):
-                continue
-            gap = copper_gap(item, other)
-            if nearest is None or gap < nearest[0]:
-                nearest = (gap, other)
-        if nearest is not None and nearest[0] < distance - NEAR_TOLERANCE:
-            findings.append(("NEAR", describe_pad(item) if item["kind"] == "pad" else describe(item), f"is {mm(round(nearest[0] * 1_000_000))} mm from {describe_pad(nearest[1]) if nearest[1]['kind'] == 'pad' else describe(nearest[1])}, "
-                                                     f"nearer than {board_check.coordinate(distance)} mm"))
+    findings += near_findings([item for item in second_all if item["net"] not in mains], second, distance)
     return findings, first_count, second_count
 
 

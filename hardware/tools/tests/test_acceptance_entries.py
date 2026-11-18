@@ -223,6 +223,26 @@ class MainsLinesAreRefused(Generator):
         self.write("b/low.kicad_pcb", board_text([]))
         self.assertIn("holds no rule area", self.refusal(text))
 
+    def test_every_rule_area_whose_name_holds_the_mains_pattern_is_a_mains_region_and_other_keepouts_are_not(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        def area(name, uuid, x):
+            return REGION.replace('(name "mains")', f'(name "{name}")').replace("00000000-0000-4000-8000-000000000001", uuid) \
+                .replace("(xy 50 50) (xy 60 50) (xy 60 60) (xy 50 60)", f"(xy {x} 50) (xy {x + 10} 50) (xy {x + 10} 60) (xy {x} 60)")
+        self.write("b/low.kicad_pcb", board_text([area("mains", "00000000-0000-4000-8000-000000000001", 50),
+                                                  area("H3 Mains pour pull-back", "00000000-0000-4000-8000-000000000002", 70),
+                                                  area("antenna keepout", "00000000-0000-4000-8000-000000000003", 90)]))
+        for at, refused in (((55, 55), True), ((75, 55), True), ((95, 55), False)):
+            if os.path.exists(self.record):
+                os.remove(self.record)
+            status, lines, report = self.both(log(line("workmanship_pad_corner", "/SLOW_A", at)))
+            self.assertEqual((status, len(report["refused"]), len(report["entries"])), (1, 1, 0) if refused else (0, 0, 1), (at, lines))
+            if refused:
+                self.assertIn("lies in the mains region", report["refused"][0]["why"])
+                self.assertTrue(any(l.startswith("REFUSED | ") for l in lines), lines)
+        os.remove(self.record)
+        status, lines, report = self.both(log(line("workmanship_pad_corner", "/SLOW_A", (95, 55))), "--mains-region", "keepout")
+        self.assertEqual((status, len(report["refused"])), (1, 1), "the argument overrides the pattern")
+
     def test_a_board_declaring_no_mains_needs_no_region_and_an_undeclared_one_is_refused(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
         text = log(line("workmanship_pad_corner", "/SLOW_A", (55, 55)))

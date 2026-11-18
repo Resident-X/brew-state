@@ -155,11 +155,12 @@ class TheChainRebuildsTheCommittedBoard(unittest.TestCase):
         """the mains copper compare, run on the committed board and the rebuilt one, finds no mains item added, missing, changed or unlocked"""
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C5: The block scripts and coordinate tables that draw the main board's copper are tracked in the main board's folder with paths relative to the repository, and running the chain runner over them from the placed board writes the same mains and low-voltage copper the committed board holds. This does not cover the wall board's scripts, which its own work delivers.
         import io
-        for form in ("text", "json"):
+        # 3 mm is the separation the board design and the method hold mains copper to; 0.001 mm is a distance nothing can be nearer than
+        for form, distance in (("text", "3"), ("json", "3"), ("text", "0.001")):
             out = io.StringIO()
             status = locked_copper.main(["--kicad-cli", kicad_cli(), "mains-compare", "--before-board", BOARD, "--before-project",
                                          os.path.join(FOLDER, "main-board.kicad_pro"), "--board", self.rebuilt, "--project",
-                                         os.path.join(self.rebuilt_folder, "main-board.kicad_pro"), "--distance", "0.001",
+                                         os.path.join(self.rebuilt_folder, "main-board.kicad_pro"), "--distance", distance,
                                          "--format", form], out=out)
             if form == "json":
                 findings = [row["finding"] for row in json.loads(out.getvalue())["findings"]]
