@@ -288,34 +288,66 @@ class AFarChannelIsHeldAgainstTheOtherDesignsRecords(base.Tree):
                                                        "hardware/m/wall/pin-allocation.yaml")
         return board_check.far_channels(yaml, self.root, self.wall, "hardware/m/wall/pin-allocation.yaml", channels, others)
 
-    def test_far_channels_that_another_design_lists_with_a_controller_pin_and_a_connector_pass(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+    def test_far_channels_that_another_design_lists_with_a_controller_pin_pass(self):
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         self.assertEqual(self.far(), [])
 
     def test_a_far_channel_that_no_record_lists_fails_naming_the_channel(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         found = self.far(text=WALL_RECORD.replace("far_channel: pump_drive", "far_channel: pump_drivee"))
         self.assertEqual([(v.rule, v.location) for v in found],
                          [("pin_allocation", "hardware/m/wall/pin-allocation.yaml channel wall_pump")])
         self.assertIn("names far channel pump_drivee, which no other design's record in the machine folder lists", found[0].message)
         self.assertIn("hardware/m/main/pin-allocation.yaml", found[0].message)
 
-    def test_a_channel_another_record_lists_without_a_controller_pin_or_without_a_connector_is_not_a_far_channel(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
-        for old, new in (("    controller_pin: PA0\n", ""), ("    connector: J2\n    connector_pin: 1\n", "")):
-            with self.subTest(removed=old):
-                self.write("hardware/m/main/pin-allocation.yaml", MAIN_RECORD.replace(old, "", 1))
-                found = self.far()
-                self.assertEqual([v.location.split(" channel ")[1] for v in found], ["wall_heater"])
+    def test_a_channel_another_record_lists_without_a_controller_pin_is_not_a_far_channel(self):
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        self.write("hardware/m/main/pin-allocation.yaml", MAIN_RECORD.replace("    controller_pin: PA0\n", "", 1))
+        found = self.far()
+        self.assertEqual([v.location.split(" channel ")[1] for v in found], ["wall_heater"])
+        self.assertIn("lists with a controller pin", found[0].message)
+        self.assertNotIn("and a connector", found[0].message)
+
+    def test_a_channel_another_record_lists_with_a_controller_pin_and_no_connector_is_a_far_channel(self):
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        self.write("hardware/m/main/pin-allocation.yaml", MAIN_RECORD.replace("    connector: J2\n    connector_pin: 1\n", "", 1))
+        self.assertEqual(self.far(), [])
+
+    def test_a_channel_another_record_lists_with_a_connector_and_no_controller_pin_fails_naming_it(self):
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        self.write("hardware/m/main/pin-allocation.yaml", MAIN_RECORD.replace("    controller_pin: PA1\n", "", 1))
+        found = self.far()
+        self.assertEqual([(v.rule, v.location) for v in found],
+                         [("pin_allocation", "hardware/m/wall/pin-allocation.yaml channel wall_pump")])
 
     def test_a_rail_or_far_entry_of_another_record_is_not_a_far_channel(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         self.write("hardware/m/main/pin-allocation.yaml", MAIN_RECORD)
         found = self.far(text=WALL_RECORD.replace("far_channel: heater_drive", "far_channel: ground_a"))
         self.assertEqual([v.location.split(" channel ")[1] for v in found], ["wall_heater"])
 
+    def listing(self, entry_pin: str, extra: str = "") -> list:
+        self.write("hardware/m/main/pin-allocation.yaml", MAIN_RECORD.replace("    controller_pin: PA0\n", f"    controller_pin: {entry_pin}\n{extra}", 1))
+        return [v.location.split(" channel ")[1] for v in self.far()]
+
+    def test_a_controller_pin_that_is_blank_or_not_text_or_not_a_port_pin_is_not_a_listing(self):
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        for pin in ("' '", "true", "7", "[PA0]", "foo", "pa0", "PA", "PA0x"):
+            with self.subTest(pin=pin):
+                self.assertEqual(self.listing(pin), ["wall_heater"])
+
+    def test_a_space_padded_port_pin_is_a_listing_as_the_record_parser_strips_it(self):
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        self.assertEqual(self.listing("'  PA0 '"), [])
+
+    def test_an_entry_that_carries_a_rail_or_a_far_channel_beside_a_controller_pin_is_not_a_listing(self):
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        for extra in ("    rail: ground\n", "    far_channel: heater_drive\n"):
+            with self.subTest(extra=extra.strip()):
+                self.assertEqual(self.listing("PA0", extra), ["wall_heater"])
+
     def test_a_record_the_design_is_itself_held_to_is_not_another_designs(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         shared = "hardware/m/pin-allocation.yaml"
         self.write(shared, WALL_RECORD)
         os.remove(os.path.join(self.root, "hardware/m/wall/pin-allocation.yaml"))
@@ -324,7 +356,7 @@ class AFarChannelIsHeldAgainstTheOtherDesignsRecords(base.Tree):
         self.assertEqual(board_check.other_designs_records(self.wall, [self.wall, self.main], files, self.root, shared), [])
 
     def test_a_record_that_cannot_be_read_lists_nothing_and_a_lone_design_has_no_one_to_list_it(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         self.write("hardware/m/main/pin-allocation.yaml", "channels: [unclosed\n")
         self.assertEqual(len(self.far()), 2)
         found = self.far(others=[])
@@ -332,7 +364,7 @@ class AFarChannelIsHeldAgainstTheOtherDesignsRecords(base.Tree):
         self.assertIn("it has no other design with a record", found[0].message)
 
     def test_only_designs_in_the_same_machine_folder_are_others_and_a_design_with_no_machine_folder_has_none(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         elsewhere = board_check.Design("hardware/n/main/main.kicad_pro")
         self.write("hardware/n/main/pin-allocation.yaml", MAIN_RECORD)
         files = {"hardware/m/main/pin-allocation.yaml", "hardware/n/main/pin-allocation.yaml", "hardware/m/wall/pin-allocation.yaml"}
@@ -344,7 +376,7 @@ class AFarChannelIsHeldAgainstTheOtherDesignsRecords(base.Tree):
             self.assertEqual(board_check.other_designs_records(design, [design, self.main, self.wall], files, self.root, None), [])
 
     def test_the_records_of_the_other_designs_in_the_machine_folder_are_among_what_a_design_reads(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         for name in ("wall", "main"):
             self.write(f"hardware/m/{name}/{name}.kicad_pro", "{}")
             self.write(f"hardware/m/{name}/{name}.kicad_sch", "(kicad_sch)")

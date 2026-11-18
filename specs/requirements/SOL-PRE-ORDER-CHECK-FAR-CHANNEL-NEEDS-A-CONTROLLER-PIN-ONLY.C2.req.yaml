@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C2
+type: criterion
+title: The readme and the design method state a far channel's far-side listing as a controller pin with no connector required
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The hardware readme and the board design method state that a far channel is held to a controller pin in another design's record, that a connector on that entry is not required, and no statement in either says the far-side entry carries a connector. Out of scope: any other rule of the check.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY
+    type: criterion-of

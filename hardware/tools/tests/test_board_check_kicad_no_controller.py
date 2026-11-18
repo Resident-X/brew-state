@@ -71,7 +71,7 @@ class TheDeclarationOnTheThrowawayDesign(Copy):
                                                "declares controller: none, but the design places U1"), found[0][4])
 
     def test_a_design_with_no_machine_folder_is_not_held_to_the_far_channel_check(self):
-        # SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3: A far channel must be a channel with a controller pin and a connector in another design's record in the same machine folder, and one that no record lists fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+        # SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1: A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
         self.declare()
         status, lines = self.check()
         self.assertEqual(status, 1)

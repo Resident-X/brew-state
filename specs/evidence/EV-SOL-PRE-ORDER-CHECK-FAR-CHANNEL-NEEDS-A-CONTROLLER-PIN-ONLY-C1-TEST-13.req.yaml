@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY-C1-TEST-13
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-18T10:14:51.500079Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_no_controller.py::test_the_records_of_the_other_designs_in_the_machine_folder_are_among_what_a_design_reads
+  artifact_version: 481acb79af3c3ebc2823dc363cd1c4db7d201ad0
+attested_by: crun-4b496aff6b599efa
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1
+    type: satisfies

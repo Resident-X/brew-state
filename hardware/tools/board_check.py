@@ -2036,8 +2036,10 @@ def other_designs_records(design: Design, designs: List[Design], tracked: Set[st
 def far_channels(yaml, root: str, design: Design, record: str, channels: List[Channel], others: List[str]) -> List[Violation]:
     """The far channels of a record that declares no controller which no other design's record lists.
 
-    A far channel is listed by another record when an entry there names it with a controller pin and a connector. A
-    record that cannot be read lists none, and its own design fails for it.
+    A far channel is listed by another record when an entry there names it with a controller pin, whether or not it names a connector. An
+    entry names a controller pin only when `controller_pin` is text that, stripped, is a port pin's name (stricter than the record's own parser,
+    which requires only text, and the test the controller part rule applies), the entry carries neither `rail` nor `far_channel`, and its `channel` is text; anything else lists nothing, since the other
+    design's own check, not this one, refuses such an entry. A record that cannot be read lists none, and its own design fails for it.
     """
     listed: Set[str] = set()
     for other in others:
@@ -2048,11 +2050,14 @@ def far_channels(yaml, root: str, design: Design, record: str, channels: List[Ch
             continue
         entries = data.get("channels") if isinstance(data, dict) else None
         for entry in entries if isinstance(entries, list) else []:
-            if isinstance(entry, dict) and entry.get("controller_pin") and entry.get("connector") and isinstance(entry.get("channel"), str):
+            if not isinstance(entry, dict) or "rail" in entry or "far_channel" in entry or not isinstance(entry.get("channel"), str):
+                continue
+            pin = entry.get("controller_pin")
+            if isinstance(pin, str) and PORT_PIN.fullmatch(pin.strip()) is not None:
                 listed.add(entry["channel"].strip())
     return [Violation(design.project, "pin_allocation", f"{record} channel {channel.channel}",
                       f"channel {channel.channel} names far channel {channel.far_channel}, which no other design's record in "
-                      f"the machine folder lists with a controller pin and a connector ({', '.join(others) if others else 'it has no other design with a record'}); "
+                      f"the machine folder lists with a controller pin ({', '.join(others) if others else 'it has no other design with a record'}); "
                       "list it in the record of the board that places the controller, or correct the name")
             for channel in channels if channel.far_channel and channel.far_channel not in listed]
 
