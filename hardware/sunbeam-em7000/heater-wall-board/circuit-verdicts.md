@@ -11,6 +11,8 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 14 parts and 
 | Sheets and the board | 0 | 0 | 0 | 10 |
 | Total | 0 | 0 | 0 | 40 |
 
+**Library symbol names (finding 3.2).** The library item names of T911 and T921 (`Triac_Thyristor:BTA16-600B`) and of U911 and U921 (`Relay_SolidState:MOC3083M`) are KiCad's stock symbol names for these families, not the fitted part numbers: `Triac_Thyristor:BTA16-600B` is KiCad's symbol for the BTA16 family's pinout (1 A1/MT1, 2 A2/MT2, 3 G), and `Relay_SolidState:MOC3083M` is onsemi's own named symbol. The fitted parts are carried by each instance's own Value, Description, Datasheet, MPN, LCSC and Rating fields (the 800 V BTA16-800BWRG triac, the onsemi MOC3083M opto-triac). The symbol text cached inside sheets 100 and 200 (a '600V' description, the older onsemi datasheet address) is the library's and is not edited, because the symbol is stock; the check compares the instance fields (schematic review finding 3.2).
+
 ## Board-level items
 
 | item | catalogue items | verdict | evidence or closing action |

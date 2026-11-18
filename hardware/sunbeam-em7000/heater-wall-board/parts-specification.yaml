@@ -23,6 +23,14 @@
 # are to carry the rating strings below when the schematic is next redrawn; catalogue figures of C10065
 # and C23552 are not read (catalogue-extract.yaml).
 #
+# The library item names of T911 and T921 (`Triac_Thyristor:BTA16-600B`) and of U911 and U921
+# (`Relay_SolidState:MOC3083M`) are KiCad's stock symbol names for these families, not the fitted part numbers:
+# `Triac_Thyristor:BTA16-600B` is KiCad's symbol for the BTA16 family's pinout (1 A1/MT1, 2 A2/MT2, 3 G), and
+# `Relay_SolidState:MOC3083M` is onsemi's own named symbol. The fitted parts are carried by each instance's own
+# Value, Description, Datasheet, MPN, LCSC and Rating fields (the 800 V BTA16-800BWRG triac, the onsemi MOC3083M
+# opto-triac). The symbol text cached inside sheets 100 and 200 (a '600V' description, the older onsemi datasheet
+# address) is the library's and is not edited, because the symbol is stock; the check compares the instance fields (schematic review finding 3.2).
+#
 # Sources of the rated figures (datasheet, revision, address that opened it):
 #   ST BTA16-800BWRG: DS2114 Rev 11, May 2018 (T1610, T1635, T1650, BTA16, BTB16), the Internet Archive's copy of
 #     https://www.st.com/resource/en/datasheet/bta16.pdf, read 2026-11-18, the BW column of Table 4 (p.3), Tables 1, 2, 5, 8 and 9.
@@ -33,7 +41,7 @@
 #     https://www.onsemi.com/pdf/datasheet/moc3083m-d.pdf, read 2026-11-18
 #   UNI-ROYAL 1206W4F2000T5E (C18002): Part Name 01005/0201/0402/0603/0805/1206/1210/1812/2010/2512 Series, V.3,
 #     Feb. 12, 2019, https://datasheet.lcsc.com/datasheet/pdf/0a975aaa49b7c97f38a963127be4a823.pdf, opened 2026-11-18:
-#     p.4 1206 working voltage 200 V, overload voltage 400 V, dielectric withstanding 500 V, 1/4 W to 70 degC; the sheet
+#     p.5 1206 working voltage 200 V, overload voltage 400 V, dielectric withstanding 500 V; p.4 1/4 W at 70 degC, derating curve p.5; the sheet
 #     states no pulse rating (amended 2026-11-18; the earlier note said the sheet was not opened)
 #   Zhuhai Hongjiacheng 07D series Rev 1.2 (C49072860), as the schematic cites it
 #   TE Connectivity 63849-1 drawing C-63849 rev F1: datasheet.lcsc.com d78aaa5668ef44d19432bad6ab97dbf2.pdf
@@ -71,7 +79,7 @@ positions:
     lcsc: C18002
     class: resistor
   # RV911: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (p.1-2); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (electrical table p.2, operating temperature p.1); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
   - reference: RV911
     value: "07D471K"
     package: RV_Disc_D9mm_W5.2mm_P5mm
@@ -117,7 +125,7 @@ positions:
     lcsc: C18002
     class: resistor
   # RV921: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (p.1-2); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (electrical table p.2, operating temperature p.1); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
   - reference: RV921
     value: "07D471K"
     package: RV_Disc_D9mm_W5.2mm_P5mm
