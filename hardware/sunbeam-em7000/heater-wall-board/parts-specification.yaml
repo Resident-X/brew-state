@@ -41,7 +41,8 @@
 #     https://www.onsemi.com/pdf/datasheet/moc3083m-d.pdf, read 2026-11-18
 #   UNI-ROYAL 1206W4F2000T5E (C18002): Part Name 01005/0201/0402/0603/0805/1206/1210/1812/2010/2512 Series, V.3,
 #     Feb. 12, 2019, https://datasheet.lcsc.com/datasheet/pdf/0a975aaa49b7c97f38a963127be4a823.pdf, opened 2026-11-18:
-#     p.5 1206 working voltage 200 V, overload voltage 400 V, dielectric withstanding 500 V; p.4 1/4 W at 70 degC, derating curve p.5; the sheet
+#     p.5 1206 maximum working voltage 200 V, maximum overload voltage 400 V (maxima), dielectric withstanding 500 V, and RCWV = sqrt(P x R) with the overload
+#     voltage 2.5 x RCWV or the maximum, whichever is less: 7.07 V and 17.7 V for 200 ohm at 1/4 W (amended 2026-11-18, round 4 finding 4.2); p.4 1/4 W at 70 degC, derating curve p.5; the sheet
 #     states no pulse rating (amended 2026-11-18; the earlier note said the sheet was not opened)
 #   Zhuhai Hongjiacheng 07D series Rev 1.2 (C49072860), as the schematic cites it
 #   TE Connectivity 63849-1 drawing C-63849 rev F1: datasheet.lcsc.com d78aaa5668ef44d19432bad6ab97dbf2.pdf

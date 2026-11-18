@@ -47,7 +47,7 @@ domains:
     highest_voltage_v: 357.8
     rides_on: mains_out
     fraction: 1
-  # the coffee triac's gate network between R911 and R912: OUT_C - opto-triac - R911 (200 ohm) - this node - R912 (200 ohm) - the gate, which sits about 1.3 V (VGT max) above RET once the opto-triac conducts, so the two equal resistors share the peak, 0.5 x 357.8 = 178.9 V each at the instant the opto-triac fires, as the main board's pump gate networks are read
+  # the coffee triac's gate network between R911 and R912: OUT_C - opto-triac - R911 (200 ohm) - this node - R912 (200 ohm) - the gate, which sits about 1.3 V (VGT max) above RET once the opto-triac conducts, so the two equal resistors share the peak, 0.5 x 357.8 = 178.9 V each if the opto-triac fires at the line peak (a false trigger; at a normal firing about 10 V each), as the main board's pump gate networks are read. Amended 2026-11-18 (round 4 finding 4.2): 178.9 V is the stress and not a figure within the part's rating; UNI-ROYAL V.3 p.5 gives RCWV 7.07 V and overload voltage 17.7 V for 200 ohm at 1/4 W, 200 V and 400 V being maxima, and no pulse rating (circuit-proof.md row (b))
   - name: mains_gate_c
     rail: /Coffee heater switch/HEAT_C_GATE_R
     highest_voltage_v: 178.9

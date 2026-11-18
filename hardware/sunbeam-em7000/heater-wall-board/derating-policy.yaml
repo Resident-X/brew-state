@@ -24,7 +24,10 @@
 # The header J931 (XFCN PZ254V-11-03P) is graded against the class relay and connector below (design change of 2026-11-18, schematic review finding 1.7); the blade and joiner class stays as it was: no maker rating is read, so its shares stay the owner-held, carried and unsourced 15 A (open-items.md).
 #
 # No accepted_exceptions are entered: every position's working voltage is inside its class limit by the pin-limit
-# record's reading (the gate resistors carry half the 357.8 V peak, 178.9 V, against 200 V). An exception is the owner's
+# record's reading. Amended 2026-11-18 (schematic review round 4, finding 4.2): that reading does not hold for the four gate
+# resistors. They carry half the 357.8 V peak, 178.9 V, in a surge, against the 200 V that UNI-ROYAL V.3 p.5 gives as the maximum
+# working voltage, not the rating of a 200 ohm part (RCWV = sqrt(0.25 W x 200 ohm) = 7.07 V, overload voltage 17.7 V, no pulse
+# rating stated; circuit-proof.md row (b), open-items.md 'Gate resistor rating, pulse and voltage'). An exception is the owner's
 # to sign and none is drafted here.
 source: NASA Goddard Space Flight Center, EEE Parts Derating, Preferred Reliability Practice PD-ED-1201, Table 1 (https://klabs.org/DEI/References/design_guidelines/design_series/1201.pdf, no date printed, read 2026-10-29), as the main board policy adopts it (main-board/derating-policy.yaml, adopted by the owner on 2026-10-29 with the relaxations stated there) for the resistor, integrated circuit and varistor classes, carried here unchanged in every share; the triac class carries unchanged the temperature share 0.8 (0.8 x 125 = 100 degC) and the current share 0.5 (8 A for the triac) that the heater wall assembly judgements state (docs/sunbeam-em7000/controller-board-division.md, The heater wall assembly judged), which are stated reasons and not read from any document; enclosure air graded at 70 degC, assumed until the bring-up measurement of the machine real enclosure air (DEL-HW-BRING-UP.C13), the conservative case for this board whose own working figure is 45 degC (owner statement 2026-10-28)
 classes:

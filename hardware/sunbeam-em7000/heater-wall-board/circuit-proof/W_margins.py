@@ -79,8 +79,19 @@ check("gate drive reaches IGT", v_fire < v_lo and ipk <= IGM,
       "line voltage that drives IGT max through %.0f ohm = %.1f V (%.1f deg after the crossing at 216 V rms); the opto fires below %.0f V, its gate current then keeps rising with the line (the opto stays latched, IH typ 0.5 mA); peak gate current %.2f A <= IGM 4 A (x%.1f)"
       % (R_G_NOM * (1 + TOL), v_fire, ang, VINH_MAX, ipk, IGM / ipk))
 v_half = VPK / 2
-check("working voltage per 1206", v_half <= 200.0,
-      "each resistor carries half of the peak: %.1f V vs 200 V rated (C18002 catalogue page): margin %.1f V (%.1f %%); class share 1" % (v_half, 200.0 - v_half, 100 * (200.0 - v_half) / 200.0))
+# UNI-ROYAL V.3 (12 Feb 2019) p.5: RCWV = sqrt(rated power x resistance), never above the maximum working voltage (1206: 200 V);
+# overload voltage 2.5 x RCWV or the maximum overload voltage (1206: 400 V), whichever is less; p.4 1/4 W at 70 degC; no pulse rating stated.
+P_RATED, MAX_WORK, MAX_OVER = 0.25, 200.0, 400.0
+rcwv = min(math.sqrt(P_RATED * 200.0), MAX_WORK)
+v_over = min(2.5 * rcwv, MAX_OVER)
+v_fire_res = IGT * 200.0 * (1 + TOL)   # voltage across one resistor at a firing, at IGT max, resistor +1 %
+print("NOTE  1206 voltage rating of a 200 ohm part (UNI-ROYAL V.3 p.5, amended 2026-11-18, finding 4.2): RCWV = sqrt(%.2f W x 200 ohm) = %.2f V; overload voltage 2.5 x RCWV = %.1f V (the 200 V and 400 V figures are maxima, not the rating); dielectric 500 V; no pulse rating stated" % (P_RATED, rcwv, v_over))
+print("NOTE  firing: %.1f V per resistor at IGT %.0f mA = x%.2f of RCWV and %.2f of the overload voltage, for the ramp below; surge case (false trigger at the line peak): %.1f V per resistor = x%.1f of RCWV and x%.1f of the overload voltage: NOT within the resistor's rating; the pulse capability is unsourced (basis: onsemi Fig. 12 p.7, the main board's identical network, rare and fail-safe)"
+      % (v_fire_res, IGT * 1e3, v_fire_res / rcwv, v_fire_res / v_over, v_half, v_half / rcwv, v_half / v_over))
+i_s = VPK / R_G_MIN
+p_s = i_s ** 2 * (R_G_MIN / 2)
+print("NOTE  surge case power in each resistor: %.3f A x %.1f V = %.0f W (x%.0f of the 250 mW rating) until the triac latches (microseconds, unsourced): %.0f uJ per us, %.1f mJ at 10 us, %.1f mJ at 100 us (durations assumed); with the 775 V clamp across the pair: %.2f A, %.1f V and %.0f W each"
+      % (i_s, v_half, p_s, p_s / P_RATED, p_s, p_s * 10e-3, p_s * 100e-3, 775.0 / R_G_MIN, 775.0 / R_G_MIN * R_G_MIN / 2, (775.0 / R_G_MIN) ** 2 * R_G_MIN / 2))
 p_fire = IGT ** 2 * 200 * (1 + TOL)
 print("   power: during the firing ramp each resistor passes at most IGT %.0f mA: %.3f W for the ramp from the opto's turn-on (<= %.0f V) to the triac's latch (%.1f V), "
       "(%.1f - %.0f) V at the line's slope 2 pi f VPK = %.0f V/ms gives %.3f ms, %.2f mW average at 100 firings a second (250 mW rated; the share 0.6 gives 150 mW)"
@@ -151,7 +162,7 @@ for name, vs, ve, vc, vw, note in rows:
 e_surge = VCLAMP10A * 10.0 * 50e-6
 check("wall varistor surge energy", e_surge < E_RATED, "775 V x 10 A x 50 us = %.2f J against the 29 J rating (10/1000 us) (x%.0f); an estimate, the pulse shape is not the rated one" % (e_surge, E_RATED / e_surge))
 print("   no varistor, 800 V triac: the triac would see the entry clamp, 850 to 1100 V [unsourced], over its VDSM 900 V at 2.5 kV: it breaks over. The wall varistor is kept")
-print("   opto-triac at the clamp voltage: it blocks 800 V (VDRM) and the clamp is at most 775 V, so it is not told to fire and the 775 V / 396 ohm = %.2f A of the earlier record does not arise; if the branch passed 800 V it would break over into the triac gate, the benign way a triac turns on" % (VCLAMP10A / R_G_MIN))
+print("   opto-triac at the clamp voltage: it blocks 800 V (VDRM) and the clamp is at most 775 V, so it is not commanded to fire; a turn-on by dv/dt is not excluded (below), so the 775 V / 396 ohm = %.2f A through the gate network is a rare case that can arise (amended 2026-11-18, finding 4.2); if the branch passed 800 V it would break over into the triac gate, the benign way a triac turns on" % (VCLAMP10A / R_G_MIN))
 i2t_event = 2.0 ** 2 * 2e-6
 print("   I2t of that breakover event: 2 A^2 x 2 us [turn-on time unsourced] = %.1e A2s against the opto-triac's one cycle 1 A at 60 Hz, half-cycle I2t = 1 A^2 x 8.33 ms / 2 = %.1e A2s (x%.0f): a comparison by I2t is an inference, not a maker figure" % (i2t_event, 1.0 * 8.33e-3 / 2, 1.0 * 8.33e-3 / 2 / i2t_event))
 p_worst = 253.0 ** 2 / (4 * R_EL_MIN)
