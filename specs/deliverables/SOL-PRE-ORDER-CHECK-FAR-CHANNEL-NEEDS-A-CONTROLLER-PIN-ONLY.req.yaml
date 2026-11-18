@@ -3,15 +3,16 @@ type: deliverable
 category: solution
 title: A far channel is accepted when another design's record gives it a controller pin, whether or not that entry names a connector
 status: active
-version: 1
+version: 2
 text: |
-  Corrects the pre-order check's reading of a far channel. A board that places no controller lists the channels crossing its header as far channels, and the check accepts one only when another design's record in the machine folder lists it with a controller pin and a connector. A channel the controller's own board lists by its controller-side net, which reaches the header only through that board's own stages (a switch and resistor for an indicator drive, a resistor divider for a presence input), has a controller pin and no connector entry in that record, since the record's net-to-pin check ties a connector entry to the net that reaches that header pin. The connector requirement was the superseded criterion's own wording, and the board design records decision asks only that each far channel exist and be driven, which a controller pin states, so the criterion said the wrong thing and is superseded, not patched.
+  Corrects the pre-order check's reading of a far channel. A board that places no controller lists the channels crossing its header as far channels, and the check accepts one only when another design's record in the machine folder lists it with a controller pin and a connector. A channel the controller's own board lists by its controller-side net, which reaches the header only through that board's own stages (a switch and resistor for an indicator drive, a resistor divider for a presence input), has a controller pin and no connector entry in that record, since the record's net-to-pin check ties a connector entry to the net that reaches that header pin. The connector requirement came from the superseded criterion and from one sentence of the board design records decision, and what the check needs is that each far channel exist and be driven by the controller's board, which a controller pin states, so the criterion said the wrong thing and is superseded, not patched, and the decision's sentence is amended with it.
 
   Settled for the build:
   - A far channel is accepted when at least one other design's record in the same machine folder lists a channel of that name with a controller pin. A connector on that entry is neither required nor refused. An entry that lists the channel with no controller pin, and a channel no other record lists, fail the design, naming the channel.
   - Nothing else changes: the exemption of a design with no machine folder, the reading of a record that cannot be read (it lists none and its own design fails for it), the failure text's structure, the rail entries, and the connectivity checks of the controller's own board, which still hold a channel's net to the connector pin an entry names.
   - The failure message names a controller pin and no longer names a connector as what the other record lists.
   - The change leaves the main board's pin allocation record as it stands.
+  - The board design records decision's statement of a far channel's far-side entry names a controller pin and no connector after this change; no other decision names the connector as a requirement of that entry.
 
   Locus: far_channels in hardware/tools/board_check.py and the message it raises, its tests under hardware/tools/tests/ (the far-channel tests of the no-controller modules, whose fixtures give the far-side entry a connector), the seeded far-channel case in hardware/tools/board_prove.py where it states the rule, hardware/README.md and docs/board-design-method.md where they state it. Tests use synthetic designs and records in a temporary directory.
 rationale: |
