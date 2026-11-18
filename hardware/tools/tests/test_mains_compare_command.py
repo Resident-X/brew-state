@@ -1,0 +1,259 @@
+#!/usr/bin/env python3
+"""The mains-copper compare of the locked-copper tool, driven on synthetic boards against the real kicad-cli."""
+
+from __future__ import annotations
+
+import io
+import json
+import os
+import sys
+import tempfile
+import unittest
+
+TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, TOOLS)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import board_fixtures  # noqa: E402
+import locked_copper  # noqa: E402
+from locked_copper_fixtures import KICAD_CLI, layout, project  # noqa: E402
+
+MAINS_PROJECT = project({"/AC": "Mains", "/AC2": "Mains"}, [], classes=("Mains",), mains="present")
+
+
+def setUpModule():
+    board_fixtures.require_tools(KICAD_CLI)
+
+
+TEXT = {
+    "track": '(segment (start 0 0) (end 5 0) (width 0.5) (locked yes) (layer "F.Cu") (net "/AC") (uuid "00000000-0000-4000-8000-000000000001"))',
+    "arc": '(arc (start 0 10) (mid 2 12) (end 4 10) (width 0.5) (locked yes) (layer "F.Cu") (net "/AC2") (uuid "00000000-0000-4000-8000-000000000002"))',
+    "via": '(via (at 20 20) (size 0.8) (drill 0.4) (layers "F.Cu" "B.Cu") (locked yes) (net "/AC") (uuid "00000000-0000-4000-8000-000000000003"))',
+    "zone": '(zone (net "/AC") (locked yes) (layer "B.Cu") (uuid "00000000-0000-4000-8000-000000000004") (hatch edge 0.5) '
+            '(connect_pads (clearance 0.5)) (min_thickness 0.25) (fill (thermal_gap 0.5) (thermal_bridge_width 0.5)) '
+            '(polygon (pts (xy 30 30) (xy 40 30) (xy 40 40) (xy 30 40))))',
+    "lv": '(segment (start 0 20) (end 5 20) (width 0.25) (layer "F.Cu") (net "/LV") (uuid "00000000-0000-4000-8000-000000000006"))',
+}
+
+
+def item(kind, *replace):
+    """The base board's item `kind` as KiCad writes it, with each (old, new) pair of `replace` applied to its text."""
+    text = TEXT[kind]
+    for old, new in replace:
+        assert old in text, (old, text)
+        text = text.replace(old, new)
+    return text
+
+
+BASE = ["track", "arc", "via", "zone", "lv"]
+
+
+def base(*leave_out):
+    return [item(kind) for kind in BASE if kind not in leave_out]
+
+
+def lv_track(y, layer="F.Cu", x0=0, x1=5, width=0.25, net="/LV", number=9):
+    return (f'(segment (start {x0} {y}) (end {x1} {y}) (width {width}) (layer "{layer}") (net "{net}") '
+            f'(uuid "00000000-0000-4000-8000-{number:012d}"))')
+
+
+class MainsCompare(unittest.TestCase):
+    """Two boards, each with the project file beside it, in folders of their own."""
+
+    def setUp(self):
+        scratch = tempfile.TemporaryDirectory(prefix="mains-compare-test-")
+        self.addCleanup(scratch.cleanup)
+        self.root = scratch.name
+        self.first = self.make("first", base())
+        self.second = self.make("second", base())
+
+    def make(self, name, items, project_text=MAINS_PROJECT):
+        folder = os.path.join(self.root, name)
+        os.makedirs(folder, exist_ok=True)
+        board = os.path.join(folder, "b.kicad_pcb")
+        with open(board, "w", encoding="utf-8") as handle:
+            handle.write(layout(items))
+        with open(os.path.join(folder, "b.kicad_pro"), "w", encoding="utf-8") as handle:
+            handle.write(project_text)
+        return board
+
+    def compare(self, distance="1", fmt=None, first=None, second=None, classes=()):
+        first, second = first or self.first, second or self.second
+        argv = ["--kicad-cli", KICAD_CLI, "mains-compare", "--before-board", first,
+                "--before-project", os.path.splitext(first)[0] + ".kicad_pro", "--board", second,
+                "--project", os.path.splitext(second)[0] + ".kicad_pro", "--distance", str(distance)]
+        for name in classes:
+            argv += ["--class", name]
+        out = io.StringIO()
+        status = locked_copper.main(argv + (["--format", fmt] if fmt else []), out=out)
+        text = out.getvalue()
+        return (status, json.loads(text)) if fmt == "json" else (status, text.splitlines())
+
+    def findings(self, lines, kind):
+        return [line.split(" | ") for line in lines if line.startswith(kind + " | ")]
+
+    def test_identical_boards_pass_in_text_and_json(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        status, lines = self.compare()
+        self.assertEqual(status, 0, lines)
+        self.assertEqual(lines, ["RESULT | PASS | all 4 Mains-class items identical on both boards and no low-voltage copper nearer than 1 mm"])
+        status, found = self.compare(fmt="json")
+        self.assertEqual((status, found["result"], found["findings"], found["mains_items_first"], found["mains_items_second"],
+                          found["distance_mm"]), (0, "PASS", [], 4, 4, 1.0))
+
+    def test_a_mains_item_added_removed_or_changed_fails_naming_it(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        added = ('(segment (start 0 50) (end 5 50) (width 0.5) (locked yes) (layer "F.Cu") (net "/AC") '
+                 '(uuid "00000000-0000-4000-8000-000000000020"))')
+        cases = {
+            "ADDED": (base() + [added], "track [/AC] on F.Cu from (0, 50) mm"),
+            "MISSING": (base("track"), "track [/AC] on F.Cu from (0, 0) mm to (5, 0) mm"),
+            "CHANGED": ([item("track", ("(end 5 0)", "(end 6 0)"))] + base("track"), "end (5, 0) mm -> (6, 0) mm"),
+        }
+        for finding, (items, needle) in cases.items():
+            with self.subTest(finding=finding):
+                second = self.make("second", items)
+                status, lines = self.compare(second=second)
+                self.assertEqual(status, 1, lines)
+                found = self.findings(lines, finding)
+                self.assertEqual(len(found), 1, lines)
+                self.assertIn(needle, " | ".join(found[0]))
+                self.assertTrue(lines[-1].startswith("RESULT | FAIL | 1 finding"), lines)
+                status, report = self.compare(second=second, fmt="json")
+                self.assertEqual((status, report["result"], [f["finding"] for f in report["findings"]]), (1, "FAIL", [finding]))
+
+    def test_each_kind_of_mains_item_is_held_a_via_an_arc_and_a_zone_as_well_as_a_track(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        changes = {
+            "via": item("via", ("(drill 0.4)", "(drill 0.5)")),
+            "arc": item("arc", ("(mid 2 12)", "(mid 2 12.5)")),
+            "zone": item("zone", ("(xy 40 40)", "(xy 41 40)")),
+        }
+        for kind, changed in changes.items():
+            with self.subTest(kind=kind):
+                second = self.make("second", [changed if k == kind else item(k) for k in BASE])
+                status, lines = self.compare(second=second)
+                self.assertEqual(status, 1, lines)
+                found = self.findings(lines, "CHANGED")
+                self.assertEqual(len(found), 1, lines)
+                self.assertTrue(found[0][1].startswith(kind), found)
+
+    def test_a_mains_item_unlocked_or_moved_to_a_low_voltage_net_fails(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        second = self.make("second", [item("track").replace(" (locked yes)", "")] + base("track"))
+        status, lines = self.compare(second=second)
+        self.assertEqual(status, 1, lines)
+        self.assertEqual(len(self.findings(lines, "UNLOCKED")), 1, lines)
+        second = self.make("second", [item("track", ('(net "/AC")', '(net "/LV")'))] + base("track"))
+        status, lines = self.compare(second=second)
+        self.assertEqual(status, 1, lines)
+        self.assertEqual(len(self.findings(lines, "MISSING")), 1, lines)
+
+    def test_low_voltage_copper_nearer_than_the_distance_fails_naming_it_and_exactly_at_it_passes(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        # The /AC track runs along y 0 and is 0.5 wide, so its edge is at y 0.25. A 0.25 wide track at y 2.375 has its
+        # edge at y 2.25: exactly 2 mm away.
+        second = self.make("second", base() + [lv_track(2.375)])
+        status, lines = self.compare(distance=2, second=second)
+        self.assertEqual(status, 0, lines)
+        status, lines = self.compare(distance=2.001, second=second)
+        self.assertEqual(status, 1, lines)
+        near = self.findings(lines, "NEAR")
+        self.assertEqual(len(near), 1, lines)
+        self.assertIn("track [/LV] on F.Cu from (0, 2.375) mm", near[0][1])
+        self.assertIn("is 2 mm from track [/AC]", near[0][2])
+        self.assertIn("nearer than 2.001 mm", near[0][2])
+        status, found = self.compare(distance=2.001, second=second, fmt="json")
+        self.assertEqual([f["finding"] for f in found["findings"]], ["NEAR"])
+        status, lines = self.compare(distance=1.999, second=second)
+        self.assertEqual(status, 0, lines)
+
+    def test_distance_is_measured_to_each_kind_of_mains_copper(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        # A via at (20, 20) of 0.8 diameter, a zone outline from (30, 30) to (40, 40), an arc from (0, 10) to (4, 10) through (2, 12).
+        probes = {
+            "via": lv_track(20, x0=21.4, x1=25),     # 21.4 - 20 - 0.4 - 0.125 edge to edge
+            "zone": lv_track(41, x0=30, x1=40, layer="B.Cu"),   # on the zone's layer, 1 mm below the outline, less half the width
+            "arc": lv_track(13, x0=1, x1=3),         # 1 mm above the arc's top at (2, 12)
+        }
+        for kind, probe in probes.items():
+            with self.subTest(kind=kind):
+                second = self.make("second", base("lv") + [probe])
+                status, lines = self.compare(distance=5, second=second)
+                self.assertEqual(status, 1, lines)
+                near = self.findings(lines, "NEAR")
+                self.assertEqual(len(near), 1, lines)
+                self.assertIn(f"from {kind} [", near[0][2], near)
+                status, lines = self.compare(distance=0.5, second=second)
+                self.assertEqual(status, 0, lines)
+
+    def test_copper_on_another_layer_or_in_the_first_board_only_is_not_near(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        on_other_layer = self.make("second", base("lv") + [lv_track(0.5, layer="In1.Cu")])
+        status, lines = self.compare(distance=5, second=on_other_layer)
+        self.assertEqual(status, 0, lines)
+        near_in_first_only = self.make("first", base() + [lv_track(0.5)])
+        status, lines = self.compare(distance=5, first=near_in_first_only, second=on_other_layer)
+        self.assertEqual(status, 0, "the extra low-voltage track is in the first board only, and is not Mains-class")
+        self.assertEqual(self.findings(lines, "NEAR"), [], lines)
+
+    def test_low_voltage_copper_overlapping_mains_copper_is_zero_away(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        second = self.make("second", base("lv") + [lv_track(0, x0=2, x1=3, width=0.1)])
+        status, lines = self.compare(distance=0.001, second=second)
+        self.assertEqual(status, 1, lines)
+        self.assertIn("is 0 mm from", self.findings(lines, "NEAR")[0][2])
+
+    def test_empty_boards_pass_and_say_there_is_no_mains_copper(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        empty_first, empty_second = self.make("empty-first", []), self.make("empty-second", [])
+        status, lines = self.compare(first=empty_first, second=empty_second)
+        self.assertEqual(status, 0, lines)
+        self.assertEqual(lines, ["RESULT | PASS | all 0 Mains-class items identical on both boards and no low-voltage copper nearer than 1 mm "
+                                 "(no Mains-class copper on either board)"])
+        status, found = self.compare(first=empty_first, second=empty_second, fmt="json")
+        self.assertEqual((status, found["result"], found["mains_items_first"], found["mains_items_second"]), (0, "PASS", 0, 0))
+        status, lines = self.compare(first=empty_first)
+        self.assertEqual(status, 1, "mains copper appearing on an empty board is an addition")
+        self.assertEqual(len(self.findings(lines, "ADDED")), 4, lines)
+        status, lines = self.compare(second=empty_second)
+        self.assertEqual(status, 1, "mains copper gone from a board is a removal")
+        self.assertEqual(len(self.findings(lines, "MISSING")), 4, lines)
+
+    def test_refusals_name_what_is_wrong_and_nothing_is_taken_as_a_pass(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        for distance in ("0", "-1", "nan"):
+            with self.subTest(distance=distance):
+                status, lines = self.compare(distance=distance)
+                self.assertEqual(status, 1, lines)
+                self.assertTrue(lines[0].startswith("REFUSED | --distance | "), lines)
+        undeclared = self.make("second", base(), project(None, [], classes=("Mains",), mains=None))
+        status, lines = self.compare(second=undeclared)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any("MAINS" in field for field in self.findings(lines, "REFUSED")[0]), lines)
+        status, lines = self.compare(classes=["NoSuchClass"])
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(any("defines no net class of this name" in found[2] and found[1] == "NoSuchClass"
+                            for found in self.findings(lines, "REFUSED")), lines)
+        open(os.path.join(self.root, "second", "~b.kicad_pcb.lck"), "w").close()
+        status, lines = self.compare()
+        self.assertEqual(status, 1, lines)
+        self.assertEqual(len(self.findings(lines, "OPEN")), 1, lines)
+        status, found = self.compare(fmt="json")
+        self.assertEqual((status, found["result"]), (1, "FAIL"))
+
+    def test_boards_that_cannot_be_read_fail_in_text_and_json(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        bad = self.make("second", [])
+        with open(bad, "w", encoding="utf-8") as handle:
+            handle.write("(kicad_sch)")
+        status, lines = self.compare(second=bad)
+        self.assertEqual(status, 1, lines)
+        self.assertTrue(lines[0].startswith("UNREADABLE | "), lines)
+        self.assertTrue(lines[-1].startswith("RESULT | FAIL | the input cannot be read"), lines)
+        status, found = self.compare(second=bad, fmt="json")
+        self.assertEqual((status, found["result"], found["findings"][0]["finding"]), (1, "FAIL", "UNREADABLE"))
+
+
+if __name__ == "__main__":
+    unittest.main()
