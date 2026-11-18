@@ -1,0 +1,19 @@
+id: SOL-CIRCUIT-PROOF-SHEET-CHECK-KNOWS-THE-NET-TIE-SYMBOL
+type: deliverable
+category: solution
+title: The proof script for the measurement and high-side sheets knows the net-tie symbol and exits clean on the committed sheets
+status: active
+version: 1
+text: |
+  Corrects the proof script that cross-checks the main board's sheet records for the measurement and high-side sheets (circuit-proof/E_check_sheets.py) against the netlist. Run on the committed main board it exits 1 with 'unknown pin count for Device:NetTie_2' and reports NT601.1 and NT601.2 as pins that do not exist: the script's table of symbol pin counts has no entry for the two-pin net tie the board draws to join the high-side ground to neutral at one point, so the check stops at a part it does not know and the whole sheet group is reported as failing although the drawing is right. Found when the schematic leaf's circuit-practice clause was checked on 2026-11-18; the script sits in no gate, so nothing reported it.
+
+  Scope: the proof script and a test that runs it on the committed sheets. It changes no sheet record, no schematic and no board.
+rationale: |
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3 asks of the circuit practice: every net and part is judged, and a check that stops at a part it does not know judges nothing after it. A maintenance item, because the script was written for the schematic review and the board's net tie came later. Authored on 2026-11-18 during the whole-board closure so the defect is in the graph and not only in a pull request.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEC-MAINTENANCE-CONTINUOUS-LANE
+    type: justified-by
