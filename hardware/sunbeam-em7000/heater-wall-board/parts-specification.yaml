@@ -31,9 +31,10 @@
 #     agreement is the revision history's and the B-grade figures the records carried (checked against Tables 1 to 5).
 #   onsemi MOC3083M: MOC3083M/D Rev. 2, September 2022 (MOC3081M, MOC3082M, MOC3083M),
 #     https://www.onsemi.com/pdf/datasheet/moc3083m-d.pdf, read 2026-11-18
-#   UNI-ROYAL 1206W4F2000T5E (C18002): the catalogue part page figures, 250 mW and 200 V; the maker's
-#     datasheet (overload voltage, pulse rating) was not opened (main-board/circuit-proof.md, pump gate
-#     resistor pulse rating row)
+#   UNI-ROYAL 1206W4F2000T5E (C18002): Part Name 01005/0201/0402/0603/0805/1206/1210/1812/2010/2512 Series, V.3,
+#     Feb. 12, 2019, https://datasheet.lcsc.com/datasheet/pdf/0a975aaa49b7c97f38a963127be4a823.pdf, opened 2026-11-18:
+#     p.4 1206 working voltage 200 V, overload voltage 400 V, dielectric withstanding 500 V, 1/4 W to 70 degC; the sheet
+#     states no pulse rating (amended 2026-11-18; the earlier note said the sheet was not opened)
 #   Zhuhai Hongjiacheng 07D series Rev 1.2 (C49072860), as the schematic cites it
 #   TE Connectivity 63849-1 drawing C-63849 rev F1: datasheet.lcsc.com d78aaa5668ef44d19432bad6ab97dbf2.pdf
 #   XFCN PZ254V-11-03P (C2937625): the main board's JP301 part; the maker's drawing REV A1 p.1 (3 A, -40 to +105 degC, 500 V AC withstanding) as the schematic review round 1 read it

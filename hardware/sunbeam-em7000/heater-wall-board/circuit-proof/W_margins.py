@@ -104,7 +104,23 @@ R_G = R_G_NOM * (1 + TOL)
 v1 = IDRM1 * R_G
 check("off-state leakage against the triac's trigger current", IDRM1 < IGT_MIN and v1 < VGD,
       "LED off: IDRM1 500 nA vs the triac's guaranteed minimum trigger current 5 %% x 50 mA = %.1f mA: x%.0f; the leakage's voltage across %.0f ohm = %.3f mV vs VGD 0.2 V min: x%.0f" % (IGT_MIN * 1e3, IGT_MIN / IDRM1, R_G, v1 * 1e3, VGD / v1))
-print("   IDRM1 at 85 degC: the sheet's Fig. 5 (p.5, a typical curve, read off the plot) stays under about 1 uA there: x%.0f under %.1f mA, not a rated figure" % (IGT_MIN / 1e-6, IGT_MIN * 1e3))
+# Amended 2026-11-18 (schematic review finding 2.11): the hot corner. IDRM1's maximum is stated at 25 degC only (the sheet's table is headed
+# TA = 25 degC); the sheet gives no maximum above that. The sheet's Fig. 5 (p.5) is a typical curve, read off the plot at about 6 nA at 25 degC,
+# 450 nA at 85 degC and 1500 nA at 100 degC (each read to within a factor of about 1.5); scaling the 25 degC maximum by those ratios is an
+# inference, not a rated figure. The triac's trigger current falls when hot: ST DS2114 Rev 11 Fig. 9 (p.5, typical, read off the plot) reads
+# IGT at Tj 125 degC at about 0.45 of its 25 degC value.
+LEAK_25, LEAK_85, LEAK_100 = 6.0, 450.0, 1500.0   # nA, onsemi Fig. 5 typical curve, read off the plot [reading]
+RATIO_85, RATIO_100 = LEAK_85 / LEAK_25, LEAK_100 / LEAK_25
+IGT_HOT = 0.45        # ST DS2114 Rev 11 Fig. 9 p.5: IGT[125 degC] / IGT[25 degC], typical, read off the plot [reading]
+igt_min_hot = IGT_MIN * IGT_HOT
+for name, ratio in (("85 degC (the opto-triac's TOPR limit)", RATIO_85), ("100 degC (its junction maximum, outside TOPR)", RATIO_100)):
+    i_hot = IDRM1 * ratio
+    v_hot = i_hot * R_G
+    print("   hot corner, opto-triac at %s, triac at 125 degC: IDRM1 scaled x%.0f = %.1f uA [inference from a typical curve]; against the triac's hot minimum trigger current 2.5 mA x %.2f = %.2f mA: x%.0f; across %.0f ohm %.1f mV against VGD 0.2 V (rated at 125 degC): x%.1f"
+          % (name, ratio, i_hot * 1e6, IGT_HOT, igt_min_hot * 1e3, igt_min_hot / i_hot, R_G, v_hot * 1e3, VGD / v_hot))
+    check("hold-off hot corner, " + name.split(" (")[0], i_hot < igt_min_hot and v_hot < VGD,
+          "leakage %.1f uA < %.2f mA hot trigger current (x%.0f); %.1f mV < VGD 0.2 V (x%.1f)" % (i_hot * 1e6, igt_min_hot * 1e3, igt_min_hot / i_hot, v_hot * 1e3, VGD / v_hot))
+print("   the 800 V test voltage of IDRM1 is above the 357.8 V peak the leakage sees on this board: no credit is taken for that")
 print("   IDRM2 2 mA flows only while the LED is on and the line is above the inhibit voltage (the commanded state): it is not a hold-off figure. Against the minimum trigger current %.1f mA it is x%.2f; across %.0f ohm it is %.2f V. So a command that starts mid-half-cycle could fire before the next zero: a non-zero-cross turn-on, no hazard (the heater was commanded on)" % (IGT_MIN * 1e3, IGT_MIN / IDRM2, R_G, IDRM2 * R_G))
 IDSS = 5e-6           # main board circuit-proof.md hold-off table (controller in reset row): Q off, LED current at most IDSS 5 uA
 print("   LED current in reset / unpowered: at most %.0f uA (main board row), %.0f times under IFT max 5 mA; cable loose: +5V_WB or HEAT_x_LED_K open gives 0 A" % (IDSS * 1e6, IFT_MAX / IDSS))
@@ -142,6 +158,32 @@ p_worst = 253.0 ** 2 / (4 * R_EL_MIN)
 i_worst = 253.0 / (2 * R_EL_MIN)
 print("   varistor failed partly (fed through the element): worst dissipation at matched resistance, %.0f V rms: %.0f W at %.2f A rms, which no fuse clears; the stuck-on current threshold has to catch %.1f A (the open item: a threshold of 2.0 A or less)" % (253.0, p_worst, i_worst, i_worst))
 check("partial-failure current above the carried threshold", i_worst > 2.0, "%.2f A against the firmware threshold the record asks (at most 2.0 A, x%.2f)" % (i_worst, i_worst / 2.0))
+
+# Amended 2026-11-18 (schematic review finding 2.4): static dv/dt of the opto-triac against a surge front.
+DVDT_MIN, DVDT_TYP = 600.0, 1500.0   # V/us, onsemi p.4: static dv/dt (IF = 0) 600 V/us min, 1500 V/us typ
+FRONT = VCLAMP10A / 1.2             # V/us [unsourced: a 1.2 us front to the 775 V clamp, an estimate; IEC 61000-4-5 not read]
+print("   opto-triac static dv/dt: %.0f V/us min, %.0f V/us typ (onsemi p.4). A front reaching %.0f V in 1.2 us [unsourced estimate] is about %.0f V/us: x%.2f against the minimum, x%.1f under the typical figure; a false trigger is therefore not excluded on the guaranteed figure"
+      % (DVDT_MIN, DVDT_TYP, VCLAMP10A, FRONT, DVDT_MIN / FRONT, DVDT_TYP / FRONT))
+ig_pk = VCLAMP10A / R_G_MIN
+print("   if the opto-triac turns on by dv/dt (the sheet states no pulse withstand and no behaviour beyond the rating, so what follows is the ordinary thyristor mechanism, an inference): it fires the triac through the gate network, the safe way for a triac; gate current at most %.0f V / %.0f ohm = %.2f A peak until the triac conducts and its main voltage collapses (the time is unsourced, microseconds; ITSM 1 A is a 60 Hz single-cycle rating, so no sheet figure covers a pulse that short)" % (VCLAMP10A, R_G_MIN, ig_pk))
+FREQ = 50.0           # the machine's supply: 100 firings a second in row (b) is 50 Hz
+e_half = 253.0 ** 2 / R_EL_MIN * (1.0 / (2 * FREQ))
+print("   consequence: the triac conducts until the current next passes zero, at most one half cycle of the element: %.0f W rms x %.0f ms = %.1f J at the 47.0 ohm steam element (253 V rms), %.1f A peak %.1f A rms [arithmetic from the element's resistance, not a maker figure]; the opto-triac's LED is off so the next half cycle is not fired: a nuisance conduction of at most one half cycle, no hazard"
+      % (253.0 ** 2 / R_EL_MIN, 1000.0 / (2 * FREQ), e_half, VPK / R_EL_MIN, 253.0 / R_EL_MIN))
+
+# ---- (e) triac current share against the sheet's current-against-case-temperature curve (finding 2.7); an addition 2026-11-18
+print("\n== (e) triac current share, ST DS2114 Rev 11 Fig. 2 (p.4, dissipation against current) and Fig. 3 (p.4, IT(RMS) against case temperature, BTA curve)")
+E_TJ_MAX, E_TC_RATED, E_I_RATED = 125.0, 86.0, 16.0   # ST DS2114 Rev 11 Table 1 p.2: Tj 125 degC; IT(RMS) 16 A at Tc 86 degC (BTA16 summary)
+E_RTH_JC, E_VTO, E_RD = 2.1, 0.85, 0.025               # ST DS2114 Rev 11 Table 5 p.3 (2.1 K/W), Table 2 p.2 (0.85 V, 25 mohm)
+E_P_STEAM = 4.84                                    # division record: dissipation at 5.38 A steam
+E_TC_BEST = 116.4 - E_P_STEAM * E_RTH_JC               # the record's best-case steady junction 116.4 degC less Rth(j-c) x P
+e_span = E_TJ_MAX - E_TC_RATED
+e_chord = E_I_RATED * (E_TJ_MAX - E_TC_BEST) / e_span
+print("   best-case case temperature %.1f degC (116.4 degC less %.2f W x %.1f K/W). Reading 1, a straight chord from 16 A at Tc 86 degC to 0 A at 125 degC (the reviewer's reading): %.1f A; the 0.5 current share is %.2f A" % (E_TC_BEST, E_P_STEAM, E_RTH_JC, e_chord, e_chord / 2))
+e_pallow = (E_TJ_MAX - E_TC_BEST) / E_RTH_JC
+e_model = (-E_VTO * 0.9 + math.sqrt((E_VTO * 0.9) ** 2 + 4 * E_RD * e_pallow)) / (2 * E_RD)
+print("   Reading 2, the plot is concave, not straight, so the chord understates it: the dissipation that keeps Tj at 125 degC at that case temperature is %.2f W (%.1f K / %.1f K/W); solving P = VTO x 0.9 I + RD I^2 (0.9 = mean of |sine|, a derivation that reproduces the sheet's 4.84 W at 5.38 A and 18.6 W at 16 A) gives %.1f A, the 0.5 current share %.2f A; read directly off the curve at that case temperature about 8 to 9 A [reading]" % (e_pallow, E_TJ_MAX - E_TC_BEST, E_RTH_JC, e_model, e_model / 2))
+print("NOTE  triac current share at the best-case case temperature: " + "the 0.5 share is %.2f A (chord) to %.2f A (model) against the steam element's 5.38 A: SHORT under either reading; the 8 A of row (e) is the rating at Tc 86 degC and is not the share at this case temperature. Owner-held (D11); recorded in owner-sign-off.md W-5" % (e_chord / 2, e_model / 2))
 
 # ---- (f) opto-triac temperature (finding 1.9)
 print("\n== (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2")

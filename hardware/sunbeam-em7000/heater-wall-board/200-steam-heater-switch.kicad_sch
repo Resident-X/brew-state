@@ -1399,7 +1399,7 @@
 				)
 			)
 		)
-		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/MOC3083M-D.PDF"
+		(property "Datasheet" "https://www.onsemi.com/pdf/datasheet/moc3083m-d.pdf"
 			(at 87.63 105.41 0)
 			(hide yes)
 			(effects
@@ -1698,7 +1698,7 @@
 				)
 			)
 		)
-		(property "Description" "16A RMS, 600V Off-State Voltage, 50mA Sensitivity, Insulated, Triac, TO-220"
+		(property "Description" "16A RMS, 800V Off-State Voltage, 50mA Sensitivity, Insulated, Snubberless Triac, TO-220"
 			(at 200.66 105.41 0)
 			(hide yes)
 			(effects

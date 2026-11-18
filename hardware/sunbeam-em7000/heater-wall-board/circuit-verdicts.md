@@ -2,7 +2,7 @@
 
 This is the skeleton of the record in the form of the main board's `circuit-verdicts.md`: every part, every net and every sheet of `schematic-spec.yaml` is listed once, with the catalogue items of `docs/board-design-method.md` that bear on it (items PINV, PARTS, CAPD, BUSL, STRAP, RCFL, SUPPLY, POLAR, CABLE, FAULT, INDEP, BARRIER, SURGE, ESD, TOUCH, EMSRC, DERATE, DRAW). **No verdict is written here: every row reads "not yet reviewed"**, and the review rounds fill the verdict column (PASS, N/A or FINDING; a FINDING is closed by a change to the sheets, by a recorded reason, or is held by the owner and listed in `open-items.md`). The arithmetic the rounds judge against is in `circuit-proof.md`; the facts about the bring-up path are in `bring-up-provision.md`.
 
-The board has 5 sheets (the four drawn sheets and the root sheet), 14 parts and 16 nets as the netlist writes them (the 12 named nets of `schematic-spec.yaml` and the 4 `unconnected-` nets of the two opto-triacs' pins 3 and 5). Its references are the 9xx series, chosen so that none equals a reference of the main board or of the separation basis's exceptions (`schematic-spec.yaml`, drawing notes). It places no controller, no ground net and no test point.
+The board has 5 sheets (the four drawn sheets and the root sheet), 14 parts and 16 nets as the netlist writes them (the 12 named nets of `schematic-spec.yaml` and the 4 `unconnected-` nets of the two opto-triacs' pins 3 and 5, written by the netlist as `unconnected-(U911-NC-Pad3)` and the like; amended 2026-11-18, the record had `-Pad3`). Its references are the 9xx series, chosen so that none equals a reference of the main board or of the separation basis's exceptions (`schematic-spec.yaml`, drawing notes). It places no controller, no ground net and no test point.
 
 | Group | PASS rows | FINDING rows | N/A rows | Not yet reviewed |
 |---|---|---|---|---|
@@ -44,8 +44,8 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 14 parts and 
 | HEAT_C_GATE_R (Mains) | PINV-1, FAULT-1 | not yet reviewed | |
 | HEAT_C_TRIAC_G (Mains) | PINV-1, FAULT-1 | not yet reviewed | |
 | HEAT_C_LED_K (low voltage) | PINV-1, CABLE-1, FAULT-1, BARRIER-1 | not yet reviewed | |
-| unconnected-(U911-Pad3) (no-connect net of U911 pin 3) | PINV-1 | not yet reviewed | |
-| unconnected-(U911-Pad5) (no-connect net of U911 pin 5) | PINV-1 | not yet reviewed | |
+| unconnected-(U911-NC-Pad3) (no-connect net of U911 pin 3) | PINV-1 | not yet reviewed | |
+| unconnected-(U911-NC-Pad5) (no-connect net of U911 pin 5) | PINV-1 | not yet reviewed | |
 
 ### Sheet
 
@@ -75,8 +75,8 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 14 parts and 
 | HEAT_S_GATE_R (Mains) | PINV-1, FAULT-1 | not yet reviewed | |
 | HEAT_S_TRIAC_G (Mains) | PINV-1, FAULT-1 | not yet reviewed | |
 | HEAT_S_LED_K (low voltage) | PINV-1, CABLE-1, FAULT-1, BARRIER-1 | not yet reviewed | |
-| unconnected-(U921-Pad3) (no-connect net of U921 pin 3) | PINV-1 | not yet reviewed | |
-| unconnected-(U921-Pad5) (no-connect net of U921 pin 5) | PINV-1 | not yet reviewed | |
+| unconnected-(U921-NC-Pad3) (no-connect net of U921 pin 3) | PINV-1 | not yet reviewed | |
+| unconnected-(U921-NC-Pad5) (no-connect net of U921 pin 5) | PINV-1 | not yet reviewed | |
 
 ### Sheet
 

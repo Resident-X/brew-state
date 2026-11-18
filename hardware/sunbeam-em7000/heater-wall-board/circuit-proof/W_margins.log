@@ -17,7 +17,11 @@ PASS  triac latches at firing: main current at the firing point at least 24.5 V 
 
 == (c) hold-off in reset, unpowered and with the cable loose; no gate-MT1 resistor
 PASS  off-state leakage against the triac's trigger current: LED off: IDRM1 500 nA vs the triac's guaranteed minimum trigger current 5 % x 50 mA = 2.5 mA: x5000; the leakage's voltage across 404 ohm = 0.202 mV vs VGD 0.2 V min: x990
-   IDRM1 at 85 degC: the sheet's Fig. 5 (p.5, a typical curve, read off the plot) stays under about 1 uA there: x2500 under 2.5 mA, not a rated figure
+   hot corner, opto-triac at 85 degC (the opto-triac's TOPR limit), triac at 125 degC: IDRM1 scaled x75 = 37.5 uA [inference from a typical curve]; against the triac's hot minimum trigger current 2.5 mA x 0.45 = 1.13 mA: x30; across 404 ohm 15.1 mV against VGD 0.2 V (rated at 125 degC): x13.2
+PASS  hold-off hot corner, 85 degC: leakage 37.5 uA < 1.13 mA hot trigger current (x30); 15.1 mV < VGD 0.2 V (x13.2)
+   hot corner, opto-triac at 100 degC (its junction maximum, outside TOPR), triac at 125 degC: IDRM1 scaled x250 = 125.0 uA [inference from a typical curve]; against the triac's hot minimum trigger current 2.5 mA x 0.45 = 1.13 mA: x9; across 404 ohm 50.5 mV against VGD 0.2 V (rated at 125 degC): x4.0
+PASS  hold-off hot corner, 100 degC: leakage 125.0 uA < 1.13 mA hot trigger current (x9); 50.5 mV < VGD 0.2 V (x4.0)
+   the 800 V test voltage of IDRM1 is above the 357.8 V peak the leakage sees on this board: no credit is taken for that
    IDRM2 2 mA flows only while the LED is on and the line is above the inhibit voltage (the commanded state): it is not a hold-off figure. Against the minimum trigger current 2.5 mA it is x1.25; across 404 ohm it is 0.81 V. So a command that starts mid-half-cycle could fire before the next zero: a non-zero-cross turn-on, no hazard (the heater was commanded on)
    LED current in reset / unpowered: at most 5 uA (main board row), 1000 times under IFT max 5 mA; cable loose: +5V_WB or HEAT_x_LED_K open gives 0 A
 
@@ -38,6 +42,14 @@ PASS  wall varistor surge energy: 775 V x 10 A x 50 us = 0.39 J against the 29 J
    I2t of that breakover event: 2 A^2 x 2 us [turn-on time unsourced] = 8.0e-06 A2s against the opto-triac's one cycle 1 A at 60 Hz, half-cycle I2t = 1 A^2 x 8.33 ms / 2 = 4.2e-03 A2s (x521): a comparison by I2t is an inference, not a maker figure
    varistor failed partly (fed through the element): worst dissipation at matched resistance, 253 V rms: 340 W at 2.69 A rms, which no fuse clears; the stuck-on current threshold has to catch 2.7 A (the open item: a threshold of 2.0 A or less)
 PASS  partial-failure current above the carried threshold: 2.69 A against the firmware threshold the record asks (at most 2.0 A, x1.35)
+   opto-triac static dv/dt: 600 V/us min, 1500 V/us typ (onsemi p.4). A front reaching 775 V in 1.2 us [unsourced estimate] is about 646 V/us: x0.93 against the minimum, x2.3 under the typical figure; a false trigger is therefore not excluded on the guaranteed figure
+   if the opto-triac turns on by dv/dt (the sheet states no pulse withstand and no behaviour beyond the rating, so what follows is the ordinary thyristor mechanism, an inference): it fires the triac through the gate network, the safe way for a triac; gate current at most 775 V / 396 ohm = 1.96 A peak until the triac conducts and its main voltage collapses (the time is unsourced, microseconds; ITSM 1 A is a 60 Hz single-cycle rating, so no sheet figure covers a pulse that short)
+   consequence: the triac conducts until the current next passes zero, at most one half cycle of the element: 1362 W rms x 10 ms = 13.6 J at the 47.0 ohm steam element (253 V rms), 7.6 A peak 5.4 A rms [arithmetic from the element's resistance, not a maker figure]; the opto-triac's LED is off so the next half cycle is not fired: a nuisance conduction of at most one half cycle, no hazard
+
+== (e) triac current share, ST DS2114 Rev 11 Fig. 2 (p.4, dissipation against current) and Fig. 3 (p.4, IT(RMS) against case temperature, BTA curve)
+   best-case case temperature 106.2 degC (116.4 degC less 4.84 W x 2.1 K/W). Reading 1, a straight chord from 16 A at Tc 86 degC to 0 A at 125 degC (the reviewer's reading): 7.7 A; the 0.5 current share is 3.85 A
+   Reading 2, the plot is concave, not straight, so the chord understates it: the dissipation that keeps Tj at 125 degC at that case temperature is 8.94 W (18.8 K / 2.1 K/W); solving P = VTO x 0.9 I + RD I^2 (0.9 = mean of |sine|, a derivation that reproduces the sheet's 4.84 W at 5.38 A and 18.6 W at 16 A) gives 9.0 A, the 0.5 current share 4.51 A; read directly off the curve at that case temperature about 8 to 9 A [reading]
+NOTE  triac current share at the best-case case temperature: the 0.5 share is 3.85 A (chord) to 4.51 A (model) against the steam element's 5.38 A: SHORT under either reading; the 8 A of row (e) is the rating at Tc 86 degC and is not the share at this case temperature. Owner-held (D11); recorded in owner-sign-off.md W-5
 
 == (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2
    sheet-implied junction-to-ambient 340 K/W; the LED's 31.6 mW (VF 1.5 V, IF 29.5 mA at the top rail) heats the junction by about 10.7 K (a derivation)
