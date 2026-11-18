@@ -64,7 +64,8 @@ class BodyGaps(Audit):
         parts = [footprint("A1", "test:Box", 0, 0), footprint("A2", "test:Box", 10, 0), footprint("A3", "test:Box", 3, 9)]
         status, lines = self.gaps(parts, dict([BOX]))
         self.assertEqual(status, 0, lines)
-        self.assertEqual(lines, ["RESULT | PASS | 3 pairs of 3 parts all at least 1 mm apart"])
+        self.assertEqual(lines, ["BASIS | A1 | maker reading", "BASIS | A2 | maker reading", "BASIS | A3 | maker reading",
+                                 "RESULT | PASS | 3 pairs of 3 parts all at least 1 mm apart"])
         status, lines = self.gaps(parts, dict([BOX]), "--all-pairs")
         self.assertIn("GAP | A1 body / A2 body | 6 mm", lines)
         self.assertIn("GAP | A1 body / A3 body | 5 mm", lines)
@@ -135,6 +136,28 @@ class BodyGaps(Audit):
         self.assertEqual([(f["finding"], f["item"]) for f in report["findings"]], [("MISSING", "Z9")])
         self.assertEqual(report["pairs"], [])
 
+    def test_every_measured_part_shows_its_body_basis_in_text_and_json_so_a_courtyard_never_looks_measured(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+        entries = {BOX[0]: BOX[1], "test:Yard": {"courtyard": True}}
+        parts = [footprint("A1", "test:Box", 0, 0), footprint("C1", "test:Yard", 10, 0, items=[courtyard(-3, -1, 3, 1)])]
+        status, lines = self.gaps(parts, entries)
+        self.assertEqual(status, 0, lines)
+        self.assertEqual([l for l in lines if l.startswith("BASIS | ")], ["BASIS | A1 | maker reading", "BASIS | C1 | courtyard substitute"])
+        self.assertTrue(lines[-1].startswith("RESULT | "), lines)
+        status, report = self.gaps_json(parts, entries)
+        self.assertEqual(report["basis"], {"A1": "maker reading", "C1": "courtyard substitute"})
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+    def test_a_part_carrying_no_reference_is_named_as_unmeasured_and_fails_the_run(self):
+        bare = ('(footprint "test:Box" (layer "F.Cu") (uuid "00000000-0000-4000-8000-000000000077") (at 40 2.5)\n\t)')
+        parts = [footprint("A1", "test:Box", 0, 0), bare]
+        status, lines = self.gaps(parts, dict([BOX]))
+        self.assertEqual(status, 1)
+        self.assertEqual(lines[0], "UNREFERENCED | test:Box at (40, 2.5) | the part carries no reference, so its body is not measured")
+        status, report = self.gaps_json(parts, dict([BOX]))
+        self.assertEqual((status, [(f["finding"], f["item"]) for f in report["findings"]]), (1, [("UNREFERENCED", "test:Box at (40, 2.5)")]))
+        self.assertEqual(report["parts_measured"], 1)
+
     def test_a_body_taken_from_the_courtyard_is_measured_in_the_frame_the_board_stores_it(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
         entries = {BOX[0]: BOX[1], "test:Yard": {"courtyard": True}}
@@ -145,7 +168,7 @@ class BodyGaps(Audit):
                 part = footprint("C1", "test:Yard", 10, 0, angle, layer, [courtyard(*rect, layer=crtyd)])
                 _, found, report = self.pair_gap(part, entries)
                 self.assertAlmostEqual(found, expected, places=6)
-                self.assertEqual(report["basis"], {"A1": "table", "C1": "courtyard"})
+                self.assertEqual(report["basis"], {"A1": "maker reading", "C1": "courtyard substitute"})
 
     def test_a_courtyard_body_whose_footprint_draws_no_courtyard_cannot_be_measured(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
@@ -399,6 +422,26 @@ class TheBodyTableOfTheMainBoard(unittest.TestCase):
             with self.subTest(footprint=name):
                 self.assertTrue(entry.courtyard or entry.rects)
                 self.assertTrue(entry.source, "each entry names the maker reading it comes from, or says it is the courtyard")
+
+
+    def test_the_relay_fuse_and_varistor_carry_the_makers_body_with_a_cited_page_and_sit_where_their_pads_put_them(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's real body dimensions in footprint coordinates, and names any part the table does not hold. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+        found = footprint_audit.read_table(os.path.join(HARDWARE, "sunbeam-em7000", "main-board", "part-bodies.yaml"))
+        pads = {"main-board:Relay_HF115F-I_1HS3A": [(0, 0), (0, 7.56), (20.16, 0), (20.16, 7.56), (25.2, 0), (25.2, 7.56)],
+                "main-board:RV_Disc_14D471K_P7.5mm": [(0, 0), (7.5, 0)]}
+        for name, points in pads.items():
+            with self.subTest(footprint=name):
+                entry = found[name]
+                self.assertFalse(entry.courtyard, "a maker reading, not the courtyard")
+                self.assertRegex(entry.source, r"p\.\d")
+                for x, y in points:
+                    self.assertTrue(any(x0 <= x <= x1 and y0 <= y <= y1 for _n, (x0, y0, x1, y1), _h in entry.rects), (x, y))
+        fuse = found["main-board:Fuse_SETfuse_SCT520PT_Axial_P28.0mm"]
+        self.assertFalse(fuse.courtyard)
+        self.assertRegex(fuse.source, r"p\.\d")
+        (_n, (x0, y0, x1, y1), _h), = fuse.rects
+        self.assertTrue(0 < x0 < x1 < 28 and y0 < 0 < y1, "an axial cartridge lies between its two lead pads")
+        self.assertAlmostEqual(x1 - x0, 20.5, places=6)
 
 
 if __name__ == "__main__":

@@ -245,6 +245,11 @@ def mm(value: float) -> str:
 # --- gaps -----------------------------------------------------------------------------
 
 
+#: What a part's measured body was taken from, as the reports say it.
+BASIS_MAKER = "maker reading"
+BASIS_COURTYARD = "courtyard substitute"
+
+
 def body_rects(part: Part, entry: Entry, access: bool) -> Tuple[List[Tuple[str, Rect]], str]:
     """A part's rectangles on the board as (name, box), and the basis they were taken on."""
     if entry.courtyard:
@@ -253,10 +258,10 @@ def body_rects(part: Part, entry: Entry, access: bool) -> Tuple[List[Tuple[str, 
             raise CannotRun(f"{part.reference} ({part.footprint}) takes its body from its courtyard and draws none on "
                             f"{'B' if part.back else 'F'}.CrtYd")
         found = [("courtyard", placed_rect(part, rect, True))]
-        basis = "courtyard"
+        basis = BASIS_COURTYARD
     else:
         found = [(name, placed_rect(part, rect)) for name, rect, _ in entry.rects]
-        basis = "table"
+        basis = BASIS_MAKER
     if access:
         found += [(f"access {name}", placed_rect(part, rect)) for name, rect, _ in entry.zones]
     return found, basis
@@ -277,6 +282,10 @@ def audit_gaps(board: str, table_path: str, references: Sequence[str], min_gap: 
                 chosen.append(by_ref[reference])
     else:
         chosen = [part for part in on_board if part.reference]
+        for part in on_board:
+            if not part.reference:
+                findings.append({"finding": "UNREFERENCED", "item": f"{part.footprint or '?'} at ({mm(part.x)}, {mm(part.y)})",
+                                 "detail": "the part carries no reference, so its body is not measured"})
     measured: List[Tuple[Part, List[Tuple[str, Rect]]]] = []
     basis: Dict[str, str] = {}
     for part in chosen:
@@ -318,6 +327,8 @@ def audit_gaps(board: str, table_path: str, references: Sequence[str], min_gap: 
 def print_gaps(report: dict, all_pairs: bool, out) -> None:
     for finding in report["findings"]:
         print(f"{finding['finding']} | {clean(finding['item'])} | {clean(finding['detail'])}", file=out)
+    for reference, how in sorted(report["basis"].items()):
+        print(f"BASIS | {clean(reference)} | {how}", file=out)
     if all_pairs:
         for pair in report["pairs"]:
             print(f"GAP | {pair['a']} {clean(pair['a_body'])} / {pair['b']} {clean(pair['b_body'])} | {mm(pair['gap_mm'])} mm", file=out)

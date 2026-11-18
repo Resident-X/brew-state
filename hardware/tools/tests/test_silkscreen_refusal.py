@@ -172,6 +172,51 @@ class Prove(fx.Work):
         self.assertEqual(status, 0, "a footprint's own silkscreen graphic is silkscreen")
 
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C7: When the board the command would write differs from its input in anything other than silkscreen, the command refuses to write it, names what differs and leaves the input untouched. Tests seed a changed track, a moved part and a changed zone in turn and check each is refused, and check that a silkscreen-only change is written. This does not cover judging the neatness of the silkscreen, which pictures settle.
+    def test_a_label_moved_to_a_layer_that_is_not_silkscreen_or_fab_is_refused_in_text_and_in_json(self):
+        for layer in ("F.Cu", "Edge.Cuts", "In1.Cu", "B.Mask", "B.SilkS", "F.CrtYd"):
+            first, second = self.pair('(layer "F.SilkS")', '(layer "%s")' % layer)
+            status, report, lines = self.prove(first, second)
+            self.assertEqual((status, report["result"]), (1, "DIFFERS"), layer)
+            self.assertIn("footprint R1", report["findings"][0]["item"], layer)
+            self.assertTrue(lines[0].startswith("DIFFERS | footprint R1"), lines)
+        first, second = self.pair('(layer "F.SilkS")', '(layer "F.Fab")')
+        self.assertEqual(self.prove(first, second)[0], 0, "the fab layer of its own side is where a label may go")
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C7: When the board the command would write differs from its input in anything other than silkscreen, the command refuses to write it, names what differs and leaves the input untouched. Tests seed a changed track, a moved part and a changed zone in turn and check each is refused, and check that a silkscreen-only change is written. This does not cover judging the neatness of the silkscreen, which pictures settle.
+    def test_a_label_property_other_than_where_and_how_big_it_is_drawn_is_a_difference(self):
+        text = fx.small_board()
+        a = self.write("a.kicad_pcb", text)
+        for old, new, why in (('(unlocked yes)', '(unlocked no)', "locking"),
+                              ('(justify mirror)', '', "mirroring"),
+                              ('(uuid "%s")' % fx._uuid("ref", "R1"), '(uuid "00000000-0000-4000-8000-000000000001")', "identity")):
+            if old not in text:
+                continue
+            status, report, _ = self.prove(a, self.write("b.kicad_pcb", text.replace(old, new, 1)))
+            self.assertEqual(status, 1, why)
+        moved = self.write("moved.kicad_pcb", text.replace('(at 0 -2.1 0)', '(at 9 9 45)', 1).replace(
+            '(size 1 1)', '(size 2 2)', 1).replace('(thickness 0.15)', '(thickness 0.3)', 1))
+        self.assertEqual(self.prove(a, moved)[0], 0, "position, angle, size and stroke are what the command sets")
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C7: When the board the command would write differs from its input in anything other than silkscreen, the command refuses to write it, names what differs and leaves the input untouched. Tests seed a changed track, a moved part and a changed zone in turn and check each is refused, and check that a silkscreen-only change is written. This does not cover judging the neatness of the silkscreen, which pictures settle.
+    def test_other_text_and_graphics_that_change_layer_into_or_out_of_silkscreen_are_differences(self):
+        text = fx.small_board()
+        a = self.write("a.kicad_pcb", text)
+        end = text.rstrip().rfind(")")
+        with_text = self.write("t.kicad_pcb", text[:end] + fx.free_text("X", 5, 5) + text[end:])
+        for layer in ("F.Cu", "Edge.Cuts", "B.Mask"):
+            moved = self.write("m.kicad_pcb", text[:end] + fx.free_text("X", 5, 5, layer=layer) + text[end:])
+            status, report, _ = self.prove(with_text, moved)
+            self.assertEqual(status, 1, layer)
+            status, report, _ = self.prove(moved, with_text)
+            self.assertEqual(status, 1, layer)
+        value_moved = self.write("v.kicad_pcb", text.replace('(layer "F.Fab")', '(layer "F.Cu")', 1))
+        self.assertEqual(self.prove(a, value_moved)[0], 1, "a Value property moved to copper is a difference")
+        self.assertEqual(self.prove(a, with_text)[0], 0)
+        footprint_graphic = self.write("g.kicad_pcb", text.replace('(layer "F.SilkS")\n\t\t\t(uuid "%s")' % fx._uuid("body", "R1"),
+                                                                       '(layer "F.Cu")\n\t\t\t(uuid "%s")' % fx._uuid("body", "R1"), 1))
+        self.assertEqual(self.prove(a, footprint_graphic)[0], 1, "a footprint's silkscreen graphic moved to copper is a difference")
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C7: When the board the command would write differs from its input in anything other than silkscreen, the command refuses to write it, names what differs and leaves the input untouched. Tests seed a changed track, a moved part and a changed zone in turn and check each is refused, and check that a silkscreen-only change is written. This does not cover judging the neatness of the silkscreen, which pictures settle.
     def test_a_board_that_cannot_be_read_or_is_not_well_formed_is_refused(self):
         a = self.write("a.kicad_pcb", fx.small_board())
         status, report, lines = self.prove(a, self.path("missing.kicad_pcb"))

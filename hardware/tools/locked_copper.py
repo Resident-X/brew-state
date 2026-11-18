@@ -1090,13 +1090,19 @@ def mains_copper_compare(before_board: str, before_project: str, after_board: st
         return findings, 0, 0
     for layout, board, project in layouts:
         nets.append(set().union(*members(kicad_cli, board, project, layout, classes).values()))
-    mains = nets[0] | nets[1]
-    first = [item for item in copper(layouts[0][0], before_board, rule_areas=False) if item["net"] in mains]
+    named = ", ".join(classes)
+    for net in sorted(nets[0] ^ nets[1]):
+        in_first = net in nets[0]
+        findings.append(("CHANGED", f"net {net}",
+                         f"is Mains-class on the {'first' if in_first else 'second'} board (in one of {named}) and not on the "
+                         f"{'second' if in_first else 'first'} board (in none of {named})"))
+    first = [item for item in copper(layouts[0][0], before_board, rule_areas=False) if item["net"] in nets[0]]
     second_all = copper(layouts[1][0], after_board, rule_areas=False)
-    first_pads = [item for item in pad_items(layouts[0][0]) if item["net"] in mains]
+    first_pads = [item for item in pad_items(layouts[0][0]) if item["net"] in nets[0]]
     second_pads = pad_items(layouts[1][0])
     second_all = second_all + second_pads
-    second = [item for item in second_all if item["net"] in mains]
+    second = [item for item in second_all if item["net"] in nets[1]]
+    mains = nets[1]
     first_count = len(first) + len(first_pads)
     second_count = len(second)
     reword = {"MISSING": "is on a Mains-class net of the first board and not of the second",
@@ -1105,7 +1111,7 @@ def mains_copper_compare(before_board: str, before_project: str, after_board: st
     for finding, item, detail in compare_items(first, [item for item in second if item["kind"] != "pad"]):
         findings.append((finding, item, reword.get(finding, detail)))
     findings += pad_findings(first_pads, [item for item in second if item["kind"] == "pad"])
-    findings += near_findings([item for item in second_all if item["net"] not in mains], second, distance)
+    findings += near_findings([item for item in second_all if item["net"] not in nets[1]], second, distance)
     return findings, first_count, second_count
 
 

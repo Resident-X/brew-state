@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import io
 import json
 import os
 import re
@@ -138,6 +140,49 @@ class MainsLinesAreRefused(Generator):
                 self.assertEqual([(e["rule"], e["scope"], e["count"], e["kind"]) for e in report["entries"]],
                                  [("workmanship_pad_corner", "/SLOW_A", 1, "slow signal")])
                 self.assertIn("ENTRY | workmanship_pad_corner | /SLOW_A | 1 | slow signal", lines)
+
+    def test_a_stretch_that_crosses_a_mains_region_with_both_ends_outside_is_refused_and_one_that_misses_it_is_entered(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        def stretch(a, b):
+            return ("VIOLATION | %s | workmanship_detour | net /SLOW_A: Track from (%s, %s) mm to (%s, %s) mm on F.Cu | message"
+                    % (DESIGN, a[0], a[1], b[0], b[1]))
+        for a, b in (((0, 55), (70, 55)), ((55, 0), (55, 70)), ((45, 55), (55, 65)), ((40, 40), (70, 70)), ((50, 40), (50, 70))):
+            with self.subTest(refused=(a, b)):
+                status, lines, report = self.both(log(stretch(a, b)), "--partial")
+                self.assertEqual(status, 1)
+                self.assertEqual(self.record_text(), "")
+                self.assertEqual(len(report["refused"]), 1)
+                self.assertIn("crosses the mains region mains", report["refused"][0]["why"])
+                self.assertTrue(any(l.startswith("REFUSED | workmanship_detour") and "crosses the mains region" in l for l in lines), lines)
+        for a, b in (((0, 5), (70, 5)), ((0, 40), (40, 70)), ((61, 40), (61, 70))):
+            with self.subTest(entered=(a, b)):
+                if os.path.exists(self.record):
+                    os.remove(self.record)
+                status, lines, report = self.both(log(stretch(a, b)))
+                self.assertEqual((status, report["refused"]), (0, []))
+                self.assertEqual([e["scope"] for e in report["entries"]], ["/SLOW_A"])
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+    def test_lines_with_no_position_are_judged_by_net_and_counted_on_standard_error_and_in_the_json(self):
+        unplaced = ("VIOLATION | %s | workmanship_detour | net /SLOW_A: Track [/SLOW_A] on F.Cu | message" % DESIGN)
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            status, lines, report = self.both(log(unplaced, unplaced, line("workmanship_pad_corner", "/SLOW_B")))
+        self.assertEqual((status, report["refused"], report["no_position"]), (0, [], 2))
+        self.assertIn("NOTE | 2 failing lines gave no position", errors.getvalue())
+        self.assertIn("judged by net only", errors.getvalue())
+        if os.path.exists(self.record):
+            os.remove(self.record)
+        errors = io.StringIO()
+        with contextlib.redirect_stderr(errors):
+            status, lines, report = self.both(log(line("workmanship_pad_corner", "/SLOW_B")))
+        self.assertEqual((status, report["no_position"], errors.getvalue()), (0, 0, ""), "a log whose lines all give a position says nothing")
+        if os.path.exists(self.record):
+            os.remove(self.record)
+        with contextlib.redirect_stderr(io.StringIO()):
+            mains = ("VIOLATION | %s | workmanship_detour | net /MAINS_L: Track [/MAINS_L] on F.Cu | message" % DESIGN)
+            status, lines, report = self.both(log(mains))
+        self.assertEqual((status, report["no_position"], len(report["refused"])), (1, 1, 1), "a mains net with no position is still refused by net")
 
     def test_mains_and_low_voltage_lines_together_write_nothing_by_default_and_the_low_voltage_ones_with_partial(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.

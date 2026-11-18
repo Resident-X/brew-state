@@ -25,6 +25,10 @@ TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[()]')
 KIND = re.compile(r'\(\s*([^\s()"]+)')
 SILK_LAYERS = ("F.SilkS", "B.SilkS")
 REFERENCE = re.compile(r'\(property\s+"Reference"\s+"((?:\\.|[^"\\])*)"')
+LABEL_LAYERS = {"F.SilkS": "F.label", "F.Fab": "F.label", "B.SilkS": "B.label", "B.Fab": "B.label"}
+LABEL_PROPERTIES = (re.compile(r'\(at\s[^)]*\)'), re.compile(r'\(size\s[^)]*\)'), re.compile(r'\(thickness\s[^)]*\)'),
+                    re.compile(r'\(hide\s[^)]*\)'))
+LAYER = re.compile(r'\(layer\s+"([^"]*)"\)')
 
 
 class Block:
@@ -90,10 +94,25 @@ def references(text: str) -> Dict[str, Block]:
     return {REFERENCE.match(b.text).group(1): b for b in blocks(text) if is_reference(b)}
 
 
+def label_remainder(block_text: str) -> str:
+    """A Reference property with what the silkscreen command legitimately sets put aside.
+
+    Its position, angle, size, stroke and visibility are set aside, and so is which of its own side's
+    silkscreen or fab layers it is on. Everything else stays, the layer included when it is any other
+    layer or the other side of the board, so a label moved onto copper, the edge or a mask is a difference.
+    """
+    text = block_text
+    for pattern in LABEL_PROPERTIES:
+        text = pattern.sub("", text)
+    return LAYER.sub(lambda m: '(layer "%s")' % LABEL_LAYERS.get(m.group(1), m.group(1)), text, count=1)
+
+
 def strip(text: str) -> Tuple[str, List[Tuple[str, Optional[str]]]]:
     """The board with its silkscreen set aside: (remainder, [(kind, layer)] of what was taken out).
 
-    A Reference is not removed whole: its text stays, so a part renamed counts as a change.
+    A Reference is not removed whole: what the command does not set stays (its text, its layer unless
+    that is a silkscreen or fab layer of its side, its other properties), so a part renamed or a
+    label moved onto another layer counts as a change.
     """
     parts, last, removed = [], 0, []
     for block in blocks(text):
@@ -101,7 +120,7 @@ def strip(text: str) -> Tuple[str, List[Tuple[str, Optional[str]]]]:
             continue
         if is_reference(block):
             parts.append(text[last:block.start])
-            parts.append('(property "Reference" "%s")' % REFERENCE.match(block.text).group(1))
+            parts.append(label_remainder(block.text))
         else:
             begin = block.start
             while begin > last and text[begin - 1] in "\t ":

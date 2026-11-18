@@ -184,10 +184,16 @@ class Mains:
         return None
 
     def position_why(self, points: Sequence[Tuple[float, float]]) -> Optional[str]:
+        """Why a line printing these positions is mains: a point in a mains region, or, when it prints two or more, a
+        stretch between consecutive points that touches or crosses one."""
         for x, y in points:
             for name, polygon in self.areas:
                 if inside(x, y, polygon):
                     return f"the position ({x:g}, {y:g}) lies in the mains region {name}"
+        for (x1, y1), (x2, y2) in zip(points, points[1:]):
+            for name, polygon in self.areas:
+                if crosses(x1, y1, x2, y2, polygon):
+                    return f"the stretch from ({x1:g}, {y1:g}) to ({x2:g}, {y2:g}) crosses the mains region {name}"
         return None
 
 
@@ -203,6 +209,32 @@ def inside(x: float, y: float, polygon: Sequence[Tuple[float, float]]) -> bool:
         if (y1 > y) != (y2 > y) and x < (x2 - x1) * (y - y1) / (y2 - y1) + x1:
             result = not result
     return result
+
+
+def orientation(ax: float, ay: float, bx: float, by: float, cx: float, cy: float) -> int:
+    value = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
+    return 0 if abs(value) < 1e-9 else (1 if value > 0 else -1)
+
+
+def on_stretch(ax: float, ay: float, bx: float, by: float, x: float, y: float) -> bool:
+    return min(ax, bx) - 1e-9 <= x <= max(ax, bx) + 1e-9 and min(ay, by) - 1e-9 <= y <= max(ay, by) + 1e-9
+
+
+def stretches_meet(a: Tuple[float, float], b: Tuple[float, float], c: Tuple[float, float], d: Tuple[float, float]) -> bool:
+    """Whether the stretch a-b and the stretch c-d share a point, touching included."""
+    o1, o2 = orientation(*a, *b, *c), orientation(*a, *b, *d)
+    o3, o4 = orientation(*c, *d, *a), orientation(*c, *d, *b)
+    if o1 != o2 and o3 != o4:
+        return True
+    return ((o1 == 0 and on_stretch(*a, *b, *c)) or (o2 == 0 and on_stretch(*a, *b, *d))
+            or (o3 == 0 and on_stretch(*c, *d, *a)) or (o4 == 0 and on_stretch(*c, *d, *b)))
+
+
+def crosses(x1: float, y1: float, x2: float, y2: float, polygon: Sequence[Tuple[float, float]]) -> bool:
+    """Whether the stretch from (x1, y1) to (x2, y2) has a point in the polygon: an end inside it, or the stretch meeting an edge."""
+    if inside(x1, y1, polygon) or inside(x2, y2, polygon):
+        return True
+    return any(stretches_meet((x1, y1), (x2, y2), polygon[i], polygon[(i + 1) % len(polygon)]) for i in range(len(polygon)))
 
 
 # --- The reasons table -------------------------------------------------------------------------
@@ -337,6 +369,7 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
     """What to write: entries, refusals, entries to remove and the count of failing lines of other rules."""
     groups: "OrderedDict[Tuple[str, str], List[Line]]" = OrderedDict()
     refused, not_covered, removed = [], 0, []
+    unplaced = 0
     stale = set()
     for line in lines:
         if line.kind != "VIOLATION" or line.design != design:
@@ -351,6 +384,7 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
             continue
         nets = line_nets(line)
         points = [(float(x), float(y)) for x, y in POSITION.findall(line.where)]
+        unplaced += 0 if points else 1
         why = [reason for reason in [mains.net_why(net) for net in nets] + [mains.position_why(points)] if reason]
         if why:
             refused.append({"rule": line.rule, "scope": ", ".join(nets), "location": line.where,
@@ -386,7 +420,7 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
     for index in sorted(stale):
         if index < len(existing):
             removed.append({"index": index, "rule": existing[index]["rule"].strip(), "scope": existing[index]["scope"].strip()})
-    return {"entries": entries, "refused": refused, "removed": removed, "not_covered": not_covered}
+    return {"entries": entries, "refused": refused, "removed": removed, "not_covered": not_covered, "no_position": unplaced}
 
 
 def write_record(path: str, text_lines: Optional[List[str]], plan_: dict, synthetic: bool) -> None:
@@ -457,12 +491,15 @@ def run(args, out) -> int:
     summary = (f"{len(result['entries'])} entries {'would be ' if args.dry_run else ''}written for "
                f"{sum(e['count'] for e in result['entries'])} lines, {len(result['refused'])} lines refused, "
                f"{len(result['removed'])} stale entries removed, {result['not_covered']} failing lines of other rules not covered")
+    if result["no_position"]:
+        print(f"NOTE | {result['no_position']} failing line{'s' if result['no_position'] != 1 else ''} gave no position, so "
+              "whether they lie in a mains region could not be told and they were judged by net only", file=sys.stderr)
     if args.format == "json":
         print(json.dumps({"result": state, "design": design, "record": record, "written": bool(write),
                           "entries": [{key: entry[key] for key in ("rule", "scope", "count", "kind", "reason")}
                                       for entry in result["entries"]],
                           "refused": result["refused"], "removed": result["removed"],
-                          "not_covered": result["not_covered"], "detail": summary}, indent=2), file=out)
+                          "not_covered": result["not_covered"], "no_position": result["no_position"], "detail": summary}, indent=2), file=out)
     else:
         for entry in result["entries"]:
             print(f"ENTRY | {entry['rule']} | {entry['scope']} | {entry['count']} | {entry['kind']}", file=out)

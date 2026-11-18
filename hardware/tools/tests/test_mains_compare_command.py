@@ -9,6 +9,7 @@ import os
 import sys
 import tempfile
 import unittest
+import zlib
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, TOOLS)
@@ -69,7 +70,7 @@ def part(reference, x, y, pads, layer="F.Cu"):
 
 def rule_area(name, layers, corners, net=None):
     points = " ".join(f"(xy {x} {y})" for x, y in corners)
-    return (f'(zone {f"(net {net})" if net else ""} (layers {layers}) (uuid "00000000-0000-4000-8000-{abs(hash(name)) % 10**12:012d}") '
+    return (f'(zone {f"(net {net})" if net else ""} (layers {layers}) (uuid "00000000-0000-4000-8000-{zlib.crc32(name.encode()) % 10**12:012d}") '
             f'(name "{name}") (hatch edge 0.5) (connect_pads (clearance 0.5)) (min_thickness 0.25) '
             '(keepout (tracks not_allowed) (vias not_allowed) (pads allowed) (copperpour not_allowed) (footprints allowed)) '
             f'(polygon (pts {points})))')
@@ -166,6 +167,31 @@ class MainsCompare(unittest.TestCase):
         status, lines = self.compare(second=second)
         self.assertEqual(status, 1, lines)
         self.assertEqual(len(self.findings(lines, "MISSING")), 1, lines)
+
+    def test_a_net_that_is_mains_class_on_one_board_and_not_on_the_other_is_reported_whichever_board(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
+        demoted = project({"/AC2": "Mains"}, [], classes=("Mains",), mains="present")
+        promoted = project({"/AC": "Mains", "/AC2": "Mains", "/LV": "Mains"}, [], classes=("Mains",), mains="present")
+        cases = {
+            "demoted in the second": (self.first, self.make("demoted-second", base() + [lv_track(2.375)], demoted), "net /AC",
+                                      "is Mains-class on the first board"),
+            "demoted in the first": (self.make("demoted-first", base() + [lv_track(2.375)], demoted), self.second, "net /AC",
+                                     "is Mains-class on the second board"),
+            "promoted in the second": (self.first, self.make("promoted-second", base(), promoted), "net /LV", "is Mains-class on the second board"),
+        }
+        for name, (first, second, net, needle) in cases.items():
+            with self.subTest(case=name):
+                status, lines = self.compare(first=first, second=second)
+                self.assertEqual(status, 1, lines)
+                changed = [f for f in self.findings(lines, "CHANGED") if f[1] == net]
+                self.assertEqual(len(changed), 1, lines)
+                self.assertIn(needle, changed[0][2])
+                self.assertIn("(in none of Mains)", changed[0][2])
+                status, report = self.compare(first=first, second=second, fmt="json")
+                self.assertEqual(status, 1)
+                self.assertIn(net, [f["item"] for f in report["findings"] if f["finding"] == "CHANGED"])
+        status, lines = self.compare()
+        self.assertEqual(status, 0, "the same classification on both boards still passes")
 
     def test_low_voltage_copper_nearer_than_the_distance_fails_naming_it_and_exactly_at_it_passes(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C1: Run over two synthetic boards, the command exits successfully only when every Mains-class item is identical in both and no low-voltage copper in the second board lies nearer to Mains-class copper than the stated distance. It exits with failure, naming the item or the copper, when a Mains-class item is added, removed or changed, and when low-voltage copper is nearer than the stated distance. Tests cover identical boards, each kind of change, copper exactly at the distance and an empty board, and the report in text and in JSON. This does not cover a board's choice of which distance to state.
