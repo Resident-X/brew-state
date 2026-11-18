@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1
+type: criterion
+title: A far channel is accepted when another design's record lists it with a controller pin, with or without a connector, and fails when none does
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A far channel must be a channel that another design's record in the same machine folder lists with a controller pin; the entry may name a connector or none. A channel that no other record lists, or that every other record lists without a controller pin, fails the design, naming the channel. A design with no machine folder is exempt from the check. Comparing the cable's pin map between the two headers is out of scope.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY
+    type: criterion-of

@@ -1,7 +1,7 @@
 id: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER.C3
 type: criterion
 title: Each far channel is checked against the other designs' records in the same machine folder
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
     type: criterion-of
+attributes:
+  deprecation_reason: 'Said the wrong thing: it required the far-side entry to carry a connector, which the controller''s own board''s record cannot carry for a channel that reaches a header through the board''s own stages. Replaced by SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY.C1, which holds a far channel to a controller pin in another design''s record.'

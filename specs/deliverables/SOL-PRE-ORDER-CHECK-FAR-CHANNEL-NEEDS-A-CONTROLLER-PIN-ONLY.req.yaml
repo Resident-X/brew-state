@@ -1,0 +1,29 @@
+id: SOL-PRE-ORDER-CHECK-FAR-CHANNEL-NEEDS-A-CONTROLLER-PIN-ONLY
+type: deliverable
+category: solution
+title: A far channel is accepted when another design's record gives it a controller pin, whether or not that entry names a connector
+status: active
+version: 1
+text: |
+  Corrects the pre-order check's reading of a far channel. A board that places no controller lists the channels crossing its header as far channels, and the check accepts one only when another design's record in the machine folder lists it with a controller pin and a connector. A channel the controller's own board lists by its controller-side net, which reaches the header only through that board's own stages (a switch and resistor for an indicator drive, a resistor divider for a presence input), has a controller pin and no connector entry in that record, since the record's net-to-pin check ties a connector entry to the net that reaches that header pin. The connector requirement was the superseded criterion's own wording, and the board design records decision asks only that each far channel exist and be driven, which a controller pin states, so the criterion said the wrong thing and is superseded, not patched.
+
+  Settled for the build:
+  - A far channel is accepted when at least one other design's record in the same machine folder lists a channel of that name with a controller pin. A connector on that entry is neither required nor refused. An entry that lists the channel with no controller pin, and a channel no other record lists, fail the design, naming the channel.
+  - Nothing else changes: the exemption of a design with no machine folder, the reading of a record that cannot be read (it lists none and its own design fails for it), the failure text's structure, the rail entries, and the connectivity checks of the controller's own board, which still hold a channel's net to the connector pin an entry names.
+  - The failure message names a controller pin and no longer names a connector as what the other record lists.
+  - The change leaves the main board's pin allocation record as it stands.
+
+  Locus: far_channels in hardware/tools/board_check.py and the message it raises, its tests under hardware/tools/tests/ (the far-channel tests of the no-controller modules, whose fixtures give the far-side entry a connector), the seeded far-channel case in hardware/tools/board_prove.py where it states the rule, hardware/README.md and docs/board-design-method.md where they state it. Tests use synthetic designs and records in a temporary directory.
+rationale: |
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 and .C3 ask of the verification: a design that is right fails nothing, and a failing item names a real defect. As built the check fails every far channel of the heater wall board against the main board's record, a false failure that no change to the wall board can clear, because the connector rule was drawn where the record is written (the controller's net) and not where the cable lands (the header's stage nets). The distinction that matters is whether the controller drives the channel, not whether its entry names a header pin; the net-to-pin check of the controller's own board already holds the header pin to its net.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: SOL-HW-PRE-ORDER-CHECK-HOLDS-BOARD-WITHOUT-CONTROLLER
+    type: depends-on
