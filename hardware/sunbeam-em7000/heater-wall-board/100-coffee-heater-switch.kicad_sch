@@ -1167,213 +1167,213 @@
 		)
 	)
 	(junction
-		(at 157.48 73.66)
+		(at 200.66 80.01)
 		(diameter 0)
-		(uuid "6cad7d5e-55f2-4878-979d-1499121a075b")
+		(uuid "ce2e86a8-b178-4466-9045-fab4cf22913b")
 	)
 	(junction
-		(at 185.42 73.66)
+		(at 238.76 80.01)
 		(diameter 0)
-		(uuid "b4dd0b3b-d1ae-466a-9cc4-db376651397a")
+		(uuid "07ab529a-67c7-421b-8c03-22368255dce6")
 	)
 	(junction
-		(at 157.48 104.14)
+		(at 200.66 130.81)
 		(diameter 0)
-		(uuid "90d3c41e-3ab5-4106-bbd3-a8749c192e8a")
+		(uuid "0e6f571b-a8a8-4790-92be-fa2857b1a927")
 	)
 	(no_connect
-		(at 58.42 88.9)
-		(uuid "31e55d05-630d-4ff0-a923-af8c94992a1b")
+		(at 82.55 105.41)
+		(uuid "fbc6984d-80ea-44f2-9104-51a3396e300a")
 	)
 	(no_connect
-		(at 68.58 88.9)
-		(uuid "90e21bbf-9b59-4136-ac0f-58ca2ef38185")
+		(at 92.71 105.41)
+		(uuid "231e9315-4acb-4e6d-af2b-11739117cd6f")
 	)
 	(wire
 		(pts
-			(xy 71.12 91.44)
-			(xy 92.71 91.44)
+			(xy 95.25 102.87)
+			(xy 100.33 102.87)
 		)
-		(uuid "dce6b160-ac32-4510-bb63-8109e233e76b")
+		(uuid "e42572cd-ea08-4be5-bf0c-3754317fabe2")
 	)
 	(wire
 		(pts
-			(xy 100.33 91.44)
-			(xy 125.73 91.44)
+			(xy 100.33 102.87)
+			(xy 100.33 80.01)
 		)
-		(uuid "5ce47a74-5fa3-4038-a272-484f1b5cb226")
+		(uuid "f02728d0-ec97-45dd-9973-ae0367505120")
 	)
 	(wire
 		(pts
-			(xy 133.35 91.44)
-			(xy 153.67 91.44)
+			(xy 100.33 80.01)
+			(xy 257.81 80.01)
 		)
-		(uuid "06d69c00-894e-4948-9126-e612ab99a969")
+		(uuid "e8b3c499-b0a8-4c8c-811e-a62962e947a8")
 	)
 	(wire
 		(pts
-			(xy 71.12 86.36)
-			(xy 76.2 86.36)
+			(xy 200.66 101.6)
+			(xy 200.66 80.01)
 		)
-		(uuid "885740df-ccf8-47d0-be73-be9f59a2f67e")
+		(uuid "600d9b31-097a-4828-8628-4ede26021b1a")
 	)
 	(wire
 		(pts
-			(xy 76.2 86.36)
-			(xy 76.2 73.66)
+			(xy 238.76 101.6)
+			(xy 238.76 80.01)
 		)
-		(uuid "e788848e-88c6-48dc-a3f8-8c34e83b1890")
+		(uuid "9b1d7024-498d-4816-999f-ef5a00798cd0")
 	)
 	(wire
 		(pts
-			(xy 76.2 73.66)
-			(xy 200.66 73.66)
+			(xy 95.25 107.95)
+			(xy 123.19 107.95)
 		)
-		(uuid "686877ba-5aa1-4a45-badd-e7f0ace902bd")
+		(uuid "efcd28d1-ca4d-4806-881e-c5c6c40b4ab5")
 	)
 	(wire
 		(pts
-			(xy 157.48 85.09)
-			(xy 157.48 73.66)
+			(xy 130.81 107.95)
+			(xy 161.29 107.95)
 		)
-		(uuid "1b890045-e792-4c61-92c3-545c3195f3fb")
+		(uuid "b0dd93df-e13a-47af-9170-6b288b4ff07f")
 	)
 	(wire
 		(pts
-			(xy 185.42 85.09)
-			(xy 185.42 73.66)
+			(xy 168.91 107.95)
+			(xy 196.85 107.95)
 		)
-		(uuid "ee620c0f-ad12-4ad0-af15-d9a33e99c531")
+		(uuid "5119a84d-0e24-46eb-9ae2-c6d72d0a269d")
 	)
 	(wire
 		(pts
-			(xy 157.48 92.71)
-			(xy 157.48 104.14)
+			(xy 80.01 107.95)
+			(xy 50.8 107.95)
 		)
-		(uuid "5f841971-e92f-4a3a-891a-b1cc13e59238")
+		(uuid "35259873-4168-40ca-8eb2-0dc7f7c0378f")
 	)
 	(wire
 		(pts
-			(xy 185.42 92.71)
-			(xy 185.42 104.14)
+			(xy 80.01 102.87)
+			(xy 50.8 102.87)
 		)
-		(uuid "2c0d08b4-cc25-4915-8c88-75c09350af55")
+		(uuid "017bae83-d7b5-4afc-a8b1-e67fd0d4166a")
 	)
 	(wire
 		(pts
-			(xy 30.48 104.14)
-			(xy 185.42 104.14)
+			(xy 200.66 109.22)
+			(xy 200.66 130.81)
 		)
-		(uuid "7128a944-e06d-4b25-860e-371737dc6626")
+		(uuid "95fe7c92-2af8-47a1-8058-ce4fda013466")
 	)
 	(wire
 		(pts
-			(xy 55.88 91.44)
-			(xy 40.64 91.44)
+			(xy 238.76 109.22)
+			(xy 238.76 130.81)
 		)
-		(uuid "2bc1e13a-7b51-4c10-a225-99cc230bb6eb")
+		(uuid "1a8bb8b4-1f70-4e15-9180-cd36976127bf")
 	)
 	(wire
 		(pts
-			(xy 55.88 86.36)
-			(xy 40.64 86.36)
+			(xy 50.8 130.81)
+			(xy 238.76 130.81)
 		)
-		(uuid "ebc2f877-f10f-47cb-9439-a60f88a58f1c")
+		(uuid "b952eeea-ee95-418d-bf40-2254c85c54a3")
 	)
 	(label "OUT_C"
-		(at 127 73.66 0)
+		(at 215.9 80.01 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "835a7770-f561-4457-81c9-4e6ead833a19")
+		(uuid "c4ff4ed8-e25f-4a68-a7d7-2e7e4229107e")
 	)
 	(label "HEAT_C_OPTO_MT"
-		(at 73.66 91.44 0)
+		(at 101.6 107.95 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "69263f83-4496-4673-b0d5-257318da6827")
+		(uuid "3f88caa5-d836-4273-8e35-0c6aa0dc2900")
 	)
 	(label "HEAT_C_GATE_R"
-		(at 104.14 91.44 0)
+		(at 135.89 107.95 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "4e0ee5ae-4630-404f-beb1-49d2ebe06711")
+		(uuid "dc021a22-bc6f-445e-be9d-ef50a0c16962")
 	)
 	(label "HEAT_C_TRIAC_G"
-		(at 134.62 91.44 0)
+		(at 173.99 107.95 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "299f4858-ade8-461a-978f-bbfe7b11b324")
+		(uuid "92fd82aa-2d54-4b2b-8087-42347523e5e7")
 	)
 	(label "RET"
-		(at 165.1 104.14 0)
+		(at 219.71 130.81 0)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify left bottom)
 		)
-		(uuid "7d16c2d2-5df6-4871-91de-76d70731000c")
+		(uuid "38c7a1b5-43fe-4ede-a47a-816259ace26b")
 	)
 	(hierarchical_label "RET"
 		(shape bidirectional)
-		(at 30.48 104.14 180)
+		(at 50.8 130.81 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "1f6350f0-d7f5-409f-a8bc-917b9d6fa115")
+		(uuid "ba529880-cabd-4af7-85e6-8ea349adfaf2")
 	)
 	(hierarchical_label "+5V_WB"
 		(shape input)
-		(at 40.64 91.44 180)
+		(at 50.8 107.95 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "1d66c41b-4d8a-4105-b583-19afa043696d")
+		(uuid "033037e6-2e16-4228-91ec-403791424256")
 	)
 	(hierarchical_label "HEAT_C_LED_K"
 		(shape output)
-		(at 40.64 86.36 180)
+		(at 50.8 102.87 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "3ade5c59-7faa-4bf5-9f7c-109f16904f94")
+		(uuid "36a3b90c-90f8-4a8a-b79d-6a5431d4bad0")
 	)
 	(symbol
 		(lib_id "Relay_SolidState:MOC3083M")
-		(at 63.5 88.9 0)
+		(at 87.63 105.41 0)
 		(mirror x)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(uuid "9030b8c3-d987-4692-b791-e579d1942a56")
-		(property "Reference" "U101"
-			(at 63.5 80.01 0)
+		(property "Reference" "U911"
+			(at 87.63 96.52 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1381,8 +1381,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "MOC3083"
-			(at 63.5 97.79 0)
+		(property "Value" "MOC3083M"
+			(at 87.63 114.3 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1391,7 +1391,7 @@
 			)
 		)
 		(property "Footprint" "Package_DIP:DIP-6_W7.62mm"
-			(at 63.5 88.9 0)
+			(at 87.63 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1400,7 +1400,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.onsemi.com/pub/Collateral/MOC3083M-D.PDF"
-			(at 63.5 88.9 0)
+			(at 87.63 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1409,7 +1409,43 @@
 			)
 		)
 		(property "Description" "Zero Cross Opto-Triac, Vdrm 800V, Ift 5mA, DIP6"
-			(at 63.5 88.9 0)
+			(at 87.63 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C23552"
+			(at 87.63 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "MOC3083M"
+			(at 87.63 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "onsemi"
+			(at 87.63 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "800 V zero-cross opto-triac driver, DIP-6, onsemi MOC3083M/D Rev. 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance >= 7 mm"
+			(at 87.63 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1420,58 +1456,22 @@
 		(instances
 			(project "heater-wall-board"
 				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
-					(reference "U101")
+					(reference "U911")
 					(unit 1)
 				)
 			)
 		)
-	
-		(property "LCSC" "C10797"
-			(at 63.5 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "MOC3083"
-			(at 63.5 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "Lite-On (stocked equivalent of onsemi MOC3083M)"
-			(at 63.5 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Rating" "800 V zero-cross opto-triac driver, DIP-6, Lite-On DS70-2001-027 Rev B; VF 1.4 V max at 20 mA, IFT 5 mA max, TA -40 to +100 degC"
-			(at 63.5 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:R")
-		(at 96.52 91.44 90)
+		(at 127 107.95 90)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(uuid "707da890-f6e4-442b-99ba-855ab8e8f26f")
-		(property "Reference" "R101"
-			(at 96.52 86.36 0)
+		(property "Reference" "R911"
+			(at 127 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1479,7 +1479,7 @@
 			)
 		)
 		(property "Value" "200"
-			(at 96.52 96.52 0)
+			(at 127 113.03 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1487,7 +1487,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_1206_3216Metric"
-			(at 96.52 91.44 0)
+			(at 127 107.95 0)
 			(hide yes)
 			(effects
 				(font
@@ -1496,7 +1496,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 96.52 91.44 0)
+			(at 127 107.95 0)
 			(hide yes)
 			(effects
 				(font
@@ -1505,7 +1505,43 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 96.52 91.44 0)
+			(at 127 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C18002"
+			(at 127 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1206W4F2000T5E"
+			(at 127 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 127 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 250mW 200V 1206"
+			(at 127 107.95 0)
 			(hide yes)
 			(effects
 				(font
@@ -1516,58 +1552,22 @@
 		(instances
 			(project "heater-wall-board"
 				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
-					(reference "R101")
+					(reference "R911")
 					(unit 1)
 				)
 			)
 		)
-	
-		(property "LCSC" "C18002"
-			(at 96.52 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "1206W4F2000T5E"
-			(at 96.52 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "UNI-ROYAL"
-			(at 96.52 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Rating" "1% 250mW 200V 1206"
-			(at 96.52 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Device:R")
-		(at 129.54 91.44 90)
+		(at 165.1 107.95 90)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(uuid "ecfec44f-8749-4d3f-addb-3d12a30737f1")
-		(property "Reference" "R102"
-			(at 129.54 86.36 0)
+		(property "Reference" "R912"
+			(at 165.1 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1575,7 +1575,7 @@
 			)
 		)
 		(property "Value" "200"
-			(at 129.54 96.52 0)
+			(at 165.1 113.03 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1583,7 +1583,7 @@
 			)
 		)
 		(property "Footprint" "Resistor_SMD:R_1206_3216Metric"
-			(at 129.54 91.44 0)
+			(at 165.1 107.95 0)
 			(hide yes)
 			(effects
 				(font
@@ -1592,7 +1592,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 129.54 91.44 0)
+			(at 165.1 107.95 0)
 			(hide yes)
 			(effects
 				(font
@@ -1601,7 +1601,43 @@
 			)
 		)
 		(property "Description" "Resistor"
-			(at 129.54 91.44 0)
+			(at 165.1 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C18002"
+			(at 165.1 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1206W4F2000T5E"
+			(at 165.1 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 165.1 107.95 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 250mW 200V 1206"
+			(at 165.1 107.95 0)
 			(hide yes)
 			(effects
 				(font
@@ -1612,58 +1648,22 @@
 		(instances
 			(project "heater-wall-board"
 				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
-					(reference "R102")
+					(reference "R912")
 					(unit 1)
 				)
 			)
 		)
-	
-		(property "LCSC" "C18002"
-			(at 129.54 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "1206W4F2000T5E"
-			(at 129.54 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "UNI-ROYAL"
-			(at 129.54 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Rating" "1% 250mW 200V 1206"
-			(at 129.54 91.44 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 	(symbol
 		(lib_id "Triac_Thyristor:BTA16-600B")
-		(at 157.48 88.9 0)
+		(at 200.66 105.41 0)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(uuid "414a00fe-e4af-4153-b7c4-48fd0762b612")
-		(property "Reference" "T101"
-			(at 162.56 86.995 0)
+		(property "Reference" "T911"
+			(at 213.36 102.87 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1671,8 +1671,8 @@
 				(justify left)
 			)
 		)
-		(property "Value" "BTA16-600BRG"
-			(at 162.56 88.9 0)
+		(property "Value" "BTA16-800BWRG"
+			(at 213.36 105.41 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1681,7 +1681,7 @@
 			)
 		)
 		(property "Footprint" "Package_TO_SOT_THT:TO-220-3_Vertical"
-			(at 157.48 88.9 0)
+			(at 200.66 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1690,7 +1690,7 @@
 			)
 		)
 		(property "Datasheet" "https://www.st.com/resource/en/datasheet/bta16.pdf"
-			(at 157.48 88.9 0)
+			(at 200.66 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1699,7 +1699,7 @@
 			)
 		)
 		(property "Description" "16A RMS, 600V Off-State Voltage, 50mA Sensitivity, Insulated, Triac, TO-220"
-			(at 157.48 88.9 0)
+			(at 200.66 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1707,17 +1707,8 @@
 				)
 			)
 		)
-		(instances
-			(project "heater-wall-board"
-				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
-					(reference "T101")
-					(unit 1)
-				)
-			)
-		)
-	
-		(property "LCSC" "C9100"
-			(at 157.48 88.9 0)
+		(property "LCSC" "C10065"
+			(at 200.66 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1725,8 +1716,8 @@
 				)
 			)
 		)
-		(property "MPN" "BTA16-600BRG"
-			(at 157.48 88.9 0)
+		(property "MPN" "BTA16-800BWRG"
+			(at 200.66 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1735,7 +1726,7 @@
 			)
 		)
 		(property "Manufacturer" "STMicroelectronics"
-			(at 157.48 88.9 0)
+			(at 200.66 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1743,25 +1734,34 @@
 				)
 			)
 		)
-		(property "Rating" "600 V 16 A insulated TO-220AB standard (4-quadrant, B grade) triac, ST Doc ID 7471 Rev 9; insulated tab 2500 Vrms"
-			(at 157.48 88.9 0)
+		(property "Rating" "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
+			(at 200.66 105.41 0)
 			(hide yes)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "heater-wall-board"
+				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
+					(reference "T911")
+					(unit 1)
+				)
+			)
+		)
+	)
 	(symbol
 		(lib_id "Device:Varistor")
-		(at 185.42 88.9 0)
+		(at 238.76 105.41 0)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(uuid "5f95d391-157c-4d77-a90e-03ad1da22a3a")
-		(property "Reference" "RV101"
-			(at 190.5 87.63 0)
+		(property "Reference" "RV911"
+			(at 247.65 104.14 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1769,7 +1769,7 @@
 			)
 		)
 		(property "Value" "07D471K"
-			(at 190.5 90.17 0)
+			(at 247.65 106.68 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1777,7 +1777,7 @@
 			)
 		)
 		(property "Footprint" "Varistor:RV_Disc_D9mm_W5.2mm_P5mm"
-			(at 185.42 88.9 0)
+			(at 238.76 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1786,7 +1786,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 185.42 88.9 0)
+			(at 238.76 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1795,7 +1795,7 @@
 			)
 		)
 		(property "Description" "Voltage dependent resistor"
-			(at 185.42 88.9 0)
+			(at 238.76 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1803,17 +1803,8 @@
 				)
 			)
 		)
-		(instances
-			(project "heater-wall-board"
-				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
-					(reference "RV101")
-					(unit 1)
-				)
-			)
-		)
-	
 		(property "LCSC" "C49072860"
-			(at 185.42 88.9 0)
+			(at 238.76 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1822,7 +1813,7 @@
 			)
 		)
 		(property "MPN" "07D471K"
-			(at 185.42 88.9 0)
+			(at 238.76 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1831,7 +1822,7 @@
 			)
 		)
 		(property "Manufacturer" "Zhuhai Hongjiacheng (R+O)"
-			(at 185.42 88.9 0)
+			(at 238.76 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1840,58 +1831,7 @@
 			)
 		)
 		(property "Rating" "07D471K 470 V disc varistor, 5 mm lead pitch, 300 VAC / 385 VDC max, clamp 775 V at 10 A 8/20 us, non-polar"
-			(at 185.42 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
-	(symbol
-		(lib_id "Connector_Generic:Conn_01x01")
-		(at 205.74 73.66 0)
-		(unit 1)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(uuid "78f50a59-ac79-441c-94ba-199ae39b7ae0")
-		(property "Reference" "J101"
-			(at 205.74 71.12 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Value" "TAB_OUT_C"
-			(at 205.74 76.2 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Footprint" "heater-wall-board:Tab_TE_63849-1"
-			(at 205.74 73.66 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 205.74 73.66 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 205.74 73.66 0)
+			(at 238.76 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -1902,14 +1842,65 @@
 		(instances
 			(project "heater-wall-board"
 				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
-					(reference "J101")
+					(reference "RV911")
 					(unit 1)
 				)
 			)
 		)
-	
+	)
+	(symbol
+		(lib_id "Connector_Generic:Conn_01x01")
+		(at 262.89 80.01 0)
+		(unit 1)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "78f50a59-ac79-441c-94ba-199ae39b7ae0")
+		(property "Reference" "J911"
+			(at 262.89 77.47 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "TAB_OUT_C"
+			(at 262.89 82.55 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "heater-wall-board:Tab_TE_63849-1"
+			(at 262.89 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 262.89 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 262.89 80.01 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "LCSC" "C86469"
-			(at 205.74 73.66 0)
+			(at 262.89 80.01 0)
 			(hide yes)
 			(effects
 				(font
@@ -1918,7 +1909,7 @@
 			)
 		)
 		(property "MPN" "63849-1"
-			(at 205.74 73.66 0)
+			(at 262.89 80.01 0)
 			(hide yes)
 			(effects
 				(font
@@ -1927,7 +1918,7 @@
 			)
 		)
 		(property "Manufacturer" "TE Connectivity"
-			(at 205.74 73.66 0)
+			(at 262.89 80.01 0)
 			(hide yes)
 			(effects
 				(font
@@ -1936,12 +1927,21 @@
 			)
 		)
 		(property "Rating" "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced)"
-			(at 205.74 73.66 0)
+			(at 262.89 80.01 0)
 			(hide yes)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
 			)
-		))
+		)
+		(instances
+			(project "heater-wall-board"
+				(path "/04043b83-db29-4616-af37-34bc2be53a4f/ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d"
+					(reference "J911")
+					(unit 1)
+				)
+			)
+		)
+	)
 )

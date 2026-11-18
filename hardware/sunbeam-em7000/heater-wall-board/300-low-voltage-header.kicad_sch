@@ -195,73 +195,78 @@
 	)
 	(wire
 		(pts
-			(xy 248.92 86.36)
-			(xy 215.9 86.36)
+			(xy 154.94 102.87)
+			(xy 127 102.87)
 		)
-		(uuid "ec40988e-fb73-4e01-b643-8e627b68d924")
+		(uuid "bba16f25-fdfa-4555-af34-a63d5065358e")
 	)
 	(wire
 		(pts
-			(xy 248.92 88.9)
-			(xy 215.9 88.9)
+			(xy 154.94 105.41)
+			(xy 127 105.41)
 		)
-		(uuid "a3889d9d-cdfb-46a4-b3c7-c2d1d96763ed")
+		(uuid "1943d185-f19e-495f-9487-ab5ffc893c47")
 	)
 	(wire
 		(pts
-			(xy 248.92 91.44)
-			(xy 215.9 91.44)
+			(xy 154.94 107.95)
+			(xy 127 107.95)
 		)
-		(uuid "f6348a79-02e2-49b0-a222-4c6a3f6c9cdf")
+		(uuid "edcf2356-3f87-485f-9bd6-7d2f93eb4eb9")
+	)
+	(text "Cable lands on positions 1 to 3 of the main board J761"
+		(at 205.74 104.14 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "98c0cf6e-f2e1-4f8b-8dfe-d28e96caa7ac")
 	)
 	(hierarchical_label "+5V_WB"
 		(shape input)
-		(at 215.9 86.36 180)
+		(at 127 102.87 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "fd647ba4-4de7-4820-9b15-bf958eefab6c")
+		(uuid "7ca62123-e680-4a1c-a003-c14c90a96876")
 	)
 	(hierarchical_label "HEAT_C_LED_K"
 		(shape input)
-		(at 215.9 88.9 180)
+		(at 127 105.41 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "ad6859f6-7bd5-4d06-a0cd-1e28e6a53c93")
+		(uuid "c9ab3f77-a9ac-4805-a389-577bfbdb733b")
 	)
 	(hierarchical_label "HEAT_S_LED_K"
 		(shape input)
-		(at 215.9 91.44 180)
+		(at 127 107.95 180)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
 			(justify right)
 		)
-		(uuid "fe959be8-4a2f-46bc-bf0e-b02b18110fe4")
+		(uuid "ebc64056-9573-43c9-ab69-648352777bd1")
 	)
-  (text "Cable lands on positions 1 to 3 of the main board J761"
-    (at 205.74 104.14 0)
-    (effects (font (size 1.27 1.27)) (justify left bottom))
-    (uuid "98c0cf6e-f2e1-4f8b-8dfe-d28e96caa7ac")
-  )
 	(symbol
 		(lib_id "Connector_Generic:Conn_01x03")
-		(at 254 88.9 0)
+		(at 160.02 105.41 0)
 		(unit 1)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(uuid "e52ceaf5-6736-4263-986e-f6c038e710d0")
-		(property "Reference" "J301"
-			(at 254 83.82 0)
+		(property "Reference" "J931"
+			(at 160.02 100.33 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -269,7 +274,7 @@
 			)
 		)
 		(property "Value" "WB_LV3"
-			(at 254 93.98 0)
+			(at 160.02 110.49 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -277,7 +282,7 @@
 			)
 		)
 		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
-			(at 254 88.9 0)
+			(at 160.02 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -286,7 +291,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 254 88.9 0)
+			(at 160.02 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -295,7 +300,43 @@
 			)
 		)
 		(property "Description" "Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
-			(at 254 88.9 0)
+			(at 160.02 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2937625"
+			(at 160.02 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "PZ254V-11-03P"
+			(at 160.02 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "XFCN"
+			(at 160.02 105.41 0)
+			(hide yes)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1x3 2.54 mm pin header, 3 A, vertical"
+			(at 160.02 105.41 0)
 			(hide yes)
 			(effects
 				(font
@@ -306,46 +347,10 @@
 		(instances
 			(project "heater-wall-board"
 				(path "/04043b83-db29-4616-af37-34bc2be53a4f/985f7f40-53a4-4976-b009-ad7089f78077"
-					(reference "J301")
+					(reference "J931")
 					(unit 1)
 				)
 			)
 		)
-	
-		(property "LCSC" "C2937625"
-			(at 254 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "PZ254V-11-03P"
-			(at 254 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Manufacturer" "XFCN"
-			(at 254 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Rating" "1x3 2.54 mm pin header, 3 A, vertical"
-			(at 254 88.9 0)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		))
+	)
 )
