@@ -212,7 +212,7 @@ for e_air in (25.0, 40.0):
             e_pa = (E_TJ_MAX - e_tc) / E_RTH_JC
             e_md = (-E_VTO * 0.9 + math.sqrt((E_VTO * 0.9) ** 2 + 4 * E_RD * e_pa)) / (2 * E_RD) / 2 if e_pa > 0 else 0.0
             print("   air %.0f degC, h = %d, Rc = %.0f K/W: steam triac junction %.1f degC, case %.1f degC; 0.5 current share %.2f A (chord, capped at the 16 A rating's share) to %.2f A (model) against the steam element's 5.38 A" % (e_air, e_h, e_rc, e_tj, e_tc, e_ch, e_md))
-print("NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (division record); Rc is an unsourced assumption; bring-up measures the case temperature (DEL-HW-BRING-UP.C13)")
+print("NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (division record); Rc is an unsourced assumption; bring-up measures the case temperature (DEL-HW-BRING-UP.C11)")
 
 # ---- (f) opto-triac temperature (finding 1.9)
 print("\n== (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2")
@@ -226,7 +226,7 @@ for air in (45.0, 50.0, 70.0):
     j_head = jshare - self_rise - air
     print("   air %.0f degC: headroom to the TOPR ambient limit 85 degC = %.0f K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = %.0f degC leaves %.1f K after self-heating" % (air, amb_head, jshare, j_head))
 print("NOTE  at 45 to 50 degC air (the owner's working figure for the wall board, 2026-10-28, unmeasured) 35 to 40 K of neighbour rise is permitted against the 85 degC ambient limit; the rise is not measured")
-print("NOTE  at 70 degC air the neighbour rise permitted is 15 K (ambient limit) and %.1f K (junction share): the division record's A8 takes 15 K as the allowance for an 85 degC part, an assumption, unmeasured; DEL-HW-BRING-UP.C13 reads it" % (0.88 * TJ_MAX - self_rise - 70.0))
+print("NOTE  at 70 degC air the neighbour rise permitted is 15 K (ambient limit) and %.1f K (junction share): the division record's A8 takes 15 K as the allowance for an 85 degC part, an assumption, unmeasured; DEL-HW-BRING-UP.C11 reads it" % (0.88 * TJ_MAX - self_rise - 70.0))
 
 print("\nexit %d" % (1 if fails else 0))
 sys.exit(1 if fails else 0)

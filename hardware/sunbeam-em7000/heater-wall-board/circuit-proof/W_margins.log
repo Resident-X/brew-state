@@ -66,7 +66,7 @@ NOTE  triac current share at the best-case case temperature: the 0.5 share is 3.
    air 40 degC, h = 5, Rc = 0 K/W: steam triac junction 138.8 degC, case 128.6 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
    air 40 degC, h = 5, Rc = 1 K/W: steam triac junction 147.9 degC, case 137.7 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
    air 40 degC, h = 5, Rc = 3 K/W: steam triac junction 166.1 degC, case 155.9 degC; 0.5 current share 0.00 A (chord, capped at the 16 A rating's share) to 0.00 A (model) against the steam element's 5.38 A
-NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (division record); Rc is an unsourced assumption; bring-up measures the case temperature (DEL-HW-BRING-UP.C13)
+NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (division record); Rc is an unsourced assumption; bring-up measures the case temperature (DEL-HW-BRING-UP.C11)
 
 == (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2
    sheet-implied junction-to-ambient 340 K/W; the LED's 31.6 mW (VF 1.5 V, IF 29.5 mA at the top rail) heats the junction by about 10.7 K (a derivation)
@@ -74,6 +74,6 @@ NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (divisio
    air 50 degC: headroom to the TOPR ambient limit 85 degC = 35 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 27.3 K after self-heating
    air 70 degC: headroom to the TOPR ambient limit 85 degC = 15 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 7.3 K after self-heating
 NOTE  at 45 to 50 degC air (the owner's working figure for the wall board, 2026-10-28, unmeasured) 35 to 40 K of neighbour rise is permitted against the 85 degC ambient limit; the rise is not measured
-NOTE  at 70 degC air the neighbour rise permitted is 15 K (ambient limit) and 7.3 K (junction share): the division record's A8 takes 15 K as the allowance for an 85 degC part, an assumption, unmeasured; DEL-HW-BRING-UP.C13 reads it
+NOTE  at 70 degC air the neighbour rise permitted is 15 K (ambient limit) and 7.3 K (junction share): the division record's A8 takes 15 K as the allowance for an 85 degC part, an assumption, unmeasured; DEL-HW-BRING-UP.C11 reads it
 
 exit 0
