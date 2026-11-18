@@ -2,12 +2,12 @@ id: DEL-HW-MAIN-BOARD-DESIGNED.C14
 type: criterion
 title: Each net the division record joins on an inner layer is routed clear of every mounting hole, slot and low-voltage block, and each route is recorded
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 closes_by: cascade
 text: |
-  The valve-relay net from its tab and the pump-strip net from its tab are among them. The signed separation basis is kept from all other copper on that layer, and where a net cannot be so routed the floorplan in the division record is revised and the basis is not relaxed.
+  The valve-relay net from its tab and the other nets the division record's route table lists are among them; a net the finished board routes on the surface instead is recorded with its surface route and the signed figures it is held to. The signed separation basis is kept from all other copper on that layer, and where a net cannot be so routed the floorplan in the division record is revised and the basis is not relaxed.
 links:
   - target: DEL-HW-MAIN-BOARD-DESIGNED
     type: criterion-of

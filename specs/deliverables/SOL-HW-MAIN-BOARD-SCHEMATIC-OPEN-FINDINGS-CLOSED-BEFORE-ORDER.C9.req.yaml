@@ -1,0 +1,13 @@
+id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C9
+type: criterion
+title: The coil flyback pulse is compared with the zener's curve by power, with the inductance limit stated and carried to a reading
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The record compares the pump coil's flyback pulse with the clamp zener's published pulse curve by power and energy, extrapolating the curve beyond its 10 ms end conservatively and saying so; states the coil inductance up to which the pulse stays within that curve; compares the record's own worst case of 4.73 H with it and states the result; and, because no source bounds the coil's inductance (the maker's sheet prints none), carries the inductance of a spare relay's coil to a bring-up reading with that limit and names the part change that follows a reading above it.
+  Out of scope: choosing a different zener unless a reading exceeds the limit, and the reading itself.
+links:
+  - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
+    type: criterion-of

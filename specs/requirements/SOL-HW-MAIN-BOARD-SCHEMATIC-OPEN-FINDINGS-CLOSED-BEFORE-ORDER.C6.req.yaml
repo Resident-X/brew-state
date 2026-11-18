@@ -1,7 +1,7 @@
 id: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER.C6
 type: criterion
 title: The coil flyback pulse is held to the zener's published pulse curve from a measured or bounded coil inductance
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: analysis
@@ -12,3 +12,5 @@ text: |
 links:
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-OPEN-FINDINGS-CLOSED-BEFORE-ORDER
     type: criterion-of
+attributes:
+  deprecation_reason: The criterion asked for a coil inductance measured on the owner's coil or bounded from a stated source; the maker's sheet prints no inductance and no other source bounds it, so the record carries it to a reading instead. The owner signed this off in session. Its successor C9 states what the record does.
