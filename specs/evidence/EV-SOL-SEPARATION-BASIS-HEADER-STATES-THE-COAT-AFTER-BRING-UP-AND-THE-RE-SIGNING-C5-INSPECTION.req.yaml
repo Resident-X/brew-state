@@ -2,15 +2,28 @@ id: EV-SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIG
 type: evidence
 title: inspection evidence for SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C5
 status: active
-version: 1
+version: 2
 result: pass
 method: inspection
 observed_at: "2026-11-18T02:31:48.87634Z"
 artifact:
   kind: external
-  reference: hardware/tools/tests/test_separation_basis_record.py::test_the_record_and_every_exception_carry_the_re_signing_day_and_the_header_states_it
-  artifact_version: 4eaf4c9f
+  reference: hardware/sunbeam-em7000/main-board/ and docs/sunbeam-em7000/ (every .md and .yaml, frozen review rounds excluded)
+  artifact_version: 123d64ad
 attested_by: crun-c4621e669c278dc4
+text: |-
+  Stated check of SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C5, made at commit 123d64ad. The criterion covers every document in the main-board folder (apart from the frozen rounds of the layout and schematic review records) and the machine-record folder; the record's own header test is not this check.
+
+  Method: a pattern scan, at commit 123d64ad, of every .md and .yaml file under hardware/sunbeam-em7000/main-board/ and docs/sunbeam-em7000/, excluding the frozen review rounds in layout-review.md and schematic-review.md, for lines that mention the separation basis, acceptance, signing, the coat or an exception and match: an earlier signing day (signed 2026-11-05/06/07/14, re-signed, accepted ... 2026-11-05/06/07, accepted_on 2026-11-06/07/14), 'unsigned', 'draft', 'until the owner signs', or the coat applied before energising or before mains is first connected. 70 lines matched. Each is classified below. The scan is a pattern scan: a statement worded outside those patterns is not covered, and the documents were not each read in full.
+
+  Result by class:
+  (1) The basis's own signature statements. Each names 2026-11-05 and 2026-11-06 (and 2026-11-07 or 2026-11-14 where it says so) as the day that acceptance was made and says it is superseded on every entry by the owner's acceptance of 2026-11-18, or states the record's current day as 2026-11-18: docs/sunbeam-em7000/controller-board-design-constraints.md:426; controller-board-division.md:183 and :1200 and :1202 (the entries 'were drafts when this section was written and are signed with the rest of the record'); main-board/circuit-verdicts.md:47, :102, :594, :610; design-rules.md:73, :76, :79, :83; fabrication-notes.md:197 and :198 (42 entries, each accepted_on 2026-11-18, earlier days named as first acceptances); open-items.md:7 (re-signed 2026-11-06, then 'On 2026-11-18 the owner accepted the whole record again ... each of its 42 exceptions read accepted_on 2026-11-18, the earlier days above being history') and :14. No hit gives an earlier day as the day the record or an entry now carries.
+  (2) Dated notes about the state when written, each carrying the later acceptance: main-board/schematic-spec.yaml:1750 and :4052, sheets/102-interlock.yaml:81, sheets/E1-supply-voltage-and-current-measurement.yaml:121 ('the draft, unsigned at this commit ... the owner has since accepted the whole record, on 2026-11-18').
+  (3) Scoped history: main-board/pre-order-check-result.md:5, :7, :9, :65, :69, :71 describe the unsigned basis; line 9 states that every such statement describes commit 200c0ae6 only, before the basis was signed (5841a9bb), and the run's counts are kept as that run's record.
+  (4) Statements about other records or other mechanisms, out of the criterion: the signature days of DEC-MAIN-BOARD-RESIDUAL-RISKS-ACCEPTED-BY-OWNER acceptances (docs constraints :180 to :194; open-items.md :16 to :19, :140; owner-sign-off.md :13, :37, :130; traceability.md :68); the derating policy's own days, 2026-11-05 for eight entries and 2026-11-14 for D701 and D711 (derating-policy.yaml :200 to :262; criterion text keeps the policy at 2026-11-05 for its entries, and the 2026-11-14 entries are the policy's own entry days); design-rules.md:12, :21, :104 (other deviations and stack change); severity-policy.yaml:6 (the mechanism of that policy); open-items.md:9 and :42; design-rules.md:61 and controller-board-division.md:198 (the drafting history of entries, not a signature state).
+  (5) No document in the scanned folders says the coat is applied before the boards are energised or before mains is first connected (the pattern 'coated before', 'before they are energised', 'before the boards are energised', 'before mains is first connected' matches only open-items.md:9, which says the thermal cutoff is to be fitted before mains is first connected, not the coat).
+
+  Clause check: each statement of the day the record or an entry now carries says 2026-11-18 (class 1: design-rules.md:73-83, controller-board-design-constraints.md:426, fabrication-notes.md:197-198, open-items.md:7); each statement of an earlier signing day (2026-11-05, 06, 07, 14) names it as the day that acceptance was made and not as the day an entry now carries; none says the coat is applied before the boards are energised or before mains is first connected; the derating policy keeps 2026-11-05. The criterion is met on this scan. Not covered: a statement outside the patterns; the pull request text, which does not yet exist in final form (this criterion names folders, not the pull request).
 links:
   - target: SOL-SEPARATION-BASIS-HEADER-STATES-THE-COAT-AFTER-BRING-UP-AND-THE-RE-SIGNING.C5
     type: satisfies
