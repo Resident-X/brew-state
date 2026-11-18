@@ -170,6 +170,27 @@ jobs:
           done
           kicad-cli version
 
+      # KiCad's own Python, which the layout tools and their tests run pcbnew
+      # with, is the system interpreter once the kicad package is installed; the
+      # step asserts it can import pcbnew, so a runner without it fails here as
+      # provisioning, and hands the interpreter and the stock footprint libraries
+      # the install brought to the verification as KICAD_PYTHON and
+      # KICAD_FOOTPRINTS, which the board tasks read.
+      - name: Locate KiCad's own Python and footprint libraries
+        run: |
+          set -euo pipefail
+          interpreter="/usr/bin/python3"
+          if ! "${interpreter}" -c 'import pcbnew; print(pcbnew.Version())'; then
+            echo "${interpreter} cannot import pcbnew, so the layout tools that run KiCad's scripting interface have no interpreter" >&2
+            exit 1
+          fi
+          if [ ! -d /usr/share/kicad/footprints/Capacitor_SMD.pretty ]; then
+            echo "KiCad's stock footprint libraries are not at /usr/share/kicad/footprints" >&2
+            exit 1
+          fi
+          echo "KICAD_PYTHON=${interpreter}" >> "${GITHUB_ENV}"
+          echo "KICAD_FOOTPRINTS=/usr/share/kicad/footprints" >> "${GITHUB_ENV}"
+
       - name: Install the rasteriser
         env:
           # renovate: datasource=github-releases depName=linebender/resvg

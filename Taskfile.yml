@@ -27,6 +27,18 @@ vars:
   # KiCad's command-line tool is often installed off the search path; point at
   # it with KICAD_CLI=... (hardware/README.md gives the usual place per system).
   KICAD_CLI: '{{.KICAD_CLI | default "kicad-cli"}}'
+  # KiCad's own Python, which the layout tools and their tests run pcbnew with:
+  # KICAD_PYTHON=... when set, else the macOS install's interpreter when it is
+  # there, else the system python3 when that can import pcbnew (the Linux
+  # package), else empty, and a tool or test that needs it stops naming the
+  # variable (hardware/README.md gives the usual place per system).
+  KICAD_PYTHON:
+    sh: 'if [ -n "${KICAD_PYTHON:-}" ]; then echo "$KICAD_PYTHON"; elif [ -x "/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3" ]; then echo "/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3"; elif python3 -c "import pcbnew" >/dev/null 2>&1; then command -v python3; fi'
+  # The folder of KiCad's stock footprint libraries, for the main board's layout
+  # chain when a block takes a part from them: KICAD_FOOTPRINTS=... when set,
+  # else the first usual place that exists, else empty.
+  KICAD_FOOTPRINTS:
+    sh: 'if [ -n "${KICAD_FOOTPRINTS:-}" ]; then echo "$KICAD_FOOTPRINTS"; else for d in /Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints /usr/share/kicad/footprints; do if [ -d "$d" ]; then echo "$d"; break; fi; done; fi'
   # resvg, which turns the review views into images, may be installed off the
   # search path too; point at it with RESVG=... (hardware/README.md says where to get it).
   RESVG: '{{.RESVG | default "resvg"}}'
@@ -664,6 +676,8 @@ tasks:
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
+      KICAD_PYTHON: "{{.KICAD_PYTHON}}"
+      KICAD_FOOTPRINTS: "{{.KICAD_FOOTPRINTS}}"
       RESVG: "{{.RESVG}}"
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
       SILKSCREEN_PYTHON: "{{.SILKSCREEN_PYTHON}}"
@@ -679,6 +693,8 @@ tasks:
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
+      KICAD_PYTHON: "{{.KICAD_PYTHON}}"
+      KICAD_FOOTPRINTS: "{{.KICAD_FOOTPRINTS}}"
       RESVG: "{{.RESVG}}"
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
       SILKSCREEN_PYTHON: "{{.SILKSCREEN_PYTHON}}"
