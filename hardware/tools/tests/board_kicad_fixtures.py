@@ -70,7 +70,8 @@ def place_records(seed, design):
 
 
 def basis_record(seed, design):
-    """The separation basis record the check holds `design` to, as (path in the seed's copy, whether it sits in the design's own folder).
+    """The separation basis record the check holds `design` to, as (path in the seed's copy, whether it is a proof design's own record, one in the design's own folder of a design
+    outside every machine folder; a machine design's own record carries that design's signed entries).
 
     The record is found as the check finds it, the nearest at or above the design's folder. Every record the check finds
     above the folder is placed in the copy too, at the same place from the repository's root, where the check finds it.
@@ -79,7 +80,35 @@ def basis_record(seed, design):
     if found is None:
         raise AssertionError(f"no separation basis record at or above {design}")
     place_records(seed, design)
-    return os.path.join(seed.root, found), os.path.dirname(found) == design
+    place_siblings(seed, design)
+    return os.path.join(seed.root, found), os.path.dirname(found) == design and board_check.machine_folder(design) is None
+
+
+def place_siblings(seed, design):
+    """Put every other tracked design of `design`'s machine folder into the seed's copy, with the records each finds.
+
+    A design's far channels are judged against the pin allocation records of the other designs in its machine folder,
+    which the check finds by discovering those designs, so a copy of one design alone fails a design that lists a far
+    channel for lacking the design that lists the channel. A design outside a machine folder has no siblings.
+    """
+    folder = board_check.machine_folder(design)
+    if folder is None:
+        return
+    tracked = subprocess.run(["git", "ls-files", "*.kicad_pro"], cwd=board_prove.REPO, capture_output=True,
+                             text=True, check=True).stdout.split()
+    for project in tracked:
+        other = os.path.dirname(project)
+        if other == design or not (other + "/").startswith(folder + "/"):
+            continue
+        held = board_prove.committed(other)
+        if held is None:
+            raise AssertionError(f"git holds no committed files for {other}")
+        for path, content in held.items():
+            target = os.path.join(seed.root, path)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            with open(target, "wb") as handle:
+                handle.write(content)
+        place_records(seed, other)
 
 #: The environment variable that, set to anything, leaves out every test that needs the seeded-fault proof.
 WITHOUT_PROOF = "BOARD_TESTS_WITHOUT_PROOF"
