@@ -226,3 +226,13 @@ The class swept: a record that counts the board's parts as 21, names H1 to H4 as
 
 The wall-board-only run of the pre-order check (a clone with the working tree, `/tmp/wl/wallonly.py`) gives 51 violations against 57 before: `missing_footprint` 21 to 15 (the six deleted parts), `parts_catalogue` 6 (RV911, RV921, T911, T921, U911, U921, unchanged), no `parts_part`, no new class; the other classes (`board_minimums`, `custom_rules`, `ignored_check`, `invalid_outline`, `mains_declaration`, `workmanship_figure`, `workmanship_rule`) belong to the board layout not yet placed. No record of this folder names a part the netlist no longer holds, except as a statement that it was deleted.
 
+## 2026-11-19: W-9 added to the owner sign-off record (12 entries, W-1 to W-9, 9 in the owner's words)
+
+Change: `owner-sign-off.md` gains W-9 (the owner's "1a/1b/1c. sign as accepted" of 2026-11-19 on the through-hole figures as first put, with his plate earth-point question and a marked re-confirmation owed if the package becomes the surface-mount part); its intro, section and subsection counts, "Look at these first" and the carried table are updated; `open-items.md` gains the W-9 reference in the re-declaration list and a carried "Plate earth point (case step)" item. Scope: `*.md` in this folder, line by line, after the change; `schematic-review.md` is frozen history and was not edited, its counts are given apart.
+
+| Phrasing | Live lines (files) | In `schematic-review.md` | What the live lines are |
+|---|---|---|---|
+| `11 entries` | 1 (1: this file) | 4 | the line is the 2026-11-19 structure-rebuild record above, which states the count of that rebuild and stays as written; `owner-sign-off.md` now reads 12 entries |
+| `W-1 to W-8` | 0 | 0 | the intro's range was changed to W-1 to W-9 |
+| `8 are` | 1 (1: this file) | 2 | the same rebuild record; `owner-sign-off.md` now reads 9 are David Baker's own acceptance |
+| `W-9` | 11 (3: `owner-sign-off.md` 9, `open-items.md` 2, this file counted apart) | 0 | the entry, the intro counts, the look-first bullet, two carried-table cells and row, the two open-items lines |
