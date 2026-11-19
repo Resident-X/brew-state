@@ -44,6 +44,6 @@ links:
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 independent brief reviewer
-  fingerprint: f46515e544e7755479329f8f3160633630a1ced38b6d8b150fbdc0be1fc18778
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 945165be5ac2f160328c3f528bdcf02b1de0ce774f6077ca6a39c84c613f0f43
   gating_profile: ""
