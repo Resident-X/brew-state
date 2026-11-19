@@ -286,3 +286,20 @@ The class swept: a record that names the plain MOC3083SR2M (C111561) as the part
 | `13 entries`, `W-1 to W-10`, `(10 entries)`, `(6 entries: ... W-10)` | 0 live | 0 | now 14 entries, W-1 to W-11, 11 in his words, 7 entries under 2026-11-19 |
 
 `derating-policy.yaml` and `board-rules.yaml` name neither number and are unchanged. The sections of this file above are history and stay as written.
+
+## 2026-11-19: the front OUT_C copper below U911 pin 6 deleted, the back OUT_C diagonal widened to 4.7 mm (workmanship review, copper pass 2)
+
+The class swept: a record that states the old front-layer extent of OUT_C (the strip x 41.55 to 46.55, y 47.75 to 69.6, now deleted), the old 3.5 mm diagonal, or the single-layer rise of about 3.5 K, left live after the copper changed. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, files `*.md` and `*.yaml`, regular expressions run line by line over the working tree after the corrections of this change; counts are lines.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `69.6` / `69.65` | 6 | 0 stale | `layout-plan.md` 1 (Pass 1, the board as judged at its Board judged commit; a pass the router has run after is never changed), `layout-review.md` 5 (the reviewer's verdict rows and the finding's What and where, frozen; the corrected Closed by of 1.1 and 1.8, where `y 69.6 to 80.9` is still the B.Cu-only stretch under the spur) |
+| `80.9` / `80.85` | 12 | 0 stale | `layout-plan.md` 1 (Pass 1), `layout-review.md` 4 (as above), `controller-board-division.md` 7 (the main board, not this one) |
+| `x 41.55 to 46.55` | 3 | 0 stale | the strip width, still the back-layer strip's: `layout-plan.md` 2 (Pass 1 and the plan row), `layout-review.md` 1 |
+| `about 3.5 K` | 1 | 1 fixed | `layout-review.md` finding 1.1 Closed by, now about 3.8 K at 4.7 mm and about 3.5 K at 5.0 mm, about 4 K for the run |
+| `3.5 mm wide`, `3.54 mm` | 2 | 1 fixed | `layout-review.md` 1.1 (the diagonal, now 4.7 mm); `controller-board-division.md` 1 is the main board |
+| `OUT_C front`, `front-layer OUT_C`, `front-layer strip` | 3 | 1 fixed | `layout-review.md`: 1.1 Closed by fixed; the other two are the reviewer's rows and What and where, frozen |
+| `single-layer` | 8 | 0 stale | `layout-plan.md` 5 (plan rows R1 and Pass 1, frozen), `layout-review.md` 3 (frozen rows and the corrected 1.1) |
+| `11.05 mm` | 4 | 0 stale | the plan's figure for the stretch, quoted against the board: `layout-plan.md` 2, `layout-review.md` 2 |
+
+`board-rules.yaml`, `design-rules.md`, `fabrication-notes.md`, `circuit-proof.md` (its "about 3.5 A" is a rail current) and `owner-sign-off.md` quote none of the phrases. `open-items.md` gained the blade backing item and states the R1 stretch in no figure.
