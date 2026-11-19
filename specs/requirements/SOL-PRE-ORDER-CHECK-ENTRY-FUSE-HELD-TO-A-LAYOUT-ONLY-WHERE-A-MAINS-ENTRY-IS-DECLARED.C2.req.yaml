@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C2
+type: criterion
+title: The readme and the design method state that the entry fuse is held to the layout only where the design declares a mains entry
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  hardware/README.md and docs/board-design-method.md describe the record's entry fuse as checked against the layout of a design that declares a mains entry, and as named but not checked against the layout of a design that declares none. Out of scope: any other paragraph of either document.
+links:
+  - target: SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED
+    type: criterion-of

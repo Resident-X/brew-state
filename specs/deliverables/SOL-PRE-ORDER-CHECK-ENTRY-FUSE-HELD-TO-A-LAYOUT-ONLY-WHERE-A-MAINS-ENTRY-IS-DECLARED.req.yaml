@@ -1,0 +1,30 @@
+id: SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED
+type: deliverable
+category: solution
+title: A record's entry fuse is held to a design's layout only where the design declares a mains entry
+status: active
+version: 1
+text: |
+  Corrects the pre-order check's reading of a record's entry fuse. The signed separation basis record names the machine's entry fuse (the mains_to_mains entry_fuse key), which on this machine sits on the main board at the retained mains lead. The check requires that reference to exist on the layout of every design the record holds, including a design that declares MAINS_ENTRY none, a board that is switched from a supply the entry fuse already protects and has no mains entry of its own. For such a design the only reference the record can truthfully name is the fuse on another board, so the design fails separation_basis for a defect no change to it can clear, and the record cannot be made untrue to satisfy the check. The method's description of the check says the fuse is held to the layout where the design declares a Mains_Entry class at all; the code holds it everywhere, so the behaviour the criteria ask for is restored and no criterion is changed.
+
+  Settled for the build:
+  - For a design that declares MAINS_ENTRY none (no Mains_Entry net class), the record's entry_fuse is required to be present in the record as a non-empty key, as the missing-key rule already asks, and is not required to be a reference of the design's layout.
+  - For a design that declares MAINS_ENTRY present, nothing changes: the entry fuse must be a reference of the layout with one pad on a Mains_Entry net and one on a Mains net outside it, and the failure names the fuse and the nets as it does now.
+  - Nothing else changes: the held_at_reinforced reading, the figures, the mains_declaration checks, the failure text's structure for a design with a mains entry.
+
+  Locus: mains_pairs in hardware/tools/board_check.py (the first check of the entry fuse's reference), its tests under hardware/tools/tests/ (fixtures for a design with MAINS_ENTRY none and one with it present, synthetic designs and records in a temporary directory), the seeded case in hardware/tools/board_prove.py where it states the rule, hardware/README.md and docs/board-design-method.md where they describe the entry fuse's check.
+rationale: |
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 and .C3 ask of the verification: a design that is right fails nothing, and a failing item names a real defect. As built the check fails the heater wall board, which has no mains entry of its own, for naming the machine's entry fuse (a part of the main board) in the record the two boards share; no change to the wall board can clear that line, and the record cannot be made untrue to satisfy it. The method states the fuse is held to the layout where the design declares a Mains_Entry class at all; the code held it everywhere.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 78effa768c9116ec1902e98498e936a678d74d3b3261d1750bb677359fbffc9b
+  gating_profile: ""
