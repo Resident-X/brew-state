@@ -2,14 +2,14 @@
 
 This is the skeleton of the record in the form of the main board's `circuit-verdicts.md`: every part, every net and every sheet of `schematic-spec.yaml` is listed once, with the catalogue items of `docs/board-design-method.md` that bear on it (items PINV, PARTS, CAPD, BUSL, STRAP, RCFL, SUPPLY, POLAR, CABLE, FAULT, INDEP, BARRIER, SURGE, ESD, TOUCH, EMSRC, DERATE, DRAW). **No verdict is written here: every row reads "not yet reviewed"**, and the review rounds fill the verdict column (PASS, N/A or FINDING; a FINDING is closed by a change to the sheets, by a recorded reason, or is held by the owner and listed in `open-items.md`). The arithmetic the rounds judge against is in `circuit-proof.md`; the facts about the bring-up path are in `bring-up-provision.md`.
 
-The board has 5 sheets (the four drawn sheets and the root sheet), 14 parts and 16 nets as the netlist writes them (the 12 named nets of `schematic-spec.yaml` and the 4 `unconnected-` nets of the two opto-triacs' pins 3 and 5, written by the netlist as `unconnected-(U911-NC-Pad3)` and the like; amended 2026-11-18, the record had `-Pad3`). Its references are the 9xx series, chosen so that none equals a reference of the main board or of the separation basis's exceptions (`schematic-spec.yaml`, drawing notes). It places no controller, no ground net and no test point.
+The board has 5 sheets (the four drawn sheets and the root sheet), 21 parts (the 14 electrical parts and, amended 2026-11-19, the seven pinless mechanical parts H1 to H4 and FID1 to FID3 on sheet 3) and 16 nets as the netlist writes them (the 12 named nets of `schematic-spec.yaml` and the 4 `unconnected-` nets of the two opto-triacs' pins 3 and 5, written by the netlist as `unconnected-(U911-NC-Pad3)` and the like; amended 2026-11-18, the record had `-Pad3`). Its references are the 9xx series, chosen so that none equals a reference of the main board or of the separation basis's exceptions (`schematic-spec.yaml`, drawing notes). It places no controller, no ground net and no test point.
 
 | Group | PASS rows | FINDING rows | N/A rows | Not yet reviewed |
 |---|---|---|---|---|
-| Parts | 0 | 0 | 0 | 14 |
+| Parts | 0 | 0 | 0 | 21 |
 | Nets | 0 | 0 | 0 | 16 |
 | Sheets and the board | 0 | 0 | 0 | 10 |
-| Total | 0 | 0 | 0 | 40 |
+| Total | 0 | 0 | 0 | 47 |
 
 **Library symbol names (finding 3.2).** The library item names of T911 and T921 (`Triac_Thyristor:BTA16-600B`) and of U911 and U921 (`Relay_SolidState:MOC3083M`) are KiCad's stock symbol names for these families, not the fitted part numbers: `Triac_Thyristor:BTA16-600B` is KiCad's symbol for the BTA16 family's pinout (1 A1/MT1, 2 A2/MT2, 3 G), and `Relay_SolidState:MOC3083M` is onsemi's own named symbol. The fitted parts are carried by each instance's own Value, Description, Datasheet, MPN, LCSC and Rating fields (the 800 V BTA16-800BWRG triac, the onsemi MOC3083M opto-triac). The symbol text cached inside sheets 100 and 200 (a '600V' description, the older onsemi datasheet address) is the library's and is not edited, because the symbol is stock; the check compares the instance fields (schematic review finding 3.2).
 
@@ -93,6 +93,13 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 14 parts and 
 | item | catalogue items | verdict | evidence or closing action |
 |---|---|---|---|
 | J931 (WB_LV3, XFCN PZ254V-11-03P, C2937625) | PINV-1, CABLE-1, POLAR-1, SUPPLY-1, ESD-1, DERATE-2 | not yet reviewed | |
+| H1 (M3 case-screw hole, one of the starting set) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 |
+| H2 (M3 case-screw hole, one of the starting set) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 |
+| H3 (M3 case-screw hole, one of the starting set) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 |
+| H4 (M3 case-screw hole, one of the starting set) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 |
+| FID1 (global fiducial) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 |
+| FID2 (global fiducial) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 |
+| FID3 (global fiducial) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 |
 
 ### Nets
 

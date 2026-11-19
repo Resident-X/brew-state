@@ -566,6 +566,7 @@
 		)
 		(property "Value" "MountingHole"
 			(at 127 127.635 0)
+			(hide yes)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -644,6 +645,7 @@
 		)
 		(property "Value" "MountingHole"
 			(at 139.7 127.635 0)
+			(hide yes)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -722,6 +724,7 @@
 		)
 		(property "Value" "MountingHole"
 			(at 152.4 127.635 0)
+			(hide yes)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -800,6 +803,7 @@
 		)
 		(property "Value" "MountingHole"
 			(at 165.1 127.635 0)
+			(hide yes)
 			(effects
 				(font
 					(size 1.27 1.27)

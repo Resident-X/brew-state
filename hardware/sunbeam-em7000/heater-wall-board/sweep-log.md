@@ -190,3 +190,20 @@ The class swept: statements that fix four mounting holes (or H1 to H4) as the wa
 | `metal screw\|plastic boss\|into the printed case.s boss` | 0 | 4 (main board) |
 
 The change of count is a pinless-part change in the schematic that the main session makes and verifies with the parity check; the records name H1 to H4 only as the starting set. The wall-board-only run of the pre-order check gives 57 violations before and after this change, the same lines (the board layout is not yet placed), and `check_spec.py sheets` reports 0 errors and 0 warnings.
+
+## 2026-11-19: round 12 findings 12.2 to 12.5 (parts counts, mounting form in two outside records, hedge summary)
+
+The class swept: a record that counts or lists the board's parts as 14 where the netlist holds 21 (14 electrical parts plus H1 to H4 and FID1 to FID3), and a live statement of the earlier ear-and-bracket form outside an amended or history section. Fixed: `circuit-verdicts.md` (21 parts, parts rows 21, total 47 rows, seven sheet 3 rows), `circuit-proof.md` grading table (one not-applicable row for the seven, the heading sentence limited to electrical parts), `open-items.md` (the Rating and LCSC statement corrected; the in_bom exclusion carried to layout stays; 'every part is graded' says electrical), `layout-hedges.md` (hedge 1 void, hedge 2 limit dropped, the others stand), and amended notes added to `docs/sunbeam-em7000/controller-board-cost-estimate.md` (three sections), `controller-board-function-forms.md` (three sections) and `docs/board-design-lessons.md` (the wall board start section).
+
+| Phrasing (docs, hardware, firmware; .md .yaml .py .txt .log, outside this log, schematic-review.md and layout-plan.md) | Files with a hit | Live hits left |
+|---|---|---|
+| `\bears?\b` | 10 | 0 (every hit is an amended note, history or the division record's annotated sections) |
+| `two mounts` | 3 | 0 (division and constraints under their notes; reference-machine.md is the original machine's own lid mounts) |
+| `57.0 x 42.5` | 8 | 0 (cost estimate and function forms now noted; board-design-lessons.md now noted) |
+| `89.0 mm` | 3 | 0 |
+| `standing leg`, `board leg`, `mounting ears` | 8, 3, 6 | 0 |
+| `right-angle bracket`, `L bracket`, `2 662` | 3, 1, 2 | 0 |
+| `14 parts` | 2 | 0 (circuit-proof.md says 14 electrical parts beside the seven; the cost estimate's 14 parts are priced parts of the whole project, a different count) |
+| `40 rows`, `fourteen parts`, `ear mount` | 0 | 0 |
+
+`controller-board-function-forms.md` is read by `firmware/emulation/tests/test_casting_peak.py` (prose guard on the removal-interval wording only); the cost estimate is pinned by no test, generated record or `HOST_READS` entry.

@@ -25,7 +25,7 @@ The record `docs/board-design-method.md` (section "Proving value-critical circui
 
 ## Grading every part against the enclosure air
 
-Every part graded against 70 degC (the constraints record's assumption; 45 degC is this board's own working figure, 70 degC its conservative case) and, for the triacs, against the 100 degC share ceiling. Shares are `derating-policy.yaml`'s. The air-to-part rise of a part that dissipates is stated where a figure exists; no part has its rating stretched.
+Every electrical part (the 14 parts that carry a current or a voltage) graded against 70 degC (the constraints record's assumption; 45 degC is this board's own working figure, 70 degC its conservative case) and, for the triacs, against the 100 degC share ceiling. Shares are `derating-policy.yaml`'s. The air-to-part rise of a part that dissipates is stated where a figure exists; no part has its rating stretched.
 
 | Position | Part and rating (source) | Temperature rating and share | At 70 degC air | At the 100 degC triac ceiling | Result |
 |---|---|---|---|---|---|
@@ -35,6 +35,7 @@ Every part graded against 70 degC (the constraints record's assumption; 45 degC 
 | `RV911`, `RV921` | 07D471K, -40 to +105 degC, 0.25 W (Rev 1.2) | varistor class, share 1 | 35 K under 105 degC at 70 degC (60 K at 45 degC); dissipation in service is leakage only | not applicable | holds |
 | `J911`, `J921`, `J941` | TE 63849-1 blade; the drawing states no current or temperature rating (unsourced); carried 15 A against 5.38 A steam, 4.80 A coffee, 10.18 A together on `J941` | blade terminal and joiner class, share 1 against the carried 15 A | 10.18 A on `J941` against the carried 15 A (x1.47); no temperature rating stated | not applicable | holds against the carried 15 A only; the maker's rating is absent (`open-items.md`) |
 | `J931` | XFCN PZ254V-11-03P, 3 A, -40 to +105 degC, 500 V AC withstanding voltage (a test figure; maker drawing REV A1 p.1, as the schematic review round 1 read it) | the class relay and connector of `derating-policy.yaml`, shares 1: the maker's 3 A and 105 degC are the limits (the position's rating states no working voltage, so `parts-specification.yaml` gives it the class none the form requires) | 59 mA at most on pin 1 (two LED lines of 29.5 mA each) and 5.25 V against 3 A (x51) and 105 degC against 70 degC air (35 K) | not applicable | holds on current and on temperature |
+| `H1` to `H4`, `FID1` to `FID3` | mechanical, pinless: M3 case-screw holes (a starting set, the layout chooses the final count) and global fiducials (amended 2026-11-19); no maker, no rating | not applicable: no electrical function, no current, no voltage, no dissipation | not applicable | not applicable | **graded not applicable**: nothing to derate; each hole's distance from `Mains` copper is the pre-order check's `mounting_hole` rule at layout, not a grade |
 
 ## Failure modes of the heater chain (schematic review finding 1.2, FAULT-1)
 

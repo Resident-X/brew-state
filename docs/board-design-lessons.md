@@ -8,6 +8,8 @@ The lessons were first drawn from memory and then checked against the record. Tw
 
 ## Start here for the wall board
 
+> **Amended 2026-11-19, mounting form.** The wall board's size (57.0 x 42.5 mm), its bracket and the standing leg and board mounts named in this section and in step 9 are the earlier form's, kept for history. The mounting is now a flat spreader plate plus a printed case and a plain board with no ears and at least three mounting holes chosen at layout (`DEC-HEATER-WALL-BOARD-IS-A-PLAIN-RECTANGLE-SCREWED-TO-A-PRINTED-CASE-ON-A-FLAT-SPREADER`).
+
 The leaf is `SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT`, under `DEL-HW-HEATER-WALL-BOARD-DESIGNED`. At the time of writing it is blocked on its prerequisites and has no folder under `hardware/sunbeam-em7000/` yet. The division record sizes the board at 57.0 x 42.5 mm with 39 hand joints: two heater triacs on a bracket, an opto-triac, a blade terminal, a varistor and a three-way header. The two mains-presence confirms, the current sensor and the snubbers are off it (the confirms may return if the owner decides so, `controller-board-division.md`, owner decision D2). It places no controller, no clock and no converter input.
 
 Each step says whether the wall board can skip it, and why.
