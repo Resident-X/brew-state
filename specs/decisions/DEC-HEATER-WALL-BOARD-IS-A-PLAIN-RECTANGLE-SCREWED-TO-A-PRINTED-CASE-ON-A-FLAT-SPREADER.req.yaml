@@ -1,0 +1,37 @@
+id: DEC-HEATER-WALL-BOARD-IS-A-PLAIN-RECTANGLE-SCREWED-TO-A-PRINTED-CASE-ON-A-FLAT-SPREADER
+type: decision
+category: tactical
+title: The heater wall board is a plain rectangle screwed to a printed case that mounts on a flat spreader plate
+status: active
+version: 1
+rationale: |
+  Context: the division record drew the heater wall board with two mounting ears on its wall edge, each carrying a screw into a bracket leg that lies above the board. The owner tested that form against how it would be made and fitted on 2026-11-19 and found it hard to build: it needs sections cut from the spreader ends and holes drilled top-down through the bracket's thickness. A stock angle with a flange along the length does not work either: a TO-220's leads sit about 2.3 mm out from its tab face, so a flange or leg face next to the pads brings earthed metal inside the 2.6 mm basic creepage the separation basis states, and a flange over the board runs into the triacs. The owner proposed an enclosure the board is screwed to that also mounts to the spreader, so that the whole assembly comes off the wall as one unit and the mains copper cannot be touched without a tool. The owner also said a 3D-printed case is easy for the agent to model and may be assumed part of the solution, and that protection need only be enough for now. The owner's window width in the wall is unmeasured and is the main constraint, so a narrower board is worth having.
+
+  Decision: the spreader is a flat plate of aluminium that carries the two triacs and bolts to the wall, and nothing is cut from it. The board is a plain rectangle with four mounting holes and no ears. It is screwed to a printed case that screws to the spreader, and the case encloses the board with slots that let heat out and keep fingers off the mains copper until a tool is used. The case design, its material and its fixings are settled in the case-design step, within the limits below: the board's holes keep the separation basis's distance from mains copper, the case keeps the earthed spreader the basic creepage from mains copper, the triac tabs stay on the spreader's inner face under screws that the case lets a driver reach, the wall bolts stay outside the case so the spreader, case and board leave the wall as one unit, the blade terminals stay reachable with the lid on, and the board's width is not set by any bracket ear.
+
+  Why the board stays simple: every mechanical feature that the first form put on the board (ears, a lift over the board, mount holes at the bracket's ends) moves into the printed case, which costs nothing to change. The board then holds only the circuit, and its outline follows the parts and the mains separation. The case can still change after the board is ordered, which the board's ears could not.
+
+  Trade-offs: the case adds a printed part that the owner prints and fits, and a plastic near mains and near a warm plate whose material grade is the case step's to choose and bring-up's to measure (the owner's bring-up step measures the plate and part temperatures). Rejected: ears with corner brackets keep metal and holes next to mains copper and need a deeper board; a printed foot that grips the board's wall edge with no holes holds the board well but leaves the mains copper uncovered and gives no touch protection; a clamshell is stiffer but more complex than the owner needs now.
+
+  Reversibility: low cost. The decision constrains no board copper beyond a plain outline and four holes, so a different mount (ears, brackets, a foot) can replace the case later by superseding this decision and redrawing the outline, before the board is ordered; after it is ordered, only the case and plate can change.
+
+  Consequences: the criterion that records the earlier ear-and-leg form, SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5, says the wrong form for the board now drawn, and the division record and layout hedges that restate it are brought to match by the layout step; the requirement that a mounting solution exists, and the case design itself, are authored when the case step is taken.
+options_considered:
+  - option: A flat spreader plate carrying the triacs, a plain four-hole board with no ears, and a printed case that holds the board, covers its mains copper and mounts to the plate
+    reason_rejected: ""
+  - option: Two ears on the board screwed to a bracket leg above the board (the division record's form)
+    reason_rejected: needs sections cut from the spreader and holes drilled top-down, puts metal and holes beside mains copper, and gives no touch protection
+  - option: A stock angle with a flange along its length
+    reason_rejected: a leg face or flange beside the triac pads brings earthed metal inside the basic creepage, and a flange over the board runs into the triacs
+  - option: A printed foot that grips the board's wall edge with no holes
+    reason_rejected: holds the board but leaves the mains copper uncovered and gives no touch protection
+  - option: A printed clamshell that pinches the board
+    reason_rejected: stiffer than needed, and more to design and fit than the owner wants now
+chosen: A flat spreader plate carrying the triacs, a plain four-hole board with no ears, and a printed case that holds the board, covers its mains copper and mounts to the plate
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C16
+    type: addresses
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C15
+    type: addresses
+  - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5
+    type: addresses
