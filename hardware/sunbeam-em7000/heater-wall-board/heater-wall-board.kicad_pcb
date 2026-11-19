@@ -181,9 +181,9 @@
 	(footprint "Resistor_SMD:R_1206_3216Metric"
 		(layer "F.Cu")
 		(uuid "2c194fa3-e63a-476b-ae51-4252d30a97ad")
-		(at 62 38.502501 90)
+		(at 62 33.502501 90)
 		(property "Reference" "R911"
-			(at 3.000001 -3.500001 0)
+			(at 1.250001 -3.500001 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "37bbb86a-f9d8-4e94-bf40-c03f6059a516")
@@ -976,7 +976,7 @@
 		(uuid "8cebd7fc-e7d7-4f88-8be2-e94eedd2e190")
 		(at 24.5 90.04 90)
 		(property "Reference" "J941"
-			(at 5.5 0 0)
+			(at 6 -2.75 90)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "bf1c0ca0-3706-47c2-bf97-358ee19c4f7a")
@@ -1320,9 +1320,9 @@
 	(footprint "Varistor:RV_Disc_D9mm_W5.2mm_P5mm"
 		(layer "F.Cu")
 		(uuid "bf0a4a12-10e2-4136-afbd-dbdf09187f24")
-		(at 50.5 40 180)
+		(at 45.5 38 90)
 		(property "Reference" "RV911"
-			(at 1.5 -2.9 0)
+			(at 8.25 1.25 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "20e06929-551d-4be8-a4ff-77c267d207ea")
@@ -1334,7 +1334,7 @@
 			)
 		)
 		(property "Value" "07D471K"
-			(at 2.5 -2.35 180)
+			(at 2.5 -2.35 90)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(hide yes)
@@ -1347,7 +1347,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 0 0 180)
+			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "3bff8a80-8033-455f-a3e2-dfb9148c5a3e")
@@ -1358,7 +1358,7 @@
 			)
 		)
 		(property "Description" ""
-			(at 0 0 180)
+			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a09d8b22-6462-469c-a29a-9e5eff5d40ce")
@@ -1382,16 +1382,6 @@
 			(uuid "7222dc92-fb8f-4f40-afb7-ea61a83caab6")
 		)
 		(fp_line
-			(start -2 3.85)
-			(end 7 3.85)
-			(stroke
-				(width 0.15)
-				(type default)
-			)
-			(layer "F.SilkS")
-			(uuid "9f2331d3-4200-44f8-ba81-f01947aafe90")
-		)
-		(fp_line
 			(start -2 -1.35)
 			(end 7 -1.35)
 			(stroke
@@ -1412,6 +1402,16 @@
 			(uuid "40ed9e2b-ce3b-43e5-ad90-aa96fe39805e")
 		)
 		(fp_line
+			(start -2 3.85)
+			(end 7 3.85)
+			(stroke
+				(width 0.15)
+				(type default)
+			)
+			(layer "F.SilkS")
+			(uuid "9f2331d3-4200-44f8-ba81-f01947aafe90")
+		)
+		(fp_line
 			(start 7.25 -1.6)
 			(end 7.25 4.1)
 			(stroke
@@ -1420,16 +1420,6 @@
 			)
 			(layer "F.CrtYd")
 			(uuid "301f3af2-3e59-4cfe-b300-c1eadb6147ff")
-		)
-		(fp_line
-			(start -2.25 4.1)
-			(end 7.25 4.1)
-			(stroke
-				(width 0.05)
-				(type default)
-			)
-			(layer "F.CrtYd")
-			(uuid "f78701db-17ea-4d47-8f8d-275434d13893")
 		)
 		(fp_line
 			(start -2.25 -1.6)
@@ -1452,6 +1442,16 @@
 			(uuid "bd59dc8e-3a01-4153-b087-5f03012f7cb0")
 		)
 		(fp_line
+			(start -2.25 4.1)
+			(end 7.25 4.1)
+			(stroke
+				(width 0.05)
+				(type default)
+			)
+			(layer "F.CrtYd")
+			(uuid "f78701db-17ea-4d47-8f8d-275434d13893")
+		)
+		(fp_line
 			(start 7 -1.35)
 			(end 7 3.85)
 			(stroke
@@ -1460,16 +1460,6 @@
 			)
 			(layer "F.Fab")
 			(uuid "b36bb98c-2876-4892-a62f-d61af518b613")
-		)
-		(fp_line
-			(start -2 3.85)
-			(end 7 3.85)
-			(stroke
-				(width 0.1)
-				(type default)
-			)
-			(layer "F.Fab")
-			(uuid "ff7a504d-0e0e-41aa-81d7-a3d34dbc060d")
 		)
 		(fp_line
 			(start -2 -1.35)
@@ -1491,8 +1481,18 @@
 			(layer "F.Fab")
 			(uuid "f3f48af1-e318-43d7-a874-d4f523e78b4c")
 		)
+		(fp_line
+			(start -2 3.85)
+			(end 7 3.85)
+			(stroke
+				(width 0.1)
+				(type default)
+			)
+			(layer "F.Fab")
+			(uuid "ff7a504d-0e0e-41aa-81d7-a3d34dbc060d")
+		)
 		(fp_text user "${REFERENCE}"
-			(at 2.5 1.25 180)
+			(at 2.5 1.25 90)
 			(unlocked yes)
 			(layer "F.Fab")
 			(uuid "3c52b414-c792-45c7-8a52-ef65e9924777")
@@ -1504,7 +1504,7 @@
 			)
 		)
 		(pad "1" thru_hole circle
-			(at 0 0 180)
+			(at 0 0 90)
 			(size 1.6 1.6)
 			(drill 0.6)
 			(layers "*.Cu" "*.Mask")
@@ -1513,7 +1513,7 @@
 			(uuid "0538a49f-8b86-4cae-9390-1faf2a6655e8")
 		)
 		(pad "2" thru_hole circle
-			(at 5 2.5 180)
+			(at 5 2.5 90)
 			(size 1.6 1.6)
 			(drill 0.6)
 			(layers "*.Cu" "*.Mask")
@@ -2052,7 +2052,7 @@
 	(footprint "Varistor:RV_Disc_D9mm_W5.2mm_P5mm"
 		(layer "F.Cu")
 		(uuid "f81c42c6-2f02-468e-9e7d-02be06767c29")
-		(at 31 42.5 180)
+		(at 31 82.5 180)
 		(property "Reference" "RV921"
 			(at -5 4.75 0)
 			(unlocked yes)
@@ -2508,7 +2508,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "24cabf70-e11c-4383-a180-1f8cc7c33bd4")
+		(uuid "2d7d2ba4-4e30-4eed-b33d-07b6eae4b961")
 	)
 	(gr_line
 		(start 20 96)
@@ -2518,7 +2518,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "01b09201-774d-404b-81e7-4df332499a6c")
+		(uuid "054f1b88-1d56-49a0-9e9b-c35f52ca6b50")
 	)
 	(gr_arc
 		(start 51.75 50.94)
@@ -2529,7 +2529,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "9cb38055-bee0-4db0-8cd2-a7354e2a8336")
+		(uuid "6da84fe7-57ce-49fc-836f-4569f72e73e2")
 	)
 	(gr_line
 		(start 51.75 50.94)
@@ -2539,7 +2539,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "27c13db7-1175-485c-95af-8f155f12751a")
+		(uuid "47ed3e4a-5ba7-4010-9bf7-1d0f3fb37c50")
 	)
 	(gr_arc
 		(start 51.75 66.959999)
@@ -2550,7 +2550,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "39776214-fbd6-49e1-9006-2b63f18cc509")
+		(uuid "e151d0dd-b5e1-43a6-a2f6-a34cdd859376")
 	)
 	(gr_line
 		(start 51.75 66.959999)
@@ -2560,7 +2560,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "cf444f33-aa72-4477-9c9c-72c228a6f520")
+		(uuid "4b557a55-32f5-48d8-97b2-490ea7431dd5")
 	)
 	(gr_line
 		(start 65 20)
@@ -2570,7 +2570,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "8d739cd9-4906-4b64-96dc-521a638c09b2")
+		(uuid "02d510b7-4014-4d4d-a18b-322ffe7d136e")
 	)
 	(gr_line
 		(start 65 49.44)
@@ -2580,7 +2580,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "b3f1beba-4144-4eee-a5e2-851cafc8d62a")
+		(uuid "46b589a6-1605-4a19-bc52-555f68f8c703")
 	)
 	(gr_line
 		(start 65 50.94)
@@ -2590,7 +2590,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "527d0975-e2f4-4a2e-9320-b9bf0e8518c7")
+		(uuid "0dd7d665-8722-4794-9b0f-d375dd17c98d")
 	)
 	(gr_line
 		(start 65 65.459999)
@@ -2600,7 +2600,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "4b7fa799-9dfd-42f3-9e58-c49789f177d7")
+		(uuid "4a7724bd-11e7-4c9e-af87-f8c82f090171")
 	)
 	(gr_line
 		(start 65 66.959999)
@@ -2610,7 +2610,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "26673e36-c3fa-45e1-85d4-85d113518ad9")
+		(uuid "0d389e93-802f-4bc7-a7af-578f261bc150")
 	)
 	(gr_line
 		(start 65 96)
@@ -2620,7 +2620,7 @@
 			(type default)
 		)
 		(layer "Edge.Cuts")
-		(uuid "f5654efc-fbd2-4cbe-ad0b-40d17dd7e35c")
+		(uuid "f0407ba6-dd5e-4e91-b6a9-fc38f5a66443")
 	)
 	(embedded_fonts no)
 )
