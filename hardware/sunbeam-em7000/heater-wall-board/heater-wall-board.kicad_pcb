@@ -93,6 +93,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -121,7 +122,7 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Mounting Hole without connection"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -132,8 +133,30 @@
 				)
 			)
 		)
+		(property "LCSC" "none"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2882e1ca-29f7-5908-ba0d-90cee904a5a7")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "M3 screw, 3.2 mm non-plated hole"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1ef27284-41f4-545b-9c60-7f7a782829e3")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(path "/985f7f40-53a4-4976-b009-ad7089f78077/2f1bb753-75f9-4250-90a4-c3e8cb4f0c5b")
-		(attr exclude_from_pos_files exclude_from_bom)
+		(attr exclude_from_pos_files)
 		(duplicate_pad_numbers_are_jumpers no)
 		(fp_circle
 			(center 0 0)
@@ -190,6 +213,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -218,11 +242,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "41ba6d14-138e-4d95-a1e4-c1ae28069bae")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C18002"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fa03a2dc-09bd-5179-b345-4d6b3204d8ab")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1206W4F2000T5E"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5bb1e686-3424-5b2c-a7b3-873a19b95851")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5124d73b-a102-5177-a7e0-a9c1366b547f")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 250mW RCWV 7.07V 1206"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1211d16a-160c-5ce7-b59c-41ba89118df4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -316,6 +384,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -344,11 +413,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "d63071bf-693e-46cd-80e4-ea936161aded")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C18002"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fb3053b9-df0c-5bcc-b867-9ced4f07943e")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1206W4F2000T5E"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2697de88-a571-54bf-8a13-104e25deb0de")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7e12e3a8-9d5f-543b-84ae-3cf16646de78")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 250mW RCWV 7.07V 1206"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "63a149d9-202e-5f1c-a2c0-5fb000d8065d")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -442,6 +555,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -459,7 +573,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.onsemi.com/pdf/datasheet/moc3083m-d.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -470,11 +584,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Zero Cross Opto-Triac, Vdrm 800V, Ift 5mA, SMDIP6"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "f19133c6-1b02-4a8d-ba1d-fbe41725de6d")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C111561"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "170ab326-26f4-5965-a0a3-f0524af3b8ae")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "MOC3083SR2M"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e5748120-214b-504e-b22c-944f34f9fb11")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "onsemi"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6d706d96-63cc-5fdd-938e-fa22bdcfd0d9")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "800 V zero-cross opto-triac driver, SMT gull-wing (lead bend) package of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e50d2e01-3fb9-56dc-9d69-4251eedddaf0")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -594,6 +752,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -622,11 +781,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c8cbc3c0-8722-446f-a019-30c6aa37f841")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C86469"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "58e42a5e-61d7-512d-8993-b0b8f2981c10")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "63849-1"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "835310b0-dff4-5d5d-a387-aaf831d35623")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "TE Connectivity"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "58fc3be2-a7fa-55ed-bef6-243f0719927d")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced)"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "52c8f5be-76c4-54ed-8e69-2da9370ffeee")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -724,6 +927,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -741,7 +945,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.onsemi.com/pdf/datasheet/moc3083m-d.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -752,11 +956,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Zero Cross Opto-Triac, Vdrm 800V, Ift 5mA, SMDIP6"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "2d66e3bd-9544-414f-a6df-8e945e9bab97")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C111561"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "47b3621c-9bfc-53d0-99d9-c03687d563a1")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "MOC3083SR2M"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "88277518-7493-51fc-9cb5-1f9dc4a8a4d3")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "onsemi"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9f842d07-51a8-5569-90f0-30fa8006cf30")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "800 V zero-cross opto-triac driver, SMT gull-wing (lead bend) package of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "6e10fb43-ef14-5255-808c-2ac821e5ffa4")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -876,6 +1124,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -904,11 +1153,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "77634b5b-5a81-467d-851d-7937cb092562")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C18002"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "57c47bfa-d2ce-53a8-97d2-355b35d7be78")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1206W4F2000T5E"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "afe24804-aa0b-5a1f-bc8a-5d91db3e4e44")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fb965ebf-3b83-528e-a390-05fd4f1f08a1")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 250mW RCWV 7.07V 1206"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0d8c20fe-a0bf-5c74-9c8f-39699dedcc41")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1002,6 +1295,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -1019,7 +1313,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.st.com/resource/en/datasheet/bta16.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -1030,11 +1324,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "16A RMS, 800V Off-State Voltage, 50mA Sensitivity, Insulated, Snubberless Triac, TO-220"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "0339fe3f-56b1-44c7-8489-a10477e09d49")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C10065"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "644417db-cca0-5747-91cd-479b4adcf07e")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "BTA16-800BWRG"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ec8a2fcd-0a08-5d59-aa4a-589d9f4d9a50")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "STMicroelectronics"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "1ccb25b6-6d3f-5d4c-bd6a-dbea33738f6c")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "65a77215-ccd3-5089-900c-8bc743d6338c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1163,6 +1501,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -1191,11 +1530,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "9283bf43-127a-4c4a-b35d-4ed71a9dc654")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C86469"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8495d7b0-f0cc-53ef-ab5d-b80983330d92")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "63849-1"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "14bd35fa-9377-501e-b4f9-a9c512d251bd")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "TE Connectivity"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "7a078e38-c94d-5300-a51d-ab856dd29442")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced)"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8086698b-8b74-5ae3-a8e1-27a11137e7ad")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1293,6 +1676,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -1321,11 +1705,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x01, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "5eb6000e-5c5a-4092-93d5-c9bca0698b9a")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C86469"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "29750ab7-c226-590c-8ddc-7aecbdd6d979")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "63849-1"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "2512a170-f50b-5751-8d1f-4e017bb3cc2e")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "TE Connectivity"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "96c64f9d-62cd-5338-a96d-54989082f3ed")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced); carries the heater return current, 5.38 A steam plus 4.80 A coffee at most together"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "3ee136d7-f261-5bd3-8047-e520aa292574")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1423,6 +1851,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -1451,11 +1880,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x03, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 0 0 270)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "53af3d99-56f6-4295-a4bc-d05dcbcba918")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C2937625"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "8078db8a-76eb-58a4-8565-cb93d7a1dbe5")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "PZ254V-11-03P"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "ade14a2a-0208-5c06-ade6-3f6b948548e8")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "XFCN"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4e5ca5ff-d9b6-5916-bb33-3b58232153f9")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1x3 2.54 mm pin header, 3 A, vertical"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "85db2ed9-2921-5d66-8c6c-377999af938e")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1639,6 +2112,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -1667,11 +2141,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Voltage dependent resistor"
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "a09d8b22-6462-469c-a29a-9e5eff5d40ce")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C49072860"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "0d565a21-77e2-5a84-8579-580c25cc13ce")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "07D471K"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5ba9f238-8769-5faa-8f98-faed43c2883a")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Zhuhai Hongjiacheng (R+O)"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e62889e1-aa88-5156-9085-cf188ee30537")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "07D471K 470 V disc varistor, 5 mm lead pitch, 300 VAC / 385 VDC max, clamp 775 V at 10 A 8/20 us, non-polar"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "11f2cfd1-bd83-57b2-b55f-25032dbfb14c")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -1845,6 +2363,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -1862,7 +2381,7 @@
 				)
 			)
 		)
-		(property "Datasheet" ""
+		(property "Datasheet" "https://www.st.com/resource/en/datasheet/bta16.pdf"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -1873,11 +2392,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "16A RMS, 800V Off-State Voltage, 50mA Sensitivity, Insulated, Snubberless Triac, TO-220"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "3928a7ca-f9df-463c-96cd-c711a295d392")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C10065"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "4c9554fb-2a5e-58a9-9a08-06bea6a4fbab")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "BTA16-800BWRG"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a2571ea4-1e4c-528f-b71a-9192051aa622")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "STMicroelectronics"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "9b8fcf7f-eb93-51e1-a123-fda6cd0938d7")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "48dc7555-5277-53cc-a421-bd584431f715")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2006,6 +2569,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -2034,11 +2598,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 0 0 90)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "7da0304f-e5fe-4122-95a5-cb67a0ed0e15")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C18002"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5e48241a-c186-5c00-b08a-d4b66cdc043d")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "1206W4F2000T5E"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a41f8d73-94e5-507a-b7ab-c5c15d968028")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "UNI-ROYAL"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e0733651-783d-51d5-b271-4707321ef024")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "1% 250mW RCWV 7.07V 1206"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "51faed24-c109-52ae-9e9f-fce267fdae44")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2132,6 +2740,7 @@
 			(effects
 				(font
 					(size 1 1)
+					(thickness 0.15)
 					(line_spacing 0)
 				)
 			)
@@ -2160,11 +2769,55 @@
 				)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Voltage dependent resistor"
 			(at 0 0 180)
 			(layer "F.Fab")
 			(hide yes)
 			(uuid "c0c4d10d-af4c-49ce-a9b9-501e21bf2d69")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "LCSC" "C49072860"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "dbc6317a-b8b0-57eb-b921-69bb4e028c8b")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "07D471K"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "5bc835fc-a144-5b0f-b339-35b77830e827")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Manufacturer" "Zhuhai Hongjiacheng (R+O)"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "a3e565c6-b3c5-5181-a30a-5e02febf2f89")
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Rating" "07D471K 470 V disc varistor, 5 mm lead pitch, 300 VAC / 385 VDC max, clamp 775 V at 10 A 8/20 us, non-polar"
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "14456218-60d3-56f8-a8e5-44c35ffae357")
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -2449,4 +3102,190 @@
 		(uuid "f5654efc-fbd2-4cbe-ad0b-40d17dd7e35c")
 	)
 	(embedded_fonts no)
+	(zone
+		(layers "F.Cu" "B.Cu")
+		(uuid "fa297f31-98a9-548d-85ae-25614450434b")
+		(name "mains")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 20 20) (xy 65 20) (xy 65 50.19) (xy 20 50.19)
+			)
+		)
+	)
+	(zone
+		(layers "F.Cu" "B.Cu")
+		(uuid "032f7386-de1f-52af-9675-e87c769e1d56")
+		(name "mains")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 20 50.19) (xy 47 50.19) (xy 47 66.21) (xy 20 66.21)
+			)
+		)
+	)
+	(zone
+		(layers "F.Cu" "B.Cu")
+		(uuid "8438f098-22bd-5bc5-bd11-50b881514686")
+		(name "mains")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 20 66.21) (xy 65 66.21) (xy 65 88) (xy 20 88)
+			)
+		)
+	)
+	(zone
+		(layers "F.Cu" "B.Cu")
+		(uuid "b41ca522-aae5-5ef5-ae4c-7c5cc93caec5")
+		(name "mains")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 20 88) (xy 55 88) (xy 55 96) (xy 20 96)
+			)
+		)
+	)
+	(zone
+		(layers "F.Cu" "B.Cu")
+		(uuid "194800fe-ea60-59c0-8185-4a3c8e7dcb8c")
+		(name "low voltage")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 56 50.19) (xy 65 50.19) (xy 65 66.21) (xy 56 66.21)
+			)
+		)
+	)
+	(zone
+		(layers "F.Cu" "B.Cu")
+		(uuid "9e2c334d-5637-5cee-b5bd-5e1aa8aaa3d6")
+		(name "low voltage")
+		(hatch edge 0.5)
+		(connect_pads
+			(clearance 0)
+		)
+		(min_thickness 0.25)
+		(keepout
+			(tracks allowed)
+			(vias allowed)
+			(pads allowed)
+			(copperpour allowed)
+			(footprints allowed)
+		)
+		(placement
+			(enabled no)
+			(sheetname "")
+		)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+			(island_removal_mode 0)
+		)
+		(polygon
+			(pts
+				(xy 55 88) (xy 65 88) (xy 65 96) (xy 55 96)
+			)
+		)
+	)
 )

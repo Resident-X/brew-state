@@ -14,15 +14,12 @@
 # HEAT_S_OPTO_MT, HEAT_C_GATE_R, HEAT_S_GATE_R, HEAT_C_TRIAC_G and HEAT_S_TRIAC_G. The nets +5V_WB,
 # HEAT_C_LED_K and HEAT_S_LED_K are low voltage, on the cable header J931, and are held apart from them
 # by the barrier of the heater-switch parts U911 and U921.
-sensing:
-  classes:
-    - Sense
-  noisy_classes:
-    - Noisy
-    - Supply5V
-    - Mains
-  clearance_mm: 0.3
-  source: "the main board's own figure, carried unchanged: main-board/board-rules.yaml sensing.clearance_mm gives 0.3 mm on the grounds it states (1.5 times the 0.2 mm Default clearance and the Sense track width, 3.3 times the manufacturer's 0.09 mm board minimum). This board has no Sense-class net, so the figure binds nothing here; where a Mains item is the noisy one the check applies the larger of this figure and the signed mains clearance"
+# sensing: none. The check refuses a sensing class that holds no net on the layout, and this board has no
+# sensing net (no sensing front end, so SENSE-6 does not apply); the one form it accepts for that is `none`.
+# The 0.3 mm figure and its source this record carried before (the main board's, 1.5 times the 0.2 mm Default
+# clearance) bound nothing here. The classes `Supply5V` and `Noisy` stay in the project file and in the
+# non_signal_classes below, since the board's low-voltage nets are in them.
+sensing: none
 ground_returns:
   ground_classes:
     - Ground
