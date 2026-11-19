@@ -580,7 +580,7 @@
 				)
 			)
 		)
-		(property "Value" "MOC3083SR2M"
+		(property "Value" "MOC3083SVM"
 			(at 0 1 0)
 			(unlocked yes)
 			(layer "F.SilkS")
@@ -604,7 +604,7 @@
 				)
 			)
 		)
-		(property "Description" "Zero Cross Opto-Triac, Vdrm 800V, Ift 5mA, SMDIP6"
+		(property "Description" "Zero Cross Opto-Triac, Vdrm 800V, Ift 5mA, SMT lead bend, VDE option"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -615,7 +615,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C111561"
+		(property "LCSC" "C899868"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -627,7 +627,7 @@
 				)
 			)
 		)
-		(property "MPN" "MOC3083SR2M"
+		(property "MPN" "MOC3083SVM"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -651,7 +651,7 @@
 				)
 			)
 		)
-		(property "Rating" "800 V zero-cross opto-triac driver, SMT gull-wing (lead bend) package of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option"
+		(property "Rating" "800 V zero-cross opto-triac driver, MOC3083SVM: SMT 6-pin lead bend, DIN EN/IEC 60747-5-5 option, of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated once for the family, not per package"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -960,7 +960,7 @@
 				)
 			)
 		)
-		(property "Value" "MOC3083SR2M"
+		(property "Value" "MOC3083SVM"
 			(at 0 1 0)
 			(unlocked yes)
 			(layer "F.SilkS")
@@ -984,7 +984,7 @@
 				)
 			)
 		)
-		(property "Description" "Zero Cross Opto-Triac, Vdrm 800V, Ift 5mA, SMDIP6"
+		(property "Description" "Zero Cross Opto-Triac, Vdrm 800V, Ift 5mA, SMT lead bend, VDE option"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -995,7 +995,7 @@
 				)
 			)
 		)
-		(property "LCSC" "C111561"
+		(property "LCSC" "C899868"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -1007,7 +1007,7 @@
 				)
 			)
 		)
-		(property "MPN" "MOC3083SR2M"
+		(property "MPN" "MOC3083SVM"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)
@@ -1031,7 +1031,7 @@
 				)
 			)
 		)
-		(property "Rating" "800 V zero-cross opto-triac driver, SMT gull-wing (lead bend) package of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option"
+		(property "Rating" "800 V zero-cross opto-triac driver, MOC3083SVM: SMT 6-pin lead bend, DIN EN/IEC 60747-5-5 option, of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated once for the family, not per package"
 			(at 0 0 0)
 			(layer "F.Fab")
 			(hide yes)

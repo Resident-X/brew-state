@@ -60,7 +60,7 @@ Position is the centre of a blade and pin 1 of the header. A blade's two pads ar
 | DECOUPLE-3 | no | The schematic carries no switching converter. |
 | DECOUPLE-4 | no | The schematic carries no switching converter. |
 | DECOUPLE-5 | no | The schematic carries no snubber: no resistor and capacitor in series across the triacs T911 and T921 (the division record drops the snubbers; `schematic-spec.yaml` drawing notes: "No gate-to-MT1 resistor, no snubber"). |
-| DECOUPLE-6 | no | The schematic carries no decoupling capacitor on an integrated circuit's supply pin. The opto-triacs U911 and U921 are integrated circuits by their reference but have no supply pin and no capacitor beside them; the pre-order check's handling of them as no-supply parts depends on their catalogue extract entry (`catalogue-extract.yaml` lacks C23552), which is read from its report. |
+| DECOUPLE-6 | no | The schematic carries no decoupling capacitor on an integrated circuit's supply pin. The opto-triacs U911 and U921 are integrated circuits by their reference but have no supply pin and no capacitor beside them; the pre-order check's handling of them as no-supply parts depends on their catalogue extract entry (`catalogue-extract.yaml` carries C899868 with its category, since 2026-11-19), which is read from its report. |
 | SENSE-1 | no | The schematic carries no resistor used to measure current: R911, R912, R921 and R922 are gate resistors, not shunts. |
 | SENSE-2 | no | The schematic carries no filter at a converter input and no reference capacitor. |
 | SENSE-3 | no | The schematic carries no operational or instrumentation amplifier. |

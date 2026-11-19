@@ -5,13 +5,14 @@
 # names (the catalogue number posted as the keyword, one exact match each), on 2026-11-19, which is this
 # extract's read_on and each entry's lifecycle read_on. library_class is the service's `expand`, which this
 # repository writes `extended` (the main board's extract does the same); stock is `stockCount`; unit_price is
-# `initialPrice`; category is `firstSortName`, written only for C111561, the opto-triac, whose first category
+# `initialPrice`; category is `firstSortName`, written only for C899868, the opto-triac, whose first category
 # name is the one the check lists as a part with no supply pin (hardware/README.md, The no-supply categories).
 #
-# C111561 (onsemi MOC3083SR2M, the surface-mount opto-triacs U911 and U921) replaces C23552 (onsemi MOC3083M, the
-# through-hole part, which the service showed at stock 0 on 2026-11-19). Same die and ratings: the MOC3083SR2M is
-# the tape-and-reel surface-mount form of the part in the onsemi MOC3081M / MOC3082M / MOC3083M sheet. No position
-# uses C23552 any more, so its entry is removed, as the main board's extract removes an entry no position uses.
+# C899868 (onsemi MOC3083SVM, the V-option surface-mount opto-triacs U911 and U921, DIN EN/IEC 60747-5-5 approved)
+# replaces C111561 (the plain MOC3083SR2M, which the layout agent first used, stock 13049 at 0.7727 USD) and C23552
+# (onsemi MOC3083M, the through-hole part, which the service showed at stock 0 on 2026-11-19). Same die, ratings and
+# package case 646BY: the family sheet onsemi MOC3081M / MOC3082M / MOC3083M covers all of them. No position uses
+# C111561 or C23552 any more, so their entries are removed, as the main board's extract removes an entry no position uses.
 #
 # The extract allows itself 14 days (max_age_days), so it is stale after 2026-12-03 and is read again before the order.
 read_on: 2026-11-19
@@ -50,11 +51,11 @@ entries:
     status: no source publishes one
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
-- lcsc: C111561
+- lcsc: C899868
   library_class: extended
   category: Triac, SCR Output Optoisolators
-  stock: 13049
-  unit_price: 0.7727
+  stock: 386
+  unit_price: 1.5748
   lifecycle:
     status: no source publishes one
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read

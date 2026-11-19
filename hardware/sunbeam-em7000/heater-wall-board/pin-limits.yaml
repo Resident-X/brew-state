@@ -1,6 +1,6 @@
 # The pin-limit record of the Sunbeam EM7000 heater wall board, read by the pre-order board check
 # (the pin-limit rule and the derated-voltage rule's net voltages). The semiconductors this board places are
-# the two opto-triacs (U911, U921, one catalogue number, C111561, the surface-mount MOC3083SR2M; C23552 was the through-hole MOC3083M before 2026-11-19) and the two triacs (T911, T921, C10065); each
+# the two opto-triacs (U911, U921, one catalogue number, C899868, the surface-mount MOC3083SVM, the V option; C111561 was the plain MOC3083SR2M and C23552 the through-hole MOC3083M, both before the V option was chosen on 2026-11-19) and the two triacs (T911, T921, C10065); each
 # is listed, found by its LCSC number, with the limits of each pin connected on a position of the part. The
 # check requires an entry for the opto-triacs (a part whose reference begins U) and does not for the triacs
 # (a reference beginning T is a passive or mechanical part to it); the triac is listed because its pins give the
@@ -72,9 +72,9 @@ domains:
     rides_on: mains_out
     fraction: 0.0037
 parts:
-  # opto-triacs: U911, U921 (onsemi MOC3083SR2M surface-mount, MOC3083M/D Rev. 2)
+  # opto-triacs: U911, U921 (onsemi MOC3083SVM surface-mount V option, MOC3083M/D Rev. 2)
   # Pin 3 (no connection) and pin 5 (no connection, the triac substrate, not connected) have no entry.
-  - lcsc: C111561
+  - lcsc: C899868
     source:
       document: "MOC3081M, MOC3082M, MOC3083M 6-Pin DIP Zero-Cross (the family sheet also covers the surface-mount option) Triac Driver Optocoupler (800 V Peak), onsemi, publication order number MOC3083M/D"
       revision: "Rev. 2, September 2022"

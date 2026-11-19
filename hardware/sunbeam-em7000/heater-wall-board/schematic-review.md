@@ -2018,3 +2018,7 @@ Each earlier finding read against the records, the graph and the documents at ce
 ### Closing note after round 14 (2026-11-19)
 
 Round 14 closed its five findings by change, by the design owner; a further full round is the owner's call and is put to him. Round 13's decision (the owner's "No, proceed as is") was given before round 14 and is not read as his decision on round 14. Round 14's findings are record wording only. The 7 mm creepage re-confirmation of W-9 1a on the surface-mount part stays OWED and is not closed by this round.
+
+### Note after round 14 (2026-11-19): the opto-triac's catalogue number and MPN changed
+
+After round 14 the opto-triacs U911 and U921 changed from the plain surface-mount onsemi MOC3083SR2M (LCSC C111561) to the V-option MOC3083SVM (LCSC C899868), a choice the owner delegated to the layout agent (`owner-sign-off.md` W-11). Fields only: the MPN, LCSC, Value, Description and Rating text of the two parts in the sheets 100 and 200, and the same text on the placed footprints of the board. No net, pin, footprint (`heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M`, name kept) or placement changed, so no round of this review is reopened by it. The rounds above name the part as it was when each was written and stay as written.

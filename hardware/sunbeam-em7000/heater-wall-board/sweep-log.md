@@ -270,3 +270,19 @@ The class swept: a record that gives the opto-triac's creepage clause other than
 | owner's lid statement (`lid`, `wall opening`) | 0 | 2 | W-10 (labelled a further statement, not a new acceptance) and the case-step requirements in `open-items.md` |
 
 Not edited here: `catalogue-extract.yaml` line 19 (lists C23552 as the opto-triacs; the layout agent's), `docs/sunbeam-em7000/controller-board-division.md` line 2243 (the executable data block; the notes added to lines 797 and 856 say the data is the DIP form kept for history), and the owner's recorded words.
+
+## 2026-11-19: the opto-triacs are the V-option MOC3083SVM (C899868), W-11 added to the owner sign-off record (14 entries, W-1 to W-11, 11 in the owner's words)
+
+The class swept: a record that names the plain MOC3083SR2M (C111561) as the part fitted at U911 and U921, or says the 7 mm re-confirmation of W-9 1a is OWED, left live after the layout agent's choice of the V-option MOC3083SVM (C899868) under the owner's delegation of 2026-11-19 (`owner-sign-off.md` W-11). Fields only: no net, pin, footprint (name kept) or placement changed. Counts are of lines over `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, this file excluded, after the edits.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `MOC3083SR2M` | 55 | 0 as the fitted part | 27 are the footprint name `SMDIP-6_W9.53mm_MOC3083SR2M`, kept; the rest are history: `schematic-review.md` rounds, W-9 / W-11 and the keeper's note, `open-items.md` and the `catalogue-extract.yaml` header naming the part first used, and the amended notes in the division, function-forms and design-constraints records |
+| `C111561` | 28 | 0 as the fitted number | the number first used, named as replaced (`catalogue-extract.yaml`, `pin-limits.yaml`, `parts-specification.yaml` headers, W-11, amended notes) and the older review rounds |
+| `C899868` | 38 | all | the fitted number: both schematics, the placed footprints on the board, the sheets, the generated `schematic-spec.yaml`, `parts-specification.yaml`, `pin-limits.yaml` (the key), `catalogue-extract.yaml` (the entry) and the amended records |
+| `MOC3083SVM` | 58 | all | the fitted part's name, same places |
+| `W-11` | 16 | all | the entry, the intro counts, the look-first bullet, the W-2 and W-9 keeper's notes, `open-items.md` and `layout-hedges.md` |
+| `W-9 1a re-confirmation owed` / `OWED` | 0 live | 0 | now 'carried by W-11' in `owner-sign-off.md`, `open-items.md`, `layout-hedges.md`; `schematic-review.md` round 14 closing note and the earlier sections of this file stay as written (history) |
+| `13 entries`, `W-1 to W-10`, `(10 entries)`, `(6 entries: ... W-10)` | 0 live | 0 | now 14 entries, W-1 to W-11, 11 in his words, 7 entries under 2026-11-19 |
+
+`derating-policy.yaml` and `board-rules.yaml` name neither number and are unchanged. The sections of this file above are history and stay as written.
