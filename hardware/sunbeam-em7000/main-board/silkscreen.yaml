@@ -1,0 +1,72 @@
+# silkscreen.yaml  --  the silkscreen choices of this board, read by `python3 hardware/tools/silkscreen.py build --table`.
+#
+# The command's placer is generic; what is a decision about THIS board is here: the stroke of each text height, the warning
+# legends, the fixed texts, how connector, tab and fuse names are made, which parts carry a pin-1 dot or a "1" mark, and the
+# per-part overrides. Positions are millimetres in the board's own frame. A fixed text stays where it is written when that
+# spot is free on the board it is given, and otherwise moves to the nearest free spot, and the command says so.
+# Every free graphic on F.SilkS and B.SilkS is rebuilt from this table, so a sign or text that must stay is an entry here.
+
+clearance: 0.16
+thickness: {0.8: 0.15, 1.0: 0.15, 1.5: 0.2, 2.0: 0.3}
+reference_sizes: [1.0, 0.8]
+name_sizes: [1.0, 0.8]
+
+function_names:
+  pattern: '^(J|JP)\d+$'
+tabs:
+  library_prefix: Tab_
+  strip_value: '^TAB\d+_'
+  known: {J102: LINE IN, J103: NEUTRAL IN, J101: LINE OUT, J110: WB RETURN, J106: COFFEE VALVE, J107: COFFEE PUMP, J108: STEAM PUMP, J109: HOT VALVE}
+  abbreviations: {COFVALVE: COFFEE VALVE, COFFPUMP: COFFEE PUMP, STEAMPUMP: STEAM PUMP, HOTVALVE: HOT VALVE, LINE1: LINE OUT, WB RET: WB RETURN}
+fuses:
+  pattern: '^F\d+$'
+  holder_library_words: [fuseholder, fuse_holder]
+  rating_words: [slow-blow]
+  exclude_words: [ptc]
+  format: "T{amps} {volts}V"
+  known: {F101: T10A 250V, F701: T800mA 250V, F711: T500mA 250V, F731: T400mA 250V}
+test_points:
+  pattern: '^TP\d+$'
+
+pin1:
+  dot: [U201, U203, U401, U402, U520, U601, U701, U711]
+  mark: [JP301, JP302, JP401, JP402, JP761, JP791, JP821, J401, J402, J501, J502, J503, J520, J521, J522, J523, J524, J525, J570, J571, J620, J622, J623, J625, J627, J628, J630, J635, J761, J791, J821, J861]
+
+parts:
+  J862: {name: skip, pin1: none}
+
+legends:
+  - id: danger-front
+    side: F
+    region: mains
+    symbol: hazard-triangle
+    prefer: [11.65, 13.46]
+    lines: [{text: DANGER, size: 1.5}, {text: MAINS VOLTAGE, size: 1.5}]
+  - id: danger-back
+    side: B
+    region: mains
+    symbol: hazard-triangle
+    prefer: [30.35, 15.15]
+    lines: [{text: DANGER, size: 2.0}, {text: MAINS VOLTAGE, size: 2.0}]
+
+fixed_texts:
+  - {id: title, text: "BREW STATE", side: F, size: 2.0, at: [86.0, 4.5]}
+  - {id: product, text: "SUNBEAM EM7000", side: F, size: 1.0, at: [86.0, 7.0]}
+  - {id: revision, text: "v1  2026-11", side: F, size: 1.5, at: [86.0, 9.2]}
+  - {id: maker, text: "MADE WITH STAIRCASE", side: F, size: 1.0, at: [86.0, 11.4]}
+  - {id: jlc-order-number, text: "JLCJLCJLCJLC", side: B, size: 1.0, at: [100.0, 8.0]}
+  - {id: supply-line, text: "230 V~ 50 Hz", side: F, size: 1.5, at: [24.0449, 96.9199]}
+  - {id: barrier-1-mains, text: "MAINS", side: F, size: 1.5, at: [53.4202, 18.0359], angle: 90}
+  - {id: barrier-2-low-voltage, text: "LOW VOLTAGE", side: F, size: 1.5, at: [70.9203, 24.0357], angle: 90}
+  - {id: barrier-3-mains, text: "MAINS", side: F, size: 1.0, at: [53.6234, 29.024], angle: 90}
+  - {id: barrier-4-low-voltage, text: "LOW VOLTAGE", side: F, size: 1.0, at: [68.6236, 29.0238], angle: 90}
+  - {id: barrier-5-mains, text: "MAINS", side: F, size: 1.0, at: [60.1234, 83.024], angle: 90}
+  - {id: barrier-6-low-voltage, text: "LOW VOLTAGE", side: F, size: 1.0, at: [65.1236, 83.0238], angle: 90}
+  - {id: barrier-7-mains, text: "MAINS", side: F, size: 1.0, at: [48.6234, 98.024], angle: 90}
+  - {id: barrier-8-low-voltage, text: "LOW VOLTAGE", side: F, size: 1.0, at: [51.1236, 98.0238], angle: 90}
+  - {id: barrier-9-mains, text: "MAINS", side: B, size: 1.5, at: [53.2872, 28.0359], angle: 90}
+  - {id: barrier-10-low-voltage, text: "LOW VOLTAGE", side: B, size: 1.5, at: [60.2871, 28.0357], angle: 90}
+  - {id: barrier-11-mains, text: "MAINS", side: B, size: 1.5, at: [59.7872, 85.0359], angle: 90}
+  - {id: barrier-12-low-voltage, text: "LOW VOLTAGE", side: B, size: 1.5, at: [65.2871, 85.0357], angle: 90}
+  - {id: reed-body-back, text: "REED BODY THIS SIDE", side: B, size: 1.0, at: [118.6764, 101.5722], angle: 90}
+  - {id: reed-solder-front, text: "REED: SOLDER THIS SIDE", side: F, size: 1.0, at: [119.623, 101.5151], angle: 90}

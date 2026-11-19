@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD-C12-TEST-4
+type: evidence
+title: test evidence for SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T07:49:32.807258Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_kicad_scripting_environment.py::test_a_path_given_as_an_argument_is_used_when_the_variable_is_unset_and_wins_over_a_bad_variable
+  artifact_version: 13b4baed91f4676fd0b2f35454f45958c5f2f3a5
+attested_by: crun-720ee3117d6c3086
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12
+    type: satisfies

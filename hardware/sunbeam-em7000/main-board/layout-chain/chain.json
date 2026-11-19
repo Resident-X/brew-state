@@ -1,0 +1,7 @@
+{"steps": [
+  {"name": "placed board", "command": ["{kicad_python}", "-I", "-B", "{steps_dir}/strip_copper.py", "{input}", "{output}"]},
+  {"name": "mains copper", "command": ["{kicad_python}", "-I", "-B", "{steps_dir}/build_mains.py", "{input}", "{output}"]},
+  {"name": "low-voltage reconnect", "command": ["{kicad_python}", "-I", "-B", "{steps_dir}/route_lv.py", "{input}", "{output}"]},
+  {"name": "chamfered mains zones", "command": ["{kicad_python}", "-I", "-B", "{steps_dir}/chamfer_corners.py", "{input}", "{output}"]},
+  {"name": "critical copper locked", "command": ["python3", "{steps_dir}/lock_critical.py", "{input}", "{output}"]}
+]}

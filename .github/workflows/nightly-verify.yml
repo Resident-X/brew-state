@@ -170,6 +170,27 @@ jobs:
           done
           kicad-cli version
 
+      # KiCad's own Python, which the layout tools and their tests run pcbnew
+      # with, is the system interpreter once the kicad package is installed; the
+      # step asserts it can import pcbnew, so a runner without it fails here as
+      # provisioning, and hands the interpreter and the stock footprint libraries
+      # the install brought to the verification as KICAD_PYTHON and
+      # KICAD_FOOTPRINTS, which the board tasks read.
+      - name: Locate KiCad's own Python and footprint libraries
+        run: |
+          set -euo pipefail
+          interpreter="/usr/bin/python3"
+          if ! "${interpreter}" -c 'import pcbnew; print(pcbnew.Version())'; then
+            echo "${interpreter} cannot import pcbnew, so the layout tools that run KiCad's scripting interface have no interpreter" >&2
+            exit 1
+          fi
+          if [ ! -d /usr/share/kicad/footprints/Capacitor_SMD.pretty ]; then
+            echo "KiCad's stock footprint libraries are not at /usr/share/kicad/footprints" >&2
+            exit 1
+          fi
+          echo "KICAD_PYTHON=${interpreter}" >> "${GITHUB_ENV}"
+          echo "KICAD_FOOTPRINTS=/usr/share/kicad/footprints" >> "${GITHUB_ENV}"
+
       - name: Install the rasteriser
         env:
           # renovate: datasource=github-releases depName=linebender/resvg
@@ -208,6 +229,32 @@ jobs:
             exit 1
           fi
           echo "GERBONARA_PYTHON=${RUNNER_TEMP}/gerbonara/bin/python" >> "${GITHUB_ENV}"
+
+      # The libraries the silkscreen command and its tests import (PyYAML for its table), at pinned
+      # versions, in a virtual environment of its own as the renderer's is. The
+      # step reads the versions back, so a runner that installs others fails here
+      # as provisioning, and hands the environment's Python to the verification
+      # as SILKSCREEN_PYTHON, which the board tasks read.
+      - name: Install the silkscreen command's libraries
+        env:
+          # renovate: datasource=pypi depName=numpy
+          NUMPY_VERSION: "2.5.0"
+          # renovate: datasource=pypi depName=shapely
+          SHAPELY_VERSION: "2.2.0"
+          # renovate: datasource=pypi depName=Pillow
+          PILLOW_VERSION: "12.3.0"
+          # renovate: datasource=pypi depName=PyYAML
+          PYYAML_VERSION: "6.0.3"
+        run: |
+          set -euo pipefail
+          python3 -m venv "${RUNNER_TEMP}/silkscreen"
+          "${RUNNER_TEMP}/silkscreen/bin/python" -m pip install "numpy==${NUMPY_VERSION}" "shapely==${SHAPELY_VERSION}" "Pillow==${PILLOW_VERSION}" "pyyaml==${PYYAML_VERSION}"
+          installed="$("${RUNNER_TEMP}/silkscreen/bin/python" -c 'import numpy, shapely, PIL, yaml; print(numpy.__version__, shapely.__version__, PIL.__version__, yaml.__version__)')"
+          if [ "${installed}" != "${NUMPY_VERSION} ${SHAPELY_VERSION} ${PILLOW_VERSION} ${PYYAML_VERSION}" ]; then
+            echo "numpy, shapely, Pillow and PyYAML are installed at ${installed:-nothing}, not ${NUMPY_VERSION} ${SHAPELY_VERSION} ${PILLOW_VERSION} ${PYYAML_VERSION}" >&2
+            exit 1
+          fi
+          echo "SILKSCREEN_PYTHON=${RUNNER_TEMP}/silkscreen/bin/python" >> "${GITHUB_ENV}"
 
       - name: Run the complete verification, the sweep left out for its own jobs
         run: |

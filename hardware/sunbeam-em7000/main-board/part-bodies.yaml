@@ -1,0 +1,136 @@
+# Part bodies of the main board, read by `python3 hardware/tools/footprint_audit.py gaps --bodies`.
+#
+# One entry per footprint name, in the footprint's own coordinates (millimetres, x right, y down, the
+# footprint turned to 0 degrees and on the front, as the maker's drawing shows the part from above).
+# `rects` are the part's real body, with the height each rises above the seating plane; `access_zones` are
+# the space a mating part or a hand needs; `source` is the maker reading the rectangles come from.
+# An entry with `from: courtyard` has no maker drawing: its body is taken as the footprint's own
+# courtyard, and the audit's report names the part and its verdict counts it as a stand-in. That is J862
+# (reed pads) alone: the parts list names no part for it (maker and part number not stated, no catalogue
+# number), so there is no maker document to read. J791 and J821 (JST B9B-PH-K-S),
+# J761 (BOOMELE 2.54-1*10PPin, tallest ordering height) and U401 (STM32H743VIT6, LQFP-100) carry maker
+# readings, read 2026-11-19. Every other footprint on the board, passives and small parts included, has no entry,
+# so the audit names such a part as missing when it is asked to measure it.
+#
+# Footprints the committed board uses that this table has no maker reading for: J101 to J103 and
+# J106 to J110 (Tab_TE_63849-1, the earlier reading was for the Bozhong BTC-3 tab), owned by
+# DEL-HW-MAIN-BOARD-DESIGNED.C20. The audit names those parts as missing until a reading is added.
+# K201 (Relay_HF115F-I_1HS3A), F101 (Fuse_SETfuse_SCT520PT_Axial_P28.0mm) and RV101
+# (RV_Disc_14D471K_P7.5mm) carry the maker's body dimensions, read 2026-11-19 from the maker
+# documents the parts specification cites; a rectangle uses the maker's maximum tolerance.
+footprints:
+  Connector_JST:JST_PH_B9B-PH-K_1x09_P2.00mm_Vertical:
+    kind: stock/other
+    hand_fitted: false
+    height_mm: 6.0
+    source: 'JST PH connector catalogue (jst-mfg.com ePH, datasheet.lcsc.com
+      6c6fce4367275d84ec6a99bf09f1250f.pdf, the page the catalogue lists for LCSC C157968) p.2, through-hole
+      top entry B9B-PH-K-S: B 19.9, A 16.0, 1.95 beyond the end pins, 4.5 deep with the pin row 1.7 from
+      the edge nearer pin 1''s side, 6 high above the board (8 mated); the 2.8 mm side lies on +y as the
+      KiCad footprint''s own outline draws it'
+    rects:
+    - {name: body, x0: -1.95, y0: -1.7, x1: 17.95, y1: 2.8, height_mm: 6.0}
+  Connector_PinHeader_2.54mm:PinHeader_1x10_P2.54mm_Vertical:
+    kind: stock/other
+    hand_fitted: false
+    height_mm: 3.3
+    source: 'BOOMELE (Dongguan Boomele) 2.54 mm single-row pin header drawing (datasheet.lcsc.com
+      f7d0c675d8004d119e2e17b298ed95d4.pdf, LCSC C57369) p.1: plastic 2.5 wide, 10 positions at 2.54
+      pitch so 25.4 long, centred on the pin row; plastic height H is an ordering option of 1.5, 1.7, 2.0,
+      2.5 or 3.3 and the part number does not name it, so the rectangle takes the tallest, 3.3'
+    rects:
+    - {name: body, x0: -1.25, y0: -1.27, x1: 1.25, y1: 24.13, height_mm: 3.3}
+  Converter_ACDC:Converter_ACDC_MeanWell_IRM-20-xx_THT:
+    kind: acdc module
+    hand_fitted: true
+    height_mm: 24.0
+    source: 'Mean Well IRM-20 spec p.3 (meanwell.com), case 219A: 52.4 x 27.2 x 24, tolerance +/-0.5,
+      pins 1.0 dia'
+    rects:
+    - {name: body, x0: -3.4, y0: -3.2, x1: 49.0, y1: 24.0, height_mm: 24.0}
+  Package_QFP:LQFP-100_14x14mm_P0.5mm:
+    kind: stock/other
+    hand_fitted: false
+    height_mm: 1.6
+    source: 'STMicroelectronics STM32H742xI/G STM32H743xI/G DS12110 Rev 11 (web.archive.org copy of st.com
+      stm32h743vi.pdf) p.318 Table 208 LQFP100 mechanical data: D and E 16.00 BSC over the leads, D1 and
+      E1 14.00 BSC the moulding, A max 1.60; the rectangle is the 16.0 mm lead span, square about the
+      footprint centre'
+    rects:
+    - {name: body, x0: -8.0, y0: -8.0, x1: 8.0, y1: 8.0, height_mm: 1.6}
+  main-board:FUSEHOLDER_5x20_XC_BLX-A:
+    kind: fuseholder
+    hand_fitted: true
+    height_mm: 13.5
+    source: 'XC Electronics BLX-A specification for approval (LCSC C3131) p.2: 22+/-0.5 leg pitch, 9.5+/-0.5
+      wide, 13.5+/-0.5 tall, legs 1.5x0.35, 4.6 below. Body length +-12.5/12.6 about centre scaled from
+      the drawing (not dimensioned); open lid arc not dimensioned.'
+    rects:
+    - {name: holder, x0: -12.5, y0: -4.75, x1: 12.6, y1: 4.75, height_mm: 13.5}
+  main-board:Fuse_SETfuse_SCT520PT_Axial_P28.0mm:
+    kind: fuse
+    hand_fitted: true
+    height_mm: 5.3
+    source: 'SETfuse (Xiamen SET Electronics) SCT520(P) series data sheet V1.0 (datasheet.lcsc.com
+      c399a71412fc2cbf24b5ddba60b5c909.pdf) p.1 dimension table: body L 20.0+/-0.5, D 5.2 +0.1/-0.2;
+      rectangle uses the maximum tolerance, 20.5 x 5.3 centred between the pads, the cartridge lying
+      on the board'
+    rects:
+    - {name: body, x0: 3.75, y0: -2.65, x1: 24.25, y1: 2.65, height_mm: 5.3}
+  main-board:LTV-814S_SMD-4:
+    kind: optocoupler
+    hand_fitted: false
+    height_mm: 3.5
+    source: 'Lite-On LTV-814 series sheet p.5: body 4.6+/-0.5 x 6.5+/-0.5 x 3.5+/-0.5; rectangle uses
+      max tolerance'
+    rects:
+    - {name: body, x0: -2.55, y0: -3.25, x1: 2.55, y1: 3.25, height_mm: 3.5}
+  main-board:MOC3052SVM_SMD-6:
+    kind: optotriac
+    hand_fitted: false
+    height_mm: 4.8
+    source: 'onsemi MOC3052M/D, case 646BY issue A (doc 98AON13450G), datasheet p.12: D 8.13-8.89 along
+      the pin row, E 6.10-6.60 across, A max 4.80'
+    rects:
+    - {name: body, x0: -4.445, y0: -3.3, x1: 4.445, y1: 3.3, height_mm: 4.8}
+  main-board:REED_PADS_P20.00mm:
+    kind: stock/other
+    hand_fitted: true
+    source: our courtyard
+    from: courtyard
+  main-board:RELAY_HF32FA-G_1H_TYPE1_THT:
+    kind: relay
+    hand_fitted: true
+    height_mm: 12.7
+    source: 'Hongfa HF32FA-G datasheet (2026, rev 1.00) p.90 (file p.2): 17.6 x 10.1 x 12.7, Type 1 PCB
+      layout'
+    rects:
+    - {name: body, x0: -1.4, y0: -1.25, x1: 16.2, y1: 8.85, height_mm: 12.7}
+  main-board:RV_Disc_14D471K_P7.5mm:
+    kind: varistor
+    hand_fitted: true
+    height_mm: 20.0
+    source: 'Ruilon 14D series metal oxide varistor data sheet Version A3, revised 2023-10-27
+      (datasheet.lcsc.com 305ba13b482fd415d345c9b9446eb189.pdf) p.4: D(max) 17.0, H(max) 20.0,
+      D1 7.5 +/-1.0, T(max) 6.2 for the 430-560 V models (Table 2); the disc stands on its two leads,
+      17.0 wide centred between them and 6.2 thick'
+    rects:
+    - {name: disc, x0: -4.75, y0: -3.1, x1: 12.25, y1: 3.1, height_mm: 20.0}
+  main-board:Relay_HF115F-I_1HS3A:
+    kind: relay
+    hand_fitted: true
+    height_mm: 16.0
+    source: 'Hongfa HF115F-I data sheet 2020 Rev. 1.00 (datasheet.lcsc.com
+      0ebe0ad433a21202e9ed2b99eb26b6ee.pdf) p.2 (printed page 202), outline dimensions and PC board layout:
+      29 +/-0.3 x 12.7 +/-0.3 x 15.7 +/-0.3, 2.6 from the body end to the first pin and 7.56 pin row pitch;
+      rectangle uses the maximum tolerance on each dimension, centred on the nominal body'
+    rects:
+    - {name: body, x0: -2.75, y0: -2.72, x1: 26.55, y1: 10.28, height_mm: 16.0}
+  main-board:TO-252-2_TabPin2_Triac:
+    kind: triac
+    hand_fitted: false
+    height_mm: 2.38
+    source: 'WeEn BTA204S-600B data sheet 31 May 2018 p.10 (DPAK SOT428): body E 6.47-6.73, HD 9.6-10.4,
+      tab-end rectangle placed from lead-foot outer edge'
+    rects:
+    - {name: body, x0: -6.14, y0: -3.365, x1: 3.86, y1: 3.365, height_mm: 2.38}

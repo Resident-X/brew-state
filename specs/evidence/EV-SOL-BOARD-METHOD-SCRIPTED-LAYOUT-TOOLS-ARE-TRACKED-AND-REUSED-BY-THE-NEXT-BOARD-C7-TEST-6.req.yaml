@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD-C7-TEST-6
+type: evidence
+title: test evidence for SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T07:49:26.632237Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_silkscreen_refusal.py::test_a_label_moved_to_a_layer_that_is_not_silkscreen_or_fab_is_refused_in_text_and_in_json
+  artifact_version: 13b4baed91f4676fd0b2f35454f45958c5f2f3a5
+attested_by: crun-720ee3117d6c3086
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C7
+    type: satisfies
