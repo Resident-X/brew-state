@@ -1,0 +1,29 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C15-INSPECTION-2
+type: evidence
+title: Residual risks recorded with who, date, words and the limit relied on, counted to W-15 (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C15)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T23:40:35Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/owner-sign-off.md
+  artifact_version: bd942f31c204a3bd6a6f99b12a050fbc9b6347fc
+text: |
+  Correction of the earlier inspection evidence for this criterion, which counted 15 entries and cited W-1 to W-12; the record has since gained W-13 to W-15. Inspection of hardware/sunbeam-em7000/heater-wall-board/owner-sign-off.md at HEAD bd942f31 against each clause of the criterion.
+
+  The record states 18 entries, W-1 to W-15 with W-5 split into W-5a, W-5b, W-5c and W-5d: 15 are David Baker's own acceptance in his words (2026-11-18: W-1 to W-4; 2026-11-19: W-5c, W-6 to W-12; 2026-11-19 and 2026-11-20: W-13; 2026-11-20: W-14 and W-15), and 3 are signed on his behalf (W-5a, W-5b, W-5d, standing instruction of 2026-11-07). Each entry carries accepted_by and accepted_on, and they agree with the section that holds it. The four residual risks the criterion names:
+
+  - The varistor kept with the firmware's stuck-on current threshold of 2.0 A or less: W-3, accepted_by David Baker (owner), in his words "I'm happy with these and sign as accepted", accepted_on 2026-11-18. The entry states the 2.7 A a partly failed varistor passes (340.5 W in the varistor), the 2.0 A threshold the acceptance relies on and its source, REQ-ACTUATION-CONFIRMATION-001.C10; no firmware delivers the threshold yet.
+  - The opto-triac's creepage exception: W-2 (2026-11-18) and W-9 1a (2026-11-19, "1a. sign as accepted") on the through-hole figures, re-confirmed for the surface-mount MOC3083SVM at U911 and U921 by W-14 (2026-11-20, "Yes and go"), whose scope is that re-confirmation only.
+  - The triac tab and pad-pair distances: W-4 (2026-11-18), W-9 1b and 1c (2026-11-19), W-10 (2026-11-19) replacing the 6.0 mm lift of 1c by a creepage barrier in the case's tray, and W-12 (2026-11-19, "I'm signing those now. Take as signed. Proceed.") for the board's own separation basis. The barrier of W-10 is the case step's to deliver; the entry records it as awaiting that step.
+  - The provisional spreader: W-5c (2026-11-19, his words), carried to DEL-HW-BRING-UP.C11 and DEL-HW-HEATER-WALL-BOARD-DESIGNED.C22, against the figures he was shown (the 25 and 40 degC air basis, junction tables at h = 10, the 80 x 30 x 5 mm provisional plate).
+
+  Each entry carries who, the date, the words where he gave them, and the figure or check the acceptance relies on. Entries signed on his behalf are in the section "Signed on behalf (3 entries: W-5a, W-5b, W-5d)" and are listed again in "For David to sign or confirm at the end of the work".
+
+  What this evidence does not establish: W-13, the disclosure of the layout review's history-command failures and the close of the review, is not one of the four residual risks and is not relied on here; it states that his "Yes" was given for a close at Round 5 while the closing round is now Round 6, and that three of the four disclosed failures were not named to him, so the record itself carries those as awaiting his confirmation. The outer-face temperature, the unrated terminals and the single-layer OUT_C run are items of the end-of-work list, not entries, and are not accepted by any W entry. The firmware that holds the stuck-on threshold is out of scope as the criterion states.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C15
+    type: satisfies
