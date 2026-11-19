@@ -172,7 +172,7 @@ class TheMappingIsRead(unittest.TestCase):
         self.assertFails(basis(mains_to_mains=mapping(entry_fuse="")), "mains_to_mains.entry_fuse", "non-empty string")
         self.assertFails(basis(mains_to_mains=mapping(entry_fuse=7)), "mains_to_mains.entry_fuse", "non-empty string")
         signed, _ = read(basis())
-        found = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L"}, set(), {"R1": [], "J1": []})
+        found = board_check.mains_pairs(DESIGN, RECORD, signed, {"/MAINS_L"}, {"/MAINS_L"}, {"R1": [], "J1": []})
         self.assertEqual([(v.rule, v.location) for v in found], [("separation_basis", f"{RECORD} mains_to_mains.entry_fuse")])
         self.assertIn("'F1'", found[0].message)
         self.assertIn("J1, R1", found[0].message)
@@ -193,10 +193,43 @@ class TheMappingIsRead(unittest.TestCase):
             self.assertIn("Mains_Entry", found[0].message)
         self.assertEqual(judge("/L_IN", "/L_OUT"), [])
         self.assertEqual(judge("/N_OUT", "/N_IN"), [])
-        # a design declaring no Mains_Entry class has no side to stand on, so only the reference is held
+        # a design declaring no Mains_Entry class has no side to stand on, so its fuse's pads are not read
         self.assertEqual(board_check.mains_pairs(DESIGN, RECORD, signed, mains, set(), {"F1": fuse("/L_OUT", "/N_OUT")}), [])
         # a part with further pads is still the fuse when two of them stand on the two sides
         self.assertEqual(judge("/L_IN", "/L_OUT", "/N_OUT"), [])
+
+    def test_a_design_with_no_mains_entry_is_not_failed_for_an_entry_fuse_that_is_on_another_board(self):
+        # SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C1: A design with no mains entry is not failed for an entry fuse that is on another board, while a design with a mains entry is still held to its entry fuse
+        signed, problems = read(basis())
+        self.assertEqual(problems, [])
+        for layout in ({}, {"R1": [], "J1": []}, {"F1": fuse("/L_OUT", "/N_OUT")}):
+            self.assertEqual(board_check.mains_pairs(DESIGN, RECORD, signed, {"/L_OUT", "/N_OUT"}, set(), layout), [], layout)
+        # the key itself is still required of the record, whatever the design declares
+        for key_changes in ({"entry_fuse": None}, {"entry_fuse": ""}):
+            data = basis(mains_to_mains=mapping(**key_changes))
+            signed_without, problems = read(data)
+            self.assertIsNone(signed_without)
+            self.assertTrue(any(v.rule == "separation_basis" and "mains_to_mains.entry_fuse" in v.location for v in problems), key_changes)
+        # the rest of the mapping is still checked on a design with no mains entry
+        held = basis(mains_to_mains=mapping(held_at_reinforced=[["/L_OUT", "/ELSEWHERE"]]))
+        signed_held, problems = read(held)
+        self.assertEqual(problems, [])
+        found = board_check.mains_pairs(DESIGN, RECORD, signed_held, {"/L_OUT"}, set(), {})
+        self.assertEqual([(v.rule, v.location) for v in found], [("mains_declaration", f"{RECORD} mains_to_mains.held_at_reinforced[0]")])
+
+    def test_a_design_with_a_mains_entry_is_still_held_to_its_entry_fuse_in_the_text_and_the_failure_line(self):
+        # SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C1: A design with no mains entry is not failed for an entry fuse that is on another board, while a design with a mains entry is still held to its entry fuse
+        signed, _ = read(basis())
+        mains, entry = {"/L_IN", "/L_OUT"}, {"/L_IN"}
+        missing = board_check.mains_pairs(DESIGN, RECORD, signed, mains, entry, {"R1": []})
+        wrong = board_check.mains_pairs(DESIGN, RECORD, signed, mains, entry, {"F1": fuse("/L_OUT", "/L_OUT")})
+        for found, words in ((missing, "no reference on the layout"), (wrong, "whose pads stand on")):
+            self.assertEqual([(v.rule, v.location) for v in found], [("separation_basis", f"{RECORD} mains_to_mains.entry_fuse")])
+            self.assertIn("'F1'", found[0].message)
+            self.assertIn(words, found[0].message)
+            self.assertIn("separation_basis", found[0].line())
+            self.assertIn("mains_to_mains.entry_fuse", found[0].line())
+        self.assertEqual(board_check.mains_pairs(DESIGN, RECORD, signed, mains, entry, {"F1": fuse("/L_IN", "/L_OUT")}), [])
 
     def test_the_mapping_is_not_asked_of_a_key_a_record_may_hold_anyway(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-TO-MAINS-SPACING.C1: On a design that declares MAINS present, a record with no mains_to_mains mapping, or one lacking clearance_mm, terminal_clearance_mm, creepage_mm, creepage_ahead_of_fuse_mm or entry_fuse, fails separation_basis naming the key. A figure that is not a positive number, a creepage_mm below creepage_ahead_of_fuse_mm with no downstream_basis, a held_at_reinforced that is not a list of pairs of net names, a terminal_clearance_mm below clearance_mm, a creepage_ahead_of_fuse_mm below creepage_mm, an entry_fuse naming no reference of the layout or, on a design that declares MAINS_ENTRY present, naming one whose pads do not stand one on a Mains_Entry net and one on a Mains net outside that class, and a key inside the mapping that the basis decision does not name each fail it likewise. A design that declares MAINS none is out of scope and passes without the mapping. A fixture, a design that declares NOT_FOR_MANUFACTURE true and is held by a record marked synthetic, is likewise out of scope and passes without it, and a mapping it carries is read as above; an orderable design, and a design marked not for manufacture but held by a record not marked synthetic, is held to all of it.

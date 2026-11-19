@@ -8096,17 +8096,19 @@ def mains_pairs(design: Design, record: str, signed: Signed, mains: Set[str], en
                 footprints: Dict[str, list]) -> List[Violation]:
     """What the layout contradicts in the mains_to_mains mapping it is held to: the entry fuse and the nets held at reinforced.
 
-    entry_fuse must name a reference of the layout with a pad on a net of the
-    Mains_Entry class and a pad on a net of the Mains class outside it, the
-    two sides of a fuse at the mains entry, where the design declares a
-    Mains_Entry class at all, and each net of a held_at_reinforced pair must
-    be in the Mains class of the layout.
+    Where the design declares a Mains_Entry class (`entry` is not empty),
+    entry_fuse must name a reference of the layout with a pad on a net of that
+    class and a pad on a net of the Mains class outside it, the two sides of a
+    fuse at the mains entry. A design that declares none has no mains entry of
+    its own, so its entry fuse is a part of another board and is not held to
+    this layout. Each net of a held_at_reinforced pair must be in the Mains
+    class of the layout.
     """
     held = signed.mains_to_mains
     if held is None:
         return []
     found = []
-    if held["entry_fuse"] not in footprints:
+    if entry and held["entry_fuse"] not in footprints:
         found.append(Violation(design.project, "separation_basis", f"{record} mains_to_mains.entry_fuse",
                                f"mains_to_mains.entry_fuse is '{held['entry_fuse']}', which is no reference on the layout "
                                f"({', '.join(sorted(footprints)) or 'it has none'}); name the entry fuse's reference"))
