@@ -1,0 +1,860 @@
+# The separation basis record of the Sunbeam EM7000 heater wall board: the figures for the distance between mains-
+# referenced and low-voltage conductors, and between conductors at different potentials of the mains supply, that this
+# board design is held to, read by the pre-order board check. It is the board's own record, found before the machine's
+# (hardware/sunbeam-em7000/separation-basis.yaml) because the check reads the separation-basis.yaml nearest at or
+# above the design: the machine's record names the main board's pad pairs, nets and entry fuse, and every one of its
+# 42 exception entries, its entry fuse F101 and its held_at_reinforced nets fail this board, which has none of them.
+# The figures below are the machine's, copied unchanged.
+#
+# Signed. The owner, David Baker, accepted this record on 2026-11-19, in his words "I'm signing those now. Take as
+# signed. Proceed." (owner-sign-off.md W-12). The signature covers this file only, the board's own separation basis; it
+# rests on the acceptances he gave in his words, W-9 1a, 1b and 1c ("sign as accepted", 2026-11-19; W-2 and W-4 of
+# 2026-11-18), which were given on the through-hole figures, and on W-11, by which he delegated the choice of the
+# opto-triac part to the layout agent with the safety facts put to him (the part became the V-option onsemi MOC3083SVM,
+# LCSC C899868, surface-mount, same case as the MOC3083SR2M of his option A). The opto-triac pin gap is now 1.04 mm
+# against the 0.94 mm of W-9 1b, which is the wider gap. Nothing else is signed by this record: the owner's other
+# end-of-work items (W-5a, W-5b, W-5d, the outer-face temperature, the barrier W-10 awaiting the case step) remain as
+# owner-sign-off.md lists them.
+#
+# What this record holds that the machine's does not. (1) Barrier heater-switch, formed by the opto-triacs U911 and
+# U921 and the board spacing around them: the part's own external creepage and clearance of at least 7 mm (onsemi
+# MOC3083M/D Rev. 2, p.2 and p.4; VISO 4170 Vrms for one minute) under the declared 10.0 mm creepage, owner-accepted
+# as an exception for the through-hole part (W-2), carried to the surface-mount V-option part by W-11 and signed here; the board
+# path lengthened by a 1.5 mm slot cut under each part (layout-plan.md MAINS-4, BOARD-3, layout-hedges.md hedge 5);
+# the 10.0 mm figure itself unchanged. (2) Barrier mains-to-earthed-plate, the triac's insulated tab and the mains
+# copper toward the earthed spreader plate at the basic creepage of 2.6 mm: the case's tray carries an insulating
+# barrier between the bare plate face and the mains copper, the board's top edge set back 1.0 mm from the plate plane
+# (owner-sign-off.md W-10, which replaces the 6.0 mm lift of W-9 1c); the barrier awaits the case step, and the
+# plate's earth bond is measured at bring-up (DEL-HW-BRING-UP.C6). The check cannot see the plate or the tray, so this
+# record states the barrier and no entry excuses it. (3) The accepted pad pairs of this board, below.
+#
+# The mains_to_mains entry fuse. This board carries no net ahead of the entry fuse (MAINS_ENTRY is none): the entry
+# fuse F101 is on the main board and is truthfully named here; the check holds an entry fuse to a design's layout only
+# where the design declares a mains entry. held_at_reinforced is empty: this board has no relay contact whose bridge
+# would defeat a safety function, and none of /LINE, /LINE1, /LINE_IN.
+#
+# The accepted pad pairs. Each is a pair of pads of one part whose gap the part's own land pattern or the owner-
+# accepted oval triac pads leave under the 2.0 mm terminal clearance and the 2.6 mm creepage. Each pair has two
+# entries, one of clearance and one of creepage, as the check reports each. accepted_mm is set 0.01 mm under the gap
+# measured on the committed board (HEAD b5f2547d: 1.04 mm for the triac pins T911 and T921 1-2 and 2-3 and for the
+# opto-triac pads U911 and U921 4-5 and 5-6; 1.80 mm for the 1206 pads of R911, R912, R921 and R922), because the
+# check fails an entry whose accepted distance is above what the layout leaves. The reasons and bounds are those of
+# owner-sign-off.md W-2, W-4, W-6, W-7 and W-9 and of open-items.md, quoted or paraphrased there and cited here, not
+# new ones. The varistor leads of RV911 and RV921 (5.0 mm apart) and every other pair are not entered, because the
+# check reports no shortfall for them.
+standard: IEC 60664-1, Annex F tables F.1, F.2 and F.4, read through the freely published derivations [TI-SEMINAR], [TI-SLUAAR5]
+  and [EMA-CREEPAGE] cited above and in table_rows; for the terminals of a part, the footnote to Table 16 of IEC 60335-1
+  as reproduced in two certification reports
+supply: 230 V nominal, single phase, 216 V to 253 V, 50 Hz
+working_voltage: 253 V rms (358 V peak), the top of the declared span
+pollution_degree: 2
+material_group: IIIa
+environment: 'household appliance interior; water, steam and repeated heating and cooling at and around the enclosure; condensation
+  possible; boards protected against moisture: enclosure, with a conformal coat as a supporting measure'
+overvoltage_category: 2
+altitude_m: 2000
+barriers:
+- heater-switch
+- mains-to-earthed-plate
+# Barrier types: the heater switch is reinforced, mains to low voltage, with its low-voltage side not bonded to protective earth (the logic supply is a Class II module whose output is not referenced to earth), as the machine's record declares; the mains-to-earthed-plate barrier is basic, to the earthed plate.
+barrier_types:
+- barrier: heater-switch
+  insulation: reinforced
+  earth_bonded: false
+  touchable:
+  - USB connector
+  - operator controls
+  - enclosure
+  formed_by: 'the opto-triacs U911 and U921 between the heater drive and the triac gate, and the board spacing around them.
+    Bought parts U911 and U921, onsemi MOC3083SVM (LCSC C899868, the V-option surface-mount form of the part in the onsemi MOC3081M
+    / MOC3082M / MOC3083M sheet, MOC3083M/D Rev. 2, September 2022): external creepage and clearance at least 7 mm, VISO
+    4170 Vrms for one minute, VIORM 850 Vpk, VIOTM 6000 Vpk, CTI 175, pollution degree 2. 7 mm falls below the declared
+    10.0 mm creepage and the 3.0 mm clearance is met; the creepage is an owner-accepted exception (owner-sign-off.md W-2
+    for the through-hole part, carried to the V-option surface-mount part by W-11 and signed with this record, W-12). The board path under each part
+    is lengthened by a 1.5 mm slot (layout-plan.md MAINS-4, BOARD-3), which does not lengthen the path over the moulding;
+    the opto-triac pads on the mains side stand apart from the low-voltage pads by the land pattern, with no copper between
+    the pad rows (layout-plan.md MAINS-5).'
+- barrier: mains-to-earthed-plate
+  insulation: basic
+  earth_bonded: true
+  touchable:
+  - earthed spreader plate
+  - the machine's steel wall it is screwed to
+  formed_by: the insulated tab of the triacs T911 and T921 (ST BTA16-800BWRG, tab rated 2500 Vrms, UL 1557 file E81734,
+    ST DS2114 Rev 11 p.1) to the earthed plate, and the board's mains copper toward the plate held to the basic creepage
+    of 2.6 mm by an insulating barrier in the case's fixed tray (owner-sign-off.md W-10), the board's top edge set back
+    1.0 mm from the plate plane. The plate is bonded to protective earth through the machine's steel wall and mains-inlet
+    earth, which the owner holds as a fact and bring-up measures (DEL-HW-BRING-UP.C6). The barrier is realised by the case
+    step and is not seen by the pre-order check.
+mains_to_low_voltage:
+  clearance_mm: 3.0
+  creepage_mm: 10.0
+# The entry fuse F101 is the machine's, on the main board; this board has none (MAINS_ENTRY is none). See the header: the check names it as no reference on this layout.
+mains_to_mains:
+  clearance_mm: 1.5
+  terminal_clearance_mm: 2.0
+  creepage_mm: 2.6
+  creepage_ahead_of_fuse_mm: 2.6
+  entry_fuse: F101
+  held_at_reinforced: []
+# The table rows are the machine's, copied unchanged: the floors the signed figures are read against.
+table_rows:
+- citation:
+    document: IEC 60664-1 Table F.1 and Table F.2, as read in [TI-SEMINAR] (https://www.ti.com/lit/pdf/SLUP421)
+    edition: as reproduced in the 2023 seminar; tables unchanged in kind across editions (2000 m clearance, inhomogeneous
+      field)
+    locator: 'Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic, so 4.0 kV for reinforced;
+      Table F.2: 4.0 kV, pollution degree 2, 3.0 mm'
+  inputs:
+    working_voltage_v: 300
+    insulation: reinforced
+    overvoltage_category: 2
+    pollution_degree: 2
+    altitude_m: 2000
+  figure:
+    clearance_mm: 3.0
+- citation:
+    document: IEC 60664-1 Table F.4, as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/);
+      doubled for reinforced as stated in [TI-SLUAAR5] (https://www.ti.com/lit/pdf/sluaar5)
+    edition: as reproduced on the page read 2026-10-23
+    locator: 'Table F.4: 320 V rms, pollution degree 2, material group IIIa and IIIb, 3.2 mm basic, doubled to 6.4 mm for
+      reinforced insulation; the floor of the row is 6.4 mm and the signed mains_to_low_voltage creepage of 10.0 mm stands
+      3.6 mm over it, deliberately'
+  inputs:
+    working_voltage_v: 320
+    insulation: reinforced
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 6.4
+- citation:
+    document: IEC 60664-1 Table F.1 and Table F.2, as read in [TI-SEMINAR] (https://www.ti.com/lit/pdf/SLUP421)
+    edition: as reproduced in the 2023 seminar; tables unchanged in kind across editions (2000 m clearance, inhomogeneous
+      field)
+    locator: 'Table F.1: up to 300 V line to neutral, overvoltage category II, 2.5 kV for basic insulation; Table F.2: 2.5
+      kV, pollution degree 2, 1.5 mm'
+  inputs:
+    working_voltage_v: 300
+    insulation: basic
+    overvoltage_category: 2
+    pollution_degree: 2
+    altitude_m: 2000
+  figure:
+    clearance_mm: 1.5
+- citation:
+    document: the footnote to Table 16 of IEC 60335-1 (household and similar electrical appliances), adding 0.5 mm to the
+      clearance for the movement and assembly of a terminal, applied to the 1.5 mm of IEC 60664-1 Table F.2 at 2.5 kV, pollution
+      degree 2
+    edition: as reproduced in two certification reports, which this repository does not identify; the standard's own text
+      was not read; a drafter's reading from reproductions, unverified, for the owner to check
+    locator: Table 16 footnote; the clause number is not given by the reports and is not found; 1.5 mm + 0.5 mm = 2.0 mm
+  inputs:
+    working_voltage_v: 300
+    insulation: basic
+    overvoltage_category: 2
+    pollution_degree: 2
+    altitude_m: 2000
+    location: terminal
+  figure:
+    clearance_mm: 2.0
+- citation:
+    document: IEC 60664-1 Table F.4, rows 250 V and 320 V as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/),
+      interpolated at 253 V under IEC 60664-1:2007 clause 5.2.4 (clause 5.2.3 for functional insulation)
+    edition: clause as read in the 2007 edition text only, the 2020 edition and AMD1:2025 not read; rows as reproduced on
+      the page read 2026-10-23, the material-group column a drafter's reading for the owner to check; whether IEC 60335-1
+      permits interpolation of its own creepage table is not verified, and if it refuses the fallback is the 320 V row,
+      3.2 mm
+    locator: 'Table F.4, pollution degree 2, material group III (the "other materials" column), basic insulation: 250 V
+      = 2.5 mm and 320 V = 3.2 mm; linear interpolation at 253 V = 2.5 + (3.2 - 2.5) x (253 - 250) / (320 - 250) = 2.53
+      mm; rounded to the table''s digits by the standard''s rule that is 2.5 mm, and the figure signed is 2.6 mm, rounded
+      up, a deliberate design margin of 0.1 mm over the standard''s own result and not the standard''s figure; the rows
+      are reproductions and not the standard'
+  inputs:
+    working_voltage_v: 253
+    insulation: basic
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 2.6
+- citation:
+    document: 'IEC 60664-1 Table F.4 (10 V row, pollution degree 2, material group III, the "other materials" column), as
+      read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance:
+      Table F.1 (up to 50 V, overvoltage category II, 500 V impulse) with Table F.2 up to 1.0 kV, 0.2 mm; the sources are
+      reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from open reproductions and KiCad's source tables, IEC text
+      unread; a drafter's reading for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 10 V = 0.40 mm creepage, 0.2 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 10
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 0.4
+    clearance_mm: 0.2
+- citation:
+    document: 'IEC 60664-1 Table F.4 (25 V row, pollution degree 2, material group III, the "other materials" column), as
+      read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance:
+      Table F.1 (up to 50 V, overvoltage category II, 500 V impulse) with Table F.2 up to 1.0 kV, 0.2 mm; the sources are
+      reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from open reproductions and KiCad's source tables, IEC text
+      unread; a drafter's reading for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 25 V = 0.50 mm creepage, 0.2 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 25
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 0.5
+    clearance_mm: 0.2
+- citation:
+    document: 'IEC 60664-1 Table F.4 (50 V row, pollution degree 2, material group III, the "other materials" column), as
+      read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/); clearance:
+      Table F.1 (up to 50 V, overvoltage category II, 500 V impulse) with Table F.2 up to 1.0 kV, 0.2 mm; the sources are
+      reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from open reproductions and KiCad's source tables, IEC text
+      unread; a drafter's reading for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 50 V = 1.20 mm creepage, 0.2 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 50
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 1.2
+    clearance_mm: 0.2
+- citation:
+    document: 'IEC 60664-1 Table F.4 (125 V row, pollution degree 2, material group III, the "other materials" column),
+      as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/);
+      clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading
+      for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 125 V = 1.5 mm creepage, 1.5 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 125
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 1.5
+    clearance_mm: 1.5
+- citation:
+    document: 'IEC 60664-1 Table F.4 (160 V row, pollution degree 2, material group III, the "other materials" column),
+      as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/);
+      clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading
+      for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 160 V = 1.6 mm creepage, 1.5 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 160
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 1.6
+    clearance_mm: 1.5
+- citation:
+    document: 'IEC 60664-1 Table F.4 (200 V row, pollution degree 2, material group III, the "other materials" column),
+      as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/);
+      clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading
+      for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 200 V = 2.0 mm creepage, 1.5 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 200
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 2.0
+    clearance_mm: 1.5
+- citation:
+    document: 'IEC 60664-1 Table F.4 (250 V row, pollution degree 2, material group III, the "other materials" column),
+      as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/);
+      clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading
+      for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 250 V = 2.5 mm creepage, 1.5 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 250
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 2.5
+    clearance_mm: 1.5
+- citation:
+    document: 'IEC 60664-1 Table F.4 (320 V row, pollution degree 2, material group III, the "other materials" column),
+      as read in [EMA-CREEPAGE] (https://www.ema-eda.com/ema-resources/blog/pcb-clearance-and-creepage-distance-table/);
+      clearance: the signed mains-to-mains clearance, 1.5 mm; the sources are reproductions and not the standard''s text'
+    edition: as reproduced on the page read 2026-10-23; read from the reproductions, IEC text unread; a drafter's reading
+      for the owner to check
+    locator: 'Table F.4, pollution degree 2, material group III, functional insulation, 320 V = 3.2 mm creepage, 1.5 mm
+      clearance; band rule: between two adjacent rows the figure is the linear interpolation rounded up to 0.1 mm, below
+      10 V the 10 V row is read, above the 320 V row there is no band figure, and a pair at the supply voltage in normal
+      operation keeps 2.6 mm, a pair reaching it only on a single fault being reduced only with that listing''s single-fault
+      table'
+  inputs:
+    working_voltage_v: 320
+    insulation: functional
+    location: conductor
+    pollution_degree: 2
+    material_group: IIIa
+  figure:
+    creepage_mm: 3.2
+    clearance_mm: 1.5
+# Signature of the record: the owner's, 2026-11-19 (owner-sign-off.md W-12).
+accepted_by: David Baker (owner)
+accepted_on: 2026-11-19
+
+# The accepted pad pairs, one entry for each constraint of each pair (24 entries). See the header for where each
+# reason and bound comes from.
+accepted_exceptions:
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - R911.1
+  - R911.2
+  accepted_mm: 1.79
+  reason: 'R911 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R911 and R912, the coffee side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - R911.1
+  - R911.2
+  accepted_mm: 1.79
+  reason: 'R911 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R911 and R912, the coffee side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - R912.1
+  - R912.2
+  accepted_mm: 1.79
+  reason: 'R912 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R911 and R912, the coffee side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - R912.1
+  - R912.2
+  accepted_mm: 1.79
+  reason: 'R912 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R911 and R912, the coffee side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - R921.1
+  - R921.2
+  accepted_mm: 1.79
+  reason: 'R921 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R921 and R922, the steam side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - R921.1
+  - R921.2
+  accepted_mm: 1.79
+  reason: 'R921 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R921 and R922, the steam side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - R922.1
+  - R922.2
+  accepted_mm: 1.79
+  reason: 'R922 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R921 and R922, the steam side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - R922.1
+  - R922.2
+  accepted_mm: 1.79
+  reason: 'R922 (200 ohm, R_1206_3216Metric, UNI-ROYAL C18002) is one of the two series gate resistors of its heater''s
+    gate network (R921 and R922, the steam side), between the opto-triac''s output and the triac gate. Its two pads stand
+    1.80 mm apart edge to edge, which is the 1206 package''s own pad gap and not a layout choice; the gap meets the 1.5
+    mm clearance and falls short of the 2.0 mm pad-to-pad terminal clearance and the 2.6 mm creepage. The same footprint
+    and circuit as the main board''s R704, R705, R714 and R715, whose 1.8 mm entries the machine''s record carries (open-items.md,
+    ''A barrier the basis does not list''); accepted by the owner on 2026-11-18 as one of the 1206 gate-resistor pad pairs
+    (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads. Measured on
+    the committed board: 1.80 mm; accepted down to 1.79 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - T911.1
+  - T911.2
+  accepted_mm: 1.03
+  reason: 'T911 (ST BTA16-800BWRG, insulated TO-220AB) pins 1 and 2 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - T911.1
+  - T911.2
+  accepted_mm: 1.03
+  reason: 'T911 (ST BTA16-800BWRG, insulated TO-220AB) pins 1 and 2 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - T911.2
+  - T911.3
+  accepted_mm: 1.03
+  reason: 'T911 (ST BTA16-800BWRG, insulated TO-220AB) pins 2 and 3 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - T911.2
+  - T911.3
+  accepted_mm: 1.03
+  reason: 'T911 (ST BTA16-800BWRG, insulated TO-220AB) pins 2 and 3 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - T921.1
+  - T921.2
+  accepted_mm: 1.03
+  reason: 'T921 (ST BTA16-800BWRG, insulated TO-220AB) pins 1 and 2 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - T921.1
+  - T921.2
+  accepted_mm: 1.03
+  reason: 'T921 (ST BTA16-800BWRG, insulated TO-220AB) pins 1 and 2 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - T921.2
+  - T921.3
+  accepted_mm: 1.03
+  reason: 'T921 (ST BTA16-800BWRG, insulated TO-220AB) pins 2 and 3 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - T921.2
+  - T921.3
+  accepted_mm: 1.03
+  reason: 'T921 (ST BTA16-800BWRG, insulated TO-220AB) pins 2 and 3 on the board-library oval-pad footprint: the pads are
+    1.5 mm across the row by 2.5 mm, drill 1.1 mm, at the 2.54 mm lead pitch, so the gap between adjacent pads is 1.04 mm,
+    at least the 1.0 mm that layout-hedges.md hedge 4 sets (round 1.9 mm pads would leave 0.74 mm); it falls short of the
+    2.0 mm terminal clearance and the 2.6 mm creepage. Accepted by the owner on 2026-11-18 as one of the TO-220 pin pairs
+    of T911 and T921 (owner-sign-off.md W-4, W-9 1b). The part is not changed, and the entry excuses only this pair of pads.
+    Measured on the committed board: 1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - U911.5
+  - U911.4
+  accepted_mm: 1.03
+  reason: 'U911 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 4 (on HEAT_C_OPTO_MT) on the land pattern the part is drawn with;
+    the gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - U911.5
+  - U911.4
+  accepted_mm: 1.03
+  reason: 'U911 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 4 (on HEAT_C_OPTO_MT) on the land pattern the part is drawn with;
+    the gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - U911.5
+  - U911.6
+  accepted_mm: 1.03
+  reason: 'U911 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 6 (on OUT_C) on the land pattern the part is drawn with; the
+    gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - U911.5
+  - U911.6
+  accepted_mm: 1.03
+  reason: 'U911 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 6 (on OUT_C) on the land pattern the part is drawn with; the
+    gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - U921.5
+  - U921.4
+  accepted_mm: 1.03
+  reason: 'U921 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 4 (on HEAT_S_OPTO_MT) on the land pattern the part is drawn with;
+    the gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - U921.5
+  - U921.4
+  accepted_mm: 1.03
+  reason: 'U921 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 4 (on HEAT_S_OPTO_MT) on the land pattern the part is drawn with;
+    the gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: creepage
+  between:
+  - U921.5
+  - U921.6
+  accepted_mm: 1.03
+  reason: 'U921 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 6 (on OUT_S) on the land pattern the part is drawn with; the
+    gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
+- pair: mains_to_mains
+  constraint: clearance
+  between:
+  - U921.5
+  - U921.6
+  accepted_mm: 1.03
+  reason: 'U921 (onsemi MOC3083SVM, surface-mount, six-pin) pin 5, which the maker gives no connection and the board leaves
+    unconnected, is the output side''s substrate; its net is named in the Mains class so that the check holds it to the
+    mains figures. It stands 1.04 mm edge to edge from pin 6 (on OUT_S) on the land pattern the part is drawn with; the
+    gap falls short of the 2.0 mm terminal clearance and the 2.6 mm creepage. The same class of entry as the machine''s
+    record carries for the main board''s opto-triacs U701 and U711 (U701.5 with U701.4 and U701.6). Accepted by the owner
+    on 2026-11-19 as the opto-triac pin pair (owner-sign-off.md W-9 1b) on the through-hole gap of 0.94 mm; W-9 records
+    that 1b stands with the pin gap now 1.04 mm. The entry excuses only this pair of pads. Measured on the committed board:
+    1.04 mm; accepted down to 1.03 mm.'
+  bounded_by: 'Each pad pair is functional insulation inside one switched branch: a tracking short across it fails ''heater
+    on'' or ''gate network shorted'', both bounded by the interlock relay K201 (which acts when the controller stops refreshing
+    it or the 5 V rail collapses) and the firmware''s stuck-on current threshold with every heater commanded off, which
+    must trip at 2.0 A or less (REQ-ACTUATION-CONFIRMATION-001.C10, a requirement no node delivers yet), and by the element''s
+    own thermostats and cutoffs; none is a shock path (owner-sign-off.md W-4, W-6, W-9 1b, and the failure-mode table of
+    circuit-proof.md). The conformal coat comes after bring-up and is no part of the bound until it is applied.'
+  accepted_by: David Baker (owner)
+  accepted_on: 2026-11-19
