@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C4
+type: criterion
+title: Every tracked design passes the recommended-figure rule and the hardware notes state its keys and line
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The main board's and the heater wall board's manufacturer limits records carry recommended_mm for each limit that has one and a below_recommended entry for each minimum their design settings hold below it, each naming its cause, so that no tracked design fails the rule, and hardware/README.md states the new keys and the check's line. Out of scope - the board designs themselves.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK
+    type: criterion-of

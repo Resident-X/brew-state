@@ -1,0 +1,31 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK
+type: deliverable
+category: solution
+title: The layout method and the pre-order check carry what the heater wall board's first layout review showed they lacked
+status: active
+version: 1
+text: |
+  Brings the board design method and the pre-order check to what the heater wall board's first layout review (hardware/sunbeam-em7000/heater-wall-board/layout-review.md, round 1) showed they lacked, as the method's own review steps require before the review can close: a first-review finding against an item the plan said it would meet is traced to the catalogue item or planning step that let it through and that is amended, and a finding a measurement can state becomes a rule. Findings 1.1 and 1.5 (a plan row stated a neck width and board minimums that could not be drawn or were below the maker's recommended figure), 1.2 (the power-path item counts vias only and gives no reading for soldered through-hole pad barrels or copper joined at one end), 1.3 (the switching-part item is written for leaded parts and has no reading for a surface-mount phototriac on a net that may carry no via) and 1.8 (one plan row contradicts three others) are planning shortfalls; finding 1.10 (no silk legend naming what each connector pin or terminal is for) needs a new judgement item; finding 1.5 can be a measured rule.
+
+  Settled for the build:
+  - The amendments to the catalogue items and planning steps are the wording the board's layout designer proposed in /Users/david/real5/fableW/real4/METHOD_AMENDMENTS.md (read it as the source; the main session makes them in the method); each amended catalogue item names the review and the finding in its Source, and each amended planning step carries at its end the note `Amended after hardware/sunbeam-em7000/heater-wall-board/layout-review.md, round 1, finding <n>.`
+  - The new catalogue item MFG-11 is a judgement-kind, quality-severity item in the manufacturing area, in the catalogue's item form, whose Source names the review; the plan row it needs is the board's to append.
+  - The measured rule reads, for each Board Setup minimum the manufacturer limits record gives a recommended figure for, whether the design's setting is below that figure, and fails the design naming the setting and both figures unless the record's below_recommended entry for that setting states the figure, what forces it and the catalogue item or requirement it rests on. The record keys are recommended_mm per limit and a below_recommended list; both boards' records carry them so that every tracked design passes. The check has a seeded fault for the failure and one for an entry that does not name what forces the figure, in the proof design's copy.
+  - Nothing else in the method or the check changes.
+
+  Locus: docs/board-design-method.md (the Layout practice catalogue items POWER-3, POWER-5 and a new MFG-11, planning steps 2 and 3), hardware/tools/board_check.py (the manufacturer limits reading and one new check line), its tests under hardware/tools/tests/, hardware/tools/board_prove.py (seeded cases), hardware/README.md, hardware/sunbeam-em7000/main-board/manufacturer-limits.yaml and hardware/sunbeam-em7000/heater-wall-board/manufacturer-limits.yaml. Tests use synthetic designs and records in a temporary directory.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 and .C4 ask of the practice: a failure found in a board's first full review against an item the plan said it would meet is traced to the item or planning step that let it through and that is corrected, and a finding a measurement can state becomes a rule that the next board is held to without anyone remembering it. The heater wall board's round 1 recorded five planning shortfalls and one measurable rule, and the method says the review cannot close until the amendments and the rule exist.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C4
+    type: targets
+  - target: DEC-BOARD-PLACED-BY-PICTURE-ROUTED-BY-SCRIPT-AND-PROVED-BY-CHECK
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: fd854c41e6463350cea3a744beb62b458a4f924f40a59ff3720d58073a5d5d2e
+  gating_profile: ""
