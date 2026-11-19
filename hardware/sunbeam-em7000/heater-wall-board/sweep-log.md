@@ -329,3 +329,14 @@ The class swept: a record that states a figure the board does not bear out. Scop
 | `no via`, `places no via` | 6 | 1 fixed | `constraints-figures.md` now states the one `+5V_WB` via; the others state that no Mains net has a via, true |
 | `exclude_from_bom` | 3 | 2 fixed | `layout-hedges.md` 17 and `open-items.md` now state `exclude_from_pos_files` alone; `layout-plan.md` MFG-7 row is baseline, amendment note added |
 | `MOC3083SR2M` | footprint name | kept | `fabrication-notes.md` "Part and footprint names" says why the footprint keeps the old name |
+
+## 2026-11-19: front silk legend repositioned, back-side placeholder added (layout review round 2, findings 2.1 and 2.4)
+
+The class swept: a record that states a silk position or the back face's content the board no longer has. Scope: `hardware/sunbeam-em7000/heater-wall-board/`, `docs/sunbeam-em7000/` and `docs/`, `*.md` and `*.yaml`, lines matching the phrases, after the corrections.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `beside J931` | 4 | 0 stale | `layout-review.md` only: round 1 finding 1.10's record and round 2's findings 2.1 and 2.2 text, frozen; `fabrication-notes.md` now gives the real positions |
+| `back face carries no text`, `back carries no text`, `B.SilkS holds no reference` | 4 | 2 fixed | `fabrication-notes.md` and the plan's `MFG-11` row fixed; the `MFG-7` and `MFG-8` plan rows are baseline, with an amendment note |
+| `moved to x 41`, `x 41.0` | 2 | 1 fixed | the round 1 workmanship text, now saying it moved again to x 44.75; the other is finding 2.4's frozen text |
+| `JLCJLCJLCJLC` | 0 before, 3 after | all new | `fabrication-notes.md`, the plan's `MFG-11` row and amendment note |
