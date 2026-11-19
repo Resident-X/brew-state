@@ -353,3 +353,15 @@ The class swept: a record that states a silk position, size or enforcement the b
 | logo `scale 0.45`, `y 64.6 centre` | 0 | 0 | `fabrication-notes.md` rewritten with scale 0.42 and the anchors with their justification |
 | `layout rule check` enforcing silk text height | 1 | 1 fixed | `design-rules.md` row `Silkscreen text height`; the other 18 board-wide minimum rows keep the method's wording, KiCad does report them |
 | silk text census | 38 texts | 0 under 1.0 mm or 0.15 mm | every `gr_text` and reference text on `F.SilkS` and `B.SilkS` of the board file |
+
+## 2026-11-19: heater-switch part row and silk line width (layout review round 4, findings 4.1 and 4.2)
+
+The class swept: a record that states the through-hole or stocked M part for the heater switches, or a silk figure as enforced. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, lines matching the phrases, after the corrections.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `through-hole, as above` | 0 | 0 | fixed in `constraints-figures.md` |
+| `stocked part is the M`, `stocked part` | 4 | 1 fixed | `constraints-figures.md` fixed; the others are main-board documents (`controller-board-function-forms.md`, `component-specification.md`) about other parts |
+| `M part`, `MOC3083M` with through-hole or stocked | 5 | 0 stale | `owner-sign-off.md` W-2 text (frozen history), `open-items.md`, `parts-specification.yaml` and `catalogue-extract.yaml` notes naming the replaced part, `constraints-figures.md` |
+| `V-ordered` | 2 | 0 stale | `owner-sign-off.md` W-2 and W-11 text, frozen history |
+| claim that the layout rule check enforces a silk figure | 1 | 1 fixed | `design-rules.md` row `Silkscreen line width`, now stating the accepted 29 strokes at 0.12 mm |

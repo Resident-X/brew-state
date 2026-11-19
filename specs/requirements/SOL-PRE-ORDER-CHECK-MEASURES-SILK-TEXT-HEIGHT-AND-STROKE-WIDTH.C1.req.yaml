@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SILK-TEXT-HEIGHT-AND-STROKE-WIDTH.C1
+type: criterion
+title: The pre-order check fails silkscreen text below the board's text height and silkscreen text or a graphic stroke below its line width
+status: active
+version: 1
+measurement_type: binary
+verification: test
+scope: hardware/tools/board_check.py and its tests only
+text: "The pre-order check reads Board Setup's silkscreen text height and line width and fails a design that draws a silkscreen text below the height, or a silkscreen text or graphic stroke below the width, naming the item, its layer and place and both figures, unless the design's record states an acceptance for it with the reason; the check's other rules and its report form are unchanged. Tests build a synthetic design with a text under the height and a graphic stroke under the width and show each fails, one with the stated acceptance and one at the minimums and show each passes. Out of scope: silkscreen clearance to pads and edges, which the layout rule check reports, the maker's figures, and any change to a board's silkscreen. "
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SILK-TEXT-HEIGHT-AND-STROKE-WIDTH
+    type: criterion-of

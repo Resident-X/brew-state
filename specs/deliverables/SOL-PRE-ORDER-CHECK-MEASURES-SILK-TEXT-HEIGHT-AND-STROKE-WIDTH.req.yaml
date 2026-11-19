@@ -1,0 +1,23 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SILK-TEXT-HEIGHT-AND-STROKE-WIDTH
+type: deliverable
+category: solution
+title: The pre-order check measures silkscreen text height and stroke width, with seeded faults
+status: active
+version: 1
+text: |
+  Why this exists. The board design method asks every board's silkscreen to meet the maker's stated minimums, a text height of 1.0 mm and a line width of 0.15 mm, and each board's rules table carries both as board-wide minimums with the wording that KiCad's layout rule check enforces them. KiCad's layout rule check in the version the repository uses reports silk text thickness only: a probe text at 0.5 mm high raised no line, and 29 silk graphic strokes of the heater wall board drawn at 0.12 mm (stock library outlines) raised none. The heater wall board's first layout reviews (hardware/sunbeam-em7000/heater-wall-board/layout-review.md, rounds 3 and 4, findings 3.2 and 4.2) found both by hand, and the board's rules table now says the figures are held by a reviewer's census until the pre-order check measures them.
+
+  What it does. Extends the repository's pre-order check with a measured rule that reads Board Setup's silk text height and line width and fails a design whose silkscreen text is below the height, or whose silkscreen text or graphic stroke is below the width, naming the item, its place and both figures, unless the design's record states an acceptance with its reason; and has the board rules table and the hardware notes state the rule's line and keys in place of the wording that KiCad enforces it.
+
+  Out of scope: the maker's figures themselves, which the manufacturer limits record carries, silkscreen clearance to pads and edges, which KiCad's check reports, and any change to a board's silkscreen.
+
+  Locus: hardware/tools/board_check.py and its tests under hardware/tools/tests/, hardware/README.md (the check's lines and keys), docs/board-design-method.md (the rules-table wording for the two minimums).
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of the practice: a board is judged against every applicable item before it is ordered, and the pre-order check is where a figure the board's own table promises is measured. A rules-table row that says a check enforces a figure the check does not read is a defect in delivered behaviour, so this is maintenance work under DEL-MAINTENANCE.C1, found by the heater wall board's layout review rounds 3 and 4.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
