@@ -3,17 +3,15 @@
 #
 # All six numbers were read from JLCPCB's parts library through the search service the main board's extract
 # names (the catalogue number posted as the keyword, one exact match each), on 2026-11-19, which is this
-# extract's read_on and each entry's lifecycle read_on. The three the first version of this file could not list
-# (C10065, C23552, C49072860) are now read; the other three (C18002, C86469, C2937625) are read again, so every
-# figure here is of the one day. library_class is the service's `expand`, which this repository writes
-# `extended` (the main board's extract does the same); stock is `stockCount`; unit_price is `initialPrice`;
-# category is `firstSortName`, written only for C23552, the opto-triac, whose first category name is the one the
-# check lists as a part with no supply pin (hardware/README.md, The no-supply categories).
+# extract's read_on and each entry's lifecycle read_on. library_class is the service's `expand`, which this
+# repository writes `extended` (the main board's extract does the same); stock is `stockCount`; unit_price is
+# `initialPrice`; category is `firstSortName`, written only for C111561, the opto-triac, whose first category
+# name is the one the check lists as a part with no supply pin (hardware/README.md, The no-supply categories).
 #
-# C23552 (onsemi MOC3083M, the opto-triacs U911 and U921) read at stock 0 on 2026-11-19. The figure is written as
-# read; the check refuses a part shown with no stock as parts_catalogue, so U911 and U921 fail that rule until
-# the library shows stock again or the owner's sourcing decision for the part is recorded in the specification
-# (open-items.md). The design opinion of 2026-11-18 read the same number at stock 8,800 the day before.
+# C111561 (onsemi MOC3083SR2M, the surface-mount opto-triacs U911 and U921) replaces C23552 (onsemi MOC3083M, the
+# through-hole part, which the service showed at stock 0 on 2026-11-19). Same die and ratings: the MOC3083SR2M is
+# the tape-and-reel surface-mount form of the part in the onsemi MOC3081M / MOC3082M / MOC3083M sheet. No position
+# uses C23552 any more, so its entry is removed, as the main board's extract removes an entry no position uses.
 #
 # The extract allows itself 14 days (max_age_days), so it is stale after 2026-12-03 and is read again before the order.
 read_on: 2026-11-19
@@ -22,7 +20,7 @@ source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v
 entries:
 - lcsc: C18002
   library_class: extended
-  stock: 117618
+  stock: 117518
   unit_price: 0.005
   lifecycle:
     status: no source publishes one
@@ -30,7 +28,7 @@ entries:
     read_on: 2026-11-19
 - lcsc: C86469
   library_class: extended
-  stock: 197224
+  stock: 192121
   unit_price: 0.0678
   lifecycle:
     status: no source publishes one
@@ -38,7 +36,7 @@ entries:
     read_on: 2026-11-19
 - lcsc: C2937625
   library_class: extended
-  stock: 1022651
+  stock: 1020022
   unit_price: 0.02
   lifecycle:
     status: no source publishes one
@@ -52,18 +50,18 @@ entries:
     status: no source publishes one
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
-- lcsc: C23552
+- lcsc: C111561
   library_class: extended
   category: Triac, SCR Output Optoisolators
-  stock: 0
-  unit_price: 0.555
+  stock: 13049
+  unit_price: 0.7727
   lifecycle:
     status: no source publishes one
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
 - lcsc: C49072860
   library_class: extended
-  stock: 348371
+  stock: 348361
   unit_price: 0.031
   lifecycle:
     status: no source publishes one
