@@ -4,7 +4,12 @@
     "version": 1
   },
   "board": {
-    "design_settings": {}
+    "design_settings": {
+      "rules": {
+        "min_clearance": 0.1,
+        "min_track_width": 0.1
+      }
+    }
   },
   "schematic": {
     "legacy_lib_dir": "",
