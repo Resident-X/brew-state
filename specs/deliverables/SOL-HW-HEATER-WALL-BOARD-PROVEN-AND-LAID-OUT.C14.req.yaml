@@ -1,12 +1,12 @@
 id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C14
 type: criterion
-title: The board-mount holes' overlap with the standing leg is resolved with every mains copper item 13.25 mm or more from each hole centre
+title: Every mounting hole keeps the signed distance from mains copper, and the holes fix the board securely to the printed case
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The two board-mount holes (3.1 mm, at u = -12.5 and 69.5) reach 0.55 mm under the ends of the bracket's standing leg (u = -11.5 to 68.5). The drawing resolves that by a notch or a mount position, stated with the figure drawn, and keeps every mains copper item 13.25 mm or more from each mount hole's centre. Making the bracket is out of scope.
+  The board carries enough mounting holes to fix it securely to the printed case, at least three, whose number and places the layout chooses together with the placement. Each hole's pad and courtyard keep the distance from mains copper that the separation basis signs for mounting holes, whatever the screw is made of, so no safety property depends on a particular screw. The drawing states the number and the centre of each hole, and how the holes hold the board when the case is fitted. Designing the case is out of scope.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
     type: criterion-of
