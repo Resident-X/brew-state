@@ -17,7 +17,7 @@
 # Enclosure air: graded at 70 degC at every part, the constraints record's assumption until bring-up measures
 # the real enclosure air (docs/sunbeam-em7000/controller-board-design-constraints.md, Enclosure air temperature;
 # DEL-HW-BRING-UP.C13). The wall board is not in the controller's air: the owner's working figure for the air at
-# the wall board is 45 degC (stated 2026-10-28, not measured), so 70 degC is this board's conservative case. The
+# the wall board was 45 degC (stated 2026-10-28, not measured; Amended 2026-11-20: superseded for the triacs' wall path by the external household air, 25 degC nominal and 40 degC bound, owner 2026-11-19; 70 degC continues to govern every board-side part). The
 # part-by-part grading at 70 degC and at the 100 degC triac ceiling is in circuit-proof.md, "Grading every part
 # against the enclosure air", and in constraints-figures.md.
 #

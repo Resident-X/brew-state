@@ -365,3 +365,17 @@ The class swept: a record that states the through-hole or stocked M part for the
 | `M part`, `MOC3083M` with through-hole or stocked | 5 | 0 stale | `owner-sign-off.md` W-2 text (frozen history), `open-items.md`, `parts-specification.yaml` and `catalogue-extract.yaml` notes naming the replaced part, `constraints-figures.md` |
 | `V-ordered` | 2 | 0 stale | `owner-sign-off.md` W-2 and W-11 text, frozen history |
 | claim that the layout rule check enforces a silk figure | 1 | 1 fixed | `design-rules.md` row `Silkscreen line width`, now stating the accepted 29 strokes at 0.12 mm |
+
+## 2026-11-20: evidence-pass corrections (C7, C8, C11, C15 of the leaf)
+
+The classes swept: a record that states the 45 degC working figure as live for the wall path (C7, C8); a record that states this board's own separation basis as unsigned, not yet drawn or not yet carrying the entries (C15, superseded by W-12). Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, counted after the corrections and excluding the review records and this log, which are history.
+
+| Phrase | Lines (heater-wall-board and docs) | Stale, fixed by an amendment note | Rest |
+|---|---|---|---|
+| `45 degC`, `45 °C` | 15 in the wall folder outside the review records and this log; 27 in `docs/sunbeam-em7000/` | 7 (`circuit-proof.md` 28 and 35, `derating-policy.yaml` 20, `constraints-figures.md` 9, `fabrication-notes.md` coat sheet line, `controller-board-design-constraints.md` pending-marks spreader row, `controller-board-function-forms.md` 279 and 477) | history labelled superseded, other boards' figures (for example the IRM-20-5 chart), the 45 degree track angle |
+| `working figure`, `conservative case` | 10 | 5 (the same lines) | history or labelled superseded |
+| `not yet in the basis`, `not yet signed`, `still to be drawn`, `still not edited`, `does not carry them` | 16 | 7 (`owner-sign-off.md` W-8, W-9 and the W-9 look-first bullet and the shared-basis table row, `open-items.md` rows (b) and (d), `constraints-figures.md` heater-switch row, `layout-hedges.md` amended note) | the shared basis does carry none of this board's entries (true, not edited), review records (history) |
+
+Not amended, on purpose: `layout-plan.md` BOARD-13 row (the plan's rows are frozen history; the statement is of the plan's date), `sweep-log.md` line 35 (a log row of its own date).
+
+C8: the revisit of the figure for the triacs, with its reason, is now in the controller boards' constraints record (`docs/sunbeam-em7000/controller-board-design-constraints.md`, Enclosure air temperature, amendment of 2026-11-20) as well as in `constraints-figures.md`. C11: `fabrication-notes.md` cites the document and revision for each preferred family and states the written request; the request has not been sent (an owner act, stated in the notes).
