@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH.C3
+type: criterion
+title: Item MFG-11's source names a published marking standard or maker document as well as the review finding
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The Source line of MFG-11 in the layout practice catalogue names the published document, a marking standard or the maker's own guidance, that supports a legend naming each connector pin or terminal, with its section and the date read, as the other items cite theirs, and keeps the review finding that added the item. Out of scope: the item's Passes and Fails readings.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH.C1
+type: criterion
+title: The recommended-figure tests carry no dead expression and each trace comment heads its test with the criterion's full text
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  hardware/tools/tests/test_board_minimums.py holds no expression that has no effect (the phrase test in the hardware notes' test reads each phrase it names, with no slice that empties one), and every trace comment on a test of the recommended-figure rule, the entry-fuse rule or the minimums carries the criterion id followed by the criterion's full current text at the head of the test, in the form the project's trace-comment rule states, not a fragment of it. Out of scope: the trace comments of other test files.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH
+    type: criterion-of

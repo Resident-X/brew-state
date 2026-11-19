@@ -1,0 +1,29 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH
+type: deliverable
+category: solution
+title: The recommended-figure rule's tests and records carry the trace form, the process choice, a source for MFG-11 and a citation for each figure
+status: active
+version: 1
+text: |
+  Closes the tooling and record polish a blind review of the recommended-figure rule's build found, none of which changes the rule's behaviour: a dead expression and fragmentary trace comments in the rule's tests, the tracked-design test's process choice and missing-key error, MFG-11's source, and the citation of the recommended figures. The rule and its tests are SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK, which is built and evidenced; its criteria stay as they are and this item corrects the delivered tests and records. Not built.
+
+  Settled for the build:
+  - A trace comment is the criterion id and its full current text, as the project's trace-comment form states; the criteria are frozen, so the test comment is corrected.
+  - The tracked-design test follows the check's own process choice, layers and outer copper weight, and fails with a message instead of a key error.
+  - MFG-11's added source is a published document found when this item is built; no document is named before it is read.
+  - recommended_mm figures cite the rows of docs/board-manufacturer-jlcpcb.md they equal; no new figure is introduced.
+
+  Locus: hardware/tools/tests/test_board_minimums.py, docs/board-design-method.md (MFG-11's Source line), the two manufacturer-limits.yaml records and, if a figure check is added, hardware/tools/tests/. It changes no rule behaviour.
+rationale: |
+  Restores the behaviour of SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK, whose tests carry the trace comments the project's form says state the criterion's text, and whose rule is held to the maker's recommended figures that the records cite only through a shared document; REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks each item of the practice to state its published source. Authored as maintenance because the blind review of the branch recorded these as suggestions in finished work, and a finding written only into a pull request is lost at merge.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C3
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK
+    type: depends-on

@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH.C2
+type: criterion
+title: The tracked-design recommended-figure test selects the process by layers and copper weight and fails, not errors, on a missing minimum
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The test that walks the tracked designs picks each design's process by its copper layer count and its declared outer copper weight together, as the check does, and reads each Board Setup minimum so that a project file lacking one fails the test with a message naming the project and the setting instead of raising a key error. A test over a synthetic project lacking a minimum and one over a record with two weights for the same layer count shows both. Out of scope: the check's own reading of those keys, which the recommended-figure criteria already hold.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH
+    type: criterion-of
