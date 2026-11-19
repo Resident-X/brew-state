@@ -31,7 +31,7 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 15 parts (the
 | item | catalogue items | verdict | evidence or closing action |
 |---|---|---|---|
 | T911 (BTA16-800BWRG, C10065) | PINV-1, PARTS-1, DERATE-2, POLAR-1, BARRIER-1 | not yet reviewed | |
-| U911 (MOC3083M, C23552) | PINV-1, PINV-2, PARTS-1, STRAP-1, SUPPLY-2, POLAR-1, INDEP-1, FAULT-1, BARRIER-1, DERATE-2 | not yet reviewed | |
+| U911 (MOC3083SR2M, C111561) | PINV-1, PINV-2, PARTS-1, STRAP-1, SUPPLY-2, POLAR-1, INDEP-1, FAULT-1, BARRIER-1, DERATE-2 | not yet reviewed | |
 | R911 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | R912 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | RV911 (07D471K) | PINV-1, SURGE-1, DERATE-2, TOUCH-1 | not yet reviewed | |
@@ -62,7 +62,7 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 15 parts (the
 | item | catalogue items | verdict | evidence or closing action |
 |---|---|---|---|
 | T921 (BTA16-800BWRG, C10065) | PINV-1, PARTS-1, DERATE-2, POLAR-1, BARRIER-1 | not yet reviewed | |
-| U921 (MOC3083M, C23552) | PINV-1, PINV-2, PARTS-1, STRAP-1, SUPPLY-2, POLAR-1, INDEP-1, FAULT-1, BARRIER-1, DERATE-2 | not yet reviewed | |
+| U921 (MOC3083SR2M, C111561) | PINV-1, PINV-2, PARTS-1, STRAP-1, SUPPLY-2, POLAR-1, INDEP-1, FAULT-1, BARRIER-1, DERATE-2 | not yet reviewed | |
 | R921 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | R922 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | RV921 (07D471K) | PINV-1, SURGE-1, DERATE-2, TOUCH-1 | not yet reviewed | |

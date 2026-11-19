@@ -236,3 +236,22 @@ Change: `owner-sign-off.md` gains W-9 (the owner's "1a/1b/1c. sign as accepted" 
 | `W-1 to W-8` | 0 | 0 | the intro's range was changed to W-1 to W-9 |
 | `8 are` | 1 (1: this file) | 2 | the same rebuild record; `owner-sign-off.md` now reads 9 are David Baker's own acceptance |
 | `W-9` | 11 (3: `owner-sign-off.md` 9, `open-items.md` 2, this file counted apart) | 0 | the entry, the intro counts, the look-first bullet, two carried-table cells and row, the two open-items lines |
+
+## 2026-11-19: the opto-triacs are the surface-mount MOC3083SR2M, pins 4 and 6 swapped, a bare-PCB order
+
+The class swept: a record that names the through-hole MOC3083M (C23552, DIP-6, 7.62 mm row) as the board's opto-triac, puts pin 4 on OUT_C and OUT_S and pin 6 on the gate chain, or says an assembler places or lists a part, left live after the owner's decision (option A, 2026-11-19): U911 and U921 are the surface-mount onsemi MOC3083SR2M (LCSC C111561, CASE 646BY) on `heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M`, pin 6 on OUT_C and OUT_S, pin 4 on HEAT_C_OPTO_MT and HEAT_S_OPTO_MT, the blades on the project symbol `heater-wall-board:TabBlade`, and every part hand-fitted on a bare-PCB order. Corrected in `sheets/100`, `200` and `400` (the custom symbol and footprint entries added; `schematic-spec.yaml` regenerated, `check_spec.py` 0 errors and 0 warnings, 15 parts), `parts-specification.yaml`, `pin-limits.yaml` (LCSC key C111561, the pin 4 and pin 6 domains exchanged), `circuit-proof.md`, `circuit-verdicts.md`, `constraints-figures.md`, `open-items.md` (three new open items: the owner's re-confirmation of W-9 1a, the wide pad lands, hand-soldering), `layout-hedges.md`, `fabrication-notes.md`; `owner-sign-off.md` keeps the owner's words and gains keeper's notes. `circuit-proof/W_margins.py` names the datasheet family only and is unchanged; rerun, 17 PASS, log identical. Scope: `*.md` and `*.yaml` in this folder (subfolders included, `catalogue-extract.yaml` and `schematic-spec.yaml` too) excluding this file, `schematic-review.md` and `layout-plan.md`, case-insensitive, line by line, after the corrections.
+
+| Phrasing | Live lines | Files | What the live lines are |
+|---|---|---|---|
+| `MOC3083M` | 57 | 12 | the maker's family and document name (MOC3083M/D, the stock symbol `Relay_SolidState:MOC3083M`) and records of the earlier part, each with the package change stated |
+| `C23552` | 13 | 7 | history or the amended notes naming the replaced number (the sign-off entries, the amended items) and `catalogue-extract.yaml`, which the layout agent edits and which still lists it |
+| `DIP-6` | 34 | 7 | 30 are the substring inside `SMDIP-6` (the new footprint and sheet entries); the rest are history (W-2, W-9 words) or amended notes |
+| `DIP6` | 0 | 0 | |
+| `7.62` | 0 | 0 | |
+| `pin 4` | 14 | 6 | the swapped assignment, the maker's pin diagram and the pin-limit domains |
+| `pin 6` | 12 | 6 | the same, and the maker's Fig. 12 application circuit (stated as the maker's pin) |
+| `MOC3083SR2M` | 43 | 11 | the fitted part |
+| `assembler` | 0 | 0 | the one earlier hit (`layout-hedges.md`) now states the bare-PCB order |
+| `hand-fitted` | 38 | 11 | the hand-fitted parts, now including the opto-triacs |
+
+Not edited here: `catalogue-extract.yaml` and the separation basis (the layout agent's), the owner's recorded words in `owner-sign-off.md` (W-2, W-4, W-9; kept with dated notes), and `bring-up-provision.md` (it names U911 and U921 only by LED pin 1 and by case temperature, unaffected).

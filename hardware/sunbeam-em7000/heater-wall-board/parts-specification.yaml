@@ -16,14 +16,14 @@
 # terminals and the three-way header state no voltage in their rating, so they take none; their current
 # ratings are not stated by the maker's drawing (unsourced), see open-items.md. The one case-screw hole (H1, the board's single mounting hole; the printed case retains the board with a ledge and fingers or ribs, and the hole is held to the mounting_hole distance from Mains copper whatever the screw) states no voltage and takes none; it is not in the bill of materials or the position file (set on the placed footprint at layout, open-items.md). The board carries no fiducials (layout decision of 2026-11-19: the four 1206 gate resistors are hand-fitted, so no assembled surface-mount part needs them).
 #
-# The four 1206 gate resistors R911, R912, R921 and R922 are hand-fitted (8 joints; excluded from the position file and the assembler's list); they keep their catalogue numbers (C18002) and are compared like any other position. The triacs T911 and T921 take the board's own footprint heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads (oval pads 1.5 x 2.5, drill 1.1, tab face 2.86 mm behind the pad row), so their package is that footprint's item name.
+# The four 1206 gate resistors R911, R912, R921 and R922 are hand-fitted (8 joints; excluded from the position file; the board is a bare-PCB order and every part is hand-fitted, no assembly service); they keep their catalogue numbers (C18002) and are compared like any other position. The triacs T911 and T921 take the board's own footprint heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads (oval pads 1.5 x 2.5, drill 1.1, tab face 2.86 mm behind the pad row), so their package is that footprint's item name.
 #
 # Design change of 2026-11-18 (the design opinion of that day, .stage0/wall-design-opinion.md; open-items.md D7):
 # the triacs BTA16-600BRG (C9100) became BTA16-800BWRG (ST, C10065), the opto-triacs Lite-On MOC3083 (C10797)
-# became onsemi MOC3083M (C23552), and the references moved to the 9xx series so that none equals a reference of
+# became onsemi MOC3083M (C23552, through-hole; changed on 2026-11-19 to the surface-mount MOC3083SR2M, C111561, hand-fitted), and the references moved to the 9xx series so that none equals a reference of
 # the main board or of the shared separation basis's exceptions. The drawn Rating fields of the four parts
 # are to carry the rating strings below when the schematic is next redrawn; catalogue figures of C10065
-# and C23552 are not read (catalogue-extract.yaml).
+# and C23552 (later C111561) are not read (catalogue-extract.yaml).
 #
 # The library item names of T911 and T921 (`Triac_Thyristor:BTA16-600B`) and of U911 and U921
 # (`Relay_SolidState:MOC3083M`) are KiCad's stock symbol names for these families, not the fitted part numbers:
@@ -59,13 +59,14 @@ positions:
     rating: "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
     lcsc: C10065
     class: triac
-  # U911: maker onsemi; MPN MOC3083M; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage >= 7 mm, external clearance >= 7 mm, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
+  # U911: maker onsemi; MPN MOC3083SR2M; surface-mount, hand-fitted (owner decision of 2026-11-19, option A); LCSC C111561, catalogue class not read (C111561 is not in the catalogue extract)
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, surface-mount gull-wing lead bend SMDIP-6 (CASE 646BY), 9.53 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option stated under the DIP title only and not stated for the surface-mount option, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
+  # U911 rating below is the drawn Rating field verbatim (compared by the board check); its creepage clause is the DIP title's figure, the sheet states none for the surface-mount option (open-items.md, re-confirmation of W-9 1a); the drawn field is the layout session's to correct.
   - reference: U911
-    value: "MOC3083M"
-    package: DIP-6_W7.62mm
-    rating: "800 V zero-cross opto-triac driver, DIP-6, onsemi MOC3083M/D Rev. 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance >= 7 mm"
-    lcsc: C23552
+    value: "MOC3083SR2M"
+    package: SMDIP-6_W9.53mm_MOC3083SR2M
+    rating: "800 V zero-cross opto-triac driver, SMT gull-wing (lead bend) package of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option"
+    lcsc: C111561
     class: integrated circuit
   # R911: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
   - reference: R911
@@ -105,13 +106,13 @@ positions:
     rating: "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
     lcsc: C10065
     class: triac
-  # U921: maker onsemi; MPN MOC3083M; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
-  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, DIP-6 7.62 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage >= 7 mm, external clearance >= 7 mm, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
+  # U921: maker onsemi; MPN MOC3083SR2M; surface-mount, hand-fitted (owner decision of 2026-11-19, option A); LCSC C111561, catalogue class not read (C111561 is not in the catalogue extract)
+  # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver, surface-mount gull-wing lead bend SMDIP-6 (CASE 646BY), 9.53 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option stated under the DIP title only and not stated for the surface-mount option, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
   - reference: U921
-    value: "MOC3083M"
-    package: DIP-6_W7.62mm
-    rating: "800 V zero-cross opto-triac driver, DIP-6, onsemi MOC3083M/D Rev. 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance >= 7 mm"
-    lcsc: C23552
+    value: "MOC3083SR2M"
+    package: SMDIP-6_W9.53mm_MOC3083SR2M
+    rating: "800 V zero-cross opto-triac driver, SMT gull-wing (lead bend) package of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated for the DIP package only, none stated for the SMT option"
+    lcsc: C111561
     class: integrated circuit
   # R921: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
   - reference: R921

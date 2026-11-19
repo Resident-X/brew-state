@@ -12,7 +12,7 @@ Maker figures are from JLCPCB's published capabilities page as `docs/board-manuf
 | Copper layers | two: F.Cu and B.Cu | `manufacturer-limits.yaml` |
 | Copper weight | 1 oz finished outer copper, the maker's introductory-price default | `board-rules.yaml` `fabrication.outer_copper_oz: 1`; `manufacturer-limits.yaml` |
 | Thickness, surface finish, panel, tolerance and delivery options | not chosen in any record of this board; set at the quote | none |
-| Parts | through-hole parts fitted by hand by the owner: T911, T921, U911, U921, J911, J921, J941 (seven hand-fitted through-hole references; with the four resistors below, eleven hand-fitted references in `schematic-spec.yaml`'s `hand_fitted_refs`); the four 1206 gate resistors R911, R912, R921 and R922 are hand-soldered too (8 joints; excluded from the position file and the assembler's list), so a fiducial-free board is ordered (no assembled surface-mount part, and no fiducial in the schematic); the two varistors and the header J931 are the only other parts | `schematic-spec.yaml` totals |
+| Parts | **amended 2026-11-19 (owner decision, option A): a bare-PCB order, every part fitted by hand by the owner, no assembly service.** Hand-fitted: T911, T921, J911, J921, J941 (through-hole), the two surface-mount opto-triacs U911 and U921 (onsemi MOC3083SR2M, C111561, gull-wing SMDIP-6 on `heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M`, pads 2.00 x 1.50 mm, hand-soldered within the sheet's 260 degC limit; the earlier text named them through-hole DIP-6 parts), and the four 1206 gate resistors R911, R912, R921 and R922 (8 joints); eleven references carry `hand: true` in `schematic-spec.yaml`'s `hand_fitted_refs`; the two varistors and the header J931 are also fitted by hand, so all fifteen parts are. No fiducials, by design: nothing is placed by a machine, so nothing needs one. The position file lists nothing; the two varistors and the header J931 are the only other parts | `schematic-spec.yaml` totals |
 | Controlled impedance | none asked | `manufacturer-limits.yaml` |
 
 ## Laminate and comparative tracking index
@@ -51,7 +51,7 @@ It is applied to **both faces of the board**, covering the gaps between this boa
 - J911, J921 and J941: the blade contact surfaces and the push-on mating area (coat on a blade defeats the push-on contact).
 - J931: the header's pins and the cable connector's mating area.
 - T911 and T921: the insulated tab faces and the spreader plate's contact area under the compound and the M3 screw (the heat path and the bolted joint stay bare); the leads and pads are coated.
-- U911 and U921 if fitted in sockets: the socket contacts.
+- U911 and U921: no keep-out; the surface-mount package is soldered to the pads and coated over (**amended 2026-11-19**; the earlier line allowed for sockets, which a surface-mount part does not take).
 
 ### Home application steps
 

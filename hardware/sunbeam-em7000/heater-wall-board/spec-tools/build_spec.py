@@ -54,7 +54,7 @@ spec = {
     'Every net carries the designer name given here; no tool-named net may remain. A pin in no_connect gets a no-connect flag.',
     'Symbol fields on every part: Reference, Value (value), Footprint (footprint), LCSC (lcsc), Rating (rating), plus Manufacturer and MPN (maker, mpn). A part with sim_exclude: true is excluded from simulation in its symbol properties.',
     'Flow left to right on each sheet: inputs and supply at the left, outputs at the right; positive supply toward the top, ground toward the bottom. Mains-referenced circuits stand at the left of a sheet and are drawn apart from low-voltage circuits (the barrier part between them); text clear of text and symbols; connector symbols show pin numbers and the net name beside every pin.',
-    'Place every part named in a sheet; parts with hand: true are through-hole parts the owner fits by hand and are placed like any other.',
+    'Place every part named in a sheet; parts with hand: true are parts the owner fits by hand (through-hole, and the surface-mount opto-triacs and 1206 resistors) and are placed like any other.',
     'Project text variables: MAINS = present. Net class Mains: the nets listed in mains_class_nets.',
     'ERC: a net with only power_in pins needs a PWR_FLAG (the sheet\'s power_flags list names them); no warning may be waived or excluded.']},
  'project_settings': {'MAINS': 'present'},

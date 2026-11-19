@@ -1,6 +1,6 @@
 # The pin-limit record of the Sunbeam EM7000 heater wall board, read by the pre-order board check
 # (the pin-limit rule and the derated-voltage rule's net voltages). The semiconductors this board places are
-# the two opto-triacs (U911, U921, one catalogue number, C23552) and the two triacs (T911, T921, C10065); each
+# the two opto-triacs (U911, U921, one catalogue number, C111561, the surface-mount MOC3083SR2M; C23552 was the through-hole MOC3083M before 2026-11-19) and the two triacs (T911, T921, C10065); each
 # is listed, found by its LCSC number, with the limits of each pin connected on a position of the part. The
 # check requires an entry for the opto-triacs (a part whose reference begins U) and does not for the triacs
 # (a reference beginning T is a passive or mechanical part to it); the triac is listed because its pins give the
@@ -37,11 +37,11 @@ domains:
   - name: mains_ret
     rail: /RET
     highest_voltage_v: 357.8
-  # the element lead landing OUT_C, triac MT2 and opto-triac main terminal pin 4: with the triac off this net follows the live through the element and never exceeds its peak. One domain serves OUT_C and OUT_S (the steam net takes it from its pins) since both are the switched live of the one supply
+  # the element lead landing OUT_C, triac MT2 and opto-triac main terminal pin 6 (swapped with pin 4 on 2026-11-19): with the triac off this net follows the live through the element and never exceeds its peak. One domain serves OUT_C and OUT_S (the steam net takes it from its pins) since both are the switched live of the one supply
   - name: mains_out
     rail: /Coffee heater switch/OUT_C
     highest_voltage_v: 357.8
-  # the opto-triac's second main terminal, pin 6, with the first gate resistor: it follows OUT_x (the opto-triac, off, drops no more than its leakage across its own 800 V rating), so it rides on mains_out at fraction 1
+  # the opto-triac's other main terminal, pin 4, with the first gate resistor: it follows OUT_x (the opto-triac, off, drops no more than its leakage across its own 800 V rating), so it rides on mains_out at fraction 1
   - name: mains_opto_mt
     rail: /Coffee heater switch/HEAT_C_OPTO_MT
     highest_voltage_v: 357.8
@@ -72,11 +72,11 @@ domains:
     rides_on: mains_out
     fraction: 0.0037
 parts:
-  # opto-triacs: U911, U921 (onsemi MOC3083M, MOC3083M/D Rev. 2)
+  # opto-triacs: U911, U921 (onsemi MOC3083SR2M surface-mount, MOC3083M/D Rev. 2)
   # Pin 3 (no connection) and pin 5 (no connection, the triac substrate, not connected) have no entry.
-  - lcsc: C23552
+  - lcsc: C111561
     source:
-      document: "MOC3081M, MOC3082M, MOC3083M 6-Pin DIP Zero-Cross Triac Driver Optocoupler (800 V Peak), onsemi, publication order number MOC3083M/D"
+      document: "MOC3081M, MOC3082M, MOC3083M 6-Pin DIP Zero-Cross (the family sheet also covers the surface-mount option) Triac Driver Optocoupler (800 V Peak), onsemi, publication order number MOC3083M/D"
       revision: "Rev. 2, September 2022"
       section: "Absolute Maximum Ratings (page 3): IF 60 mA, VR 6 V, VDRM 800 V, TOPR -40 to 85 degC, TJ -40 to 100 degC; Electrical Characteristics (page 4): VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V"
       read_on: 2026-11-18
@@ -93,15 +93,15 @@ parts:
         absolute_max_v: 11.25
         absolute_min_v: 0
         tolerates_driven_unpowered: false
-      # Main terminal. Off-state output terminal voltage VDRM 800 V (either polarity); the sheet states a peak blocking current of 500 nA at 800 V.
+      # Main terminal. Off-state output terminal voltage VDRM 800 V (either polarity); the sheet states a peak blocking current of 500 nA at 800 V. Pin 4 is on the gate chain (HEAT_x_OPTO_MT) since 2026-11-19.
       - pin: "4"
-        domain: mains_out
+        domain: mains_opto_mt
         absolute_max_v: 800
         absolute_min_v: -800
         tolerates_driven_unpowered: true
-      # Main terminal. VDRM 800 V.
+      # Main terminal. VDRM 800 V. Pin 6 is on OUT_x since 2026-11-19.
       - pin: "6"
-        domain: mains_opto_mt
+        domain: mains_out
         absolute_max_v: 800
         absolute_min_v: -800
         tolerates_driven_unpowered: true

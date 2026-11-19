@@ -1,11 +1,12 @@
 sheet: "Return landing"
 function: "The neutral return of both heater switches leaves the board on one blade terminal to the main board's return landing."
 parts:
-  - {"ref": "J941", "lib_id": "Connector_Generic:Conn_01x01", "value": "TAB_RET", "rating": "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced); carries the heater return current, 5.38 A steam plus 4.80 A coffee at most together", "footprint": "Tab_TE_63849-1", "mpn": "63849-1", "maker": "TE Connectivity", "lcsc": "C86469", "class": "extended", "hand": true, "function": "return landing: RET, the wire back to the main board's WB_RET blade J110 (owner decision D8 drawn at the blade)", "mains": true, "sim_exclude": true, "pinmap": {"1": "blade (both pads of the footprint are pin 1)"}, "pinmap_source": "TE drawing C-63849 rev F1 (LCSC C86469) as recorded in the main board's custom footprint Tab_TE_63849-1: two 1.40 mm holes 5.08 mm apart, one terminal"}
+  - {"ref": "J941", "lib_id": "heater-wall-board:TabBlade", "value": "TAB_RET", "rating": "6.3 x 0.8 mm blade, board-mounted PC tab; current rating not stated in the maker's drawing (unsourced); carries the heater return current, 5.38 A steam plus 4.80 A coffee at most together", "footprint": "Tab_TE_63849-1", "mpn": "63849-1", "maker": "TE Connectivity", "lcsc": "C86469", "class": "extended", "hand": true, "function": "return landing: RET, the wire back to the main board's WB_RET blade J110 (owner decision D8 drawn at the blade)", "mains": true, "sim_exclude": true, "pinmap": {"1": "blade (both pads of the footprint are pin 1)"}, "pinmap_source": "TE drawing C-63849 rev F1 (LCSC C86469) as recorded in the main board's custom footprint Tab_TE_63849-1: two 1.40 mm holes 5.08 mm apart, one terminal"}
 nets:
   "RET": {"scope": "global", "pins": ["J941.1"]}
 no_connect:
-custom_symbols: []
+custom_symbols:
+  - {"name": "heater-wall-board:TabBlade", "from": "project symbol in heater-wall-board.kicad_sym: one passive pin numbered 1, drawn as a blade; replaces Connector_Generic:Conn_01x01 for the blade terminals", "pins": [{"number": "1", "name": "1"}], "used_by": ["J941"]}
 custom_footprints:
   - {"name": "Tab_TE_63849-1", "from": "TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469), https://datasheet.lcsc.com/datasheet/pdf/d78aaa5668ef44d19432bad6ab97dbf2.pdf, as drawn for the main board (main-board.pretty/Tab_TE_63849-1.kicad_mod, copied unchanged to heater-wall-board.pretty)", "detail": "Blade 6.35 +-0.08 wide, 0.76 to 0.84 thick; PC board hole pattern 2 x diameter 1.40 +-0.05 at 5.08 +-0.08; both pads are numbered 1 (one terminal)."}
 power_flags: []
