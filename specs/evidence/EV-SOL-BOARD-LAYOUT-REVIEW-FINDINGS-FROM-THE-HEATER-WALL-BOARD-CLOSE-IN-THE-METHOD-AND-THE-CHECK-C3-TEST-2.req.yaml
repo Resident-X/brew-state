@@ -1,0 +1,20 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK-C3-TEST-2
+type: evidence
+title: 'Seeded-fault proof run: both new faults caught (SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3)'
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T14:12:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'hardware/tools/board_prove.py (FAULTS: board-setup minimum below the recommended figure; entry that names no cause), run as task hw:prove with the two fault names'
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Seeded-fault proof, run on demand (it is in neither gate) for the two faults this criterion adds, on 2026-11-19 at HEAD db73f4b6 (working tree clean): python3 hardware/tools/board_prove.py --kicad-cli <KiCad.app>/Contents/MacOS/kicad-cli --jobs 2 "below the manufacturer's recommended" "below-recommended entry that names no cause". Output, in full: the clean copy "CLEAN | the throwaway design as committed | must pass"; "CAUGHT | a board-setup minimum below the manufacturer's recommended figure with no entry | board minimums: ... fails | VIOLATION | hardware/proof/gate-proof/gate-proof.kicad_pro | minimum_below_recommended | ..." ; "CAUGHT | a below-recommended entry that names no cause | board minimums: a below_recommended entry whose forced_by is empty fails the minimum it excuses | VIOLATION | ... | minimum_below_recommended | ..."; "RESULT | PASS | 2 of 2 faults caught".
+
+  The seeded cases are in hardware/tools/board_prove.py, FAULTS list (functions recommended_hole_clearance and the constant BELOW_WITHOUT_CAUSE, added in commit 2560a35e): the proof design's copy of the shared limits record is given a recommended_mm of 0.35 mm for min_hole_clearance, above the 0.15 mm the design sets, with no entry (first fault) and with an entry whose forced_by is empty (second). This is the criterion's clause that the proof design's copy carries a seeded fault for the failure and one for the entry with no cause. The full hw:prove (every seeded fault of the check) was not run for this evidence.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3
+    type: satisfies
