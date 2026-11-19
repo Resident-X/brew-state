@@ -174,16 +174,33 @@ def read_table(path: str) -> Dict[str, Entry]:
         unknown = sorted(set(item) - ENTRY_KEYS)
         if unknown:
             raise CannotRun(f"{what} carries {', '.join(unknown)}, which an entry does not take")
-        courtyard = item.get("from")
-        if courtyard is not None and courtyard != "courtyard":
+        courtyard = item.get("from") if "from" in item else None
+        if "from" in item and courtyard != "courtyard":
             raise CannotRun(f"{what} says from: {json.dumps(courtyard)}; the only source a body may be taken from is courtyard")
         if courtyard and item.get("rects"):
             raise CannotRun(f"{what} gives both rects and from: courtyard; give one")
-        if not courtyard and not item.get("rects"):
-            raise CannotRun(f"{what} gives no rects and does not say from: courtyard, so it holds no body")
+        if not courtyard:
+            if not isinstance(item.get("rects"), list) or not item["rects"]:
+                raise CannotRun(f"{what} gives no rects and does not say from: courtyard, so it holds no body")
+            source = item.get("source")
+            if not isinstance(source, str) or not source.strip():
+                raise CannotRun(f"{what} gives rects but no `source` naming the maker reading they come from "
+                                f"(a non-blank string); without one it is not a maker reading")
+        elif "rects" in item:
+            raise CannotRun(f"{what} says from: courtyard and carries a rects key; give one")
+        if "source" in item and not isinstance(item["source"], str):
+            raise CannotRun(f"{what} has a `source` that is {json.dumps(item['source'])}, not a string")
+        if "height_mm" in item:
+            number(item["height_mm"], f"{what}.height_mm")
+        if "hand_fitted" in item and not isinstance(item["hand_fitted"], bool):
+            raise CannotRun(f"{what} has a `hand_fitted` that is {json.dumps(item['hand_fitted'])}, not true or false")
+        if "kind" in item and not isinstance(item["kind"], str):
+            raise CannotRun(f"{what} has a `kind` that is {json.dumps(item['kind'])}, not a string")
+        if "access_zones" in item and item["access_zones"] is not None and not isinstance(item["access_zones"], list):
+            raise CannotRun(f"{what}.access_zones is not a list of rectangles")
         rects = [] if courtyard else read_rects(item["rects"], f"{what}.rects")
         zones = read_rects(item["access_zones"], f"{what}.access_zones") if item.get("access_zones") else []
-        table[str(name)] = Entry(str(name), bool(courtyard), rects, zones, str(item.get("source", "")))
+        table[str(name)] = Entry(str(name), bool(courtyard), rects, zones, str(item.get("source") or ""))
     return table
 
 

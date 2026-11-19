@@ -226,10 +226,10 @@ class BodyGaps(Audit):
             "empty rects": ('footprints:\n  "test:Box": {kind: x}\n', "holds no body"),
             "both": (f'footprints:\n  "test:Box": {{from: courtyard, rects: [{rect}]}}\n', "give one"),
             "other source": ('footprints:\n  "test:Box": {from: fab}\n', "only source a body may be taken from is courtyard"),
-            "unknown key": (f'footprints:\n  "test:Box": {{rects: [{rect}], colour: red}}\n', "colour"),
-            "no area": ('footprints:\n  "test:Box": {rects: [{name: body, x0: 2, y0: -2, x1: 2, y1: 2}]}\n', "has no area"),
-            "missing corner": ('footprints:\n  "test:Box": {rects: [{name: body, x0: 0, y0: 0, x1: 2}]}\n', "lacks y1"),
-            "not a number": ('footprints:\n  "test:Box": {rects: [{name: body, x0: wide, y0: 0, x1: 2, y1: 2}]}\n', "not a number"),
+            "unknown key": (f'footprints:\n  "test:Box": {{source: s, rects: [{rect}], colour: red}}\n', "colour"),
+            "no area": ('footprints:\n  "test:Box": {source: s, rects: [{name: body, x0: 2, y0: -2, x1: 2, y1: 2}]}\n', "has no area"),
+            "missing corner": ('footprints:\n  "test:Box": {source: s, rects: [{name: body, x0: 0, y0: 0, x1: 2}]}\n', "lacks y1"),
+            "not a number": ('footprints:\n  "test:Box": {source: s, rects: [{name: body, x0: wide, y0: 0, x1: 2, y1: 2}]}\n', "not a number"),
             "not a mapping": ('footprints:\n  "test:Box": [1]\n', "is not a mapping"),
         }
         for name, (text, expected) in bad.items():
@@ -254,6 +254,63 @@ class BodyGaps(Audit):
         status, report = self.run_json(footprint_audit.main, "gaps", "--board", board_path, "--bodies", good, "--min-gap", "-1")
         self.assertEqual((status, report["result"]), (2, "CANNOT RUN"))
         self.assertIn("--min-gap", report["detail"])
+
+    def _refused(self, text, expected):
+        board_path = self.write("b.kicad_pcb", board([footprint("A1", "test:Box", 0, 0)]))
+        path = self.write("t.yaml", text)
+        status, report = self.run_json(footprint_audit.main, "gaps", "--board", board_path, "--bodies", path)
+        self.assertEqual((status, report["result"]), (2, "CANNOT RUN"), report)
+        self.assertIn("test:Box", report["detail"])
+        self.assertIn(expected, report["detail"])
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            status, lines = self.run_tool(footprint_audit.main, "gaps", "--board", board_path, "--bodies", path)
+        self.assertEqual((status, lines), (2, []))
+        self.assertIn("CANNOT RUN | ", err.getvalue())
+        self.assertIn(expected, err.getvalue())
+
+    def test_a_body_with_rects_and_no_source_is_refused_and_never_labelled_a_maker_reading(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's body dimensions in footprint coordinates, and names any part the table does not hold. A part's body is its maker's drawing or, where the parts list names no maker part, the footprint's courtyard; the report states which basis each part rests on and the verdict counts the parts on a courtyard stand-in. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a part on a courtyard stand-in counted in the verdict, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+        rect = "{name: body, x0: -2, y0: -2, x1: 2, y1: 2}"
+        self._refused(f'footprints:\n  "test:Box": {{rects: [{rect}]}}\n', "`source`")
+        self._refused(f'footprints:\n  "test:Box": {{kind: part, height_mm: 5, rects: [{rect}]}}\n', "`source`")
+
+    def test_a_blank_or_non_string_source_is_refused(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's body dimensions in footprint coordinates, and names any part the table does not hold. A part's body is its maker's drawing or, where the parts list names no maker part, the footprint's courtyard; the report states which basis each part rests on and the verdict counts the parts on a courtyard stand-in. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a part on a courtyard stand-in counted in the verdict, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+        rect = "{name: body, x0: -2, y0: -2, x1: 2, y1: 2}"
+        for label, value in (("empty", '""'), ("spaces", '"   "'), ("null", "null"), ("number", "7"), ("list", "[a]"), ("true", "true")):
+            with self.subTest(source=label):
+                self._refused(f'footprints:\n  "test:Box": {{source: {value}, rects: [{rect}]}}\n', "`source`")
+
+    def test_a_body_with_empty_or_malformed_rects_or_an_unknown_from_is_refused(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's body dimensions in footprint coordinates, and names any part the table does not hold. A part's body is its maker's drawing or, where the parts list names no maker part, the footprint's courtyard; the report states which basis each part rests on and the verdict counts the parts on a courtyard stand-in. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a part on a courtyard stand-in counted in the verdict, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+        rect = "{name: body, x0: -2, y0: -2, x1: 2, y1: 2}"
+        cases = {
+            "empty rects": ('{source: s, rects: []}', "holds no body"),
+            "rects not a list": ('{source: s, rects: {a: 1}}', "holds no body"),
+            "rects a string": ('{source: s, rects: body}', "holds no body"),
+            "unknown from": (f'{{source: s, from: fab, rects: [{rect}]}}', "only source a body may be taken from is courtyard"),
+            "blank from": (f'{{source: s, from: "", rects: [{rect}]}}', "only source a body may be taken from is courtyard"),
+            "null from": (f'{{source: s, from: null, rects: [{rect}]}}', "only source a body may be taken from is courtyard"),
+            "courtyard with empty rects": ('{from: courtyard, rects: []}', "rects key"),
+            "courtyard with non-string source": ('{from: courtyard, source: 3}', "not a string"),
+            "height not a number": (f'{{source: s, height_mm: tall, rects: [{rect}]}}', "height_mm"),
+            "hand_fitted not a bool": (f'{{source: s, hand_fitted: yes please, rects: [{rect}]}}', "hand_fitted"),
+            "access zones not a list": (f'{{source: s, access_zones: reach, rects: [{rect}]}}', "access_zones is not a list"),
+            "access zones a mapping": (f'{{source: s, access_zones: {{a: 1}}, rects: [{rect}]}}', "access_zones is not a list"),
+            "zone corner missing": (f'{{source: s, access_zones: [{{name: z, x0: 0, y0: 0, x1: 2}}], rects: [{rect}]}}', "lacks y1"),
+        }
+        for label, (entry, expected) in cases.items():
+            with self.subTest(entry=label):
+                self._refused(f'footprints:\n  "test:Box": {entry}\n', expected)
+
+    def test_a_courtyard_entry_needs_no_source_and_a_maker_entry_with_a_source_reads(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's body dimensions in footprint coordinates, and names any part the table does not hold. A part's body is its maker's drawing or, where the parts list names no maker part, the footprint's courtyard; the report states which basis each part rests on and the verdict counts the parts on a courtyard stand-in. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a part on a courtyard stand-in counted in the verdict, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
+        rect = "{name: body, x0: -2, y0: -2, x1: 2, y1: 2}"
+        path = self.write("t.yaml", f'footprints:\n  "test:Box": {{source: "maker p.3", rects: [{rect}]}}\n  "test:Yard": {{from: courtyard}}\n')
+        found = footprint_audit.read_table(path)
+        self.assertEqual((found["test:Box"].courtyard, found["test:Box"].source), (False, "maker p.3"))
+        self.assertTrue(found["test:Yard"].courtyard)
 
     def test_a_missing_yaml_package_is_named(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
