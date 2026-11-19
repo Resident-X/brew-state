@@ -1680,7 +1680,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" "Package_TO_SOT_THT:TO-220-3_Vertical"
+		(property "Footprint" "heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads"
 			(at 200.66 105.41 0)
 			(hide yes)
 			(effects

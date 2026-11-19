@@ -29,85 +29,7 @@ parts:
   lcsc: none
   class: none
   hand: false
-  function: Case-screw mounting hole 1, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-  mains: false
-  sim_exclude: true
-- ref: H2
-  lib_id: Mechanical:MountingHole
-  value: MountingHole
-  rating: M3 screw, 3.2 mm non-plated hole
-  footprint: MountingHole:MountingHole_3.2mm_M3
-  mpn: ''
-  maker: ''
-  lcsc: none
-  class: none
-  hand: false
-  function: Case-screw mounting hole 2, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-  mains: false
-  sim_exclude: true
-- ref: H3
-  lib_id: Mechanical:MountingHole
-  value: MountingHole
-  rating: M3 screw, 3.2 mm non-plated hole
-  footprint: MountingHole:MountingHole_3.2mm_M3
-  mpn: ''
-  maker: ''
-  lcsc: none
-  class: none
-  hand: false
-  function: Case-screw mounting hole 3, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-  mains: false
-  sim_exclude: true
-- ref: H4
-  lib_id: Mechanical:MountingHole
-  value: MountingHole
-  rating: M3 screw, 3.2 mm non-plated hole
-  footprint: MountingHole:MountingHole_3.2mm_M3
-  mpn: ''
-  maker: ''
-  lcsc: none
-  class: none
-  hand: false
-  function: Case-screw mounting hole 4, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-  mains: false
-  sim_exclude: true
-- ref: FID1
-  lib_id: Mechanical:Fiducial
-  value: Fiducial
-  rating: global fiducial, 1 mm copper, 2 mm mask opening
-  footprint: Fiducial:Fiducial_1mm_Mask2mm
-  mpn: ''
-  maker: ''
-  lcsc: none
-  class: none
-  hand: false
-  function: Global fiducial 1 of 3 on F.Cu; not in the bill of materials, not in the position file
-  mains: false
-  sim_exclude: true
-- ref: FID2
-  lib_id: Mechanical:Fiducial
-  value: Fiducial
-  rating: global fiducial, 1 mm copper, 2 mm mask opening
-  footprint: Fiducial:Fiducial_1mm_Mask2mm
-  mpn: ''
-  maker: ''
-  lcsc: none
-  class: none
-  hand: false
-  function: Global fiducial 2 of 3 on F.Cu; not in the bill of materials, not in the position file
-  mains: false
-  sim_exclude: true
-- ref: FID3
-  lib_id: Mechanical:Fiducial
-  value: Fiducial
-  rating: global fiducial, 1 mm copper, 2 mm mask opening
-  footprint: Fiducial:Fiducial_1mm_Mask2mm
-  mpn: ''
-  maker: ''
-  lcsc: none
-  class: none
-  hand: false
-  function: Global fiducial 3 of 3 on F.Cu; not in the bill of materials, not in the position file
+  function: "The board's single mounting hole (M3 screw, 3.2 mm non-plated): the 3D-printed case retains the board with a printed ledge and hold-down fingers or lid ribs, and the hole keeps the mounting_hole distance from Mains copper whatever the screw is made of; not in the bill of materials, not in the position file"
   mains: false
   sim_exclude: true
 nets:
@@ -127,4 +49,4 @@ no_connect: []
 custom_symbols: []
 custom_footprints: []
 power_flags: []
-notes: 'Header at the right edge of the sheet; no mains on this sheet. The cable lands on positions 1 to 3 of the main board''s ten-way J761: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K. +5V_WB supplies the two opto-triac LED anodes on the switch sheets and is power-leaving at the main board''s end (JP761); nothing on this board sources it. HEAT_C_LED_K and HEAT_S_LED_K are the LED returns sunk by the main board''s Q761 and Q771. The board has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. H1 to H4 (case-screw holes, a starting set) and FID1 to FID3 (fiducials) are mechanical symbols on no net, drawn in a row on this sheet with the LCSC field none: the holes take an M3 screw (the board is a plain rectangle screwed to the case, with no ears; the case screws to the flat spreader plate), and none of the seven is in the bill of materials or the position file. The layout chooses the final number of holes (at least three) and their places, each held to the pre-order check''s mounting_hole distance from Mains copper whatever the screw is made of; a different count is a pinless-part change in the schematic, verified with the parity check, and nothing here fixes four. The symbols are drawn with in_bom yes; the exclusion is set on the placed footprints at layout (open-items.md). Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'
+notes: 'Header at the right edge of the sheet; no mains on this sheet. The cable lands on positions 1 to 3 of the main board''s ten-way J761: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K. +5V_WB supplies the two opto-triac LED anodes on the switch sheets and is power-leaving at the main board''s end (JP761); nothing on this board sources it. HEAT_C_LED_K and HEAT_S_LED_K are the LED returns sunk by the main board''s Q761 and Q771. The board has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. H1 (the board''s single mounting hole) is a mechanical symbol on no net, drawn on this sheet with the LCSC field none: it takes an M3 screw, the board is a plain 45 x 76 mm rectangle with no ears, and the 3D-printed case retains it with a printed ledge and hold-down fingers or lid ribs (the layout''s decision of 2026-11-19, delegated by the owner). The hole is held to the pre-order check''s mounting_hole distance from Mains copper whatever the screw is made of, and H1 is not in the bill of materials or the position file. The board carries no fiducials: the four 1206 gate resistors are hand-fitted and the other assembled parts are through-hole, so a fiducial-free board is ordered. The symbol is drawn with in_bom yes; the exclusion is set on the placed footprint at layout (open-items.md). Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'

@@ -1859,3 +1859,7 @@ Each earlier finding read against the records, the graph and the documents at b3
 
 Round 13 raised one finding (13.1, cosmetic: `controller-board-function-forms.md` line 477 named the bracket's standing leg) and was not clean. 13.1 is closed by a change (the row now names the flat spreader plate), committed with the graph amendments of the same day. A further full round was put to the owner, with the recommendation to run it; the owner answered "No, proceed as is". No round 14 was run. The review therefore stands closed on round 13's judgement plus the one change above, not on a clean full round. This is recorded so the evidence for `SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C1` states it.
 
+### Note after the owner's decision: schematic changed after round 13 (2026-11-19)
+
+After round 13 the schematic changed by deleting six pinless parts (H2, H3, H4, FID1, FID2, FID3) and changing two footprint fields (T911 and T921 now carry `heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads`), delegated to the layout agent by the owner. No net, pin or value changed: ERC reports 0, the netlist holds 15 parts, and the four 1206 gate resistors are marked hand-fitted in the records. The rounds above are not rewritten and the review stands as the owner directed ("No, proceed as is").
+

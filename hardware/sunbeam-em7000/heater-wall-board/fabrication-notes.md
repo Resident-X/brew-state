@@ -8,11 +8,11 @@ Maker figures are from JLCPCB's published capabilities page as `docs/board-manuf
 
 | Item | Statement | Source |
 |---|---|---|
-| Outline | a plain rectangle with 3.2 mm mounting holes (at least three; the layout chooses the count, the schematic's H1 to H4 being a starting set) and no ears, as narrow as the parts allow, its size set at layout and to stay inside the maker's 102 x 102 mm lowest price band (**amended 2026-11-19**: the earlier form's 57.0 x 42.5 mm body of 2422.5 mm2, 2662.5 mm2 with two mounting ears of a bracket, is not carried); the layout leaf draws the outline and the later case-design step the case and the plate | `docs/sunbeam-em7000/controller-board-division.md`, The heater wall board; leaf text |
+| Outline | a plain 45 x 76 mm rectangle with one 3.2 mm mounting hole (H1; the layout chose one, the printed case retaining the board with a ledge and fingers or lid ribs) and no ears, as narrow as the parts allow, its size set at layout and to stay inside the maker's 102 x 102 mm lowest price band (**amended 2026-11-19**: the earlier form's 57.0 x 42.5 mm body of 2422.5 mm2, 2662.5 mm2 with two mounting ears of a bracket, is not carried); the layout leaf draws the outline and the later case-design step the case and the plate | `docs/sunbeam-em7000/controller-board-division.md`, The heater wall board; leaf text |
 | Copper layers | two: F.Cu and B.Cu | `manufacturer-limits.yaml` |
 | Copper weight | 1 oz finished outer copper, the maker's introductory-price default | `board-rules.yaml` `fabrication.outer_copper_oz: 1`; `manufacturer-limits.yaml` |
 | Thickness, surface finish, panel, tolerance and delivery options | not chosen in any record of this board; set at the quote | none |
-| Parts | through-hole parts fitted by hand by the owner: T911, T921, U911, U921, J911, J921, J941 (seven hand-fitted references); the four 1206 gate resistors, the two varistors and the header J931 are the only other parts | `schematic-spec.yaml` totals |
+| Parts | through-hole parts fitted by hand by the owner: T911, T921, U911, U921, J911, J921, J941 (seven hand-fitted through-hole references; with the four resistors below, eleven hand-fitted references in `schematic-spec.yaml`'s `hand_fitted_refs`); the four 1206 gate resistors R911, R912, R921 and R922 are hand-soldered too (8 joints; excluded from the position file and the assembler's list), so a fiducial-free board is ordered (no assembled surface-mount part, and no fiducial in the schematic); the two varistors and the header J931 are the only other parts | `schematic-spec.yaml` totals |
 | Controlled impedance | none asked | `manufacturer-limits.yaml` |
 
 ## Laminate and comparative tracking index

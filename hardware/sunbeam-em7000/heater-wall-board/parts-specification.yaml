@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 heater wall board: one position for every part
-# schematic-spec.yaml lists (21), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (15), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, as the main board's record (main-board/parts-specification.yaml) states. So the figures
@@ -14,9 +14,9 @@
 # derating-policy.yaml), integrated circuit (the two opto-triacs, as the main board classes its
 # MOC3052SVM), resistor (the four 1206 gate resistors), varistor (the two 07D471K). The three blade
 # terminals and the three-way header state no voltage in their rating, so they take none; their current
-# ratings are not stated by the maker's drawing (unsourced), see open-items.md. The case-screw holes (H1 to H4 are a starting set; the layout chooses the final count, at least three, and a change of count is a pinless-part change in the schematic)
-# and the three fiducials (FID1 to FID3), added 2026-11-19 with the plain-rectangle mounting form, state no voltage and take none;
-# none of the seven is in the bill of materials or the position file (set on the placed footprints at layout, open-items.md).
+# ratings are not stated by the maker's drawing (unsourced), see open-items.md. The one case-screw hole (H1, the board's single mounting hole; the printed case retains the board with a ledge and fingers or ribs, and the hole is held to the mounting_hole distance from Mains copper whatever the screw) states no voltage and takes none; it is not in the bill of materials or the position file (set on the placed footprint at layout, open-items.md). The board carries no fiducials (layout decision of 2026-11-19: the four 1206 gate resistors are hand-fitted, so no assembled surface-mount part needs them).
+#
+# The four 1206 gate resistors R911, R912, R921 and R922 are hand-fitted (8 joints; excluded from the position file and the assembler's list); they keep their catalogue numbers (C18002) and are compared like any other position. The triacs T911 and T921 take the board's own footprint heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads (oval pads 1.5 x 2.5, drill 1.1, tab face 2.86 mm behind the pad row), so their package is that footprint's item name.
 #
 # Design change of 2026-11-18 (the design opinion of that day, .stage0/wall-design-opinion.md; open-items.md D7):
 # the triacs BTA16-600BRG (C9100) became BTA16-800BWRG (ST, C10065), the opto-triacs Lite-On MOC3083 (C10797)
@@ -55,7 +55,7 @@ positions:
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V 16 A insulated TO-220AB snubberless (3-quadrant, BW grade) triac, ST DS2114 Rev 11, May 2018 (VDRM/VRRM 800 V (product summary p.1, Table 8 p.15), VDSM VDRM+100 V = 900 V, IGM 4 A at 20 us, PG(AV) 1 W, IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
   - reference: T911
     value: "BTA16-800BWRG"
-    package: TO-220-3_Vertical
+    package: TO-220-3_Vertical_Insulated_OvalPads
     rating: "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
     lcsc: C10065
     class: triac
@@ -67,14 +67,14 @@ positions:
     rating: "800 V zero-cross opto-triac driver, DIP-6, onsemi MOC3083M/D Rev. 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance >= 7 mm"
     lcsc: C23552
     class: integrated circuit
-  # R911: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  # R911: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
   - reference: R911
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
-  # R912: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  # R912: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
   - reference: R912
     value: "200"
     package: R_1206_3216Metric
@@ -101,7 +101,7 @@ positions:
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V 16 A insulated TO-220AB snubberless (3-quadrant, BW grade) triac, ST DS2114 Rev 11, May 2018 (VDRM/VRRM 800 V (product summary p.1, Table 8 p.15), VDSM VDRM+100 V = 900 V, IGM 4 A at 20 us, PG(AV) 1 W, IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
   - reference: T921
     value: "BTA16-800BWRG"
-    package: TO-220-3_Vertical
+    package: TO-220-3_Vertical_Insulated_OvalPads
     rating: "800 V 16 A insulated TO-220AB snubberless triac (BW grade), ST BTA16-800BWRG DS2114 Rev 11; insulated tab 2500 Vrms"
     lcsc: C10065
     class: triac
@@ -113,14 +113,14 @@ positions:
     rating: "800 V zero-cross opto-triac driver, DIP-6, onsemi MOC3083M/D Rev. 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance >= 7 mm"
     lcsc: C23552
     class: integrated circuit
-  # R921: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  # R921: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
   - reference: R921
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
-  # R922: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended
+  # R922: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
   - reference: R922
     value: "200"
     package: R_1206_3216Metric
@@ -151,53 +151,11 @@ positions:
     rating: "1x3 2.54 mm pin header, 3 A, vertical"
     lcsc: C2937625
     class: none
-  # H1: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
+  # H1: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; the board's single mounting hole, held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
   - reference: H1
     value: "MountingHole"
     package: MountingHole_3.2mm_M3
     rating: "M3 screw, 3.2 mm non-plated hole"
-    lcsc: none
-    class: none
-  # H2: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
-  - reference: H2
-    value: "MountingHole"
-    package: MountingHole_3.2mm_M3
-    rating: "M3 screw, 3.2 mm non-plated hole"
-    lcsc: none
-    class: none
-  # H3: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
-  - reference: H3
-    value: "MountingHole"
-    package: MountingHole_3.2mm_M3
-    rating: "M3 screw, 3.2 mm non-plated hole"
-    lcsc: none
-    class: none
-  # H4: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
-  - reference: H4
-    value: "MountingHole"
-    package: MountingHole_3.2mm_M3
-    rating: "M3 screw, 3.2 mm non-plated hole"
-    lcsc: none
-    class: none
-  # FID1: maker none; MPN none (a copper marker); catalogue class none; not in the bill of materials or the position file
-  - reference: FID1
-    value: "Fiducial"
-    package: Fiducial_1mm_Mask2mm
-    rating: "global fiducial, 1 mm copper, 2 mm mask opening"
-    lcsc: none
-    class: none
-  # FID2: maker none; MPN none (a copper marker); catalogue class none; not in the bill of materials or the position file
-  - reference: FID2
-    value: "Fiducial"
-    package: Fiducial_1mm_Mask2mm
-    rating: "global fiducial, 1 mm copper, 2 mm mask opening"
-    lcsc: none
-    class: none
-  # FID3: maker none; MPN none (a copper marker); catalogue class none; not in the bill of materials or the position file
-  - reference: FID3
-    value: "Fiducial"
-    package: Fiducial_1mm_Mask2mm
-    rating: "global fiducial, 1 mm copper, 2 mm mask opening"
     lcsc: none
     class: none
   # ---- sheet: Return landing

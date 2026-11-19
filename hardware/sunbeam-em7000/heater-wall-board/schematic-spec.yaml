@@ -47,15 +47,19 @@ sheets_order:
 - Return landing
 totals:
   sheets: 4
-  parts: 21
+  parts: 15
   nets: 12
   parts_by_catalogue_class:
     extended: 14
-    none: 7
+    none: 1
   hand_fitted_refs:
   - J911
   - J921
   - J941
+  - R911
+  - R912
+  - R921
+  - R922
   - T911
   - T921
   - U911
@@ -93,7 +97,7 @@ sheets:
       16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA
       max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table
       4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
-    footprint: Package_TO_SOT_THT:TO-220-3_Vertical
+    footprint: heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads
     mpn: BTA16-800BWRG
     maker: STMicroelectronics
     lcsc: C10065
@@ -143,7 +147,7 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: false
+    hand: true
     function: first half of the 400 ohm gate resistor of the coffee triac (opto-triac side)
     mains: true
     sim_exclude: false
@@ -156,7 +160,7 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: false
+    hand: true
     function: second half of the 400 ohm gate resistor (triac gate side)
     mains: true
     sim_exclude: false
@@ -236,7 +240,11 @@ sheets:
   - pin: U911.5
     reason: substrate, DO NOT CONNECT per the onsemi MOC3083M pin diagram (5 NC, triac substrate)
   custom_symbols: []
-  custom_footprints: []
+  custom_footprints:
+  - name: heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads
+    from: ST DS2114 Rev 11 (BTA16-800BWRG, TO-220AB insulated), as drawn in heater-wall-board.pretty/TO-220-3_Vertical_Insulated_OvalPads.kicad_mod; the stock Package_TO_SOT_THT:TO-220-3_Vertical it replaces is not used
+    detail: Three plated oval pads numbered 1, 2, 3 at 2.54 mm pitch along X, each 1.5 x 2.5 mm with a 1.1 mm drill (pin 1 A1/MT1, pin 2 A2/MT2, pin 3 G); the insulated tab face stands 2.86 mm behind the pad row and the tab
+      is not a pin. Used by T911 and T921.
   power_flags: []
   drawing_notes: 'Left to right: element lead landing J911 (OUT_C, mains) at the left, the opto-triac U911 and the triac T911 in the middle, the varistor RV911 across OUT_C and RET. Mains side at the left and middle; the opto-triac
     is the barrier part and straddles the line: its LED pins 1-2 (+5V_WB, HEAT_C_LED_K) are drawn on the right edge as low voltage, its output pins 4 and 6 on the left with the mains. Separation basis barrier: heater-switch
@@ -257,7 +265,7 @@ sheets:
       16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA
       max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table
       4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
-    footprint: Package_TO_SOT_THT:TO-220-3_Vertical
+    footprint: heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads
     mpn: BTA16-800BWRG
     maker: STMicroelectronics
     lcsc: C10065
@@ -307,7 +315,7 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: false
+    hand: true
     function: first half of the 400 ohm gate resistor of the steam triac (opto-triac side)
     mains: true
     sim_exclude: false
@@ -320,7 +328,7 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: false
+    hand: true
     function: second half of the 400 ohm gate resistor (triac gate side)
     mains: true
     sim_exclude: false
@@ -443,85 +451,8 @@ sheets:
     lcsc: none
     class: none
     hand: false
-    function: Case-screw mounting hole 1, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-    mains: false
-    sim_exclude: true
-  - ref: H2
-    lib_id: Mechanical:MountingHole
-    value: MountingHole
-    rating: M3 screw, 3.2 mm non-plated hole
-    footprint: MountingHole:MountingHole_3.2mm_M3
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: Case-screw mounting hole 2, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-    mains: false
-    sim_exclude: true
-  - ref: H3
-    lib_id: Mechanical:MountingHole
-    value: MountingHole
-    rating: M3 screw, 3.2 mm non-plated hole
-    footprint: MountingHole:MountingHole_3.2mm_M3
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: Case-screw mounting hole 3, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-    mains: false
-    sim_exclude: true
-  - ref: H4
-    lib_id: Mechanical:MountingHole
-    value: MountingHole
-    rating: M3 screw, 3.2 mm non-plated hole
-    footprint: MountingHole:MountingHole_3.2mm_M3
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: Case-screw mounting hole 4, one of the starting set H1 to H4 (the layout chooses the final count, at least three; M3 screw); not in the bill of materials, not in the position file
-    mains: false
-    sim_exclude: true
-  - ref: FID1
-    lib_id: Mechanical:Fiducial
-    value: Fiducial
-    rating: global fiducial, 1 mm copper, 2 mm mask opening
-    footprint: Fiducial:Fiducial_1mm_Mask2mm
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: Global fiducial 1 of 3 on F.Cu; not in the bill of materials, not in the position file
-    mains: false
-    sim_exclude: true
-  - ref: FID2
-    lib_id: Mechanical:Fiducial
-    value: Fiducial
-    rating: global fiducial, 1 mm copper, 2 mm mask opening
-    footprint: Fiducial:Fiducial_1mm_Mask2mm
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: Global fiducial 2 of 3 on F.Cu; not in the bill of materials, not in the position file
-    mains: false
-    sim_exclude: true
-  - ref: FID3
-    lib_id: Mechanical:Fiducial
-    value: Fiducial
-    rating: global fiducial, 1 mm copper, 2 mm mask opening
-    footprint: Fiducial:Fiducial_1mm_Mask2mm
-    mpn: ''
-    maker: ''
-    lcsc: none
-    class: none
-    hand: false
-    function: Global fiducial 3 of 3 on F.Cu; not in the bill of materials, not in the position file
+    function: 'The board''s single mounting hole (M3 screw, 3.2 mm non-plated): the 3D-printed case retains the board with a printed ledge and hold-down fingers or lid ribs, and the hole keeps the mounting_hole distance from
+      Mains copper whatever the screw is made of; not in the bill of materials, not in the position file'
     mains: false
     sim_exclude: true
   nets:
@@ -543,12 +474,12 @@ sheets:
   power_flags: []
   drawing_notes: 'Header at the right edge of the sheet; no mains on this sheet. The cable lands on positions 1 to 3 of the main board''s ten-way J761: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K. +5V_WB supplies the two opto-triac
     LED anodes on the switch sheets and is power-leaving at the main board''s end (JP761); nothing on this board sources it. HEAT_C_LED_K and HEAT_S_LED_K are the LED returns sunk by the main board''s Q761 and Q771. The board
-    has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. H1 to H4 (case-screw
-    holes, a starting set) and FID1 to FID3 (fiducials) are mechanical symbols on no net, drawn in a row on this sheet with the LCSC field none: the holes take an M3 screw (the board is a plain rectangle screwed to the case,
-    with no ears; the case screws to the flat spreader plate), and none of the seven is in the bill of materials or the position file. The layout chooses the final number of holes (at least three) and their places, each held
-    to the pre-order check''s mounting_hole distance from Mains copper whatever the screw is made of; a different count is a pinless-part change in the schematic, verified with the parity check, and nothing here fixes four.
-    The symbols are drawn with in_bom yes; the exclusion is set on the placed footprints at layout (open-items.md). Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header
-    (separation basis, heater-switch barrier).'
+    has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. H1 (the board''s single
+    mounting hole) is a mechanical symbol on no net, drawn on this sheet with the LCSC field none: it takes an M3 screw, the board is a plain 45 x 76 mm rectangle with no ears, and the 3D-printed case retains it with a printed
+    ledge and hold-down fingers or lid ribs (the layout''s decision of 2026-11-19, delegated by the owner). The hole is held to the pre-order check''s mounting_hole distance from Mains copper whatever the screw is made of,
+    and H1 is not in the bill of materials or the position file. The board carries no fiducials: the four 1206 gate resistors are hand-fitted and the other assembled parts are through-hole, so a fiducial-free board is ordered.
+    The symbol is drawn with in_bom yes; the exclusion is set on the placed footprint at layout (open-items.md). Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation
+    basis, heater-switch barrier).'
 - order: 4
   sheet: Return landing
   source_file: 400-return-landing.yaml
@@ -587,6 +518,11 @@ sheets:
     The element lead landings OUT_C and OUT_S are on the switch sheets. No live or line feed lands on this board.'
 custom_symbols: []
 custom_footprints:
+- name: heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads
+  from: ST DS2114 Rev 11 (BTA16-800BWRG, TO-220AB insulated), as drawn in heater-wall-board.pretty/TO-220-3_Vertical_Insulated_OvalPads.kicad_mod; the stock Package_TO_SOT_THT:TO-220-3_Vertical it replaces is not used
+  detail: Three plated oval pads numbered 1, 2, 3 at 2.54 mm pitch along X, each 1.5 x 2.5 mm with a 1.1 mm drill (pin 1 A1/MT1, pin 2 A2/MT2, pin 3 G); the insulated tab face stands 2.86 mm behind the pad row and the tab
+    is not a pin. Used by T911 and T921.
+  sheet: Coffee heater switch
 - name: Tab_TE_63849-1
   from: TE Connectivity drawing C-63849 rev F1 (63849-1, LCSC C86469), https://datasheet.lcsc.com/datasheet/pdf/d78aaa5668ef44d19432bad6ab97dbf2.pdf, as drawn for the main board (main-board.pretty/Tab_TE_63849-1.kicad_mod,
     copied unchanged to heater-wall-board.pretty)
