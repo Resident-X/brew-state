@@ -528,6 +528,16 @@ def limits(old: str, new: str):
     return lambda seed: seed.replace_shared(SHARED_RECORDS[0], old, new)
 
 
+#: A below_recommended entry for the proof design's hole clearance whose forced_by states nothing.
+BELOW_WITHOUT_CAUSE = ("    below_recommended:\n      - setting: min_hole_clearance\n        figure_mm: 0.15\n"
+                       "        forced_by: \"\"\n        item: none -- synthetic item\n")
+
+
+def recommended_hole_clearance(seed: Seed) -> None:
+    """The shared record's hole clearance made to state a recommended figure of 0.35 mm, above the 0.15 mm the design sets."""
+    limits("      min_hole_clearance:\n        mm: 0.15\n", "      min_hole_clearance:\n        mm: 0.15\n        recommended_mm: 0.35\n")(seed)
+
+
 def resistor_over_its_rating(seed: Seed) -> None:
     """R1, across the mains pair, made a resistor of class resistor rated 100 V in the record and the schematic."""
     parts('    rating: "0.25W"\n    lcsc: "C9000002"\n    class: none',
@@ -2308,6 +2318,12 @@ FAULTS: List[tuple] = [
     ("a manufacturer limits record read longer ago than its own max_age_days", "board minimums: a record older than its own max_age_days fails", "manufacturer_limits_record",
      "past the 30 days it allows itself",
      lambda seed: (limits("max_age_days: 36500", "max_age_days: 30")(seed), limits("read_on: 2026-10-20", "read_on: 2026-01-01")(seed))),
+    ("a board-setup minimum below the manufacturer's recommended figure with no entry", "board minimums: a board setup minimum below the recommended figure the record gives for it, with no below_recommended entry, fails", "minimum_below_recommended",
+     "the board setup's min_hole_clearance is 0.15 mm, below the 0.35 mm the manufacturer recommends",
+     lambda seed: recommended_hole_clearance(seed)),
+    ("a below-recommended entry that names no cause", "board minimums: a below_recommended entry whose forced_by is empty fails the minimum it excuses", "minimum_below_recommended",
+     "the below_recommended entry for min_hole_clearance in hardware/proof/manufacturer-limits.yaml names no cause",
+     lambda seed: (recommended_hole_clearance(seed), limits("  - copper_layers: 4\n", BELOW_WITHOUT_CAUSE + "  - copper_layers: 4\n")(seed))),
     ("a part whose catalogue lifecycle status is end of life", "lifecycle: a part whose status is end of life, obsolete or not recommended for new designs fails", "parts_lifecycle",
      "the position R1, catalogue number C9000002, has the lifecycle status 'end of life'",
      extract("    stock: 1001\n    unit_price: 0.01\n    lifecycle:\n      status: active", "    stock: 1001\n    unit_price: 0.01\n    lifecycle:\n      status: end of life")),

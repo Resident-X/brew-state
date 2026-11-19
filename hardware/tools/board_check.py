@@ -3908,12 +3908,21 @@ MANUFACTURER_LIMITS_NAME = "manufacturer-limits.yaml"
 #: The keys of the manufacturer limits record, of each process in it, and of the figure and citation of each limit.
 MANUFACTURER_LIMITS_KEYS = ("read_on", "source", "max_age_days", "processes", "synthetic")
 PROCESS_KEYS = ("copper_layers", "outer_copper_oz", "limits")
+#: A process may also list the minimums a board takes below the maker's recommended figure, each with what forces it.
+PROCESS_OPTIONAL_KEYS = ("below_recommended",)
 LIMIT_FIGURE_KEYS = ("mm", "citation")
+#: A limit may also state the figure the maker recommends where it states one.
+LIMIT_OPTIONAL_KEYS = ("recommended_mm",)
+#: The keys of an entry of a process's below_recommended list: the setting, the figure the board takes, what forces it
+#: and the catalogue item or requirement the cause rests on.
+BELOW_RECOMMENDED_KEYS = ("setting", "figure_mm", "forced_by", "item")
+BELOW_RECOMMENDED_STATED = ("setting", "figure_mm")
 #: The entry of the dated prose manufacturer record a limit was read from: its section, its limit and its condition.
 LIMIT_CITATION_KEYS = ("section", "limit", "condition")
 #: A limit is named for the board-setup minimum it bounds, as KiCad names it.
 LIMIT_NAME = re.compile(r"min_[a-z0-9_]+")
 MINIMUMS_RULE = "board_minimums"
+RECOMMENDED_RULE = "minimum_below_recommended"
 #: The board-setup minimum each constraint of a custom rule, and each net class's clearance and track width, is held to.
 CONSTRAINT_LIMITS = {
     "clearance": "min_clearance",
@@ -3940,6 +3949,11 @@ class Limits(NamedTuple):
 
     processes: Dict[Tuple[int, float], Dict[str, Tuple[float, Dict[str, str]]]]
     record: str
+    #: Each process's recommended figure, by the limit it is stated for, where the record states one.
+    recommended: Dict[Tuple[int, float], Dict[str, float]] = {}
+    #: Each process's entries for a minimum taken below its recommended figure, by the minimum: the figure taken, what
+    #: forces it and the item it rests on, the last two as the record wrote them (empty where it wrote none).
+    accepted: Dict[Tuple[int, float], Dict[str, Tuple[float, str, str]]] = {}
 
 
 def load_manufacturer_limits(yaml, root: str, repository: Repository, design: Design, today: datetime.date,
@@ -3972,16 +3986,19 @@ def load_manufacturer_limits(yaml, root: str, repository: Repository, design: De
     if "max_age_days" in data and (isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0):
         reading.bad("max_age_days", f"max_age_days is {limit!r}, where it is a whole number of days above zero")
     processes: Dict[Tuple[int, float], Dict[str, Tuple[float, Dict[str, str]]]] = {}
+    recommended_all: Dict[Tuple[int, float], Dict[str, float]] = {}
+    accepted_all: Dict[Tuple[int, float], Dict[str, Tuple[float, str, str]]] = {}
     if "processes" in data and reading.listed("processes", data["processes"], "processes"):
         keys: List[str] = []
         for index, entry in enumerate(data["processes"]):
             where = f"processes[{index}]"
-            if not reading.mapping(where, entry, PROCESS_KEYS, PROCESS_KEYS, "a process"):
+            if not reading.mapping(where, entry, PROCESS_KEYS + PROCESS_OPTIONAL_KEYS, PROCESS_KEYS, "a process"):
                 continue
             ok_layers = "copper_layers" not in entry or reading.whole(f"{where}.copper_layers", entry["copper_layers"], 1, 64)
             ok_weight = "outer_copper_oz" not in entry or reading.positive(f"{where}.outer_copper_oz", entry["outer_copper_oz"],
                                                                            " of ounces")
             figures: Dict[str, Tuple[float, Dict[str, str]]] = {}
+            recommended: Dict[str, float] = {}
             if "limits" in entry and not isinstance(entry["limits"], dict):
                 reading.bad(f"{where}.limits", f"{where}.limits is not a mapping from the name of a board-setup minimum to its "
                                                f"figure ({', '.join(LIMIT_FIGURE_KEYS)})")
@@ -3994,9 +4011,17 @@ def load_manufacturer_limits(yaml, root: str, repository: Repository, design: De
                         reading.bad(at, f"{at} is not the name of a board-setup minimum as KiCad names it (min_track_width, "
                                         "min_clearance and the like)")
                         continue
-                    if not reading.mapping(at, figure, LIMIT_FIGURE_KEYS, LIMIT_FIGURE_KEYS, "a limit"):
+                    if not reading.mapping(at, figure, LIMIT_FIGURE_KEYS + LIMIT_OPTIONAL_KEYS, LIMIT_FIGURE_KEYS, "a limit"):
                         continue
                     ok_mm = "mm" not in figure or reading.positive(f"{at}.mm", figure["mm"], " of millimetres")
+                    if "recommended_mm" in figure and reading.positive(f"{at}.recommended_mm", figure["recommended_mm"],
+                                                                       " of millimetres"):
+                        if ok_mm and "mm" in figure and figure["recommended_mm"] < figure["mm"]:
+                            reading.bad(f"{at}.recommended_mm", f"{at}.recommended_mm is {figure['recommended_mm']!r}, below "
+                                                                f"the stated minimum {figure['mm']!r}; the recommended figure "
+                                                                "is the larger of the two")
+                        else:
+                            recommended[name] = float(figure["recommended_mm"])
                     cited: Dict[str, str] = {}
                     if "citation" in figure and reading.mapping(f"{at}.citation", figure["citation"], LIMIT_CITATION_KEYS,
                                                                 LIMIT_CITATION_KEYS, "a citation"):
@@ -4005,9 +4030,36 @@ def load_manufacturer_limits(yaml, root: str, repository: Repository, design: De
                                 cited[part] = figure["citation"][part]
                     if ok_mm and "mm" in figure and len(cited) == len(LIMIT_CITATION_KEYS):
                         figures[name] = (float(figure["mm"]), cited)
+            accepted: Dict[str, Tuple[float, str, str]] = {}
+            if "below_recommended" in entry and reading.listed(f"{where}.below_recommended", entry["below_recommended"],
+                                                               "minimums taken below the recommended figure", empty=True):
+                named: List[str] = []
+                for position, taken in enumerate(entry["below_recommended"]):
+                    at = f"{where}.below_recommended[{position}]"
+                    if not reading.mapping(at, taken, BELOW_RECOMMENDED_KEYS, BELOW_RECOMMENDED_STATED, "a below_recommended entry"):
+                        continue
+                    setting_name = taken.get("setting")
+                    ok_setting = "setting" in taken and reading.text(f"{at}.setting", setting_name)
+                    if ok_setting:
+                        named.append(setting_name)
+                        if setting_name not in recommended:
+                            reading.bad(f"{at}.setting", f"{at}.setting is '{setting_name}', a limit this process gives no "
+                                                         "recommended_mm for, so there is no recommended figure to be below")
+                    if "figure_mm" in taken and reading.positive(f"{at}.figure_mm", taken["figure_mm"], " of millimetres"):
+                        if ok_setting and setting_name in recommended and taken["figure_mm"] >= recommended[setting_name]:
+                            reading.bad(f"{at}.figure_mm", f"{at}.figure_mm is {taken['figure_mm']!r}, not below the "
+                                                           f"recommended {recommended[setting_name]:g} mm; remove the entry")
+                        elif ok_setting and setting_name in recommended:
+                            accepted[setting_name] = (float(taken["figure_mm"]),
+                                                      taken["forced_by"].strip() if isinstance(taken.get("forced_by"), str) else "",
+                                                      taken["item"].strip() if isinstance(taken.get("item"), str) else "")
+                reading.distinct(f"{where}.below_recommended", named, "the setting")
             if ok_layers and ok_weight and "copper_layers" in entry and "outer_copper_oz" in entry:
                 keys.append(f"{entry['copper_layers']} copper layers at {entry['outer_copper_oz']:g} oz")
-                processes[(entry["copper_layers"], float(entry["outer_copper_oz"]))] = figures
+                process_key = (entry["copper_layers"], float(entry["outer_copper_oz"]))
+                processes[process_key] = figures
+                recommended_all[process_key] = recommended
+                accepted_all[process_key] = accepted
         reading.distinct("processes", keys, "the process")
     if reading.found:
         return None, reading.found
@@ -4021,7 +4073,7 @@ def load_manufacturer_limits(yaml, root: str, repository: Repository, design: De
                                f"the record was read on {read_on.isoformat()}, {(today - read_on).days} days before today "
                                f"({today.isoformat()}), past the {limit} days it allows itself; read the manufacturer's "
                                "limits again and date the record"))
-    return Limits(processes, record), found
+    return Limits(processes, record, recommended_all, accepted_all), found
 
 
 def rule_length_mm(text) -> Optional[float]:
@@ -4030,6 +4082,39 @@ def rule_length_mm(text) -> Optional[float]:
         return None
     match = RULE_LENGTH.fullmatch(str(text))
     return float(match.group(1)) * RULE_UNITS[match.group(2) or ""] if match else None
+
+
+def below_recommended(design: Design, limits: Limits, process_key: Tuple[int, float], process_name: str, name: str,
+                      value: float, where: str) -> List[Violation]:
+    """The line for a board-setup minimum that is no looser than its limit but is below the maker's recommended figure.
+
+    A minimum below the recommended figure the record gives for it fails, naming the setting and both figures, unless the
+    record's below_recommended entry for the setting states the figure taken, a non-empty cause and the item the cause
+    rests on, and the minimum is no smaller than the entry's figure. An entry that states no cause or no item fails, and
+    so does a minimum smaller than its entry's figure.
+    """
+    recommended = limits.recommended.get(process_key, {}).get(name)
+    if recommended is None or value >= recommended - LIMIT_SLACK:
+        return []
+    head = (f"the board setup's {name} is {value:g} mm, below the {recommended:g} mm the manufacturer recommends "
+            f"({limits.record} limits {name} recommended_mm, for {process_name})")
+    entry = limits.accepted.get(process_key, {}).get(name)
+    if entry is None:
+        return [Violation(design.project, RECOMMENDED_RULE, where,
+                          f"{head}, and {limits.record} has no below_recommended entry for {name} stating the figure taken, "
+                          "what forces it and the item it rests on; raise it to the recommended figure, or add the entry")]
+    figure, forced_by, item = entry
+    if not forced_by or not item:
+        lacking = "forced_by" if not forced_by else "item"
+        return [Violation(design.project, RECOMMENDED_RULE, where,
+                          f"{head}, and the below_recommended entry for {name} in {limits.record} names no cause: its "
+                          f"{lacking} is empty, where it states what forces the figure and the catalogue item or requirement "
+                          "it rests on")]
+    if value < figure - LIMIT_SLACK:
+        return [Violation(design.project, RECOMMENDED_RULE, where,
+                          f"{head}, and below the {figure:g} mm the below_recommended entry for {name} in {limits.record} "
+                          "states; raise it to that figure, or change the entry")]
+    return []
 
 
 def board_minimums(design: Design, project: dict, rules: Optional[List[list]], tree: list, limits: Limits,
@@ -4048,7 +4133,8 @@ def board_minimums(design: Design, project: dict, rules: Optional[List[list]], t
     rule writes it in. A kind the map does not hold, such as track_angle, creepage
     or courtyard_clearance, is not judged, and neither is a minimum the record
     does not state. A minimum a rule writes in a form that cannot be read as a
-    length fails, since it cannot be shown to be no looser than the limit.
+    length fails, since it cannot be shown to be no looser than the limit. A board-setup minimum no looser than
+    its limit is also held to the record's recommended figure for it (below_recommended).
     """
     def fail(location: str, message: str) -> Violation:
         return Violation(design.project, MINIMUMS_RULE, location, message)
@@ -4083,6 +4169,8 @@ def board_minimums(design: Design, project: dict, rules: Optional[List[list]], t
         elif value < process[name][0] - LIMIT_SLACK:
             found.append(fail(where, f"the board setup's {name} is {value:g} mm, looser than the manufacturer's {cited(name)}; "
                                      "raise it to at least the limit"))
+        else:
+            found += below_recommended(design, limits, wanted, process_name, name, value, where)
     for entry in setting(project, "net_settings", "classes") or []:
         if not isinstance(entry, dict):
             continue

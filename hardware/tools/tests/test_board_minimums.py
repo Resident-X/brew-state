@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import copy
 import datetime
+import json
 import os
 import re
 import subprocess
@@ -522,6 +523,183 @@ PROSE = """\
 |---|---|---|---|---|---|
 | Minimum track width and spacing | 9.99 mm | 1- and 2-layer boards, 1 oz finished copper | published | https://example.invalid/c | 2026-10-13 |
 """
+
+
+C3 = ("SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: "
+      "The pre-order check fails a Board Setup minimum below the maker's recommended figure unless the record states what forces it")
+C4 = ("SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C4: "
+      "Every tracked design passes the recommended-figure rule and the hardware notes state its keys and line")
+PROCESS_KEY = (2, 1.0)
+CAUSE = {"forced_by": "the oval pads of T1, 1.5 mm across on a 1.1 mm drill", "item": "BOARD-1"}
+
+
+def recommended_limits(recommended=None, accepted=None) -> board_check.Limits:
+    """A two-layer, 1 oz process bounding annular width and hole clearance, recommending 0.25 and 0.35 mm."""
+    held = {"min_via_annular_width": (0.18, dict(CITATION)), "min_hole_clearance": (0.28, dict(CITATION))}
+    return board_check.Limits({PROCESS_KEY: held}, RECORD,
+                              {PROCESS_KEY: {"min_via_annular_width": 0.25, "min_hole_clearance": 0.35}
+                               if recommended is None else recommended},
+                              {PROCESS_KEY: accepted or {}})
+
+
+def rules_project(annular=0.25, clearance=0.35) -> dict:
+    return {"board": {"design_settings": {"rules": {"min_via_annular_width": annular, "min_hole_clearance": clearance}}},
+            "net_settings": {"classes": []}}
+
+
+def below(project, limits):
+    return [v for v in minimums(project, limits=limits) if v.rule == "minimum_below_recommended"]
+
+
+class ABoardSetupMinimumBelowTheRecommendedFigureFails(unittest.TestCase):
+    def test_a_minimum_below_its_recommended_figure_with_no_entry_fails_naming_the_setting_and_both_figures(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: The pre-order check fails a Board Setup minimum below the maker's recommended figure unless the record states what forces it
+        found = below(rules_project(annular=0.2), recommended_limits())
+        self.assertEqual(len(found), 1, found)
+        self.assertEqual(found[0].location, "hw/machine/board/board.kicad_pro board.design_settings.rules.min_via_annular_width")
+        for words in ("min_via_annular_width is 0.2 mm", "below the 0.25 mm the manufacturer recommends", "no below_recommended entry"):
+            self.assertIn(words, found[0].message)
+        self.assertTrue(found[0].line().startswith("VIOLATION | hw/machine/board/board.kicad_pro | minimum_below_recommended | "))
+        self.assertEqual([v for v in minimums(rules_project(annular=0.2), limits=recommended_limits()) if v.rule == "board_minimums"], [],
+                         "a figure above the stated minimum is not looser than it")
+
+    def test_a_minimum_at_or_above_its_recommended_figure_passes_and_float_rounding_below_it_is_not_below(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: below the maker's recommended figure fails
+        for annular in (0.25, 0.3, 0.25 - 1e-12):
+            with self.subTest(annular=annular):
+                self.assertEqual(minimums(rules_project(annular=annular), limits=recommended_limits()), [])
+
+    def test_every_setting_below_its_figure_is_reported_each_at_its_own_key(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: for each limit the record gives a recommended figure for
+        found = below(rules_project(annular=0.2, clearance=0.28), recommended_limits())
+        self.assertEqual(sorted(v.location.rsplit(".", 1)[1] for v in found), ["min_hole_clearance", "min_via_annular_width"])
+
+    def test_a_limit_the_record_gives_no_recommended_figure_for_is_held_to_its_stated_limit_alone(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: for each limit the record gives a recommended figure for
+        limits = recommended_limits(recommended={"min_hole_clearance": 0.35})
+        self.assertEqual(minimums(rules_project(annular=0.18), limits=limits), [])
+        self.assertEqual(len(below(rules_project(annular=0.18, clearance=0.3), limits)), 1)
+
+    def test_an_entry_stating_the_figure_its_cause_and_its_item_lets_a_setting_at_that_figure_pass(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: unless the record's below_recommended list has an entry for that setting stating figure_mm, forced_by and item
+        limits = recommended_limits(accepted={"min_via_annular_width": (0.2, CAUSE["forced_by"], CAUSE["item"])})
+        self.assertEqual(minimums(rules_project(annular=0.2), limits=limits), [])
+
+    def test_an_entry_does_not_excuse_a_setting_smaller_than_the_figure_it_states_or_a_different_setting(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: an entry for that setting
+        limits = recommended_limits(accepted={"min_via_annular_width": (0.2, CAUSE["forced_by"], CAUSE["item"])})
+        smaller = below(rules_project(annular=0.19), limits)
+        self.assertEqual(len(smaller), 1, smaller)
+        self.assertIn("below the 0.2 mm the below_recommended entry for min_via_annular_width", smaller[0].message)
+        other = below(rules_project(annular=0.2, clearance=0.3), limits)
+        self.assertEqual([v.location.rsplit(".", 1)[1] for v in other], ["min_hole_clearance"])
+
+    def test_an_entry_that_names_no_cause_fails_saying_so_whichever_of_cause_or_item_is_empty(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: forced_by (non-empty text) and item
+        for forced_by, item, lacking in (("", "BOARD-1", "forced_by"), ("the pads", "", "item")):
+            with self.subTest(lacking=lacking):
+                limits = recommended_limits(accepted={"min_via_annular_width": (0.2, forced_by, item)})
+                found = below(rules_project(annular=0.2), limits)
+                self.assertEqual(len(found), 1, found)
+                self.assertIn("names no cause", found[0].message)
+                self.assertIn(f"its {lacking} is empty", found[0].message)
+
+    def test_a_process_the_record_gives_no_recommended_figure_for_at_all_is_not_judged_by_the_new_rule(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: A record with no recommended_mm for a minimum holds it to the stated minimum as before
+        limits = board_check.Limits(*limits_of(**STANDARD))
+        self.assertEqual(minimums(limits=limits), [])
+
+
+def recommending(**edits) -> dict:
+    """The complete record with the first process's annular and hole-clearance limits given and the keys given set."""
+    record = copy.deepcopy(COMPLETE)
+    record["processes"][0]["limits"]["min_via_annular_width"] = dict(figure(0.18), recommended_mm=0.25)
+    record["processes"][0]["limits"].update(edits.pop("limits", {}))
+    record["processes"][0].update(edits)
+    return record
+
+
+def entry(**edits) -> dict:
+    return {"setting": "min_via_annular_width", "figure_mm": 0.2, **CAUSE, **edits}
+
+
+class TheRecommendedFigureAndTheEntriesBelowItAreRead(Tree):
+    def test_a_recommended_figure_and_an_entry_below_it_are_read_into_the_limits(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: The record keys are recommended_mm per limit and a below_recommended list
+        limits, problems = self.load(recommending(below_recommended=[entry()]))
+        self.assertEqual(problems, [])
+        self.assertEqual(limits.recommended[PROCESS_KEY], {"min_via_annular_width": 0.25})
+        self.assertEqual(limits.accepted[PROCESS_KEY], {"min_via_annular_width": (0.2, CAUSE["forced_by"], CAUSE["item"])})
+        self.assertEqual(limits.processes[PROCESS_KEY]["min_via_annular_width"], (0.18, CITATION),
+                         "the stated limit is unchanged by the recommended figure")
+
+    def test_an_entry_with_a_blank_cause_is_read_so_the_rule_can_fail_it_and_the_record_is_not_refused(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: an entry that names no cause fails under the same rule
+        limits, problems = self.load(recommending(below_recommended=[entry(forced_by="  ", item=3)]))
+        self.assertEqual(problems, [])
+        self.assertEqual(limits.accepted[PROCESS_KEY]["min_via_annular_width"], (0.2, "", ""))
+        without = {key: value for key, value in entry().items() if key != "item"}
+        limits, problems = self.load(recommending(below_recommended=[without]))
+        self.assertEqual(problems, [])
+        self.assertEqual(limits.accepted[PROCESS_KEY]["min_via_annular_width"], (0.2, CAUSE["forced_by"], ""))
+
+    def test_a_malformed_recommended_figure_or_entry_fails_the_record_naming_the_key(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3: The record keys are recommended_mm per limit and a below_recommended list
+        cases = (
+            ("limits.min_via_annular_width.recommended_mm", "is 'big'", recommending(limits={"min_via_annular_width": dict(figure(0.18), recommended_mm="big")})),
+            ("limits.min_via_annular_width.recommended_mm", "below the stated minimum", recommending(limits={"min_via_annular_width": dict(figure(0.18), recommended_mm=0.1)})),
+            ("below_recommended[0].setting", "gives no recommended_mm", recommending(below_recommended=[entry(setting="min_track_width")])),
+            ("below_recommended[0].figure_mm", "not below the recommended 0.25 mm", recommending(below_recommended=[entry(figure_mm=0.25)])),
+            ("below_recommended[0].figure_mm", "is -1", recommending(below_recommended=[entry(figure_mm=-1)])),
+            ("below_recommended[0].note", "which is not one", recommending(below_recommended=[entry(note="x")])),
+            ("below_recommended", "more than once", recommending(below_recommended=[entry(), entry()])),
+            ("below_recommended", "is not a list", recommending(below_recommended={"setting": "x"})),
+        )
+        for where, words, record in cases:
+            with self.subTest(where=where, words=words):
+                self.assertFails(record, where, words)
+
+
+class EveryTrackedDesignPassesTheRecommendedFigureRule(unittest.TestCase):
+    def test_every_tracked_record_that_states_a_recommended_figure_has_an_entry_for_each_board_setting_below_it(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C4: Every tracked design passes the recommended-figure rule
+        yaml = board_check.require_yaml()
+        tracked = board_check.tracked_files("git", REPO)
+        records = [path for path in tracked if os.path.basename(path) == board_check.MANUFACTURER_LIMITS_NAME]
+        projects = [path for path in tracked if path.endswith(".kicad_pro")]
+        checked = 0
+        for record in records:
+            with open(os.path.join(REPO, record), encoding="utf-8") as handle:
+                data = yaml.safe_load(handle)
+            if data.get("synthetic") is True:
+                continue
+            folder = os.path.dirname(record)
+            for project in (p for p in projects if os.path.dirname(p) == folder):
+                with open(os.path.join(REPO, project), encoding="utf-8") as handle:
+                    rules = json.load(handle)["board"]["design_settings"]["rules"]
+                with open(os.path.join(REPO, project.replace(".kicad_pro", ".kicad_pcb")), encoding="utf-8") as handle:
+                    layers = len(board_check.copper_layers(sexpr.parse_one(handle.read())))
+                process = next(p for p in data["processes"] if p["copper_layers"] == layers)
+                accepted = {e["setting"]: e for e in process.get("below_recommended", [])}
+                for name, held in process["limits"].items():
+                    if "recommended_mm" in held and rules[name] < held["recommended_mm"] - 1e-9:
+                        with self.subTest(project=project, setting=name):
+                            self.assertIn(name, accepted)
+                            self.assertLessEqual(accepted[name]["figure_mm"], rules[name] + 1e-9)
+                        checked += 1
+        self.assertGreater(checked, 0, "a tracked board takes a minimum below its recommended figure, so an entry is exercised")
+
+
+class TheHardwareNotesStateTheRecommendedFigureKeysAndLine(unittest.TestCase):
+    def test_the_notes_state_recommended_mm_below_recommended_its_four_keys_and_the_reported_name(self):
+        # SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C4: the hardware notes state its keys and line
+        with open(os.path.join(REPO, "hardware", "README.md"), encoding="utf-8") as handle:
+            text = handle.read()
+        for phrase in ("`recommended_mm`", "`below_recommended`", "`setting`", "`figure_mm`", "`forced_by`", "`item`"):
+            self.assertIn(phrase, text)
+        row = next(line for line in text.splitlines() if line.startswith("| `minimum_below_recommended` |"))
+        for phrase in ("`recommended_mm`", "`below_recommended`", "names no cause", "no `recommended_mm` is exempt"[:0] or "exempt"):
+            self.assertIn(phrase, row)
 
 
 def prose_entries(text: str) -> list:

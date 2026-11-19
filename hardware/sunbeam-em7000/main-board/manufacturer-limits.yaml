@@ -11,7 +11,8 @@
 # prose record the figure comes from: the heading its table sits under, its Limit cell and its
 # Condition cell. Where a limit has a hard minimum and a recommended value, the hard minimum is
 # written (the annular ring's absolute minimum, the plated hole's minimum to track); the layout
-# may set a stricter figure. The track and spacing figure is the multilayer 1 oz minimum of
+# may set a stricter figure; the recommended value is written beside it as recommended_mm, and a minimum the board
+# takes below it has an entry in below_recommended stating the figure taken, what forces it and the item it rests on. The track and spacing figure is the multilayer 1 oz minimum of
 # 3.5 mil; the maker charges 20 % of the order amount on a board that carries track or spacing
 # of 3.0 to 3.5 mil at four to eight layers, which is in the prose record and not a limit of
 # capability, so it is not written here. The maker's other extra-charge bands are in the prose
@@ -73,6 +74,7 @@ processes:
           condition: "Any board"
       min_via_annular_width:
         mm: 0.15
+        recommended_mm: 0.2
         citation:
           section: "Drills, vias and annular rings"
           limit: "PTH annular ring"
@@ -85,6 +87,7 @@ processes:
           condition: "2-layer and multilayer boards"
       min_hole_clearance:
         mm: 0.28
+        recommended_mm: 0.35
         citation:
           section: "Hole-to-hole and clearances to holes and edges"
           limit: "Plated hole to track"
@@ -95,6 +98,11 @@ processes:
           section: "Hole-to-hole and clearances to holes and edges"
           limit: "Copper to a routed board edge or routed slot"
           condition: "Board outline routed"
+    below_recommended:
+      - setting: min_via_annular_width
+        figure_mm: 0.15
+        forced_by: "the ordinary via of 0.6 mm diameter over a 0.3 mm drill, annular width (0.6 - 0.3) / 2 = 0.15 mm, that every net class but the Mains classes uses, 466 vias on the board of 2026-11-15 (the 0.3 mm drill is what a via in a soldered land may be)"
+        item: MFG-3
   - copper_layers: 6
     outer_copper_oz: 1
     limits:
@@ -124,6 +132,7 @@ processes:
           condition: "Any board"
       min_via_annular_width:
         mm: 0.15
+        recommended_mm: 0.2
         citation:
           section: "Drills, vias and annular rings"
           limit: "PTH annular ring"
@@ -136,6 +145,7 @@ processes:
           condition: "2-layer and multilayer boards"
       min_hole_clearance:
         mm: 0.28
+        recommended_mm: 0.35
         citation:
           section: "Hole-to-hole and clearances to holes and edges"
           limit: "Plated hole to track"
@@ -146,3 +156,8 @@ processes:
           section: "Hole-to-hole and clearances to holes and edges"
           limit: "Copper to a routed board edge or routed slot"
           condition: "Board outline routed"
+    below_recommended:
+      - setting: min_via_annular_width
+        figure_mm: 0.15
+        forced_by: "the ordinary via of 0.6 mm diameter over a 0.3 mm drill, annular width (0.6 - 0.3) / 2 = 0.15 mm, that every net class but the Mains classes uses, 466 vias on the board of 2026-11-15 (the 0.3 mm drill is what a via in a soldered land may be)"
+        item: MFG-3

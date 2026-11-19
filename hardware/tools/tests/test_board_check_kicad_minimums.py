@@ -30,7 +30,7 @@ MINIMUMS_FAULT_PREFIXES = ("board minimums:", "lifecycle:")
 
 
 MINIMUMS_FAULT_PREFIXES = ("board minimums:", "lifecycle:")
-MINIMUMS_RULES = ("board_minimums", "board_rules_record", "manufacturer_limits_record", "parts_lifecycle")
+MINIMUMS_RULES = ("board_minimums", "board_rules_record", "manufacturer_limits_record", "minimum_below_recommended", "parts_lifecycle")
 
 
 
@@ -39,7 +39,7 @@ class BoardMinimumsAndLifecycleProof(Proved):
         # SOL-PRE-ORDER-CHECK-DATED-RECORDS-MINIMUMS-AND-LIFECYCLE.C5: The on-demand seeded-fault proof introduces into a copy of a throwaway design, outside the tracked tree, a track-width minimum looser than its process's limit, a design whose process the record does not list, a design whose board rules record declares no outer copper weight, a record older than its max_age_days, a part whose lifecycle status is end of life and a part whose catalogue entry lacks its lifecycle mapping, and requires the check to fail each
         # OBL-VERIFICATION-DISCIPLINE-001.C9: A check is shown to fail on the defect it exists to catch rather than asserted to be capable of it
         faults = [fault for fault in board_prove.FAULTS if fault[1].startswith(MINIMUMS_FAULT_PREFIXES)]
-        self.assertEqual(len(faults), 6)
+        self.assertEqual(len(faults), 8)
         self.assertEqual({board_prove.target_of(fault) for fault in faults}, {(board_prove.DESIGN, board_prove.NAME)},
                          "seeded into a copy of the throwaway gate proof design")
         self.assertEqual({fault[2] for fault in faults}, set(MINIMUMS_RULES))
@@ -50,6 +50,8 @@ class BoardMinimumsAndLifecycleProof(Proved):
             "past the 30 days it allows itself": "manufacturer_limits_record",
             "has the lifecycle status 'end of life'": "parts_lifecycle",
             "has no lifecycle in the catalogue extract": "parts_lifecycle",
+            "min_hole_clearance is 0.15 mm, below the 0.35 mm the manufacturer recommends": "minimum_below_recommended",
+            "names no cause": "minimum_below_recommended",
         }
         for words, rule in wanted.items():
             with self.subTest(fault=words):

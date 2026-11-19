@@ -11,7 +11,10 @@
 # in the session that wrote it), so the two-layer figures below are the prose record's, not a new reading.
 # The citation names the entry of that prose record the figure comes from: the heading its table sits under, its
 # Limit cell and its Condition cell. Where a limit has a hard minimum and a recommended value, the hard
-# minimum is written (the annular ring's absolute minimum 0.18 mm for a two-layer 1 oz board).
+# minimum is written (the annular ring's absolute minimum 0.18 mm for a two-layer 1 oz board), and the
+# recommended value is written beside it as recommended_mm. The check holds each Board Setup minimum to
+# recommended_mm too; a minimum the board takes below it has an entry in below_recommended stating the figure
+# taken, what forces it and the item it rests on.
 #
 # Two-layer figures that differ from the main board's multilayer ones: track and spacing 0.10 mm (the
 # multilayer 0.09 mm is not offered at two layers), and the plated-hole annular ring 0.18 mm absolute minimum
@@ -50,6 +53,7 @@ processes:
           condition: "Any board"
       min_via_annular_width:
         mm: 0.18
+        recommended_mm: 0.25
         citation:
           section: "Drills, vias and annular rings"
           limit: "PTH annular ring"
@@ -62,6 +66,7 @@ processes:
           condition: "2-layer and multilayer boards"
       min_hole_clearance:
         mm: 0.28
+        recommended_mm: 0.35
         citation:
           section: "Hole-to-hole and clearances to holes and edges"
           limit: "Plated hole to track"
@@ -72,3 +77,8 @@ processes:
           section: "Hole-to-hole and clearances to holes and edges"
           limit: "Copper to a routed board edge or routed slot"
           condition: "Board outline routed"
+    below_recommended:
+      - setting: min_via_annular_width
+        figure_mm: 0.2
+        forced_by: "the six oval triac pads of T911 and T921 (1.5 mm across the row on a 1.1 mm drill, (1.5 - 1.1) / 2 = 0.20 mm on the narrow side), which hold adjacent pins 1.04 mm apart, and the board's one via at 0.3 mm drill over 0.7 mm diameter; at 0.25 mm the check reports those six pads and that via"
+        item: BOARD-1
