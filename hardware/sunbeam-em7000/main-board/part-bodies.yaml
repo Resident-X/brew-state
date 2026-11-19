@@ -4,9 +4,10 @@
 # footprint turned to 0 degrees and on the front, as the maker's drawing shows the part from above).
 # `rects` are the part's real body, with the height each rises above the seating plane; `access_zones` are
 # the space a mating part or a hand needs; `source` is the maker reading the rectangles come from.
-# An entry with `from: courtyard` has no maker reading yet: its body is taken as the footprint's own
-# courtyard. That is J862 (reed pads) alone: the parts list names no part for it (maker and part number
-# not stated, no catalogue number), so there is no maker document to read. J791 and J821 (JST B9B-PH-K-S),
+# An entry with `from: courtyard` has no maker drawing: its body is taken as the footprint's own
+# courtyard, and the audit's report names the part and its verdict counts it as a stand-in. That is J862
+# (reed pads) alone: the parts list names no part for it (maker and part number not stated, no catalogue
+# number), so there is no maker document to read. J791 and J821 (JST B9B-PH-K-S),
 # J761 (BOOMELE 2.54-1*10PPin, tallest ordering height) and U401 (STM32H743VIT6, LQFP-100) carry maker
 # readings, read 2026-11-19. Every other footprint on the board, passives and small parts included, has no entry,
 # so the audit names such a part as missing when it is asked to measure it.

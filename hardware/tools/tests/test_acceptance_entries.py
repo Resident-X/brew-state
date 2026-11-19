@@ -93,6 +93,28 @@ class Generator(Work):
     def record_text(self) -> str:
         return self.read(self.record) if os.path.exists(self.record) else ""
 
+    def declare(self, value, classes=("Default", "Mains", "Mains_Entry")):
+        """Rewrite the project file with MAINS declared `value` (None: not declared) and the net classes it defines."""
+        data = {"net_settings": {"classes": [{"name": name} for name in classes],
+                                 "netclass_assignments": {"/LINE_X": "Mains"},
+                                 "netclass_patterns": [{"netclass": "Mains", "pattern": "/MAINS_*"}]},
+                "text_variables": {} if value is None else {"MAINS": value}}
+        self.write("b/low.kicad_pro", json.dumps(data))
+
+    def cannot(self, argv, said):
+        before = self.record_text()
+        for fmt in ("text", "json"):
+            done = subprocess.run([sys.executable, os.path.join(TOOLS, "acceptance_entries.py"), *argv, "--format", fmt],
+                                  capture_output=True, text=True, timeout=120)
+            self.assertEqual(done.returncode, 2, (fmt, done.stdout, done.stderr))
+            self.assertTrue(done.stderr.startswith("CANNOT RUN | "), done.stderr)
+            self.assertIn(said, done.stderr)
+            self.assertEqual(self.record_text(), before, "a tool that cannot run writes nothing")
+            if fmt == "json":
+                self.assertEqual(json.loads(done.stdout)["result"], "CANNOT RUN")
+            else:
+                self.assertEqual(done.stdout, "")
+
     def both(self, log_text: str, *extra: str):
         """(exit status, text lines, JSON report) of the same run in each format, the record as the text run left it."""
         status, lines = self.generate(log_text, *extra)
@@ -262,14 +284,6 @@ class MainsLinesAreRefused(Generator):
         status, lines = self.generate(log(line("workmanship_pad_corner", "/SLOW_A", (55, 55))), "--mains-region", "second")
         self.assertEqual(status, 2, "a region named by argument must exist while MAINS is present")
 
-    def declare(self, value, classes=("Default", "Mains", "Mains_Entry")):
-        """Rewrite the project file with MAINS declared `value` (None: not declared) and the net classes it defines."""
-        data = {"net_settings": {"classes": [{"name": name} for name in classes],
-                                 "netclass_assignments": {"/LINE_X": "Mains"},
-                                 "netclass_patterns": [{"netclass": "Mains", "pattern": "/MAINS_*"}]},
-                "text_variables": {} if value is None else {"MAINS": value}}
-        self.write("b/low.kicad_pro", json.dumps(data))
-
     def refusal(self, text, *extra):
         """(exit status, stderr) of a run in each format; both stop with exit 2 and the same message on stderr."""
         messages = []
@@ -353,6 +367,178 @@ class MainsLinesAreRefused(Generator):
         self.assertIn("no rule area named absent", self.refusal(text, "--mains-region", "absent"))
         self.write("b/low.kicad_pcb", board_text([]))
         self.assertIn("no rule area named mains", self.refusal(text))
+
+
+L_REGION = ('(zone (layers "F.Cu" "B.Cu") (uuid "00000000-0000-4000-8000-000000000002") (name "mains") (hatch edge 0.5) '
+            '(keepout (tracks allowed) (vias allowed) (pads allowed) (copperpour allowed) (footprints allowed)) '
+            '(polygon (pts (xy 50 50) (xy 70 50) (xy 70 55) (xy 55 55) (xy 55 70) (xy 50 70))))')
+BUS_TABLE = TABLE + """  - kind: bus
+    nets: ["/D*", "/P*", "/Q*"]
+    bounded_by: a synthetic bus bound
+    reasons:
+      workmanship_pad_corner: a synthetic reason for a bus corner
+"""
+
+
+def pad_part(net: str, x: float, y: float, size: float, number: int = 1) -> str:
+    return (f'(footprint "test:P" (layer "F.Cu") (uuid "00000000-0000-4000-8000-{900 + number:012d}") (at {x} {y}) '
+            f'(property "Reference" "R{number}" (at 0 -2 0) (layer "F.SilkS") (uuid "00000000-0000-4000-8000-{950 + number:012d}") '
+            f'(effects (font (size 1 1) (thickness 0.15)))) '
+            f'(pad "1" smd rect (at 0 0) (size {size} {size}) (layers "F.Cu") (net "{net}") '
+            f'(uuid "00000000-0000-4000-8000-{990 + number:012d}")))')
+
+
+class NetsAreResolvedAgainstTheBoard(Generator):
+    def put(self, region, *items):
+        self.write("b/low.kicad_pcb", board_text([region, *items]))
+
+    def test_a_net_whose_name_holds_a_colon_and_space_is_judged_under_its_whole_name(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        # /A is clear of the region; /A: B crosses it. The prefix `net /A: B: x` must be judged as the net /A: B, never as /A.
+        self.put(REGION, track("/A", (2, 2), (20, 2), number=10), track("/A: B", (45, 55), (65, 55), number=11))
+        table = self.write("b/bus.yaml", BUS_TABLE.replace('"/D*", "/P*", "/Q*"', '"/A", "/A: B"'))
+        text = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /A: B: P1 at (5, 5) mm | message"
+        argv = self.argv(log(text), "--partial", table=table)
+        status, lines = self.run_tool(acceptance_entries.main, *argv)
+        self.assertEqual(status, 1)
+        self.assertEqual(self.record_text(), "")
+        self.assertTrue(any(l.startswith("REFUSED | ") and "copper of net /A: B" in l and "mains region mains" in l for l in lines), lines)
+        status, report = self.run_json(acceptance_entries.main, *argv)
+        self.assertEqual((report["entries"], [r["scope"] for r in report["refused"]]), ([], ["/A: B"]))
+
+    def test_a_net_name_with_a_colon_and_space_that_is_clear_is_entered_under_its_whole_name(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        self.put(REGION, track("/SLOW_A: B", (2, 2), (20, 2), number=10))
+        text = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /SLOW_A: B: P1 at (5, 5) mm | message"
+        status, lines, report = self.both(log(text))
+        self.assertEqual((status, report["refused"]), (0, []))
+        self.assertEqual([(e["scope"], e["count"]) for e in report["entries"]], [("/SLOW_A: B", 1)])
+
+    def test_a_prefix_that_is_no_net_of_the_board_is_refused_even_beside_a_resolved_bracket(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        self.put(REGION, track("/SLOW_A", (2, 2), (20, 2), number=10))
+        for mains in ("present", "none"):
+            with self.subTest(mains=mains):
+                self.declare(mains)
+                text = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /ELSEWHERE: Track [/SLOW_A] on F.Cu | message"
+                status, lines, report = self.both(log(text), "--partial")
+                self.assertEqual((status, report["entries"], len(report["refused"])), (1, [], 1))
+                self.assertIn("no net of the board given" if mains == "present" else "names 2 nets", report["refused"][0]["why"])
+                self.assertEqual(self.record_text(), "")
+
+    def test_a_bus_net_with_brackets_in_its_name_is_resolved_and_a_crossing_one_is_refused(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        self.put(REGION, track("/D[0]", (2, 2), (20, 2), number=10), track("/D[1]", (45, 55), (65, 55), number=11))
+        table = self.write("b/bus.yaml", BUS_TABLE)
+        clear = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /D[0]: Track [/D[0]] on F.Cu | message"
+        crossing = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /D[1]: Track [/D[1]] on F.Cu | message"
+        for fmt in ("text", "json"):
+            if os.path.exists(self.record):
+                os.remove(self.record)
+            argv = self.argv(log(clear, crossing), "--partial", "--format", fmt, table=table)
+            if fmt == "text":
+                status, lines = self.run_tool(acceptance_entries.main, *argv)
+                self.assertIn("ENTRY | workmanship_pad_corner | /D[0] | 1 | bus", lines)
+                self.assertTrue(any(l.startswith("REFUSED | ") and "copper of net /D[1]" in l for l in lines), lines)
+            else:
+                status, report = self.run_json(acceptance_entries.main, *argv)
+                self.assertEqual([e["scope"] for e in report["entries"]], ["/D[0]"])
+                self.assertEqual([r["scope"] for r in report["refused"]], ["/D[1]"])
+            self.assertEqual(status, 1)
+            self.assertIn('scope: "/D[0]"', self.record_text())
+            self.assertNotIn("/D[1]", self.record_text())
+
+    def test_a_net_name_with_a_bar_or_doubled_spaces_is_matched_in_the_cleaned_form_the_check_prints(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        self.put(REGION, track("/P|Q", (45, 55), (65, 55), number=10), track("/Q  R", (2, 2), (20, 2), number=11))
+        table = self.write("b/bus.yaml", BUS_TABLE)
+        crossing = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /P/Q: Track [/P/Q] on F.Cu | message"
+        clear = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /Q R: Track [/Q R] on F.Cu | message"
+        status, report = self.run_json(acceptance_entries.main, *self.argv(log(crossing, clear), "--partial", table=table))
+        self.assertEqual(status, 1)
+        self.assertEqual([r["scope"] for r in report["refused"]], ["/P|Q"])
+        self.assertIn("copper of net /P|Q", report["refused"][0]["why"])
+        self.assertEqual([e["scope"] for e in report["entries"]], ["/Q  R"])
+
+    def test_a_pad_in_the_notch_of_an_l_shaped_region_is_entered_and_a_pad_touching_its_arm_is_refused(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        for name, pad, entered in (("notch", pad_part("/SLOW_A", 65, 65, 2), True),
+                                   ("arm", pad_part("/SLOW_A", 62, 54, 2), False),
+                                   ("far arm end", pad_part("/SLOW_A", 69, 52, 2), False),
+                                   ("outside the box", pad_part("/SLOW_A", 80, 80, 2), True)):
+            with self.subTest(pad=name):
+                if os.path.exists(self.record):
+                    os.remove(self.record)
+                self.put(L_REGION, pad)
+                text = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /SLOW_A: R1 pad 1 at (5, 5) mm | message"
+                status, lines, report = self.both(log(text), "--partial")
+                if entered:
+                    self.assertEqual((status, report["refused"]), (0, []))
+                    self.assertEqual([e["scope"] for e in report["entries"]], ["/SLOW_A"])
+                else:
+                    self.assertEqual((status, report["entries"]), (1, []))
+                    self.assertIn("lies in or crosses the mains region mains", report["refused"][0]["why"])
+                    self.assertTrue(any(l.startswith("REFUSED | ") for l in lines))
+
+    def test_a_pad_crossing_a_region_side_without_a_corner_inside_either_is_refused(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        # A 20 x 2 pad lies across the arm's width: no pad corner is in the region and no region corner is in the pad.
+        self.put(L_REGION, pad_part("/SLOW_A", 60, 52.5, 30))
+        text = f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /SLOW_A: R1 pad 1 at (5, 5) mm | message"
+        status, lines, report = self.both(log(text), "--partial")
+        self.assertEqual((status, report["entries"]), (1, []))
+
+
+class AnEntryNeverCoversARefusedLine(Generator):
+    MAINS_LINE = (f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /MAINS_L: Track [/SLOW_B] on F.Cu | message")
+
+    def test_with_partial_an_entry_whose_scope_also_holds_a_refused_line_is_not_written(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        low = line("workmanship_pad_corner", "/SLOW_B")
+        status, lines, report = self.both(log(self.MAINS_LINE, low), "--partial")
+        self.assertEqual(status, 1)
+        self.assertEqual(self.record_text(), "")
+        self.assertEqual(report["entries"], [])
+        self.assertFalse(report["written"])
+        self.assertEqual(len(report["refused"]), 2)
+        shared = [r for r in report["refused"] if "also holds a refused line" in r["why"]]
+        self.assertEqual([r["scope"] for r in shared], ["/SLOW_B"])
+        self.assertTrue(any(l.startswith("REFUSED | workmanship_pad_corner") and "also holds a refused line" in l for l in lines), lines)
+
+    def test_an_entry_is_still_written_when_the_refused_line_is_of_another_rule_or_another_scope(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        other_rule = (f"VIOLATION | {DESIGN} | workmanship_detour | net /MAINS_L: Track [/SLOW_B] on F.Cu | message")
+        other_scope = (f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /MAINS_L: Track [/SLOW_C] on F.Cu | message")
+        for refused in (other_rule, other_scope):
+            with self.subTest(refused=refused[-40:]):
+                if os.path.exists(self.record):
+                    os.remove(self.record)
+                status, lines, report = self.both(log(refused, line("workmanship_pad_corner", "/SLOW_B")), "--partial")
+                self.assertEqual(status, 1)
+                self.assertEqual([e["scope"] for e in report["entries"]], ["/SLOW_B"])
+                self.assertIn('scope: "/SLOW_B"', self.record_text())
+
+    def test_withholding_one_entry_can_withhold_the_next_whose_scope_the_new_refusal_holds(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        # /SLOW_A's line names /SLOW_B in brackets; /SLOW_B's line is refused by the first withholding, then holds /SLOW_C.
+        chain = [self.MAINS_LINE,
+                 f"VIOLATION | {DESIGN} | workmanship_pad_corner | net /SLOW_B: Track [/SLOW_C] on F.Cu | message",
+                 line("workmanship_pad_corner", "/SLOW_C")]
+        status, lines, report = self.both(log(*chain), "--partial")
+        self.assertEqual((status, report["entries"], self.record_text()), (1, [], ""))
+        self.assertEqual(len(report["refused"]), 3)
+
+
+class TheLogMustBeOfTheBoardGiven(Generator):
+    def test_a_log_of_another_design_stops_the_tool_naming_the_mismatch(self):
+        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+        argv = self.argv(log(line("workmanship_pad_corner", "/SLOW_A"), design="hardware/other/o.kicad_pro"), "--partial")
+        self.cannot(argv, "is not that design's project file")
+        other_board = self.write("b/o.kicad_pcb", self.read(self.board))
+        argv = self.argv(log(line("workmanship_pad_corner", "/SLOW_A")), "--partial")
+        argv[argv.index("--board") + 1] = other_board
+        self.cannot(argv, "is not that design's layout")
+        self.assertEqual(self.record_text(), "")
 
 
 class EntriesFollowTheTable(Generator):
@@ -455,20 +641,6 @@ class EntriesFollowTheTable(Generator):
 
 
 class TheToolCannotRunOnInputsItCannotTrust(Generator):
-    def cannot(self, argv, said):
-        before = self.record_text()
-        for fmt in ("text", "json"):
-            done = subprocess.run([sys.executable, os.path.join(TOOLS, "acceptance_entries.py"), *argv, "--format", fmt],
-                                  capture_output=True, text=True, timeout=120)
-            self.assertEqual(done.returncode, 2, (fmt, done.stdout, done.stderr))
-            self.assertTrue(done.stderr.startswith("CANNOT RUN | "), done.stderr)
-            self.assertIn(said, done.stderr)
-            self.assertEqual(self.record_text(), before, "a tool that cannot run writes nothing")
-            if fmt == "json":
-                self.assertEqual(json.loads(done.stdout)["result"], "CANNOT RUN")
-            else:
-                self.assertEqual(done.stdout, "")
-
     def test_a_file_that_is_no_check_log_or_is_missing_or_names_several_designs_stops_the_tool(self):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C8: Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
         self.cannot(self.argv("not a log\n"), "has no DESIGN line")
@@ -478,7 +650,7 @@ class TheToolCannotRunOnInputsItCannotTrust(Generator):
         self.cannot(argv, "cannot be read")
         many = log(line("workmanship_pad_corner", "/SLOW_A")) + f"DESIGN | hardware/other/o.kicad_pro | PASS | 0\n"
         self.cannot(self.argv(many), "names several designs")
-        status, lines = self.generate(many, "--design", "hardware/other/o.kicad_pro")
+        status, lines = self.generate(many, "--design", DESIGN)
         self.assertEqual(status, 0, "naming the design chooses it")
         self.cannot(self.argv(many, "--design", "hardware/nowhere/x.kicad_pro"), "names no design")
 

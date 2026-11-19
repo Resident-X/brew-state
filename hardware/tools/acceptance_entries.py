@@ -74,9 +74,10 @@ ACCEPTED_RULES = board_check.ACCEPTABLE_WORKMANSHIP
 #: The default of --mains-class and --mains-region.
 MAINS_CLASS_DEFAULT = "Mains*"
 MAINS_REGION_DEFAULT = "mains"
+#: The distance in mm under which two pieces of copper are taken to touch; a limit above zero makes the gap exact.
+TOUCH = 1e-6
 
 NET_PREFIX = re.compile(r"^net (.+?): ")
-NET_BRACKET = re.compile(r"\[([^\]]+)\]")
 STALE = re.compile(r"accepted_workmanship\[(\d+)\]")
 
 
@@ -165,6 +166,16 @@ class Mains:
         for item in locked_copper.copper(layout, board, rule_areas=False) + locked_copper.pad_items(layout):
             if item["net"] and locked_copper.copper_layers(item):
                 self.copper.setdefault(item["net"], []).append(item)
+        self.net_names: Dict[str, List[str]] = {}
+        for declared_net in sexpr.children(layout, "net"):
+            if len(declared_net) > 2 and isinstance(declared_net[2], str) and declared_net[2]:
+                self.net_names.setdefault(board_check.clean(declared_net[2]), [])
+                if declared_net[2] not in self.net_names[board_check.clean(declared_net[2])]:
+                    self.net_names[board_check.clean(declared_net[2])].append(declared_net[2])
+        for copper_net in self.copper:
+            self.net_names.setdefault(board_check.clean(copper_net), [])
+            if copper_net not in self.net_names[board_check.clean(copper_net)]:
+                self.net_names[board_check.clean(copper_net)].append(copper_net)
         found = [name.lower() for name, _ in self.areas]
         missing = [region for region in regions if not any(region.lower() in name for name in found)]
         if declared == "present" and missing:
@@ -209,7 +220,7 @@ class Mains:
                                    for ring in rings for a, b in locked_copper.pieces(ring + ring[:1]))
                     touching = touching or any(inside(x, y, ring) for ring in rings for x, y in polygon)
                 else:
-                    touching = locked_copper.copper_gap(item, region, 0.0) == 0.0
+                    touching = locked_copper.copper_gap(item, region, TOUCH) < TOUCH
                 if touching:
                     return f"copper of net {net} ({describe_copper(item)}) lies in or crosses the mains region {name}"
         return None
@@ -384,11 +395,28 @@ def entry_text(entry: dict, example: str) -> str:
 # --- The generator ----------------------------------------------------------------------------
 
 
-def line_nets(line: Line) -> List[str]:
-    """Every net a line names: the `net X:` prefix and each bracketed net, together."""
-    found = NET_PREFIX.match(line.where)
-    nets = ([found.group(1)] if found else []) + NET_BRACKET.findall(line.where)
-    return sorted(set(nets))
+def line_nets(line: Line, mains: Mains) -> Tuple[List[str], Optional[str]]:
+    """The nets a line names, and the prefix text that is no net of the board, if any (it is then named as a net too, so its
+    net class is still read).
+
+    The net of the `net X: ` prefix is the longest net name of the board that the line starts with as `net <name>: `, and
+    a bracketed net is any net name of the board held as `[<name>]`, both read in the cleaned form the check prints."""
+    where = line.where
+    unresolved = None
+    nets = set()
+    found = NET_PREFIX.match(where)
+    if found:
+        held = [name for name in mains.net_names if where.startswith(f"net {name}: ")]
+        if held:
+            nets.update(mains.net_names[max(held, key=len)])
+        else:
+            unresolved = found.group(1)
+            nets.add(unresolved)
+    if "[" in where:
+        for name, raws in mains.net_names.items():
+            if f"[{name}]" in where:
+                nets.update(raws)
+    return sorted(nets), unresolved
 
 
 def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existing: Sequence[dict]) -> dict:
@@ -407,8 +435,11 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
         if line.rule not in ACCEPTED_RULES:
             not_covered += 1
             continue
-        nets = line_nets(line)
+        nets, unresolved = line_nets(line, mains)
         why = [reason for reason in [mains.net_why(net) for net in nets] + [mains.copper_why(net) for net in nets] if reason]
+        if not why and unresolved is not None and mains.present and mains.areas:
+            why = [f"the line's net prefix {unresolved} is no net of the board given, so a mains region cannot be ruled out "
+                   "(is the log of another board or revision?)"]
         if not why and mains.present and mains.areas and not any(net in mains.copper for net in nets):
             why = ["the line names no net whose copper is on the board, so a mains region cannot be ruled out"]
         if why:
@@ -441,11 +472,37 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
         entries.append({"rule": rule, "scope": net, "count": len(group), "reason": kind["reasons"][rule],
                         "bounded_by": kind["bounded_by"], "accepted_by": table.accepted_by,
                         "accepted_on": table.accepted_on.isoformat(), "kind": kind["kind"],
-                        "example": group[0].message})
+                        "example": group[0].message,
+                        "locations": [line.where for line in group]})
+    entries = withhold_shared_scopes(entries, refused)
     for index in sorted(stale):
         if index < len(existing):
             removed.append({"index": index, "rule": existing[index]["rule"].strip(), "scope": existing[index]["scope"].strip()})
     return {"entries": entries, "refused": refused, "removed": removed, "not_covered": not_covered}
+
+
+def scope_holds(net: str, location: str) -> bool:
+    """Whether the pre-order check would give an entry for `net` the line at `location`: the `net X:` prefix or `[X]` anywhere."""
+    return location.startswith(f"net {net}:") or f"[{net}]" in location
+
+
+def withhold_shared_scopes(entries: List[dict], refused: List[dict]) -> List[dict]:
+    """The entries whose rule and net scope no refused line of the same rule falls in. The check gives an entry to the first
+    line of its rule in its scope, so an entry that also covers a refused line could excuse that line (a mains line) in
+    place of the one it was written for; such an entry is not written, and its lines are refused by name."""
+    entries = list(entries)
+    while True:
+        shared = [entry for entry in entries
+                  if any(item["rule"] == entry["rule"] and scope_holds(entry["scope"], board_check.clean(item["location"]))
+                         for item in refused)]
+        if not shared:
+            return entries
+        for entry in shared:
+            entries.remove(entry)
+            refused.extend({"rule": entry["rule"], "scope": entry["scope"], "location": location,
+                            "why": f"the scope {entry['scope']} of the entry for {entry['rule']} also holds a refused line, "
+                                   "and the check would give the entry to the first line in its scope, which may be the refused one"}
+                           for location in entry["locations"])
 
 
 def write_record(path: str, text_lines: Optional[List[str]], plan_: dict, synthetic: bool) -> None:
@@ -494,6 +551,12 @@ def design_of(lines: Sequence[Line], designs: Sequence[str], given: Optional[str
 def run(args, out) -> int:
     log, designs = read_log(args.log)
     design = design_of(log, designs, args.design)
+    named = os.path.basename(design.replace("\\", "/"))
+    for label, given, stem in (("--project", args.project, False), ("--board", args.board, True)):
+        base = os.path.basename(given)
+        if (os.path.splitext(base)[0] != os.path.splitext(named)[0]) if stem else (base != named):
+            raise CannotRun(f"the log is of the design {design} and {label} is {given}, which is not that design's "
+                            f"{'layout (same name, .kicad_pcb)' if stem else 'project file'}; give the board and project the log was made from")
     when = datetime.date.today()
     if args.accepted_on:
         try:

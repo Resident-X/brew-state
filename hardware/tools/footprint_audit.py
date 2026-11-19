@@ -19,7 +19,8 @@ nearer than `--min-gap` (default 1 mm) is a finding. A part on the board, or
 named with `--ref`, whose footprint the table does not hold is named as missing:
 its gap cannot be measured, and the run fails. A table entry may take the
 footprint's courtyard for its body (`from: courtyard`), which marks the body as
-no maker reading. `--access-zones` also measures the table's access zones, the
+no maker reading: the report gives each part's basis, and its verdict line counts
+the parts measured on such a stand-in and names them (`courtyard_stand_ins` in JSON). `--access-zones` also measures the table's access zones, the
 space a mating part or a hand needs.
 
 `pads` lists each pad of the footprints named, with its number, kind, shape,
@@ -320,8 +321,11 @@ def audit_gaps(board: str, table_path: str, references: Sequence[str], min_gap: 
               f"of {len(measured)} part{'s' if len(measured) != 1 else ''}" if failed else
               f"{len(pairs)} pair{'s' if len(pairs) != 1 else ''} of {len(measured)} part{'s' if len(measured) != 1 else ''} "
               f"all at least {mm(min_gap)} mm apart")
+    stand_ins = sorted(reference for reference, how in basis.items() if how == BASIS_COURTYARD)
+    detail += (f"; {len(stand_ins)} part{'s' if len(stand_ins) != 1 else ''} on a courtyard stand-in, not a maker's drawing "
+               f"({', '.join(stand_ins)})" if stand_ins else "; 0 parts on a courtyard stand-in")
     return {"result": "FAIL" if failed else "PASS", "detail": detail, "findings": findings, "min_gap_mm": min_gap,
-            "parts_measured": len(measured), "basis": basis, "pairs": pairs}
+            "parts_measured": len(measured), "courtyard_stand_ins": stand_ins, "basis": basis, "pairs": pairs}
 
 
 def print_gaps(report: dict, all_pairs: bool, out) -> None:
