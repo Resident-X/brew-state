@@ -568,7 +568,7 @@
 		(uuid "4dd761f3-632a-4c90-aa8e-0f263f7ca768")
 		(at 60.64 50.19 90)
 		(property "Reference" "U911"
-			(at -4.765 -7.04 0)
+			(at 2.29 -7.04 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "af124c1d-f582-4172-ab05-7c3212d869b8")
@@ -948,7 +948,7 @@
 		(uuid "4eff92c3-09e1-49a4-8d1c-18bfe66665aa")
 		(at 60.64 66.21 -90)
 		(property "Reference" "U921"
-			(at -4.765 7.04 0)
+			(at 7.39 0.24 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "815de851-ed20-46ad-96b9-13af6726806c")
@@ -1892,7 +1892,7 @@
 		(uuid "b77298e6-8b43-48a8-a7b9-27c334be00fc")
 		(at 63.18 58.2 -90)
 		(property "Reference" "J931"
-			(at 0 8.88 0)
+			(at 0 12.28 90)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "cc8269f9-7885-49c9-84df-702903362642")
@@ -4038,7 +4038,7 @@
 		)
 	)
 	(gr_text "3 HEAT_S_LED_K"
-		(at 47.4 64.5 90)
+		(at 52.6 64.6 90)
 		(layer "F.SilkS")
 		(uuid "e11d627e-10d0-52cc-9dbe-d29d6463d295")
 		(effects
@@ -4050,7 +4050,7 @@
 		)
 	)
 	(gr_text "2 HEAT_C_LED_K"
-		(at 48.9 64.5 90)
+		(at 54.1 64.6 90)
 		(layer "F.SilkS")
 		(uuid "7c40a9db-46db-5ba1-9f44-10426046d7a2")
 		(effects
@@ -4062,7 +4062,7 @@
 		)
 	)
 	(gr_text "1 +5V_WB"
-		(at 50.4 64.5 90)
+		(at 55.6 64.6 90)
 		(layer "F.SilkS")
 		(uuid "318cac57-6381-5e02-b0cc-dc4ced4c4975")
 		(effects
@@ -4123,7 +4123,7 @@
 	)
 	(gr_poly
 		(pts
-			(xy 41 50.9019) (xy 44 56.0981) (xy 38 56.0981)
+			(xy 44.75 50.9019) (xy 47.75 56.0981) (xy 41.75 56.0981)
 		)
 		(stroke
 			(width 0.25)
@@ -4135,7 +4135,7 @@
 	)
 	(gr_poly
 		(pts
-			(xy 41.4125 53.241) (xy 40.2875 54.891) (xy 40.9625 54.891) (xy 40.55 56.166) (xy 41.7125 54.441) (xy 41.0375 54.441)
+			(xy 45.1625 53.241) (xy 44.0375 54.891) (xy 44.7125 54.891) (xy 44.3 56.166) (xy 45.4625 54.441) (xy 44.7875 54.441)
 		)
 		(stroke
 			(width 0.1)
@@ -4146,7 +4146,7 @@
 		(uuid "f31c05bc-eddf-5e98-9ec5-a9151ad02e68")
 	)
 	(gr_text "DANGER"
-		(at 41 58.6 0)
+		(at 44.75 58.6 0)
 		(layer "F.SilkS")
 		(uuid "57d77b44-8ac8-5782-ac57-99733d97c506")
 		(effects
@@ -4157,7 +4157,7 @@
 		)
 	)
 	(gr_text "MAINS"
-		(at 41 61 0)
+		(at 44.75 61 0)
 		(layer "F.SilkS")
 		(uuid "1482a521-3182-5897-b965-35dbfc49d918")
 		(effects
@@ -4168,7 +4168,7 @@
 		)
 	)
 	(gr_text "VOLTAGE"
-		(at 41 63.4 0)
+		(at 44.75 63.4 0)
 		(layer "F.SilkS")
 		(uuid "7c1d3a52-90e4-5b6a-8f3e-2d4b6a1c9e07")
 		(effects
@@ -4179,7 +4179,7 @@
 		)
 	)
 	(gr_text "230 V~ 50 Hz"
-		(at 41 65.6 0)
+		(at 44.75 65.6 0)
 		(layer "F.SilkS")
 		(uuid "4062b7ac-f5ec-5d44-8aae-0a96b81c2b52")
 		(effects
@@ -4669,6 +4669,30 @@
 				(thickness 0.15)
 			)
 			(justify left)
+		)
+	)
+	(gr_text "TO MAIN BOARD J761"
+		(at 56.2 68.25 0)
+		(layer "F.SilkS")
+		(uuid "5eb66d98-6abd-58b5-b2dd-6c4c3fa34610")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify right)
+		)
+	)
+	(gr_text "JLCJLCJLCJLC"
+		(at 56.5 80 0)
+		(layer "B.SilkS")
+		(uuid "84609717-721d-5790-9829-62ab7af49b75")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+			(justify mirror)
 		)
 	)
 )
