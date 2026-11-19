@@ -83,7 +83,7 @@ The three items the first draft of this section listed as unasked now have a cri
 
 ## For David to sign or confirm at the end of the work
 
-Items 1 to 3 are signed on his behalf under his standing instruction of 2026-11-07; none is in his words. Item 4 is not an entry of this record: it is a figure no record sourced and no criterion asks for, listed so that he can confirm it or act on it. Each line is the risk he is asked to confirm.
+Items 1 to 3 are signed on his behalf under his standing instruction of 2026-11-07; none is in his words. Items 4 and 5 are not entries of this record: it is a figure no record sourced and no criterion asks for, listed so that he can confirm it or act on it. Each line is the risk he is asked to confirm.
 
 1. W-5a: the blade terminals and joiners carry 4.80 to 10.18 A against a 15 A that no maker rates; a hot joint is caught only at the bring-up thermocouple step.
 2. W-5b: no ESD level and no clamp at the connectors; a discharge could damage the LED or the triac gate; handle with ESD care when fitting.
