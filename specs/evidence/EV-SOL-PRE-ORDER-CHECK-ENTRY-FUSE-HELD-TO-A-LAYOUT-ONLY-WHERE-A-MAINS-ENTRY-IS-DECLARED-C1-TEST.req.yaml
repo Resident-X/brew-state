@@ -1,7 +1,7 @@
 id: EV-SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED-C1-TEST
 type: evidence
 title: 'Entry-fuse tests: no-entry design not failed, entry design still held (SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C1)'
-status: active
+status: superseded
 version: 1
 result: pass
 method: test
@@ -12,7 +12,7 @@ artifact:
   reference: hardware/tools/tests/test_board_mains_to_mains.py::test_a_design_with_no_mains_entry_is_not_failed_for_an_entry_fuse_that_is_on_another_board
   artifact_version: 4c0262ba863c02904f706a4d7b8ab8d8539bfb4e
 text: |
-  Two tests in hardware/tools/tests/test_board_mains_to_mains.py, both in the module that ran in the build round's gate (task check:round at HEAD db73f4b6, exit 0; hw:test:round line "ok test_board_mains_to_mains: 48 tests", log /private/tmp/claude-501/-Users-david-repos-coffee/8bf0ba1d-648a-4892-a203-5813f90b6039/scratchpad/gate.log). The change is commit 4c0262ba.
+  Two tests in hardware/tools/tests/test_board_mains_to_mains.py, both in the module that ran in the build round's gate (task check:round at HEAD db73f4b6, exit 0; hw:test:round line "ok test_board_mains_to_mains: 48 tests", log the round gate's log). The change is commit 4c0262ba.
 
   test_a_design_with_no_mains_entry_is_not_failed_for_an_entry_fuse_that_is_on_another_board: for a design declaring no Mains_Entry class, board_check.mains_pairs returns no violation for three layouts (empty, parts with no fuse, and a layout holding F1 on Mains nets), so an entry fuse that is no reference of the layout does not fail. It then proves the record's entry_fuse key is still required: with entry_fuse None or "" the record is refused (rule separation_basis, location mains_to_mains.entry_fuse). It proves the rest of the mapping is still checked on such a design: a held_at_reinforced pair naming a net the design lacks still fails as mains_declaration.
 

@@ -1,7 +1,7 @@
 id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C4-TEST
 type: evidence
 title: Wall board header channels resolve to the main board's controller-pin channels (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C4)
-status: active
+status: superseded
 version: 1
 result: pass
 method: test
@@ -12,7 +12,7 @@ artifact:
   reference: hardware/tools/tests/test_board_check_no_controller.py (far-channel tests) and task hw:verify on hardware/sunbeam-em7000/heater-wall-board
   artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
 text: |
-  Tests, from the build round's one gate (task check:round at HEAD db73f4b6, exit 0, hw:verify and hw:test:round passed; log /private/tmp/claude-501/-Users-david-repos-coffee/8bf0ba1d-648a-4892-a203-5813f90b6039/scratchpad/gate.log), and the real record.
+  Tests, from the build round's one gate (task check:round at HEAD db73f4b6, exit 0, hw:verify and hw:test:round passed; log the round gate's log), and the real record.
 
   The record, hardware/sunbeam-em7000/heater-wall-board/pin-allocation.yaml: controller none; channel wb_5v_supply (net +5V_WB, J931 pin 1, rail +5V_WB); channel heat_c_drv (net HEAT_C_LED_K, J931 pin 2, far_channel heat_c_drv); channel heat_s_drv (net HEAT_S_LED_K, J931 pin 3, far_channel heat_s_drv). It carries no controller pin and no converter-input map.
 

@@ -1,7 +1,7 @@
 id: EV-SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK-C3-TEST
 type: evidence
 title: 'Recommended-figure rule tests: below fails, entry passes, no-cause entry fails (SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3)'
-status: active
+status: superseded
 version: 1
 result: pass
 method: test
@@ -12,7 +12,7 @@ artifact:
   reference: hardware/tools/tests/test_board_minimums.py::ABoardSetupMinimumBelowTheRecommendedFigureFails
   artifact_version: 2560a35ee90a08cd2b9c23792fabbf4717a7f4b2
 text: |
-  Tests in hardware/tools/tests/test_board_minimums.py (60 tests, all ok in hw:test:round of the build round's gate at HEAD db73f4b6, "ok test_board_minimums: 60 tests", log /private/tmp/claude-501/-Users-david-repos-coffee/8bf0ba1d-648a-4892-a203-5813f90b6039/scratchpad/gate.log). Implemented in commit 2560a35e. Class ABoardSetupMinimumBelowTheRecommendedFigureFails, each over synthetic designs and records in a temporary directory:
+  Tests in hardware/tools/tests/test_board_minimums.py (60 tests, all ok in hw:test:round of the build round's gate at HEAD db73f4b6, "ok test_board_minimums: 60 tests", log the round gate's log). Implemented in commit 2560a35e. Class ABoardSetupMinimumBelowTheRecommendedFigureFails, each over synthetic designs and records in a temporary directory:
   - test_a_minimum_below_its_recommended_figure_with_no_entry_fails_naming_the_setting_and_both_figures: min_via_annular_width 0.2 mm against recommended 0.25 mm and no below_recommended entry fails with a violation at the setting's key naming "min_via_annular_width is 0.2 mm" and "below the 0.25 mm the manufacturer recommends".
   - test_a_minimum_at_or_above_its_recommended_figure_passes_and_float_rounding_below_it_is_not_below, and test_a_limit_the_record_gives_no_recommended_figure_for_is_held_to_its_stated_limit_alone: no failure at or above the figure; a limit with no recommended_mm is out of the new rule's scope.
   - test_every_setting_below_its_figure_is_reported_each_at_its_own_key.
