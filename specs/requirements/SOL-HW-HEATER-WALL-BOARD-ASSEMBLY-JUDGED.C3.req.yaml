@@ -1,7 +1,7 @@
 id: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C3
 type: criterion
 title: The bracket, its spacers and the thermal interfaces are designed, and the tab-hole height on its standing leg is fixed with its source
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
     type: criterion-of
+attributes:
+  deprecation_reason: Records the earlier ear-and-bracket form; superseded by the printed-case solution's C12 (the case node)
