@@ -315,3 +315,17 @@ The class swept: a record that lists the front silkscreen items or the legend, l
 | `MADE WITH` | 5 | 1 new | `fabrication-notes.md` 1 (the new paragraph); the other 3 are unrelated prose in `docs/sunbeam-em7000/` and the paragraph's own heading line |
 | `STAIRCASE` | 1 | 1 new | `fabrication-notes.md` |
 | plan rows naming the silkscreen (`MFG-7`, `MFG-8`, `MFG-9`) | 3 | 0 stale | they judge the references' and text's reading and place, which the mark does not change; the KiCad rule check reports no silk line on the new board |
+
+## 2026-11-19: layout review round 2, record findings 2.2, 2.3, 2.5 to 2.8
+
+The class swept: a record that states a figure the board does not bear out. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, run line by line over the working tree after the corrections; the outline read from the board's Edge.Cuts (x 20 to 65, y 21 to 96: 45.0 x 75.0 mm) and H1's distances measured from the board's copper (H1 centre to the OUT_S spur's rounded end 14.31 mm, to the OUT_S finger zone's corner 15.37 mm).
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `45 x 76`, `45.0 by 76`, `left edge (76.0 mm)` | 9 | 7 fixed | `fabrication-notes.md` Outline row, `constraints-figures.md`, `layout-hedges.md` 13, `open-items.md`, `sheets/300-low-voltage-header.yaml` and its generated `schematic-spec.yaml` fixed to 45 x 75; `layout-plan.md` WORK-9 baseline row kept and corrected by the amendment note, the note itself quotes it; the `schematic-review.md` and `controller-board-division.md` hits are other figures (76 mm2, 0.76 mm) |
+| `14.25` | 1 | 1 fixed | `layout-plan.md` D1: 14.3 mm to the spur end, 15.4 mm to the finger zone's corner; Pass 1 and the review quote 14.25 (the layout agent's figure for the same end cap), frozen history |
+| `11.05` | 7 | 1 fixed | R1 now states the built 47.5 mm run; the BOARD-4 row, Pass 1 and the review's rows quote the plan's baseline figure, frozen, with the amendment note |
+| `about 4 K` | 1 | 1 fixed | `layout-review.md` finding 1.1 Closed by, now 3.8 K at the worst section |
+| `no via`, `places no via` | 6 | 1 fixed | `constraints-figures.md` now states the one `+5V_WB` via; the others state that no Mains net has a via, true |
+| `exclude_from_bom` | 3 | 2 fixed | `layout-hedges.md` 17 and `open-items.md` now state `exclude_from_pos_files` alone; `layout-plan.md` MFG-7 row is baseline, amendment note added |
+| `MOC3083SR2M` | footprint name | kept | `fabrication-notes.md` "Part and footprint names" says why the footprint keeps the old name |
