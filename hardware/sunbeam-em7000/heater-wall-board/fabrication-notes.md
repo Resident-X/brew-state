@@ -8,7 +8,7 @@ Maker figures are from JLCPCB's published capabilities page as `docs/board-manuf
 
 | Item | Statement | Source |
 |---|---|---|
-| Outline | a plain rectangle with four 3.2 mm holes and no ears, as narrow as the parts allow, its size set at layout and to stay inside the maker's 102 x 102 mm lowest price band (**amended 2026-11-19**: the earlier form's 57.0 x 42.5 mm body of 2422.5 mm2, 2662.5 mm2 with two mounting ears of a bracket, is not carried); the layout leaf draws the outline and the later case-design step the case and the plate | `docs/sunbeam-em7000/controller-board-division.md`, The heater wall board; leaf text |
+| Outline | a plain rectangle with 3.2 mm mounting holes (at least three; the layout chooses the count, the schematic's H1 to H4 being a starting set) and no ears, as narrow as the parts allow, its size set at layout and to stay inside the maker's 102 x 102 mm lowest price band (**amended 2026-11-19**: the earlier form's 57.0 x 42.5 mm body of 2422.5 mm2, 2662.5 mm2 with two mounting ears of a bracket, is not carried); the layout leaf draws the outline and the later case-design step the case and the plate | `docs/sunbeam-em7000/controller-board-division.md`, The heater wall board; leaf text |
 | Copper layers | two: F.Cu and B.Cu | `manufacturer-limits.yaml` |
 | Copper weight | 1 oz finished outer copper, the maker's introductory-price default | `board-rules.yaml` `fabrication.outer_copper_oz: 1`; `manufacturer-limits.yaml` |
 | Thickness, surface finish, panel, tolerance and delivery options | not chosen in any record of this board; set at the quote | none |

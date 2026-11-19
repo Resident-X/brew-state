@@ -14,7 +14,7 @@
 # derating-policy.yaml), integrated circuit (the two opto-triacs, as the main board classes its
 # MOC3052SVM), resistor (the four 1206 gate resistors), varistor (the two 07D471K). The three blade
 # terminals and the three-way header state no voltage in their rating, so they take none; their current
-# ratings are not stated by the maker's drawing (unsourced), see open-items.md. The four case-screw holes (H1 to H4)
+# ratings are not stated by the maker's drawing (unsourced), see open-items.md. The case-screw holes (H1 to H4 are a starting set; the layout chooses the final count, at least three, and a change of count is a pinless-part change in the schematic)
 # and the three fiducials (FID1 to FID3), added 2026-11-19 with the plain-rectangle mounting form, state no voltage and take none;
 # none of the seven is in the bill of materials or the position file (set on the placed footprints at layout, open-items.md).
 #
@@ -151,28 +151,28 @@ positions:
     rating: "1x3 2.54 mm pin header, 3 A, vertical"
     lcsc: C2937625
     class: none
-  # H1: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  # H1: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
   - reference: H1
     value: "MountingHole"
     package: MountingHole_3.2mm_M3
     rating: "M3 screw, 3.2 mm non-plated hole"
     lcsc: none
     class: none
-  # H2: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  # H2: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
   - reference: H2
     value: "MountingHole"
     package: MountingHole_3.2mm_M3
     rating: "M3 screw, 3.2 mm non-plated hole"
     lcsc: none
     class: none
-  # H3: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  # H3: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
   - reference: H3
     value: "MountingHole"
     package: MountingHole_3.2mm_M3
     rating: "M3 screw, 3.2 mm non-plated hole"
     lcsc: none
     class: none
-  # H4: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  # H4: maker none; MPN none (a hole in the board); catalogue class none; M3 screw; one of the starting set H1 to H4, the layout chooses the final count (at least three), each held to the mounting_hole distance from Mains copper whatever the screw; not in the bill of materials or the position file
   - reference: H4
     value: "MountingHole"
     package: MountingHole_3.2mm_M3
