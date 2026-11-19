@@ -27,6 +27,18 @@ vars:
   # KiCad's command-line tool is often installed off the search path; point at
   # it with KICAD_CLI=... (hardware/README.md gives the usual place per system).
   KICAD_CLI: '{{.KICAD_CLI | default "kicad-cli"}}'
+  # KiCad's own Python, which the layout tools and their tests run pcbnew with:
+  # KICAD_PYTHON=... when set, else the macOS install's interpreter when it is
+  # there, else the system python3 when that can import pcbnew (the Linux
+  # package), else empty, and a tool or test that needs it stops naming the
+  # variable (hardware/README.md gives the usual place per system).
+  KICAD_PYTHON:
+    sh: 'if [ -n "${KICAD_PYTHON:-}" ]; then echo "$KICAD_PYTHON"; elif [ -x "/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3" ]; then echo "/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/Current/bin/python3"; elif python3 -c "import pcbnew" >/dev/null 2>&1; then command -v python3; fi'
+  # The folder of KiCad's stock footprint libraries, for the main board's layout
+  # chain when a block takes a part from them: KICAD_FOOTPRINTS=... when set,
+  # else the first usual place that exists, else empty.
+  KICAD_FOOTPRINTS:
+    sh: 'if [ -n "${KICAD_FOOTPRINTS:-}" ]; then echo "$KICAD_FOOTPRINTS"; else for d in /Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints /usr/share/kicad/footprints; do if [ -d "$d" ]; then echo "$d"; break; fi; done; fi'
   # resvg, which turns the review views into images, may be installed off the
   # search path too; point at it with RESVG=... (hardware/README.md says where to get it).
   RESVG: '{{.RESVG | default "resvg"}}'
@@ -39,6 +51,17 @@ vars:
   # that environment once it exists, else the bare python3.
   GERBONARA_PYTHON:
     sh: 'if [ -n "${GERBONARA_PYTHON:-}" ]; then echo "$GERBONARA_PYTHON"; elif [ -x "{{.GERBONARA_VENV}}/bin/python" ]; then echo "{{.GERBONARA_VENV}}/bin/python"; else echo python3; fi'
+
+  # The virtual environment numpy, shapely, Pillow and PyYAML are installed in, which the
+  # silkscreen command and its tests import: `task hw:silkscreen` creates it here,
+  # and SILKSCREEN_VENV=... puts it elsewhere (hardware/README.md says more).
+  SILKSCREEN_VENV:
+    sh: 'echo "${SILKSCREEN_VENV:-${XDG_CACHE_HOME:-$HOME/.cache}/brew-state/silkscreen}"'
+  # The Python that runs them: SILKSCREEN_PYTHON=... when set, else the Python of
+  # that environment once it exists, else the bare python3. The command and its
+  # tests run themselves again under it when the Python they started in lacks a package.
+  SILKSCREEN_PYTHON:
+    sh: 'if [ -n "${SILKSCREEN_PYTHON:-}" ]; then echo "$SILKSCREEN_PYTHON"; elif [ -x "{{.SILKSCREEN_VENV}}/bin/python" ]; then echo "{{.SILKSCREEN_VENV}}/bin/python"; else echo python3; fi'
 
   # The Freerouting 2.5.0 jar the board design method routes with: `task hw:freerouting`
   # fetches it here, and FREEROUTING_JAR=... points at one placed by hand.
@@ -634,6 +657,14 @@ tasks:
       - '"{{.GERBONARA_VENV}}/bin/python" -m pip install --quiet gerbonara==1.6.3'
       - '"{{.GERBONARA_VENV}}/bin/python" -c "import gerbonara; assert gerbonara.__version__ == \"1.6.3\", gerbonara.__version__; print(\"gerbonara\", gerbonara.__version__, \"in {{.GERBONARA_VENV}}\")"'
 
+  hw:silkscreen:
+    desc: Create the virtual environment numpy 2.5.0, shapely 2.2.0, Pillow 12.3.0 and PyYAML 6.0.3 are installed in, at SILKSCREEN_VENV (by default a folder in your user cache, outside the repository), and read the versions back, so the silkscreen command and its tests find them without SILKSCREEN_PYTHON being set. Safe to run again. Needs Python 3.9 or newer with venv and pip, and network access to the Python package index
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - python3 -m venv "{{.SILKSCREEN_VENV}}"
+      - '"{{.SILKSCREEN_VENV}}/bin/python" -m pip install --quiet numpy==2.5.0 shapely==2.2.0 Pillow==12.3.0 pyyaml==6.0.3'
+      - '"{{.SILKSCREEN_VENV}}/bin/python" -c "import numpy, shapely, PIL, yaml; print(\"numpy\", numpy.__version__, \"shapely\", shapely.__version__, \"Pillow\", PIL.__version__, \"PyYAML\", yaml.__version__, \"in {{.SILKSCREEN_VENV}}\")"'
+
   hw:freerouting:
     desc: Fetch the Freerouting 2.5.0 release jar the board design method routes with to FREEROUTING_JAR (by default a file in your user cache, outside the repository), keeping it only when its sha256 matches the release's, and leave a matching file alone. Safe to run again. Needs Python 3.9 or newer and network access the first time; running the jar needs a Java runtime 25 or newer
     dir: "{{.ROOT_DIR}}"
@@ -641,12 +672,15 @@ tasks:
       - python3 "{{.HW_DIR}}/tools/fetch_freerouting.py" "{{.FREEROUTING_JAR}}"
 
   hw:test:
-    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check, the layout review record history check, the layout review proof's seeding command, the schematic sheet drawing command, the review kit (its session specification and executors, answer reading, stream checks and telemetry, declaration, catalogue and shared context, planner and scheduler, merge and replicas, caller contract, contract smoke, command and the task runner's file), the layout review's caller, the critical-routing check's caller and the catalogue helpers both share, the production-files check's caller and its folder command, the schematic review's caller, the schematic review folder command and the schematic review proof command (with the netlist and schematic readers they share and the proof harness the layout review proof command shares), the review folder command, the layout review proof command, the critical-routing review proof command and the production-files review proof command, and the production-files conversion, rendering and seeding command), against the real kicad-cli, resvg and gerbonara, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it), and Task
+    desc: Run the tests covering the board tooling (the pre-order check, the locked-copper check, the layout review views, the placement view, the placement and critical routing history check, the layout review record history check, the layout review proof's seeding command, the schematic sheet drawing command, the review kit (its session specification and executors, answer reading, stream checks and telemetry, declaration, catalogue and shared context, planner and scheduler, merge and replicas, caller contract, contract smoke, command and the task runner's file), the layout review's caller, the critical-routing check's caller and the catalogue helpers both share, the production-files check's caller and its folder command, the schematic review's caller, the schematic review folder command and the schematic review proof command (with the netlist and schematic readers they share and the proof harness the layout review proof command shares), the review folder command, the layout review proof command, the critical-routing review proof command and the production-files review proof command, and the production-files conversion, rendering and seeding command, and the scripted layout tools (the zone refill and fill-diff commands, the chain runner, the mains-copper compare, the acceptance-entry generator, the silkscreen command and the footprint audit, with their fixtures)), against the real kicad-cli, resvg and gerbonara, the seeded-fault proof's own tests included — on demand; the build round's gate and the nightly complete verification run hw:test:round instead. Needs the same tools as hw:verify, KICAD_PYTHON (KiCad's own interpreter, which holds pcbnew) and KICAD_FOOTPRINTS (KiCad's installed footprint libraries) for the layout tools that call pcbnew, SILKSCREEN_PYTHON (an interpreter with numpy, shapely, Pillow and PyYAML) for the silkscreen command, resvg 0.47 or newer (set RESVG=/path/to/resvg when resvg is not on PATH), gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it), and Task
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
+      KICAD_PYTHON: "{{.KICAD_PYTHON}}"
+      KICAD_FOOTPRINTS: "{{.KICAD_FOOTPRINTS}}"
       RESVG: "{{.RESVG}}"
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
+      SILKSCREEN_PYTHON: "{{.SILKSCREEN_PYTHON}}"
     cmds:
       # Each test file runs in a process of its own, side by side, from this
       # directory as the serial discover run did; the runner fails when it finds
@@ -655,12 +689,15 @@ tasks:
       - python3 {{.FW_DIR}}/tools/run_tool_tests.py --tests {{.HW_DIR}}/tools/tests --cwd . --worker-cap 4 {{.CLI_ARGS}}
 
   hw:test:round:
-    desc: Run the tests covering the board tooling as hw:test does, the review kit's, the layout review caller's, the critical-routing check caller's, the production-files check caller's and its folder command's, the schematic review's caller, the schematic review folder command and the schematic review proof command, the review folder command's, the layout review proof command's, the critical-routing review proof command's and the production-files review proof command's among them (they stand a stub in place of the agent command line and need no model), without the tests that need the seeded-fault proof, which stays on demand (hw:test runs the whole suite) — the part the build round's gate runs for a change that can matter to a board and the nightly complete verification runs every night. Against the real kicad-cli and resvg, so it needs the tools hw:test does, KiCad 10.0 or newer, resvg 0.47 or newer, a monospaced font for the layout review views' captions, which the tests need as well as the views, and gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it) for the production-files tests, and a missing one stops the run with a CANNOT RUN line naming it
+    desc: Run the tests covering the board tooling as hw:test does, the scripted layout tools' tests included, the review kit's, the layout review caller's, the critical-routing check caller's, the production-files check caller's and its folder command's, the schematic review's caller, the schematic review folder command and the schematic review proof command, the review folder command's, the layout review proof command's, the critical-routing review proof command's and the production-files review proof command's among them (they stand a stub in place of the agent command line and need no model), without the tests that need the seeded-fault proof, which stays on demand (hw:test runs the whole suite) — the part the build round's gate runs for a change that can matter to a board and the nightly complete verification runs every night. Against the real kicad-cli and resvg, so it needs the tools hw:test does, among them KICAD_PYTHON, KICAD_FOOTPRINTS and SILKSCREEN_PYTHON for the scripted layout tools' tests, KiCad 10.0 or newer, resvg 0.47 or newer, a monospaced font for the layout review views' captions, which the tests need as well as the views, and gerbonara 1.6.3 in a virtual environment of its own (set GERBONARA_PYTHON=/path/to/that/python when python3 is not it) for the production-files tests, and a missing one stops the run with a CANNOT RUN line naming it
     dir: "{{.ROOT_DIR}}"
     env:
       KICAD_CLI: "{{.KICAD_CLI}}"
+      KICAD_PYTHON: "{{.KICAD_PYTHON}}"
+      KICAD_FOOTPRINTS: "{{.KICAD_FOOTPRINTS}}"
       RESVG: "{{.RESVG}}"
       GERBONARA_PYTHON: "{{.GERBONARA_PYTHON}}"
+      SILKSCREEN_PYTHON: "{{.SILKSCREEN_PYTHON}}"
       BOARD_TESTS_WITHOUT_PROOF: "1"
     cmds:
       # Each test file runs in a process of its own, side by side, from this

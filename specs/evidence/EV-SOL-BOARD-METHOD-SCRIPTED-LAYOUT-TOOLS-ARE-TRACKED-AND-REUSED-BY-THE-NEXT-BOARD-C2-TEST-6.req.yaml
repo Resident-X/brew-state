@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD-C2-TEST-6
+type: evidence
+title: test evidence for SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T07:49:23.800467Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_zone_refill.py::test_a_board_that_cannot_be_read_is_refused_and_nothing_is_written
+  artifact_version: 13b4baed91f4676fd0b2f35454f45958c5f2f3a5
+attested_by: crun-720ee3117d6c3086
+links:
+  - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C2
+    type: satisfies
