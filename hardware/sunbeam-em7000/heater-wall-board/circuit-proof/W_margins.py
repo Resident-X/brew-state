@@ -197,7 +197,7 @@ print("   Reading 2, the plot is concave, not straight, so the chord understates
 print("NOTE  triac current share at the best-case case temperature: " + "the 0.5 share is %.2f A (chord) to %.2f A (model) against the steam element's 5.38 A: SHORT under either reading; the 8 A of row (e) is the rating at Tc 86 degC and is not the share at this case temperature. Owner decision D11 (the provisional wall cut) was accepted as preliminary by the owner on 2026-10-28; on 2026-11-19 he accepted finding 2.7 in his words as owner-sign-off.md W-5c (the 45 degC best case here is superseded history)" % (e_chord / 2, e_model / 2))
 
 # 2026-11-19 amendment: the wall path's far-face air is the external household air (owner, 2026-11-19), 25 degC nominal and 40 degC as the stated
-# hot-kitchen bound, not the enclosure air. The path resistances are the division record's own (80 x 30 mm, 304 stainless k 15 W/(m.K) 2.5 mm, bracket 0.139 K/W,
+# hot-kitchen bound, not the enclosure air. The path resistances are the division record's own (80 x 30 mm, 304 stainless k 15 W/(m.K) 2.5 mm, spreader plate 0.139 K/W,
 # paste film 0.027 K/W); Rc is an added bolted-joint contact resistance, an unsourced assumption.
 print("\n== (e) amendment 2026-11-19: case temperature and current share at the external air (25 and 40 degC), continuous full power on both triacs (9.09 W)")
 E_R_WALL = {10: 6.30, 5: 9.32}
@@ -224,7 +224,7 @@ for air in (45.0, 50.0, 70.0):
     amb_head = TOPR_MAX - air
     jshare = 0.88 * TJ_MAX
     j_head = jshare - self_rise - air
-    print("   air %.0f degC: headroom to the TOPR ambient limit 85 degC = %.0f K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = %.0f degC leaves %.1f K after self-heating" % (air, amb_head, jshare, j_head))
+    print("   air %.0f degC: headroom to the TOPR ambient limit 85 degC = %.0f K for the neighbour rise (the triac 20.0 mm away, unmeasured); junction share 0.88 x 100 = %.0f degC leaves %.1f K after self-heating" % (air, amb_head, jshare, j_head))
 print("NOTE  at 45 to 50 degC air (the owner's working figure for the wall board, 2026-10-28, unmeasured) 35 to 40 K of neighbour rise is permitted against the 85 degC ambient limit; the rise is not measured")
 print("NOTE  at 70 degC air the neighbour rise permitted is 15 K (ambient limit) and %.1f K (junction share): the division record's A8 takes 15 K as the allowance for an 85 degC part, an assumption, unmeasured; DEL-HW-BRING-UP.C11 reads it" % (0.88 * TJ_MAX - self_rise - 70.0))
 

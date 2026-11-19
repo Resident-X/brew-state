@@ -8,7 +8,7 @@ Maker figures are from JLCPCB's published capabilities page as `docs/board-manuf
 
 | Item | Statement | Source |
 |---|---|---|
-| Outline | body 57.0 x 42.5 mm = 2422.5 mm2, 2662.5 mm2 with the two mounting ears of the bracket, inside the maker's 102 x 102 mm lowest price band; provisional: the owner may change the outline (shorter, wider) and the layout leaf re-derives the bracket, window and opening | `docs/sunbeam-em7000/controller-board-division.md`, The heater wall board; leaf text |
+| Outline | a plain rectangle with four 3.2 mm holes and no ears, as narrow as the parts allow, its size set at layout and to stay inside the maker's 102 x 102 mm lowest price band (**amended 2026-11-19**: the earlier form's 57.0 x 42.5 mm body of 2422.5 mm2, 2662.5 mm2 with two mounting ears of a bracket, is not carried); the layout leaf draws the outline and the later case-design step the case and the plate | `docs/sunbeam-em7000/controller-board-division.md`, The heater wall board; leaf text |
 | Copper layers | two: F.Cu and B.Cu | `manufacturer-limits.yaml` |
 | Copper weight | 1 oz finished outer copper, the maker's introductory-price default | `board-rules.yaml` `fabrication.outer_copper_oz: 1`; `manufacturer-limits.yaml` |
 | Thickness, surface finish, panel, tolerance and delivery options | not chosen in any record of this board; set at the quote | none |
@@ -50,11 +50,11 @@ It is applied to **both faces of the board**, covering the gaps between this boa
 **Keep-outs for contacts, by reference designator** (proposed; confirmed against the drawn pads at layout):
 - J911, J921 and J941: the blade contact surfaces and the push-on mating area (coat on a blade defeats the push-on contact).
 - J931: the header's pins and the cable connector's mating area.
-- T911 and T921: the insulated tab faces and the bracket contact area under the compound and the M3 screw (the heat path and the bolted joint stay bare); the leads and pads are coated.
+- T911 and T921: the insulated tab faces and the spreader plate's contact area under the compound and the M3 screw (the heat path and the bolted joint stay bare); the leads and pads are coated.
 - U911 and U921 if fitted in sockets: the socket contacts.
 
 ### Home application steps
 
-As the main board's notes give them (clean with 99.9 % isopropyl alcohol, mask the keep-outs, spray 20 to 25 cm away at 45 degrees in thin coats rotating the board 90 degrees with 3 minutes between coats, 25 to 75 um, cure 24 hours at room temperature before power, inspect under a low-angle light for bare gaps between mains pads). Differences for this board: finish every bring-up repair and fit every hand-fitted part first (a later part is soldered through the film); the bracket and triac mounting are done and the heat compound applied before coating, with the tab faces masked; the board's area, 2422.5 mm2 a face, is under 70 cm2 for both faces together, which the one can the main board uses covers many times over.
+As the main board's notes give them (clean with 99.9 % isopropyl alcohol, mask the keep-outs, spray 20 to 25 cm away at 45 degrees in thin coats rotating the board 90 degrees with 3 minutes between coats, 25 to 75 um, cure 24 hours at room temperature before power, inspect under a low-angle light for bare gaps between mains pads). Differences for this board: finish every bring-up repair and fit every hand-fitted part first (a later part is soldered through the film); the plate and triac mounting are done and the heat compound applied before coating, with the tab faces masked; the board's area, a plain rectangle set at layout inside the 102 x 102 mm band (the earlier form's 2422.5 mm2 a face was under 70 cm2), is to be kept under 70 cm2 for both faces together at layout, which the one can the main board uses covers many times over.
 
 Status: criterion C10 is **met on paper**; no coating test is planned and none is claimed.

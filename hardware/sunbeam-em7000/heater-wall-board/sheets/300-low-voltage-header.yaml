@@ -19,6 +19,97 @@ parts:
     '2': HEAT_C_LED_K
     '3': HEAT_S_LED_K
   pinmap_source: the main board's JP301 part (parts-specification.yaml, XFCN PZ254V-11-03P, footprint PinHeader_1x03_P2.54mm_Vertical, pads 1..3); pin order is the first three ways of the main board's J761 (sheets/720 of the main board); the maker's drawing is not read here
+- ref: H1
+  lib_id: Mechanical:MountingHole
+  value: MountingHole
+  rating: M3 screw, 3.2 mm non-plated hole
+  footprint: MountingHole:MountingHole_3.2mm_M3
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: Case-screw mounting hole 1 of 4 (M3 screw into the printed case's boss); not in the bill of materials, not in the position file
+  mains: false
+  sim_exclude: true
+- ref: H2
+  lib_id: Mechanical:MountingHole
+  value: MountingHole
+  rating: M3 screw, 3.2 mm non-plated hole
+  footprint: MountingHole:MountingHole_3.2mm_M3
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: Case-screw mounting hole 2 of 4 (M3 screw into the printed case's boss); not in the bill of materials, not in the position file
+  mains: false
+  sim_exclude: true
+- ref: H3
+  lib_id: Mechanical:MountingHole
+  value: MountingHole
+  rating: M3 screw, 3.2 mm non-plated hole
+  footprint: MountingHole:MountingHole_3.2mm_M3
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: Case-screw mounting hole 3 of 4 (M3 screw into the printed case's boss); not in the bill of materials, not in the position file
+  mains: false
+  sim_exclude: true
+- ref: H4
+  lib_id: Mechanical:MountingHole
+  value: MountingHole
+  rating: M3 screw, 3.2 mm non-plated hole
+  footprint: MountingHole:MountingHole_3.2mm_M3
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: Case-screw mounting hole 4 of 4 (M3 screw into the printed case's boss); not in the bill of materials, not in the position file
+  mains: false
+  sim_exclude: true
+- ref: FID1
+  lib_id: Mechanical:Fiducial
+  value: Fiducial
+  rating: global fiducial, 1 mm copper, 2 mm mask opening
+  footprint: Fiducial:Fiducial_1mm_Mask2mm
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: Global fiducial 1 of 3 on F.Cu; not in the bill of materials, not in the position file
+  mains: false
+  sim_exclude: true
+- ref: FID2
+  lib_id: Mechanical:Fiducial
+  value: Fiducial
+  rating: global fiducial, 1 mm copper, 2 mm mask opening
+  footprint: Fiducial:Fiducial_1mm_Mask2mm
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: Global fiducial 2 of 3 on F.Cu; not in the bill of materials, not in the position file
+  mains: false
+  sim_exclude: true
+- ref: FID3
+  lib_id: Mechanical:Fiducial
+  value: Fiducial
+  rating: global fiducial, 1 mm copper, 2 mm mask opening
+  footprint: Fiducial:Fiducial_1mm_Mask2mm
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: Global fiducial 3 of 3 on F.Cu; not in the bill of materials, not in the position file
+  mains: false
+  sim_exclude: true
 nets:
   +5V_WB:
     scope: global
@@ -36,4 +127,4 @@ no_connect: []
 custom_symbols: []
 custom_footprints: []
 power_flags: []
-notes: 'Header at the right edge of the sheet; no mains on this sheet. The cable lands on positions 1 to 3 of the main board''s ten-way J761: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K. +5V_WB supplies the two opto-triac LED anodes on the switch sheets and is power-leaving at the main board''s end (JP761); nothing on this board sources it. HEAT_C_LED_K and HEAT_S_LED_K are the LED returns sunk by the main board''s Q761 and Q771. The board has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'
+notes: 'Header at the right edge of the sheet; no mains on this sheet. The cable lands on positions 1 to 3 of the main board''s ten-way J761: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K. +5V_WB supplies the two opto-triac LED anodes on the switch sheets and is power-leaving at the main board''s end (JP761); nothing on this board sources it. HEAT_C_LED_K and HEAT_S_LED_K are the LED returns sunk by the main board''s Q761 and Q771. The board has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. H1 to H4 (case-screw holes) and FID1 to FID3 (fiducials) are mechanical symbols on no net, drawn in a row on this sheet with the LCSC field none: the holes take an M3 screw into the printed case''s boss (the board is a plain rectangle screwed to the case, with no ears; the case screws to the flat spreader plate), and none of the seven is in the bill of materials or the position file. The symbols are drawn with in_bom yes; the exclusion is set on the placed footprints at layout (open-items.md). Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'

@@ -151,3 +151,28 @@ Scope: every `.md`, `.yaml`, `.py` and `.log` file under `hardware/sunbeam-em700
 | `\band and\b` | 0 | the `and and` of `owner-sign-off.md` 42 fixed; no other |
 
 Fixed in this round, with line counts: `owner-sign-off.md` 4 lines (19, 36, 42, 98: what he was shown cut to message 1's content; the appendix says a subset, not the amendment's figures); `circuit-proof.md` 2 lines (24 D11 date; the Result paragraph cites W-5c as the owner's decision for row (e)); `circuit-proof/W_margins.py` 1 line (197) and `circuit-proof/W_margins.log` 1 line (54), `W_margins.py` re-run, output identical to the log; `bring-up-provision.md` 1 line (23: the threshold detection cannot be tested until the firmware of `REQ-ACTUATION-CONFIRMATION-001.C6` and `.C10` exists; bring-up measures the all-outputs-off current, `DEL-HW-BRING-UP.C23`, and reads a deliberately held-on heater's current as evidence for the firmware's thresholds). Total 9 lines in 5 files, plus 3 rows in `schematic-review.md`.
+
+## 2026-11-19: the mounting form changed (flat spreader plate, plain four-hole board, printed case)
+
+The class swept: statements of the earlier mounting form (two ears on the board's wall edge screwed to a bracket leg above the board, a two-leg bracket, a 13.25 mm earthed-fixing distance, a 57.0 x 42.5 mm body, blades between the triacs) left live in this folder after `DEC-HEATER-WALL-BOARD-IS-A-PLAIN-RECTANGLE-SCREWED-TO-A-PRINTED-CASE-ON-A-FLAT-SPREADER` and the owner's 2026-11-19 blade-edge constraint. Scope: every `*.md`, `*.yaml`, `*.py`, `*.log` and `*.yml` outside `.git`, case-insensitive regular expressions run line by line over the working tree after the corrections. Columns: files with a hit repo-wide (this folder's included); live lines in this folder outside the three frozen or dated records; lines in `schematic-review.md`, `owner-sign-off.md`, `sweep-log.md` (history, left as written). `layout-plan.md` is outside this change's scope and is counted in the first column only.
+
+| Phrasing | Files, repo-wide | Live lines here | History lines here |
+|---|---|---|---|
+| `\bears?\b` | 12 | 6 | 7 |
+| `two mounts` | 6 | 0 | 2 |
+| `16 x 7.5` or `16.0 mm wide` | 3 | 1 | 1 |
+| `89 mm` or `89.0` | 13 | 1 | 3 |
+| `standing leg` | 16 | 3 | 0 |
+| `board leg` | 5 | 1 | 1 |
+| `\blift` | 39 | 0 | 3 |
+| `57 x 42.5` or `57.0 x 42.5` | 9 | 4 | 1 |
+| `13.25` | 12 | 3 | 1 |
+| `bracket` | 80 | 5 | 28 |
+| `\blegs?\b` | 70 | 5 | 1 |
+| `along v` | 0 | 0 | 0 |
+| `ear mount` | 0 | 0 | 0 |
+| `mounting.hole` | 130 | 13 | 5 |
+| `two mounting` | 8 | 2 | 2 |
+| `between the (two )?triacs` | 4 | 2 | 6 |
+
+What the live lines now are: every remaining live hit in this folder is an `Amended 2026-11-19` note naming the earlier form as superseded (`open-items.md`, `layout-hedges.md`, `constraints-figures.md`, `fabrication-notes.md`, the new part records), the legitimate TO-220 or blade "leg" (a terminal lead), or a mounting-hole record of the new form. The repo-wide files are other boards' records (the main board's lid-screw holes, the 13.25 mm main-board fixing rule, other leaf records), the division and constraints records (annotated, not rewritten), and `layout-plan.md` (not touched here). `circuit-proof/W_margins.py` and its log: "the triac leg 20.0 mm away" now reads "the triac 20.0 mm away", "bracket 0.139 K/W" reads "spreader plate 0.139 K/W"; the script was re-run and its log is unchanged otherwise.

@@ -70,9 +70,9 @@ NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (divisio
 
 == (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2
    sheet-implied junction-to-ambient 340 K/W; the LED's 31.6 mW (VF 1.5 V, IF 29.5 mA at the top rail) heats the junction by about 10.7 K (a derivation)
-   air 45 degC: headroom to the TOPR ambient limit 85 degC = 40 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 32.3 K after self-heating
-   air 50 degC: headroom to the TOPR ambient limit 85 degC = 35 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 27.3 K after self-heating
-   air 70 degC: headroom to the TOPR ambient limit 85 degC = 15 K for the neighbour rise (the triac leg 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 7.3 K after self-heating
+   air 45 degC: headroom to the TOPR ambient limit 85 degC = 40 K for the neighbour rise (the triac 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 32.3 K after self-heating
+   air 50 degC: headroom to the TOPR ambient limit 85 degC = 35 K for the neighbour rise (the triac 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 27.3 K after self-heating
+   air 70 degC: headroom to the TOPR ambient limit 85 degC = 15 K for the neighbour rise (the triac 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 7.3 K after self-heating
 NOTE  at 45 to 50 degC air (the owner's working figure for the wall board, 2026-10-28, unmeasured) 35 to 40 K of neighbour rise is permitted against the 85 degC ambient limit; the rise is not measured
 NOTE  at 70 degC air the neighbour rise permitted is 15 K (ambient limit) and 7.3 K (junction share): the division record's A8 takes 15 K as the allowance for an 85 degC part, an assumption, unmeasured; DEL-HW-BRING-UP.C11 reads it
 

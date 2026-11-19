@@ -1,5 +1,5 @@
 # Parts specification of the Sunbeam EM7000 heater wall board: one position for every part
-# schematic-spec.yaml lists (14), in sheet order, the sheet named above each group.
+# schematic-spec.yaml lists (21), in sheet order, the sheet named above each group.
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, as the main board's record (main-board/parts-specification.yaml) states. So the figures
@@ -14,7 +14,9 @@
 # derating-policy.yaml), integrated circuit (the two opto-triacs, as the main board classes its
 # MOC3052SVM), resistor (the four 1206 gate resistors), varistor (the two 07D471K). The three blade
 # terminals and the three-way header state no voltage in their rating, so they take none; their current
-# ratings are not stated by the maker's drawing (unsourced), see open-items.md.
+# ratings are not stated by the maker's drawing (unsourced), see open-items.md. The four case-screw holes (H1 to H4)
+# and the three fiducials (FID1 to FID3), added 2026-11-19 with the plain-rectangle mounting form, state no voltage and take none;
+# none of the seven is in the bill of materials or the position file (set on the placed footprints at layout, open-items.md).
 #
 # Design change of 2026-11-18 (the design opinion of that day, .stage0/wall-design-opinion.md; open-items.md D7):
 # the triacs BTA16-600BRG (C9100) became BTA16-800BWRG (ST, C10065), the opto-triacs Lite-On MOC3083 (C10797)
@@ -148,6 +150,55 @@ positions:
     package: PinHeader_1x03_P2.54mm_Vertical
     rating: "1x3 2.54 mm pin header, 3 A, vertical"
     lcsc: C2937625
+    class: none
+  # H1: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  - reference: H1
+    value: "MountingHole"
+    package: MountingHole_3.2mm_M3
+    rating: "M3 screw, 3.2 mm non-plated hole"
+    lcsc: none
+    class: none
+  # H2: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  - reference: H2
+    value: "MountingHole"
+    package: MountingHole_3.2mm_M3
+    rating: "M3 screw, 3.2 mm non-plated hole"
+    lcsc: none
+    class: none
+  # H3: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  - reference: H3
+    value: "MountingHole"
+    package: MountingHole_3.2mm_M3
+    rating: "M3 screw, 3.2 mm non-plated hole"
+    lcsc: none
+    class: none
+  # H4: maker none; MPN none (a hole in the board); catalogue class none; M3 screw into the printed case's boss; not in the bill of materials or the position file
+  - reference: H4
+    value: "MountingHole"
+    package: MountingHole_3.2mm_M3
+    rating: "M3 screw, 3.2 mm non-plated hole"
+    lcsc: none
+    class: none
+  # FID1: maker none; MPN none (a copper marker); catalogue class none; not in the bill of materials or the position file
+  - reference: FID1
+    value: "Fiducial"
+    package: Fiducial_1mm_Mask2mm
+    rating: "global fiducial, 1 mm copper, 2 mm mask opening"
+    lcsc: none
+    class: none
+  # FID2: maker none; MPN none (a copper marker); catalogue class none; not in the bill of materials or the position file
+  - reference: FID2
+    value: "Fiducial"
+    package: Fiducial_1mm_Mask2mm
+    rating: "global fiducial, 1 mm copper, 2 mm mask opening"
+    lcsc: none
+    class: none
+  # FID3: maker none; MPN none (a copper marker); catalogue class none; not in the bill of materials or the position file
+  - reference: FID3
+    value: "Fiducial"
+    package: Fiducial_1mm_Mask2mm
+    rating: "global fiducial, 1 mm copper, 2 mm mask opening"
+    lcsc: none
     class: none
   # ---- sheet: Return landing
   # J941: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
