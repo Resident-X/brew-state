@@ -1,0 +1,24 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C14-INSPECTION
+type: evidence
+title: Case retention chosen and stated; the mounting hole keeps the signed distance (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C14)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/layout-plan.md, fabrication-notes.md, layout-review.md round 4 (BOARD-11, CONN-4), hw:verify mounting_hole rule
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection at HEAD db73f4b6 of layout-plan.md, fabrication-notes.md, layout-review.md (round 4) and the hw:verify report against each clause.
+
+  The layout chooses how the printed case retains the board, and the drawing states it: a plain 45.0 by 75.0 mm rectangle, outline (20.0, 21.0) to (65.0, 96.0), with two 1.5 mm slots open at the right edge, and one mounting hole; the printed case retains the board with a ledge and fingers or lid ribs, as one hole alone would not hold it (layout-plan.md, outline paragraph; fabrication-notes.md "Outline": "one 3.2 mm mounting hole (H1; the layout chose one, the printed case retaining the board with a ledge and fingers or lid ribs)"; DEC-HEATER-WALL-BOARD-IS-A-PLAIN-RECTANGLE-SCREWED-TO-A-PRINTED-CASE-ON-A-FLAT-SPREADER). The drawing states the number and the centre of the hole: one hole, H1, at (61.50, 92.50). The plan's CONN-4 row states that the item asks for at least three holes, this board has one, and records the closure (layout review round 1, finding 1.4, overridden by BOARD-11: the case's ledge and fingers retain it, at the owner's direction in decision 5382d95c).
+
+  Distance from mains copper: the hole sits in the mains-free bottom-right pocket (the low-voltage rectangle (55.0, 88.0) to (65.0, 96.0)); BOARD-11 (round 4): "H1 at (61.50, 92.50) stands 13.45 mm or more from Mains copper with no departure written for it" and CONN-4 states the same. The pre-order check's mounting_hole rule holds each mounting hole's pad and courtyard to the larger of the signed clearance and creepage of mains copper (the board's mains-to-low-voltage figures, 10.0 mm creepage), on every layer and whether or not the fixing is bonded to earth, so the distance does not depend on the screw's material (hardware/README.md, rules table); in the build round's gate hw:verify ended "RESULT | PASS | all 7 designs passed" with the wall board PASS and no VIOLATION line (the 28 ACCEPTED lines are spacing and derating exceptions, none a mounting hole). No safety property depends on a particular screw: the hole's figure is a distance, not a screw property.
+
+  Stated limit, not hidden: the criterion also says the board is held "securely and stably", which the printed case delivers and the layout cannot show; the review records that the retaining ledge, fingers or ribs are the case step's (case design is out of scope as the criterion says).
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C14
+    type: satisfies

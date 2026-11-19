@@ -1,0 +1,27 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C15-INSPECTION
+type: evidence
+title: Residual risks recorded with who, date, words and the limit relied on (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C15)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/owner-sign-off.md
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection of hardware/sunbeam-em7000/heater-wall-board/owner-sign-off.md (HEAD db73f4b6) against each clause. The record states 15 entries, W-1 to W-12 with W-5 split into W-5a to W-5d: 12 are David Baker's own acceptance in his words (subsections by the day: 2026-11-18, W-1 to W-4; 2026-11-19, W-5c, W-6 to W-12), 3 are signed on his behalf (W-5a, W-5b, W-5d, standing instruction of 2026-11-07), with accepted_by and accepted_on on each entry. The four residual risks the criterion names:
+
+  - The varistor kept with the firmware's stuck-on current threshold of 2.0 A or less: W-3. accepted_by David Baker (owner), in his words "I'm happy with these and sign as accepted", accepted_on 2026-11-18. The risk and the figure it relies on: a partly failed varistor fed through the element conducts about 2.7 A (340.5 W in the varistor and about the same in the element) and no fuse clears it; the threshold must trip at 2.0 A or less, required by REQ-ACTUATION-CONFIRMATION-001.C10 (graph, commit 1977f86c); no firmware delivers it yet. The 2.69 A against 2.0 A margin (x1.35) is W_margins.py row "partial-failure current above the carried threshold", PASS. The source of the threshold is stated in the entry and in the "Look at these first" block.
+  - The opto-triac's creepage exception: W-2 (2026-11-18, his words as above) and W-9 1a (2026-11-19, "1a. sign as accepted"), both on the through-hole figures; the keeper's note and W-11 state that the part has since changed to the surface-mount V-option MOC3083SVM (C899868) by the choice the owner delegated in his words ("if fable recommended it with the context of safety and performance etc and there isn't a significant downside then fables can make that choice"), and that he is to see the final state on his end-of-work list.
+  - The triac tab and pad-pair distances: W-4 (2026-11-18, "I'm happy with these and sign as accepted") and W-9 1b and 1c (2026-11-19, "sign as accepted"), with W-10 (2026-11-19, his words) replacing the 6.0 mm lift by the case's barrier; and W-12 (2026-11-19, "I'm signing those now. Take as signed. Proceed.") for the board's own separation basis.
+  - The provisional spreader: W-5c (2026-11-19, his words), carried to DEL-HW-BRING-UP.C11 and DEL-HW-HEATER-WALL-BOARD-DESIGNED.C22, against the figures he was shown (the 25 and 40 degC air basis, junction tables at h = 10, the 80 x 30 x 5 mm provisional plate).
+
+  Each entry carries who, the date, the words where he gave them, and the figure or check the acceptance relies on. Which entries are signed on his behalf: the section "Signed on behalf (3 entries: W-5a, W-5b, W-5d)", and the end-of-work list "For David to sign or confirm at the end of the work" lists them for him.
+
+  Stated limits, not hidden: the opening paragraph of the "Look at these first" W-9 bullet (line 21) still says "the basis and the board's own separation-basis.yaml are not yet signed", which W-12 (line 20 and the entry) supersedes; the entry W-12 is the current state. The firmware that holds the threshold is out of scope as the criterion states.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C15
+    type: satisfies

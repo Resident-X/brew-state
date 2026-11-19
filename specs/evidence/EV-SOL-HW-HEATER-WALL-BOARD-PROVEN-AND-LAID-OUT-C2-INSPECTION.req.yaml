@@ -1,0 +1,24 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C2-INSPECTION
+type: evidence
+title: Hold-off in reset, unpowered and disconnected shown with its circuit and arithmetic (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/circuit-proof.md row (c) and INDEP-1, circuit-proof/W_margins.log
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection of circuit-proof.md, circuit-proof/W_margins.py and its log, schematic-review.md (rounds 11 and 14) and bring-up-provision.md at HEAD db73f4b6, against the clause that each heater switch is held off in reset, unpowered and disconnected, with the circuit shown for each.
+
+  circuit-proof.md row (c), "Hold-off with no gate-MT1 resistor: controller in reset, unpowered, cable loose" shows the circuit: LED supply +5V_WB enters on J931 pin 1, runs through the opto-triac LED (U911 or U921) and returns on J931 pin 2 or 3 to the main board's sink; with the LED undriven the opto-triac's off-state leakage flows through the 404 ohm gate network (R911 + R912, 400 ohm +1 %) to the triac gate. Arithmetic (W_margins.py section (c), log lines 21 to 25, all PASS): at 25 degC, IDRM1 500 nA against the triac's guaranteed minimum trigger current of 5 % x 50 mA = 2.5 mA is a factor of 5000, and across 404 ohm it is 0.2 mV against VGD 0.2 V (x990); hot corners: at 85 degC leakage 37.5 uA < 1.13 mA hot trigger current (x30), 15.1 mV < 0.2 V (x13.2); at 100 degC 125.0 uA < 1.13 mA (x9), 50.5 mV < 0.2 V (x4.0). The row records its own correction (IDRM2 is a leakage with the LED on, not an off-state figure).
+
+  Each condition: in reset or unpowered, the main board's drive holds the LED return at most 5 uA (main-board circuit-proof hold-off rows, cited by row (c)), so the LED is dark; cable loose or any of +5V_WB or an LED return open: no LED current, heater off (failure-modes table, rows "LED supply +5V_WB or an LED return open on the cable"); INDEP-1 statement: "The off state is fail-safe: with the LED undriven (controller in reset or unpowered, cable loose, either conductor open) the leakage is 0.2 mV to 50 mV across the gate network against VGD 0.2 V (row c), so the triac stays off." The cable-loose check at bring-up (bring-up-provision.md) tests the built board and is not claimed here: the criterion puts the built board's behaviour out of scope.
+
+  Schematic-review rounds 11 and 14 judged these items against the sheets (FAULT-1, CABLE-1, INDEP-1 rows). W_margins.py was re-run in rounds 11 and 14 with output identical to the log.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C2
+    type: satisfies

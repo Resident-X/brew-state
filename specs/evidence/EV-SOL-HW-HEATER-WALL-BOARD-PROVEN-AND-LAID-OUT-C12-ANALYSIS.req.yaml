@@ -1,0 +1,26 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C12-ANALYSIS
+type: evidence
+title: No line driven from the header comes from a source that stands without the +3V3 (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C12)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/constraints-figures.md, circuit-proof.md, bring-up-provision.md, pin-allocation.yaml
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Analysis at HEAD db73f4b6 of the records against the clause that no line the board drives from its header is supplied from a source that stands while the main board's +3V3 is absent.
+
+  Statements and their sources, in the board's records:
+  - The board places no source of its own on the header: constraints-figures.md row "The header limit that binds this board": "This board drives no line from its header: all three header pins are the LED supply entering (+5V_WB) and two LED returns sunk by the main board; it carries no mains-presence confirm (decision D2) ... Ended for this board, by the drawn header and pin-allocation.yaml." pin-allocation.yaml lists exactly three channels across J931 (wb_5v_supply as rail, heat_c_drv and heat_s_drv as far channels) and no controller; bring-up-provision.md: "A passive switch pair. It produces no rail, holds no regulator and runs no code. Its only supply is the LED supply +5V_WB, which enters on the header J931 from the main board, where it leaves through the isolating link JP761." circuit-proof.md line 12: "The board places no controller, no ground net and no resistor on the LED path."
+  - Its only supply enters on +5V_WB from the main board's isolating link: circuit-proof.md, the LED return section: "+5V_WB (from the main board's +5V through the link JP761) reaches this board on J931 pin 1, runs through the opto-triac's LED ... and returns on J931 pin 2 or 3 to the main board's J761", and the INDEP-1 passage: "its only supply is the LED supply +5V_WB entering on J931".
+  - The reasoning: the two LED returns are lines the main board sinks, not lines this board drives, and +5V_WB is an input to this board; nothing on the board is a supply, so no line on the header can be driven from a supply that stands while +3V3 is absent. The main board's own hold-off table (main-board circuit-proof.md, the "+5V absent, +3V3 present" row) holds the LED return states for the supply states; circuit-proof.md row (c) cites it.
+  - The schematic confirms it: schematic-review rounds 11 and 14 read the netlist export (16 nets) with J931's three pins on +5V_WB, HEAT_C_LED_K and HEAT_S_LED_K; the sheet's drawing note says "nothing on this board sources it" of +5V_WB. The pre-order check's connectivity rule holds the three channels to the record (hw:verify PASS in the gate).
+
+  Each statement carries its source (the drawn header, pin-allocation.yaml, the main board's records named). No arithmetic is needed beyond the count: three header pins, one input, two outputs sunk elsewhere, zero sources on the board. Making the main board enforce the limit is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C12
+    type: satisfies
