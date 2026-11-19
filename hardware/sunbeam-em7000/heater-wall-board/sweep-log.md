@@ -340,3 +340,16 @@ The class swept: a record that states a silk position or the back face's content
 | `back face carries no text`, `back carries no text`, `B.SilkS holds no reference` | 4 | 2 fixed | `fabrication-notes.md` and the plan's `MFG-11` row fixed; the `MFG-7` and `MFG-8` plan rows are baseline, with an amendment note |
 | `moved to x 41`, `x 41.0` | 2 | 1 fixed | the round 1 workmanship text, now saying it moved again to x 44.75; the other is finding 2.4's frozen text |
 | `JLCJLCJLCJLC` | 0 before, 3 after | all new | `fabrication-notes.md`, the plan's `MFG-11` row and amendment note |
+
+## 2026-11-19: front silk legend, hazard block and maker mark repositioned again (layout review round 3, findings 3.1 to 3.3)
+
+The class swept: a record that states a silk position, size or enforcement the board no longer has. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, lines matching the phrases after the corrections.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| pin-name columns at `x 52.6`, `54.1`, `55.6` | 1 | 0 stale | `layout-review.md`, round 2's closure of finding 2.1 and findings text, frozen history; `fabrication-notes.md` now states the header table |
+| hazard block `44.75`, `y 58.6` | 2 real (9 other hits are `y 58.69`, a crop caption) | 0 stale | `layout-review.md` round 2 text and closure, frozen; `sweep-log.md` the earlier log entry |
+| maker text `0.9`, `x 50.6`, `90.55` | 0 | 0 | the finding 3.2 text is in round 3, frozen; the notes state 1.0 mm at x 50.15 |
+| logo `scale 0.45`, `y 64.6 centre` | 0 | 0 | `fabrication-notes.md` rewritten with scale 0.42 and the anchors with their justification |
+| `layout rule check` enforcing silk text height | 1 | 1 fixed | `design-rules.md` row `Silkscreen text height`; the other 18 board-wide minimum rows keep the method's wording, KiCad does report them |
+| silk text census | 38 texts | 0 under 1.0 mm or 0.15 mm | every `gr_text` and reference text on `F.SilkS` and `B.SilkS` of the board file |
