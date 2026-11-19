@@ -156,3 +156,101 @@ The owner delegated the open questions to the layout agent; these are its decisi
 - A2: the tab face to lead centre distance is 2.86 mm nominal (ST DS2114 Rev 11, Table 6 and Figure 13: c2 2.40 to 2.72 mm to the lead's rear face plus the lead thickness c1 0.49 to 0.70 mm, so the centre is 2.65 to 3.07 mm).
 - A3: T911 and T921 use a board-library footprint with oval pads and a corrected body and courtyard, pinout unchanged.
 - A4: the blades stand with their wide face along the board's depth, 8.1 mm (between J941 and J921) and 11.4 mm (between J921 and J911) apart, and the insulated push-on receptacles are about 6 mm thick.
+
+## Placement
+
+### Candidate 1
+
+**Commit**: e1c81b86fc5f5a499b6380b7014b71f2397f50ef
+
+**Renders**: `git worktree add --detach <work folder>/heater-wall-board-candidate-1 e1c81b86fc5f5a499b6380b7014b71f2397f50ef`, then `(cd <work folder>/heater-wall-board-candidate-1/hardware/sunbeam-em7000/heater-wall-board && task hw:placement -- --board heater-wall-board.kicad_pcb --project heater-wall-board.kicad_pro --out <work folder>/heater-wall-board-placement-1)`, then `git worktree remove <work folder>/heater-wall-board-candidate-1`
+
+**Measures**:
+
+```
+LENGTH | total | 385.2466 mm
+CROSSINGS | total | 8
+OUTSIDE | total | 0
+```
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+| FLOOR-1 | pass | `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02), U911 across y 50.19; `OUTSIDE / total / 0` | Every part lies inside the rectangles of the region that lists it; U911 and U921 are listed in both regions and leave neither. |
+| FLOOR-3 | not applicable | whole board | The schematic carries no regulator and no controller: `+5V_WB` enters on J931 pin 1 from the main board and nothing on this board regulates or sources it. |
+| FLOOR-5 | pass | `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02), J931 pin 1 at (63.18, 58.20); `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08), blades at x 24.50, 32.60, 44.00 | J931 pin 1 is on the right edge at the table position and the three blades stand on the bottom edge with pads at y 87.50 and 92.58, as the table gives. |
+| POWER-2 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08); `NET / /RET / 6 pads / length 107.1471 mm / 2 crossings`, `NET / /Steam heater switch/OUT_S / 5 pads / length 94.3244 mm / 4 crossings`, `NET / /Coffee heater switch/OUT_C / 5 pads / length 83.0508 mm / 4 crossings` | The heavy nets run from the triacs on the top edge to the blades on the bottom edge in the order RET, OUT_S, OUT_C with each varistor beside its strip. The one RET/OUT_S crossing the plan names as unavoidable is the only heavy-net crossing that placement cannot remove; the rest are crossings with the gate-net lines. The length is the plate-to-blade distance. |
+| DECOUPLE-1 | not applicable | whole board | The netlist holds no capacitor: the 15 parts are the blades J911, J921 and J941, the header J931, the triacs T911 and T921, the opto-triacs U911 and U921, the resistors R911, R912, R921 and R922, the varistors RV911 and RV921, the mounting hole H1. |
+| DECOUPLE-3 | not applicable | whole board | The schematic carries no switching converter. |
+| DECOUPLE-4 | not applicable | whole board | The schematic carries no switching converter. |
+| DECOUPLE-5 | not applicable | whole board | The schematic carries no snubber: no resistor and capacitor in series across the triacs T911 and T921 (the division record drops the snubbers; `schematic-spec.yaml` drawing notes: "No gate-to-MT1 resistor, no snubber"). |
+| SENSE-2 | not applicable | whole board | The schematic carries no filter at a converter input and no reference capacitor. |
+| SENSE-3 | not applicable | whole board | The schematic carries no operational or instrumentation amplifier. |
+| SENSE-5 | not applicable | whole board | The schematic carries no sensing front end. |
+| CLOCK-1 | not applicable | whole board | The schematic carries no crystal or ceramic resonator. |
+| CLOCK-3 | not applicable | whole board | The schematic carries no crystal or ceramic resonator. |
+| MAINS-2 | pass | `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02), `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08); `OUTSIDE / total / 0` | No Mains-class pad lies outside the mains rectangles and no low-voltage pad lies inside them; only U911 and U921 straddle the boundary. |
+| CONN-1 | not applicable | whole board | The schematic carries no transient suppressor on a line that leaves the board. |
+| CONN-2 | not applicable | whole board | The schematic carries no leadless package. |
+| CONN-3 | not applicable | whole board | The schematic carries no controller and no crystal. |
+| CONN-4 | fail | `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08), H1 at (61.50, 92.50) | One hole, where the item asks for three. Identical in both candidates and the departure the plan's CONN-4 row records as decided under the owner's delegation of 2026-11-19; judged here as the item reads. |
+| TEST-1 | not applicable | whole board | The schematic carries no test point: the netlist holds no part whose reference begins TP (the 15 parts are listed under DECOUPLE-1), and `bring-up-provision.md` records that no test point is placed on this board, each net being probed at the pad it names. |
+| TEST-2 | not applicable | whole board | The schematic carries no test point. |
+| EMI-3 | not applicable | whole board | The schematic carries no capacitor. |
+| EMI-4 | not applicable | whole board | The schematic carries no ferrite bead. |
+| EMI-5 | not applicable | whole board | The schematic carries no controller. |
+| WORK-1 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02); `CROSSINGS / total / 8`, `NET / /Steam heater switch/HEAT_S_GATE_R / 2 pads / length 45.2065 mm / 2 crossings`, `NET / /Coffee heater switch/HEAT_C_GATE_R / 2 pads / length 7.075 mm / 0 crossings` | Each resistor sits beside the pin it serves and faces its pads; R911 is 7.5 mm from U911 pin 6 and under R912 with its pads in line. The 45.2 mm HEAT_S_GATE_R connection from R922 to R921 and its two crossings are the plan's one long connection and come from T921 standing at the top left and U921 at the lower right; no turn or swap of the parts shortens it. Not a clean pass on that connection. |
+| BOARD-6 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), T921 and T911 pad rows at y 22.86 | Pin 2 of T921 at x 32.60 and of T911 at x 57.20 (24.60 mm), both at rotation 0 with the tab toward the top edge. |
+| BOARD-7 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), pad rows at y 22.86 | The pad rows stand 2.86 mm inside the top edge, the plate plane, and no other copper is nearer; the plate height is a case-step input. |
+| BOARD-8 | pass | `REGION / low voltage` and `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02); U911 courtyard to T911 body 20.73 mm, to T921 body 27.98 mm; U921 36.74 mm and 41.27 mm (measured from the board) | Both opto-triacs stand at least 20.0 mm from both triac bodies with no part between. |
+| BOARD-9 | pass | `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02), RV911 and RV921; RV911 body to U911 pin 1 pad 12.72 mm, RV921 body 25.97 mm (measured) | Each varistor body is over 5 mm from every low-voltage part. |
+| BOARD-10 | pass | `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02), J931; nearest Mains pad to a J931 pad 11.02 mm edge to edge (measured) | J931 is 11.0 mm or more from every Mains pad. |
+| BOARD-11 | pass | `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08), H1; H1 centre to J911 pad 1 17.5 mm, edge 16.0 mm (measured) | H1 stands 16.0 mm from the nearest Mains pad, over 13.45 mm; the spur's rounded end is a routing figure judged later. |
+
+### Candidate 2
+
+**Commit**: ffaee201555d2d262eb6407a4f73358f87fc63a4
+
+**Renders**: `git worktree add --detach <work folder>/heater-wall-board-candidate-2 ffaee201555d2d262eb6407a4f73358f87fc63a4`, then `(cd <work folder>/heater-wall-board-candidate-2/hardware/sunbeam-em7000/heater-wall-board && task hw:placement -- --board heater-wall-board.kicad_pcb --project heater-wall-board.kicad_pro --out <work folder>/heater-wall-board-placement-2)`, then `git worktree remove <work folder>/heater-wall-board-candidate-2`
+
+**Measures**:
+
+```
+LENGTH | total | 380.5719 mm
+CROSSINGS | total | 11
+OUTSIDE | total | 0
+```
+
+| Item | Verdict | Rests on | Why |
+|---|---|---|---|
+| FLOOR-1 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08); `OUTSIDE / total / 0` | Every part lies inside the rectangles of the region that lists it, RV921 at the blade end included. |
+| FLOOR-3 | not applicable | whole board | The schematic carries no regulator and no controller: `+5V_WB` enters on J931 pin 1 from the main board and nothing on this board regulates or sources it. |
+| FLOOR-5 | pass | `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02), `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08) | Connectors unchanged from candidate 1 and at the table positions. |
+| POWER-2 | fail | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08); `NET / /RET / 6 pads / length 97.3616 mm / 5 crossings`, `NET / /Steam heater switch/OUT_S / 5 pads / length 93.778 mm / 5 crossings`, `NET / /Coffee heater switch/OUT_C / 5 pads / length 89.1526 mm / 6 crossings` | RET is 9.8 mm shorter than in candidate 1, but each heavy net gains crossings (RET 2 to 5, OUT_S 4 to 5, OUT_C 4 to 6) and OUT_C is 6.1 mm longer, since RV911's OUT_C pad at (45.50, 38.00) lies left of the OUT_C strip, away from the copper it must join, while its RET pad is up at (48.00, 33.00). RV921 at the blade end puts a tall part beside the blades where the push-on terminals are fitted. |
+| DECOUPLE-1 | not applicable | whole board | The netlist holds no capacitor: the 15 parts are the blades J911, J921 and J941, the header J931, the triacs T911 and T921, the opto-triacs U911 and U921, the resistors R911, R912, R921 and R922, the varistors RV911 and RV921, the mounting hole H1. |
+| DECOUPLE-3 | not applicable | whole board | The schematic carries no switching converter. |
+| DECOUPLE-4 | not applicable | whole board | The schematic carries no switching converter. |
+| DECOUPLE-5 | not applicable | whole board | The schematic carries no snubber: no resistor and capacitor in series across the triacs T911 and T921 (the division record drops the snubbers; `schematic-spec.yaml` drawing notes: "No gate-to-MT1 resistor, no snubber"). |
+| SENSE-2 | not applicable | whole board | The schematic carries no filter at a converter input and no reference capacitor. |
+| SENSE-3 | not applicable | whole board | The schematic carries no operational or instrumentation amplifier. |
+| SENSE-5 | not applicable | whole board | The schematic carries no sensing front end. |
+| CLOCK-1 | not applicable | whole board | The schematic carries no crystal or ceramic resonator. |
+| CLOCK-3 | not applicable | whole board | The schematic carries no crystal or ceramic resonator. |
+| MAINS-2 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08); `OUTSIDE / total / 0` | No Mains-class pad lies outside the mains rectangles and no low-voltage pad inside them. |
+| CONN-1 | not applicable | whole board | The schematic carries no transient suppressor on a line that leaves the board. |
+| CONN-2 | not applicable | whole board | The schematic carries no leadless package. |
+| CONN-3 | not applicable | whole board | The schematic carries no controller and no crystal. |
+| CONN-4 | fail | `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08), H1 at (61.50, 92.50) | One hole, where the item asks for three; the same departure as candidate 1. |
+| TEST-1 | not applicable | whole board | The schematic carries no test point: the netlist holds no part whose reference begins TP (the 15 parts are listed under DECOUPLE-1), and `bring-up-provision.md` records that no test point is placed on this board, each net being probed at the pad it names. |
+| TEST-2 | not applicable | whole board | The schematic carries no test point. |
+| EMI-3 | not applicable | whole board | The schematic carries no capacitor. |
+| EMI-4 | not applicable | whole board | The schematic carries no ferrite bead. |
+| EMI-5 | not applicable | whole board | The schematic carries no controller. |
+| WORK-1 | fail | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), RV911 and R911 and R912; `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08), RV921; `CROSSINGS / total / 11`, `NET / /Coffee heater switch/HEAT_C_OPTO_MT / 2 pads / length 12.0628 mm / 1 crossings` | Eleven crossings against eight in candidate 1, where turning RV911 and moving RV921 and R911 was meant to remove them. R911 now sits 12.06 mm from U911 pin 6 (7.5 mm in candidate 1) and 0.45 mm courtyard to courtyard from R912, so the part serving that pin is away from it; RV911's OUT_C pad is off its strip. Only the HEAT_C_GATE_R connection is shorter (2.08 mm against 7.08 mm). |
+| BOARD-6 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), pad rows at y 22.86 | Triacs unchanged: 24.60 mm apart, rotation 0, tab toward the top edge. |
+| BOARD-7 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), pad rows at y 22.86 | Same as candidate 1: the nearest copper to the plate is the triac pad row. |
+| BOARD-8 | pass | `REGION / low voltage` and `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02); U911 courtyard to T911 body 20.73 mm, U921 36.74 mm (measured) | Both opto-triacs stand at least 20.0 mm from both triac bodies; RV911's body sits beside the path, not on it. |
+| BOARD-9 | pass | `placement-r1c1.png` (board x 18.95 to 66.05, y 18.95 to 38.48), RV911; `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08), RV921; RV911 to U911 pin 1 pad 15.34 mm, RV921 to H1 25.53 mm (measured) | Each varistor body is over 5 mm from every low-voltage part. |
+| BOARD-10 | pass | `placement-r2c1.png` (board x 18.95 to 66.05, y 38.48 to 58.02), J931; 11.02 mm edge to edge (measured) | J931 is 11.0 mm or more from every Mains pad. |
+| BOARD-11 | pass | `placement-r4c1.png` (board x 18.95 to 66.05, y 77.55 to 97.08), H1; centre to J911 pad 1 17.5 mm, edge 16.0 mm (measured) | H1 stands 16.0 mm from the nearest Mains pad, over 13.45 mm. |
+
+**Chosen**: 1. Candidate 1 is chosen over candidate 2. It has 8 crossings against 11 (`CROSSINGS | total | 8` against `CROSSINGS | total | 11`), and it passes `POWER-2` and `WORK-1`, which candidate 2 fails. Candidate 2's total connection length is 4.7 mm shorter (`LENGTH | total | 380.5719 mm` against `385.2466 mm`), but the saving is RET alone (9.8 mm), paid for with 3 more RET crossings and 6.1 mm more OUT_C. In candidate 2 RV911's OUT_C pad at (45.50, 38.00) lands left of the OUT_C strip, away from the copper it must join; R911 stands 0.45 mm courtyard to courtyard from R912 and 12.06 mm from U911 pin 6 against 7.5 mm; and RV921 at the blade end stands a tall part beside the blades where the push-on terminals are fitted. Both candidates leave no part outside its regions (`OUTSIDE | total | 0`) and differ only on `POWER-2` and `WORK-1`. `CONN-4` fails in both on the single hole, the departure the plan records.
