@@ -303,3 +303,15 @@ The class swept: a record that states the old front-layer extent of OUT_C (the s
 | `11.05 mm` | 4 | 0 stale | the plan's figure for the stretch, quoted against the board: `layout-plan.md` 2, `layout-review.md` 2 |
 
 `board-rules.yaml`, `design-rules.md`, `fabrication-notes.md`, `circuit-proof.md` (its "about 3.5 A" is a rail current) and `owner-sign-off.md` quote none of the phrases. `open-items.md` gained the blade backing item and states the R1 stretch in no figure.
+
+## 2026-11-19: the Staircase logo and maker line added to the front silk
+
+The class swept: a record that lists the front silkscreen items or the legend, left without the maker mark. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, lines matching `legend`, `silkscreen`, `silk legend`, `BREW STATE`, `MADE WITH`, `STAIRCASE`, after the change.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `legend` | 4 | 0 stale | `layout-review.md` 3 (round 1 record, finding 1.10, frozen) and one main-board carry-forward note; no record lists the front silkscreen items |
+| `BREW STATE` | 2 | 1 new | `fabrication-notes.md`, the new paragraph "Front silkscreen" (the only record that lists the items, now with the maker mark), and the `layout-review.md` finding 1.10 text (frozen) |
+| `MADE WITH` | 5 | 1 new | `fabrication-notes.md` 1 (the new paragraph); the other 3 are unrelated prose in `docs/sunbeam-em7000/` and the paragraph's own heading line |
+| `STAIRCASE` | 1 | 1 new | `fabrication-notes.md` |
+| plan rows naming the silkscreen (`MFG-7`, `MFG-8`, `MFG-9`) | 3 | 0 stale | they judge the references' and text's reading and place, which the mark does not change; the KiCad rule check reports no silk line on the new board |
