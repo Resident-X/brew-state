@@ -1,0 +1,13 @@
+id: SOL-REVIEW-RECORD-HISTORY-READS-PAST-A-MALFORMED-FIRST-RECORDING.C2
+type: criterion
+title: The method's layout review step states what a reviewer does with a malformed recorded round without rewriting history
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: docs/board-design-method.md layout review step and the command's section of hardware/README.md only; no other step or catalogue item changes
+text: |
+  The board design method's layout review step states that a round whose first recording cannot be read is disclosed in the record at the next round, naming the commit and what was malformed, and is repaired in a later version that keeps the round's text; it names the history command's handling of such a round and says a repair never rewrites the commits the record cites. The hardware notes state the same handling in the command's section. Nothing else in the review step changes.  Out of scope: any other step of the method and the command's own behaviour, which the first criterion covers.
+links:
+  - target: SOL-REVIEW-RECORD-HISTORY-READS-PAST-A-MALFORMED-FIRST-RECORDING
+    type: criterion-of

@@ -1,0 +1,25 @@
+id: SOL-REVIEW-RECORD-HISTORY-READS-PAST-A-MALFORMED-FIRST-RECORDING
+type: deliverable
+category: solution
+title: The review record history command and the method handle a round whose first recording was malformed, with no rewrite of history
+status: active
+version: 1
+text: |
+  Why this exists. The layout review record history command (SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK) reads every version of a board's review record and holds each round to what its end-of-round commit first recorded. The heater wall board's round 1 was first recorded (hardware/sunbeam-em7000/heater-wall-board/layout-review.md, commit 3a018946) with a blank line after each table's separator row, which cuts the table, so the command cannot read that version's Verdicts and Findings tables. The command reports the cut tables as a structure fault in that version and in every later version that still holds them, and reports every verdict row and finding as added against the unreadable first recording. The record was repaired in the next version, but the command cannot be satisfied by any later commit: the fault is in history, and the only way to clear it is to rewrite the commits the record's rounds cite by hash, which the method forbids. A board's review can therefore never close under the command, whatever its later rounds say. The command's intent is that a round cannot be quietly changed after it is recorded; it was not meant to hold a review hostage to a table-shape slip in the first recording that every later version has repaired.
+
+  What it does. Makes the command and the method handle a round whose first recording cannot be read, so that the slip is reported once, naming the commit and the round, as a fault of that recording that the record discloses, and later versions that read cleanly are judged as the record's baseline, rather than every later check failing for ever; and has the method's review step state what a reviewer does when a recorded round is malformed, a repair that needs no rewrite of history and keeps the round's text as recorded. The integrity of "as first recorded" is kept: a round whose first recording was readable is still held to it, and a repair that changes a round's findings, verdicts or opening lines is still reported.
+
+  Out of scope: the judgement checks of the review step, and the heater wall board's own record, which is accepted as it stands and disclosed (the board's review is closed by the owner's acceptance of that failure, not by this item).
+
+  Locus: hardware/tools/board_review_history.py and its tests, docs/board-design-method.md (the layout review step), hardware/README.md (the command's section).
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of the practice: a board is judged against every applicable item before it is ordered, and the review record, held to what each round first recorded, is the evidence of that judgement. A command that no later commit can satisfy after a malformed first recording stops the record serving as that evidence at all, the opposite of its intent. It is a defect in delivered behaviour of SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK, so it is maintenance work under DEL-MAINTENANCE.C1, a sibling of the other review-driven corrections, not a change to that leaf's confirmed criteria.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-REVIEW-RECORD-HISTORY-CHECK
+    type: depends-on
