@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C3
+type: criterion
+title: The plate is at least as long as the case's outer width plus two bolt zones
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The plate drawing states a length not less than the case drawing's outer width plus a bolt zone at each end for the wall bolts, with the arithmetic shown. The plate's size is provisional until the owner cuts and measures the wall, and the criterion holds at the figure then recorded. Making the plate is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

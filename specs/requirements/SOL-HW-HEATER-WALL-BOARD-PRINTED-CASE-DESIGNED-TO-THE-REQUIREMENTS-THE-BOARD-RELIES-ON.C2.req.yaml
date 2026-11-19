@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C2
+type: criterion
+title: The case lies within the plate's footprint and the wall opening is the plate outline plus clearance
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The case drawing or model lies wholly within the spreader plate's outline in both directions across the wall, so that only the plate touches the wall, and states the opening in the plastic wall as the plate outline plus a stated clearance, with no larger opening needed for the case, the blades or the harness, which sit in the cavity. Cutting the wall is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

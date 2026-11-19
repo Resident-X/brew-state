@@ -1,0 +1,42 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+type: deliverable
+category: solution
+title: The printed case that retains the heater wall board and mounts to the spreader plate is designed to the requirements the board and the signed separation basis rely on
+status: active
+version: 1
+text: |
+  Designs the printed case that retains the heater wall board and mounts to the spreader plate, to the requirements the board's layout and the signed separation basis rely on and that the earlier decision deferred to a case-design step. The board is a plain 45.0 by 75.0 mm rectangle with one mounting hole and two slots open at its right edge, hung on the triac leads and that hole, with its triacs on the plate's inner face; the case holds it, covers its mains copper with slots that let heat out, and mounts to the plate so that the plate, case and board leave the wall as one unit.
+
+  It covers: the tray's creepage barrier over the bare plate face (or the 6.0 mm plate lift as the fallback); the case within the plate's footprint and the wall opening the plate outline plus clearance; the plate's length against the case's width and two bolt zones; the lid fitting and coming off with everything installed in the machine, and no lid screw against the wall opening; the board held by the tray, not the lid, by its one hole and printed features; every case screw keeping the mounting-hole distance from mains copper; no case material across the slot mouths; rigid backing under the three blades; the plate's earth bond and the owner's decision on a strap; and the fitting order and reach of every fixing.
+
+  Settled for the build:
+  - The case is 3D printed at home in ASA, ABS or PC and fixed with ordinary screws, as the owner stated; its design, material and fixings are this leaf's within the criteria.
+  - The barrier is a creepage barrier of the tray, never of the lid; the layout agent's feasibility reading (a 0.8 mm wall rising 3.0 mm above the board face, 2.0 mm at the least and 3.5 mm at the most under the triac bodies, the plate plane set back 1.0 mm from the board's top edge, 4.8 mm creepage path against 2.6 mm needed) is the starting figure and not the owner's words.
+  - The plate's size is provisional; the case adapts to the figure the owner records after cutting and measuring.
+  - The earth strap is the owner's decision; the case design records it and carries it.
+  - This leaf takes over, from SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5 and SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C3, the mounting content those criteria record in the earlier ear-and-bracket form.
+
+  Locus: a case record in the heater wall board's design folder (hardware/sunbeam-em7000/heater-wall-board/), the printed case's model and drawing, and the plate drawing's length figure. It changes no board copper or outline.
+rationale: |
+  Added because the decision that the board is a plain rectangle screwed to a printed case on a flat spreader defers the case design to a later step, and that step has no requirement in the graph: the owner's case-step requirements of 2026-11-19 (the barrier in the tray, the case within the plate, the lid removable in place, the earth-strap question) and the board's own carried items (slot mouths, blade backing, one-hole retention) are recorded only in the board's open-items record, which is not durable. The signed basis relies on the barrier for the plate's creepage, so a case that omits it would leave the heater switch's basis unmet; stating each requirement as a criterion makes the case verifiable when it is designed. Sized as one leaf because every criterion is one case drawing or model judged against the same board and basis, with two fitting demonstrations.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C16
+    type: derives-from
+  - target: DEC-HEATER-WALL-BOARD-IS-A-PLAIN-RECTANGLE-SCREWED-TO-A-PRINTED-CASE-ON-A-FLAT-SPREADER
+    type: justified-by
+  - target: DEC-BOARD-SEPARATION-BASIS-RECORD
+    type: justified-by
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: depends-on
+  - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
+    type: depends-on
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED
+    type: depends-on
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C3
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C5
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C6
+    type: targets

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C8
+type: criterion
+title: No case material bridges the two slot mouths on the board's right edge
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  No part of the tray, the lid or any rib or barrier crosses the mouth of either 1.5 mm slot open at the board's right edge (slot A from board (51.0, 49.44) to (65.0, 50.94) and slot B from (51.0, 65.46) to (65.0, 66.96), as the board's layout plan states them), so the creepage the slots lengthen is not shortened; the case drawing or model shows the clearance at each mouth. Out of scope: the slots' dimensions, which the layout fixed.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

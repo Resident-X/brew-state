@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C9
+type: criterion
+title: The tray backs the board under the three blades and the drawing shows the push-on direction
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |
+  The tray carries rigid backing, a rib or pad, under the board face beneath J911, J921 and J941, and the case drawing shows the push-on direction of the 6.3 mm terminals and the support. With the board fitted in a printed tray, pushing a terminal onto each blade does not move the board against the triac leads, which the demonstration records. Out of scope: the terminals' own retention force.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C4
+type: criterion
+title: The lid fits and comes off with the plate, case and board already installed in the machine
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  With the plate, case and board fitted to the machine's wall, or to a stand-in of the wall opening at the recorded plate outline plus clearance, the lid is fitted and then removed by sliding or angling it away, with no wall opening larger than the plate outline plus clearance and without removing the case or the plate; the owner prints the case and the demonstration records the fit. Designing the machine's wall opening is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

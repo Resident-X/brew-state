@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C6
+type: criterion
+title: The tray, not the lid, holds the board, which is retained by its one hole and printed features
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The board is held securely and stably by its one mounting hole H1 and by a printed ledge, hold-down fingers or ribs that belong to the tray and not to the removable lid, so that taking the lid off leaves the board held, and the case drawing states what holds the board. The case is printable at home and fixed with ordinary screws. Which of the ledge, fingers or ribs it uses is the case design's choice. Out of scope: the choice among ledge, fingers and ribs, and the board's outline.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

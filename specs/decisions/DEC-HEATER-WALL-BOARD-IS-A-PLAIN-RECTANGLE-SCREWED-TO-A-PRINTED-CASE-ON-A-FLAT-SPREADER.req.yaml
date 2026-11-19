@@ -3,7 +3,7 @@ type: decision
 category: tactical
 title: The heater wall board is a plain rectangle screwed to a printed case that mounts on a flat spreader plate
 status: active
-version: 1
+version: 2
 rationale: |
   Context: the division record drew the heater wall board with two mounting ears on its wall edge, each carrying a screw into a bracket leg that lies above the board. The owner tested that form against how it would be made and fitted on 2026-11-19 and found it hard to build: it needs sections cut from the spreader ends and holes drilled top-down through the bracket's thickness. A stock angle with a flange along the length does not work either: a TO-220's leads sit about 2.3 mm out from its tab face, so a flange or leg face next to the pads brings earthed metal inside the 2.6 mm basic creepage the separation basis states, and a flange over the board runs into the triacs. The owner proposed an enclosure the board is screwed to that also mounts to the spreader, so that the whole assembly comes off the wall as one unit and the mains copper cannot be touched without a tool. The owner also said a 3D-printed case is easy for the agent to model and may be assumed part of the solution, and that protection need only be enough for now. The owner's window width in the wall is unmeasured and is the main constraint, so a narrower board is worth having.
 
@@ -34,4 +34,26 @@ links:
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C15
     type: addresses
   - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C1
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C2
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C3
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C4
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C5
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C6
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C7
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C8
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C9
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C10
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C11
     type: addresses
