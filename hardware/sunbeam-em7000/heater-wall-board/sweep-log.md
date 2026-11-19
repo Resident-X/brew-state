@@ -364,7 +364,7 @@ The class swept: a record that states the through-hole or stocked M part for the
 | `stocked part is the M`, `stocked part` | 4 | 1 fixed | `constraints-figures.md` fixed; the others are main-board documents (`controller-board-function-forms.md`, `component-specification.md`) about other parts |
 | `M part`, `MOC3083M` with through-hole or stocked | 5 | 0 stale | `owner-sign-off.md` W-2 text (frozen history), `open-items.md`, `parts-specification.yaml` and `catalogue-extract.yaml` notes naming the replaced part, `constraints-figures.md` |
 | `V-ordered` | 2 | 0 stale | `owner-sign-off.md` W-2 and W-11 text, frozen history |
-| claim that the layout rule check enforces a silk figure | 1 | 1 fixed | `design-rules.md` row `Silkscreen line width`, now stating the accepted 29 strokes at 0.12 mm |
+| claim that the layout rule check enforces a silk figure | 1 | 1 fixed | `design-rules.md` row `Silkscreen line width`, now stating the accepted 29 strokes at 0.12 mm (**amended 2026-11-20**: the exception no longer stands, every silk stroke was widened to 0.15 mm after the production-files check; the row now states the census) |
 
 ## 2026-11-20: evidence-pass corrections (C7, C8, C11, C15 of the leaf)
 
@@ -387,3 +387,16 @@ The earlier row above wrongly called the rest of `docs/sunbeam-em7000/` history 
 ## 2026-11-20: the 1a re-confirmation, W-14 (blind review)
 
 The class swept: a record that says the W-9 1a re-confirmation for the surface-mount part is owed, or carried by W-11, or on the owner's end-of-work list (W-11 only delegated the part choice; the owner re-confirmed in W-14, "Yes and go", 2026-11-20). Scope: `hardware/` and `docs/`, `*.md` and `*.yaml`, outside the review records. Phrases, counted as matching lines over `hardware/` and `docs/` including the review records (history, not amended): `re-confirm` 43, `carried by W-11` 12, `1a` with `confirm` 33; `owed` matches 927 lines of unrelated text and was read only where it sat with `re-confirmation` or `1a`. Live statements found and given an amendment note: 9 (`owner-sign-off.md` look-first W-9 bullet, W-2, W-9, the W-8 carry table row 1.3 and 2.2, the keeper's note, W-11; `open-items.md` rows (b), item 1 and the carried line; `layout-hedges.md` 25; `constraints-figures.md` 10). Left alone on purpose: `separation-basis.yaml` header (states the basis rests on W-9 1a, 1b, 1c and W-11, none as owed; a signed record, not edited), `parts-specification.yaml` comment 64 (names W-11 and W-9 1a as the part's source, not as owed), `layout-plan.md` (frozen plan).
+
+## 2026-11-20: silk stroke widening (production-files check; supersedes the exception of finding 4.2)
+
+The class swept: a record that states a silk stroke width below 0.15 mm, the 0.12 mm stock-library exception, or a silk figure that the board no longer has. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md`, `*.yaml`, `*.py` and `*.log`, after the corrections and excluding `layout-review.md` and `schematic-review.md`, which are history (finding 4.2 and its Closed by text are frozen; this section and `design-rules.md` say the exception no longer stands). Phrases: `0.12`, `0.10`, `0.1 mm`, `stock library`, `accepted by reason`, `silk` with `width` or `stroke`, `stroke width`, `pin-1 dot`, `bolt`.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| the 0.12 mm exception, 29 strokes accepted | 2 | 2 fixed | `design-rules.md` row `Silkscreen line width` (now the census: 118 printed strokes, 0 under 0.15 mm) and the 2026-11-19 section above (annotated) |
+| silk strokes stated as 0.15 mm or more | 1 | 1 fixed | `fabrication-notes.md` 'Front silkscreen' (stated for texts only; now texts and graphics, with the edge of the dots and the bolt) |
+| `0.1 mm`, `0.10 mm` as a clearance, track or pour figure | many | 0 stale | `design-rules.md`, `layout-plan.md`, `manufacturer-limits.yaml`, `separation-basis.yaml`: copper and creepage figures, not silk |
+| `0.12` elsewhere | 0 | 0 | none outside the review records |
+
+Census of every `F.SilkS` and `B.SilkS` graphic and text of the board file, including inside footprints, before and after: before, 8 at 0.10 mm and 29 at 0.12 mm (37 below the minimum); after, none below 0.15 mm: graphics 79 at 0.15 mm and 1 at 0.25 mm, texts 30 at 0.15 mm and 8 at 0.2 mm. 15 hidden Value properties carry no thickness and are not printed.
