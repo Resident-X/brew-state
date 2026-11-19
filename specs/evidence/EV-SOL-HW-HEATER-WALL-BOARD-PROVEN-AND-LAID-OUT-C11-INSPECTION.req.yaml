@@ -1,0 +1,28 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C11-INSPECTION
+type: evidence
+title: Laminate notes cite documents and state the written request, not shown sent (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C11)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T20:12:09Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/fabrication-notes.md, Laminate and comparative tracking index (commit 3eb142b4)
+  artifact_version: e422d9f38adb120387fdd2b87d32bfc0cdb08d7e
+text: |
+  Inspection at HEAD e422d9f3 of hardware/sunbeam-em7000/heater-wall-board/fabrication-notes.md, "Laminate and comparative tracking index", as amended in commit 3eb142b4. This supplements the earlier evidence for this leaf; it supersedes the earlier statement that C11 was unmet.
+
+  Clause: the notes name the laminate families with a published CTI of at least 175 (material group IIIa or better) as the preferred laminate, as margin and not a precondition. Met: Shengyi S1000-2M / S1000-2MB and S1000-2 / S1000-2B, stated as margin, with the basis's pollution degree 2 material group III column covering IIIa and IIIb so an index below 175 changes none of its figures (separation-basis.yaml condition 3), and 175 needed only for the pollution degree 3 fallback.
+
+  Clause: for each preferred family, the maker's document for that index and the revision read. Met, with a stated limit. S1000-2M: "S1000-2M data sheet (20120321)", 3 pages, revision as printed 20120321, General Properties table page 1, CTI IEC60112 specification "PLC3(175~250)", typical "PLC3(200V)", the sheet saying its data are typical values. S1000-2: the maker's catalogue page "-31-", no revision printed, file created 2009, CTI specification "PLC 3(175V--249V)", typical "PLC 3". Both copies were read at a distributor-hosted address (a-contract.ru) and the notes state that the laminate makers' own sites could not be reached, so neither is shown to be the maker's current document.
+
+  Clause: the order note requiring the family. Met: "laminate: Shengyi S1000-2M or S1000-2, comparative tracking index class PLC 3 (175 V or more) per IEC 60112; report any substitution before production", stated as advice to the maker, not a requirement the maker is shown to honour.
+
+  Clause: state the written request the owner makes of the manufacturer for the shipped laminate's identity and a certificate of its index. Judged met by stating it, and only that: the notes state a three-part request (1 the laminate maker and product for this two-layer order with that maker's datasheet; 2 confirmation it can be fixed to one of the two families and the order-form field or note that does it; 3 a material or conformance certificate for the shipped lot stating CTI to IEC 60112, or the laminate maker's report). The notes say plainly, and the layout review (round 5) repeats, that no record in the repository shows the request has been sent, for either board: it is the owner's pre-order act and stays to be made; and that the shipped laminate is not verified. The criterion's words ask the notes to state the request and put receiving the certificate out of scope; it does not ask for proof of sending, so the clause is read as met. This evidence does not claim the request was made.
+
+  Clause: a family whose maker publishes no index, or only a typical value or no test method, is listed as such and not named preferred. Met by reference: the notes point to the main board's notes, which list S1141, Kingboard KB-6165F and KB-6165 and Nan Ya NP-140TL as not preferred. This is a pointer, not a repeat; the families preferred here are the two named above.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C11
+    type: satisfies

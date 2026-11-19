@@ -1,0 +1,34 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C6-INSPECTION
+type: evidence
+title: Layout review rounds 1 to 5, closing round 5, owner accepts close without round 6 (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C6)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T20:12:09Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/layout-review.md rounds 1 to 5, closing round commit e422d9f3
+  artifact_version: e422d9f38adb120387fdd2b87d32bfc0cdb08d7e
+text: |
+  Inspection at HEAD e422d9f3 of hardware/sunbeam-em7000/heater-wall-board/layout-review.md (rounds 1 to 5) against each clause. This supplements the earlier evidence for this leaf and states what holds and what does not.
+
+  Views of every layer and every critical net: each round rendered the layout review views from a detached copy of the committed board (round 4: 77 images, round 5 likewise, per the round's Views entry) covering both copper layers, silk, paste, edge, assembly of both sides, the class map, the placement view, crops of U911 and U921 and the 3D views, and the net views of RET, OUT_S and OUT_C. Round 4 states that three tiles of HEAT_S_GATE_R were not opened as separate images; the nets were read through the copper layers and the class map.
+
+  A reviewer that did not draw the board: rounds 1 to 5 were each judged by an independent reviewer that had not seen the board (round 4 and round 5 say so; an independent blind workmanship review of 2026-11-19 is also recorded in round 2).
+
+  Closes on a full round: round 5 is the closing round, kind "full", judged on 89 rows (the catalogue's 71 items and BOARD-1 to BOARD-18), board design files those of 60c665fc, unchanged since round 3 apart from the silk change that round 3's findings closed; the round-kind, round-completeness and closing-round checks of the review-history command pass for it. Its board verdicts, as reported: 45 pass, 37 not applicable and 7 fails, each fail citing a round-1 finding closed by a reason and re-tested against the board as it stands.
+
+  Findings recorded and resolved: round 1 findings 1.1 to 1.10, round 2 findings 2.1 to 2.9, round 3 findings 3.1 to 3.3 (silk, closed by change), round 4 findings 4.1 (record) and 4.2 (silk strokes, closed by reason with the measured rule tracked by SOL-PRE-ORDER-CHECK-MEASURES-SILK-TEXT-HEIGHT-AND-STROKE-WIDTH), and round 5 finding 5.1 (cosmetic, record: the live 45 degC statements the sweep missed, closed by amendment notes in the records commit after 3eb142b4).
+
+  What does not hold literally, stated plainly: no round has been finding-free. Round 5 raised finding 5.1 (record staleness, cosmetic, no view and no change to any KiCad file), and rounds 3 and 4 raised silk and record findings. The method asks that the review close on a clean full round. The findings of rounds 3 to 5 are silk, silk-stroke and record statements only; the copper, edge and placement have been unchanged since round 2's closure and judged unchanged in rounds 3, 4 and 5. The owner decided on 2026-11-20 ("Yes", relayed to this session by the coordinator; layout-review.md does not quote it) to close the review without a round 6. This is the owner's acceptance of a closing round that raised only a cosmetic record finding, not a finding-free round.
+
+  hw:review-history fails three checks: "round structure", "round 1 as first recorded" and "round 3 order". The record discloses them (round 1's first recording had a blank line after each table's separator row, cutting the tables for the history command, and the command reads every version; round 3's order failure disclosed in commit 86557a77). The owner accepted the disclosed failure on 2026-11-19, and the fix is tracked by SOL-REVIEW-RECORD-HISTORY-READS-PAST-A-MALFORMED-FIRST-RECORDING, which is not built.
+
+  Earlier limits now corrected by commit 3eb142b4 (not by editing earlier evidence): the constraints record now carries the revisit (see the C8 evidence); the stale statement in owner-sign-off.md that the board's own basis is not yet signed is amended there (W-12 supersedes); constraints-figures.md and the constraints record's heat-spreader and enclosure-air rows now carry the 25/40 degC amendment, so the superseded 45 degC figures the C7 evidence noted are amended in the records.
+
+  Ordering the board is out of scope; the board is not ordered.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C6
+    type: satisfies
