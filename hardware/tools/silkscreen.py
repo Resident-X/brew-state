@@ -125,6 +125,24 @@ def _check_findings(checks: dict) -> list:
     return out
 
 
+def companions(board: str, out_path: str) -> List[tuple]:
+    """The project and rules files beside the input that `build` copies beside the output: (source, destination) for each one
+    that exists, none when the output sits beside the input under the same name."""
+    stem_in, stem_out = os.path.splitext(board)[0], os.path.splitext(out_path)[0]
+    if os.path.abspath(stem_in) == os.path.abspath(stem_out):
+        return []
+    return [(stem_in + extension, stem_out + extension) for extension in (".kicad_pro", ".kicad_dru")
+            if os.path.isfile(stem_in + extension)]
+
+
+def _same_bytes(first: str, second: str) -> bool:
+    try:
+        with open(first, "rb") as one, open(second, "rb") as other:
+            return one.read() == other.read()
+    except OSError:
+        return False
+
+
 def build(board: str, out_path: str, table_path: Optional[str], work: Optional[str], kicad_python: Optional[str], resolution: float,
           out, as_json: bool) -> int:
     def done(result, detail, findings, status, **extra):
@@ -146,6 +164,11 @@ def build(board: str, out_path: str, table_path: Optional[str], work: Optional[s
         refusals.append({"finding": "REFUSED", "item": table_path or "table", "detail": str(error)})
     if resolution <= 0:
         refusals.append({"finding": "REFUSED", "item": "--resolution", "detail": f"{resolution} is not above zero; give the raster step in mm"})
+    for source, destination in companions(board, out_path):
+        if os.path.exists(destination) and not _same_bytes(source, destination):
+            refusals.append({"finding": "REFUSED", "item": destination,
+                             "detail": f"a different {os.path.basename(destination)} is already beside the output and the one beside the input "
+                                       f"({source}) would overwrite it; remove it, or give an output path with no such file beside it"})
     if refusals:
         return done("REFUSED", "the inputs cannot be used, so nothing was placed or written", refusals, 1, written=None)
     python = kicad_scripting.interpreter(kicad_python)
@@ -183,20 +206,20 @@ def build(board: str, out_path: str, table_path: Optional[str], work: Optional[s
         with open(temporary, "w", encoding="utf-8", newline="") as handle:
             handle.write(candidate)
         os.replace(temporary, out_path)
-        stem_in, stem_out = os.path.splitext(board)[0], os.path.splitext(out_path)[0]
-        for extension in (".kicad_pro", ".kicad_dru"):
-            if os.path.isfile(stem_in + extension) and os.path.abspath(stem_in) != os.path.abspath(stem_out):
-                shutil.copyfile(stem_in + extension, stem_out + extension)
+        copied = []
+        for source, destination in companions(board, out_path):
+            shutil.copyfile(source, destination)
+            copied.append({"finding": "COPIED", "item": destination, "detail": f"copied from {source}, so the output opens with the input's settings"})
         after = extract(python, out_path, folder, "out.json")
         checks = _checks(check_module, after)
         refs = plan["refs"]
         on_silk = sorted(r for r, v in refs.items() if not v.get("fab") and not v.get("keep"))
         unplaced = placement.report["unplaced"]
-        findings = list(placement.notes) + _check_findings(checks)
+        findings = list(placement.notes) + copied + _check_findings(checks)
         detail = (f"wrote {out_path}: only silkscreen differs from the input; {len(on_silk)} of {len(refs)} references on silkscreen, "
                   f"{len(unplaced)} unplaced, {sum(len(v) for v in checks.values())} silkscreen measures broken")
         return done("WRITTEN", detail, findings, 0, written=out_path, sha256=silkscreen_patch.sha(candidate), references=len(refs),
-                    references_on_silk=len(on_silk), unplaced=unplaced, fixed=placement.report["fixed"],
+                    references_on_silk=len(on_silk), unplaced=unplaced, copied=[c["item"] for c in copied], fixed=placement.report["fixed"],
                     checks={cls: len(rows) for cls, rows in checks.items()})
     finally:
         if scratch is not None:
@@ -267,7 +290,7 @@ def check(board: str, work: Optional[str], kicad_python: Optional[str], out, as_
 def require_table_packages() -> None:
     """Run again under SILKSCREEN_PYTHON when that holds the table's package; else CannotRun naming the package.
 
-    Every subcommand reads the table's YAML, the proof included, so the stop comes before any of them starts.
+    `build` and `check` read the table's YAML, so the stop comes before either starts; `prove` reads no table and needs none.
     """
     silkscreen_python.rerun_under_silkscreen_python(needed=silkscreen_python.TABLE_PACKAGES)
     missing = silkscreen_python.missing_packages(silkscreen_python.TABLE_PACKAGES)
@@ -299,7 +322,8 @@ def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     args = parser.parse_args(argv)
     as_json = args.format == "json"
     try:
-        require_table_packages()
+        if args.command != "prove":
+            require_table_packages()
         if args.command == "build":
             return build(args.board, args.out, args.table, args.work, args.kicad_python, args.resolution, out, as_json)
         if args.command == "prove":

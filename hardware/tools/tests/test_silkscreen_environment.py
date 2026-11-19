@@ -112,10 +112,9 @@ class Environment(fx.Work):
         return subprocess.run([sys.executable, "-c", driver], capture_output=True, text=True, env=env, timeout=120)
 
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
-    def test_a_missing_pyyaml_stops_build_prove_and_check_naming_it_never_with_a_traceback(self):
+    def test_a_missing_pyyaml_stops_build_and_check_naming_it_never_with_a_traceback(self):
         board = self.board()
-        for command in (["build", "--board", board, "--out", self.path("out.kicad_pcb")], ["check", "--board", board],
-                        ["prove", "--input", board, "--output", board]):
+        for command in (["build", "--board", board, "--out", self.path("out.kicad_pcb")], ["check", "--board", board]):
             for extra in ([], ["--format", "json"]):
                 status, out, err = self.run_blocked("yaml", *command, *extra)
                 self.assertEqual(status, 2, (command, out, err))
@@ -147,6 +146,17 @@ class Environment(fx.Work):
             self.assertTrue(done.stdout.startswith("STAYED ['numpy']"), (value, done.stdout + done.stderr))
 
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C12: Each tracked layout tool that needs KiCad's scripting interface runs it in the interpreter named by a documented environment variable, and the tool and its tests fail naming that variable when it is unset or names nothing runnable. The silkscreen command names the missing package when numpy, shapely or Pillow is not installed. No tool holds a path fixed to one machine: every tool, interpreter and board path is an argument or an environment variable. Tests cover the variable unset, the variable naming a missing file, a missing package and a path given as an argument, in text and in JSON.
+    def test_the_proof_needs_no_pyyaml_in_text_and_in_json(self):
+        board = self.board()
+        for extra in ([], ["--format", "json"]):
+            status, out, err = self.run_blocked("yaml", "prove", "--input", board, "--output", board, *extra, env=self.env())
+            self.assertEqual((status, err), (0, ""), out)
+            self.assertNotIn("Traceback", out)
+            if extra:
+                self.assertEqual(json.loads(out)["result"], "SILKSCREEN ONLY")
+            else:
+                self.assertTrue(out.startswith("RESULT | SILKSCREEN ONLY | "), out)
+
     def test_the_proof_and_the_table_need_neither_numpy_nor_the_interpreter(self):
         board = self.board()
         status, out, err = self.run_blocked("numpy", "prove", "--input", board, "--output", board, env=self.env())

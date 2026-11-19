@@ -49,6 +49,54 @@ class Rebuild(fx.Work):
         return {s["owner"]: s for s in data["silk"] if s["kind"] == "field:Reference"}
 
 
+class Companions(Rebuild):
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C6: Run twice over the same synthetic board and the same table, the command writes boards whose silkscreen is identical in both runs. Tests cover several parts, a part with an override in the table, a part whose label cannot be placed, which is listed in the unplaced report, and an empty board, in text and in JSON. This does not cover the choice of text heights and legends, which the board's table holds.
+    def test_build_names_the_project_and_rules_files_it_copied_beside_the_output_in_text_and_in_json(self):
+        original = fx.small_board()
+        for as_json in (True, False):
+            tag = "j" if as_json else "t"
+            self.write(f"{tag}/in.kicad_pro", '{"meta": {"filename": "in.kicad_pro"}}')
+            self.write(f"{tag}/in.kicad_dru", "(version 1)\n")
+            status, result, out, _ = self.build(original, tag=tag, as_json=as_json)
+            self.assertEqual(status, 0, result)
+            stem = os.path.splitext(out)[0]
+            self.assertEqual(self.read(stem + ".kicad_pro"), '{"meta": {"filename": "in.kicad_pro"}}')
+            if as_json:
+                self.assertEqual(result["copied"], [stem + ".kicad_pro", stem + ".kicad_dru"])
+            else:
+                copied = [line for line in result if line.startswith("COPIED | ")]
+                self.assertEqual(len(copied), 2, result)
+                self.assertIn(stem + ".kicad_dru", copied[1])
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C6: Run twice over the same synthetic board and the same table, the command writes boards whose silkscreen is identical in both runs. Tests cover several parts, a part with an override in the table, a part whose label cannot be placed, which is listed in the unplaced report, and an empty board, in text and in JSON. This does not cover the choice of text heights and legends, which the board's table holds.
+    def test_build_copies_nothing_and_reports_none_when_the_board_has_no_project_files(self):
+        status, report, out, _ = self.build(fx.small_board())
+        self.assertEqual((status, report["copied"]), (0, []))
+        self.assertFalse(os.path.exists(os.path.splitext(out)[0] + ".kicad_pro"))
+
+    # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C6: Run twice over the same synthetic board and the same table, the command writes boards whose silkscreen is identical in both runs. Tests cover several parts, a part with an override in the table, a part whose label cannot be placed, which is listed in the unplaced report, and an empty board, in text and in JSON. This does not cover the choice of text heights and legends, which the board's table holds.
+    def test_build_refuses_a_different_project_file_already_beside_the_output_and_writes_nothing(self):
+        original = fx.small_board()
+        for as_json in (True, False):
+            tag = "rj" if as_json else "rt"
+            self.write(f"{tag}/in.kicad_pro", '{"meta": 1}')
+            existing = self.write(f"{tag}/out.kicad_pro", '{"meta": 2}')
+            status, result, out, _ = self.build(original, tag=tag, as_json=as_json)
+            self.assertEqual(status, 1, result)
+            self.assertFalse(os.path.exists(out), "nothing is written")
+            self.assertEqual(self.read(existing), '{"meta": 2}', "the existing file is left as it was")
+            if as_json:
+                self.assertEqual(result["result"], "REFUSED")
+                self.assertIn("a different out.kicad_pro is already beside the output", result["findings"][0]["detail"])
+            else:
+                self.assertTrue(any(l.startswith("REFUSED | ") and "a different out.kicad_pro" in l for l in result), result)
+        tag = "same"
+        self.write(f"{tag}/in.kicad_pro", '{"meta": 3}')
+        self.write(f"{tag}/out.kicad_pro", '{"meta": 3}')
+        status, result, out, _ = self.build(original, tag=tag)
+        self.assertEqual((status, len(result["copied"])), (0, 1), "an identical file already there is no conflict")
+
+
 class Several(Rebuild):
     # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C6: Run twice over the same synthetic board and the same table, the command writes boards whose silkscreen is identical in both runs. Tests cover several parts, a part with an override in the table, a part whose label cannot be placed, which is listed in the unplaced report, and an empty board, in text and in JSON. This does not cover the choice of text heights and legends, which the board's table holds.
     def test_several_parts_each_get_a_label_beside_them_and_the_names_the_board_gives_them(self):

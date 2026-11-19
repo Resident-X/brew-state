@@ -2,11 +2,11 @@ id: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BO
 type: criterion
 title: The acceptance generator refuses a line on a Mains-class net or inside a mains region
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Given a check log whose failing neatness lines include one on a Mains-class net and one inside a mains region, the generator writes no entry for either, names each as refused and exits with failure. Tests cover a line on a Mains-class net, a line inside a mains region, a line on neither and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
+  Given a check log whose failing neatness lines include one on a Mains-class net, one inside a mains region and one on a low-voltage net whose copper lies in or crosses a mains region, the generator writes no entry for any of them, names each as refused and exits with failure. A line is judged from the copper of the nets it names in the board it is given, not from the positions the log prints. A line that names no resolvable net is refused when the project declares mains present and the board has a mains region. Tests cover a line on a Mains-class net, a line inside a mains region, a low-voltage net whose copper crosses a region while its printed point lies outside, a line with no position, a line on none of these and a log with no failing lines, in text and in JSON. This does not cover entries for any line other than a failing neatness line.
 links:
   - target: SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD
     type: criterion-of

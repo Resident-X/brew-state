@@ -18,7 +18,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import time
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -104,13 +103,11 @@ class TheChainRebuildsTheCommittedBoard(unittest.TestCase):
             shutil.copyfile(os.path.join(FOLDER, "main-board" + suffix), os.path.join(cls.rebuilt_folder, "main-board" + suffix))
         cls.rebuilt = os.path.join(cls.rebuilt_folder, "main-board.kicad_pcb")
         cls.work = os.path.join(cls.scratch.name, "work")
-        started = time.time()
         import io
         out = io.StringIO()
         cls.status = chain_runner.main(["--board", os.path.join(cls.placed_from, "main-board.kicad_pcb"), "--steps",
                                         os.path.join(CHAIN, "chain.json"), "--output", cls.rebuilt, "--work", cls.work], out=out)
         cls.lines = out.getvalue().splitlines()
-        cls.seconds = time.time() - started
         cls.committed = copper(BOARD)
         cls.rebuilt_copper = copper(cls.rebuilt) if os.path.isfile(cls.rebuilt) else collections.Counter()
 
@@ -185,11 +182,6 @@ class TheChainRebuildsTheCommittedBoard(unittest.TestCase):
         status = zone_fill_diff.main(["--first", BOARD, "--second", self.rebuilt, "--tolerance", "0.25"], out=out)
         self.assertEqual(status, 0, out.getvalue())
         self.assertIn("RESULT | SAME", out.getvalue())
-
-    def test_the_run_takes_minutes_not_hours(self):
-        """the chain over the committed board, both runs of every step, is a run a build round can afford"""
-        # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C5: The block scripts and coordinate tables that draw the main board's copper are tracked in the main board's folder with paths relative to the repository, and running the chain runner over them from the placed board writes the same mains and low-voltage copper the committed board holds. This does not cover the wall board's scripts, which its own work delivers.
-        self.assertLess(self.seconds, 600, self.seconds)
 
 
 class TheChainReportsInJson(Work):

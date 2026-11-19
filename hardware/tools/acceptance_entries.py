@@ -9,10 +9,15 @@ record. This tool writes those entries from the log of a check run, so that a
 re-run of the check reports the lines as ACCEPTED and not as failures.
 
 It writes an entry only where it can justify one. Every failing neatness line is
-first tested against the mains side of the board, and a line on a net of a Mains
-net class or at a position inside a mains region (a named rule area of the
-layout) is refused, named, and never entered: a mains spacing, creepage or
-neatness line is not the generator's to excuse. A line on a low-voltage net is
+first tested against the mains side of the board, and a line is refused, named,
+and never entered when any net it names (the `net X:` prefix and every bracketed
+net together) is in a Mains net class, or when any copper of such a net on the
+board given (tracks, arcs, vias, pads and zones, on copper layers) lies inside a
+mains region (a named rule area of the layout) or crosses one. The positions a
+line prints only name it and are never what is judged. Where the project declares
+MAINS present and the layout holds a mains region, a line naming no net whose
+copper is on the board is refused too, since a mains region cannot be ruled out:
+a mains spacing, creepage or neatness line is not the generator's to excuse. A line on a low-voltage net is
 given the reason the board's own table holds for that net's kind; a net the
 table does not place in any kind, a kind with no reason for the rule, and a net
 that already has an exhausted signed entry (a signed count is never raised) are
@@ -70,8 +75,6 @@ ACCEPTED_RULES = board_check.ACCEPTABLE_WORKMANSHIP
 MAINS_CLASS_DEFAULT = "Mains*"
 MAINS_REGION_DEFAULT = "mains"
 
-NUMBER = r"-?\d+(?:\.\d+)?"
-POSITION = re.compile(rf"\(({NUMBER}), ({NUMBER})\)")
 NET_PREFIX = re.compile(r"^net (.+?): ")
 NET_BRACKET = re.compile(r"\[([^\]]+)\]")
 STALE = re.compile(r"accepted_workmanship\[(\d+)\]")
@@ -154,6 +157,14 @@ class Mains:
                     for xy in (corner[1:] if corner and corner[0] == "arc" else [corner]):
                         points.append((xy[0] / 1_000_000, xy[1] / 1_000_000))
                 self.areas.append((str(name[1]), points))
+        self.present = declared == "present"
+        self.region_items = [{"kind": "zone", "outline": [[[round(x * 1_000_000), round(y * 1_000_000)] for x, y in points]]}
+                             for _, points in self.areas]
+        self.region_boxes = [locked_copper.copper_box(item) for item in self.region_items]
+        self.copper: Dict[str, List[dict]] = {}
+        for item in locked_copper.copper(layout, board, rule_areas=False) + locked_copper.pad_items(layout):
+            if item["net"] and locked_copper.copper_layers(item):
+                self.copper.setdefault(item["net"], []).append(item)
         found = [name.lower() for name, _ in self.areas]
         missing = [region for region in regions if not any(region.lower() in name for name in found)]
         if declared == "present" and missing:
@@ -183,18 +194,32 @@ class Mains:
                 return f"net {net} is in the net class {name}, a mains class"
         return None
 
-    def position_why(self, points: Sequence[Tuple[float, float]]) -> Optional[str]:
-        """Why a line printing these positions is mains: a point in a mains region, or, when it prints two or more, a
-        stretch between consecutive points that touches or crosses one."""
-        for x, y in points:
-            for name, polygon in self.areas:
-                if inside(x, y, polygon):
-                    return f"the position ({x:g}, {y:g}) lies in the mains region {name}"
-        for (x1, y1), (x2, y2) in zip(points, points[1:]):
-            for name, polygon in self.areas:
-                if crosses(x1, y1, x2, y2, polygon):
-                    return f"the stretch from ({x1:g}, {y1:g}) to ({x2:g}, {y2:g}) crosses the mains region {name}"
+    def copper_why(self, net: str) -> Optional[str]:
+        """Why the copper of a net, all of it on the board given, is mains: a copper item, a track or arc or via or pad or
+        zone on a copper layer, that lies in a mains region or crosses one. A zone is judged by its outline: a vertex inside
+        the region, a side that meets it, or the region lying inside the outline."""
+        for item in self.copper.get(net, []):
+            box = locked_copper.copper_box(item)
+            for (name, polygon), region, region_box in zip(self.areas, self.region_items, self.region_boxes):
+                if locked_copper.boxes_apart(box, region_box) > 0:
+                    continue
+                if item["kind"] == "zone":
+                    rings = locked_copper.copper_shape(item)[0]
+                    touching = any(crosses(a[0], a[1], b[0], b[1], polygon)
+                                   for ring in rings for a, b in locked_copper.pieces(ring + ring[:1]))
+                    touching = touching or any(inside(x, y, ring) for ring in rings for x, y in polygon)
+                else:
+                    touching = locked_copper.copper_gap(item, region, 0.0) == 0.0
+                if touching:
+                    return f"copper of net {net} ({describe_copper(item)}) lies in or crosses the mains region {name}"
         return None
+
+
+def describe_copper(item: dict) -> str:
+    lines, _, _ = locked_copper.copper_shape(item)
+    x, y = lines[0][0]
+    name = item["pad"].name() if item["kind"] == "pad" else None
+    return f"{name or 'a ' + item['kind']} near ({x:g}, {y:g}) mm"
 
 
 def inside(x: float, y: float, polygon: Sequence[Tuple[float, float]]) -> bool:
@@ -360,8 +385,9 @@ def entry_text(entry: dict, example: str) -> str:
 
 
 def line_nets(line: Line) -> List[str]:
+    """Every net a line names: the `net X:` prefix and each bracketed net, together."""
     found = NET_PREFIX.match(line.where)
-    nets = [found.group(1)] if found else NET_BRACKET.findall(line.where)
+    nets = ([found.group(1)] if found else []) + NET_BRACKET.findall(line.where)
     return sorted(set(nets))
 
 
@@ -369,7 +395,6 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
     """What to write: entries, refusals, entries to remove and the count of failing lines of other rules."""
     groups: "OrderedDict[Tuple[str, str], List[Line]]" = OrderedDict()
     refused, not_covered, removed = [], 0, []
-    unplaced = 0
     stale = set()
     for line in lines:
         if line.kind != "VIOLATION" or line.design != design:
@@ -383,9 +408,9 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
             not_covered += 1
             continue
         nets = line_nets(line)
-        points = [(float(x), float(y)) for x, y in POSITION.findall(line.where)]
-        unplaced += 0 if points else 1
-        why = [reason for reason in [mains.net_why(net) for net in nets] + [mains.position_why(points)] if reason]
+        why = [reason for reason in [mains.net_why(net) for net in nets] + [mains.copper_why(net) for net in nets] if reason]
+        if not why and mains.present and mains.areas and not any(net in mains.copper for net in nets):
+            why = ["the line names no net whose copper is on the board, so a mains region cannot be ruled out"]
         if why:
             refused.append({"rule": line.rule, "scope": ", ".join(nets), "location": line.where,
                             "why": "; ".join(why) + "; a mains line is never entered"})
@@ -420,7 +445,7 @@ def plan(lines: Sequence[Line], design: str, mains: Mains, table: Table, existin
     for index in sorted(stale):
         if index < len(existing):
             removed.append({"index": index, "rule": existing[index]["rule"].strip(), "scope": existing[index]["scope"].strip()})
-    return {"entries": entries, "refused": refused, "removed": removed, "not_covered": not_covered, "no_position": unplaced}
+    return {"entries": entries, "refused": refused, "removed": removed, "not_covered": not_covered}
 
 
 def write_record(path: str, text_lines: Optional[List[str]], plan_: dict, synthetic: bool) -> None:
@@ -491,15 +516,12 @@ def run(args, out) -> int:
     summary = (f"{len(result['entries'])} entries {'would be ' if args.dry_run else ''}written for "
                f"{sum(e['count'] for e in result['entries'])} lines, {len(result['refused'])} lines refused, "
                f"{len(result['removed'])} stale entries removed, {result['not_covered']} failing lines of other rules not covered")
-    if result["no_position"]:
-        print(f"NOTE | {result['no_position']} failing line{'s' if result['no_position'] != 1 else ''} gave no position, so "
-              "whether they lie in a mains region could not be told and they were judged by net only", file=sys.stderr)
     if args.format == "json":
         print(json.dumps({"result": state, "design": design, "record": record, "written": bool(write),
                           "entries": [{key: entry[key] for key in ("rule", "scope", "count", "kind", "reason")}
                                       for entry in result["entries"]],
                           "refused": result["refused"], "removed": result["removed"],
-                          "not_covered": result["not_covered"], "no_position": result["no_position"], "detail": summary}, indent=2), file=out)
+                          "not_covered": result["not_covered"], "detail": summary}, indent=2), file=out)
     else:
         for entry in result["entries"]:
             print(f"ENTRY | {entry['rule']} | {entry['scope']} | {entry['count']} | {entry['kind']}", file=out)

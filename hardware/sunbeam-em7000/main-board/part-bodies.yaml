@@ -5,8 +5,10 @@
 # `rects` are the part's real body, with the height each rises above the seating plane; `access_zones` are
 # the space a mating part or a hand needs; `source` is the maker reading the rectangles come from.
 # An entry with `from: courtyard` has no maker reading yet: its body is taken as the footprint's own
-# courtyard. Those are J791 and J821 (JST PH 9-way), J761 (pin header 1x10), J862 (reed pads) and
-# U401 (LQFP-100). Every other footprint on the board, passives and small parts included, has no entry,
+# courtyard. That is J862 (reed pads) alone: the parts list names no part for it (maker and part number
+# not stated, no catalogue number), so there is no maker document to read. J791 and J821 (JST B9B-PH-K-S),
+# J761 (BOOMELE 2.54-1*10PPin, tallest ordering height) and U401 (STM32H743VIT6, LQFP-100) carry maker
+# readings, read 2026-11-19. Every other footprint on the board, passives and small parts included, has no entry,
 # so the audit names such a part as missing when it is asked to measure it.
 #
 # Footprints the committed board uses that this table has no maker reading for: J101 to J103 and
@@ -19,13 +21,24 @@ footprints:
   Connector_JST:JST_PH_B9B-PH-K_1x09_P2.00mm_Vertical:
     kind: stock/other
     hand_fitted: false
-    source: our courtyard
-    from: courtyard
+    height_mm: 6.0
+    source: 'JST PH connector catalogue (jst-mfg.com ePH, datasheet.lcsc.com
+      6c6fce4367275d84ec6a99bf09f1250f.pdf, the page the catalogue lists for LCSC C157968) p.2, through-hole
+      top entry B9B-PH-K-S: B 19.9, A 16.0, 1.95 beyond the end pins, 4.5 deep with the pin row 1.7 from
+      the edge nearer pin 1''s side, 6 high above the board (8 mated); the 2.8 mm side lies on +y as the
+      KiCad footprint''s own outline draws it'
+    rects:
+    - {name: body, x0: -1.95, y0: -1.7, x1: 17.95, y1: 2.8, height_mm: 6.0}
   Connector_PinHeader_2.54mm:PinHeader_1x10_P2.54mm_Vertical:
     kind: stock/other
     hand_fitted: false
-    source: our courtyard
-    from: courtyard
+    height_mm: 3.3
+    source: 'BOOMELE (Dongguan Boomele) 2.54 mm single-row pin header drawing (datasheet.lcsc.com
+      f7d0c675d8004d119e2e17b298ed95d4.pdf, LCSC C57369) p.1: plastic 2.5 wide, 10 positions at 2.54
+      pitch so 25.4 long, centred on the pin row; plastic height H is an ordering option of 1.5, 1.7, 2.0,
+      2.5 or 3.3 and the part number does not name it, so the rectangle takes the tallest, 3.3'
+    rects:
+    - {name: body, x0: -1.25, y0: -1.27, x1: 1.25, y1: 24.13, height_mm: 3.3}
   Converter_ACDC:Converter_ACDC_MeanWell_IRM-20-xx_THT:
     kind: acdc module
     hand_fitted: true
@@ -37,8 +50,13 @@ footprints:
   Package_QFP:LQFP-100_14x14mm_P0.5mm:
     kind: stock/other
     hand_fitted: false
-    source: our courtyard
-    from: courtyard
+    height_mm: 1.6
+    source: 'STMicroelectronics STM32H742xI/G STM32H743xI/G DS12110 Rev 11 (web.archive.org copy of st.com
+      stm32h743vi.pdf) p.318 Table 208 LQFP100 mechanical data: D and E 16.00 BSC over the leads, D1 and
+      E1 14.00 BSC the moulding, A max 1.60; the rectangle is the 16.0 mm lead span, square about the
+      footprint centre'
+    rects:
+    - {name: body, x0: -8.0, y0: -8.0, x1: 8.0, y1: 8.0, height_mm: 1.6}
   main-board:FUSEHOLDER_5x20_XC_BLX-A:
     kind: fuseholder
     hand_fitted: true
