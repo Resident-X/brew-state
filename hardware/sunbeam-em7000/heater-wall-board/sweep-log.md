@@ -255,3 +255,18 @@ The class swept: a record that names the through-hole MOC3083M (C23552, DIP-6, 7
 | `hand-fitted` | 38 | 11 | the hand-fitted parts, now including the opto-triacs |
 
 Not edited here: `catalogue-extract.yaml` and the separation basis (the layout agent's), the owner's recorded words in `owner-sign-off.md` (W-2, W-4, W-9; kept with dated notes), and `bring-up-provision.md` (it names U911 and U921 only by LED pin 1 and by case temperature, unaffected).
+
+## 2026-11-19: round 14 findings closed, W-10 and the lid statement added to the owner sign-off record (13 entries, W-1 to W-10, 10 in the owner's words)
+
+The class swept: a record that gives the opto-triac's creepage clause other than the drawn Rating field text, calls the drawn field still to be corrected, names the fitted part MOC3083M, states the package-change re-confirmation as a condition (an 'if'), says the other parts are through-hole or assembled by a service, counts the fitted parts as fifteen, places J911 or J921 at the left or the opto-triac's LED pins at the right, or counts the owner-sign-off entries as 12 (9 in his words).
+
+| Phrasing | Live hits before | Live hits after | What each is |
+|---|---|---|---|
+| `if the package`, `package (changes\|becomes)`, `owed if` | 3 (`owner-sign-off.md` line 20, W-9 body, `open-items.md` line 40) | 0 | all three now say the package HAS changed and 1a is OWED now; the order must not proceed before it. `sweep-log.md` line 231 is this file's history of W-9's first form and stays as written |
+| `all fifteen parts`, `every other part is through-hole`, `other assembled parts are through-hole` | 3 (`fabrication-notes.md`, `open-items.md`, `sheets/300` and its generated spec) | 0 | corrected to 14 fitted parts plus the hole H1 and the through-hole and surface-mount lists |
+| `at the left` (J911, J921), `on the right edge as low voltage` | 2 sheet notes and their generated spec lines | 0 | corrected to what the sheets draw |
+| `12 entries`, `9 are`, `W-1 to W-9`, `(9 entries)`, `(5 entries: ... W-9)` | 4 live lines in `owner-sign-off.md` | 0 | now 13 entries, W-1 to W-10, 10 in his words, 6 entries under 2026-11-19. This file's lines 229 to 237 are the history of the W-9 round and stay as written |
+| `layout-hedges.md` line 25, 7 mm creepage stated as accepted | 1 | 0 | qualified: accepted on the through-hole MOC3083M figures (W-9 1a), re-confirmation owed on the SMT MOC3083SR2M |
+| owner's lid statement (`lid`, `wall opening`) | 0 | 2 | W-10 (labelled a further statement, not a new acceptance) and the case-step requirements in `open-items.md` |
+
+Not edited here: `catalogue-extract.yaml` line 19 (lists C23552 as the opto-triacs; the layout agent's), `docs/sunbeam-em7000/controller-board-division.md` line 2243 (the executable data block; the notes added to lines 797 and 856 say the data is the DIP form kept for history), and the owner's recorded words.
