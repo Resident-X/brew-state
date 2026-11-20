@@ -411,9 +411,11 @@ The class swept: a record that states the front OUT_C zone's extent past the fin
 
 | Phrase | Lines | Of which live | What they are |
 |---|---|---|---|
-| `44.425`, `49.875`, `44.4`, `46.4` | 0 outside the board file | 0 stale | no record in the folder or in `docs/sunbeam-em7000/` states the front OUT_C zone's vertices; `layout-plan.md` and `layout-review.md` quote none of them |
+| `44.425`, `49.875` | 0 | 0 stale | no record states the old vertices |
+| `44.4`, `46.4` | `layout-plan.md` 2 lines (Pass 1's rows MAINS-2, "the F.Cu finger of OUT_C (y 44.4 to 46.4)", frozen), `layout-review.md` 5 lines (rounds 1 to 3 and 6, frozen) | 0 stale | **Corrected 2026-11-20 (layout review round 7, finding 7.4): this row first said 0 outside the board file and that the plan and the review quote none of them, which was wrong.** All are frozen pass and round text, not edited; they describe the F.Cu finger of the board as it then stood, which the zone body ending at y 46.425 has replaced, and no live record states it |
 | `wedge`, `ends at the finger`, `zone finger` | 1 | 0 stale | `design-rules.md` `MainsBranch` row: the spur "ends in a zone finger", still true of the zone with the wedge filled |
-| `56.8`, `58.1, 56`, `56.575`, `70.975`, `55.05` | 0 | 0 stale | no record states the via's coordinates or the HEAT_S_OPTO_MT track's vertices; `design-rules.md` names the one via on `+5V_WB` and its sizes only |
+| `56.575`, `70.975`, `55.05` | 0 | 0 stale | no record states the HEAT_S_OPTO_MT track's vertices |
+| `56.8`, `58.1, 56` | `layout-review.md` 8 lines (rounds 1 to 3, frozen) | 0 stale | **Corrected as the row above (finding 7.4): this row first said 0.** The via at (58.1, 56.8) of the frozen rounds; `design-rules.md` names the one via on `+5V_WB` and its sizes only and no live record states its position |
 | `HEAT_S_OPTO_MT` | 0 describing the route | 0 stale | the net is named in lists of Mains-class nets only |
 | `34.7`, `22.7`, `38.5`, `28.5`, `59.7`, `40.9` as reference positions | 0 before this change | 1 new | `fabrication-notes.md`, "Front silkscreen", now states the six reference positions |
 
