@@ -1,0 +1,31 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C6-INSPECTION-2
+type: evidence
+title: Layout review closed on the full, clean Round 10 by a fresh reviewer, with four history failures disclosed (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C6)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-20T04:54:53Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/layout-review.md
+  artifact_version: d05e006abe4c2d92bb903d0d773d7da3bf1ce3d4
+text: |
+  Inspection of hardware/sunbeam-em7000/heater-wall-board/layout-review.md, Round 10 (commit d05e006a), against each clause of the criterion. This supersedes the earlier evidence, which judged rounds 1 to 5.
+
+  - Views of every layer and every critical net: Round 10 ran hw:views with the critical classes Mains, MainsTrunk and MainsBranch (77 images: the layer tiles of every copper, mask, paste, silkscreen, edge and fab layer the board carries, the class and assembly views, the crops of U911 and U921, three three-dimensional views and the 22 written tiles of the critical nets) and hw:placement (4 images). The reviewer opened every image, and added 84 zoom tiles at 45 px/mm, 28 each of F.Cu, B.Cu and F.SilkS. B.Fab and B.CrtYd are not rendered because the board carries neither.
+  - A full round: the round states "Round kind: full" and carries 89 verdict rows (45 pass, 37 not applicable, 7 fail that cite earlier findings closed by a reason and tested again). The history command's round kind and round completeness checks pass.
+  - A clean round: the Findings part reads "This round raises no finding." The whole-repository pre-order check ended RESULT PASS with 0 violations, and a separate KiCad rule check lists only the 12 accepted 1.04 mm mains pad pairs.
+  - By a reviewer that did not draw the board: the round's opening lines state the reviewer is a fresh-context agent that did not draw, edit, place or route the board and has no memory of earlier rounds. The evidence for that is the record's own statement.
+  - The round judged the board as it stands: no design file has changed since the board's last design-file commit 56660c80 (git diff of the KiCad files is empty), and the history command's closing round check passes. The round gate task check:round passed at 478d3b05 on the same design files.
+  - Findings recorded and resolved: every finding of rounds 1 to 9 is recorded and closed, by a change to the board, a records change or a reason; the Round 10 order and first-recording checks pass.
+
+  What does not hold, or needs the reader's attention:
+  - Rounds 1 to 9 each raised findings (rounds 4 to 9 only record, silk or edge-shape findings). The closing round moved from Round 5 to Round 10 because of design changes the owner asked for (W-15, W-16). The owner's W-13 "Yes" was given for a close at Round 5, not Round 10; the owner has not accepted Round 10 as the closing round in words of his own.
+  - The history command (hw:review-history) still fails four disclosed checks: round structure, round 1 as first recorded, round 3 order, and round 5 as first recorded. They concern how the earlier rounds were recorded and cannot be cleared without rewriting history. W-13 covers the first by name and the others as the same class. The maintenance item SOL-REVIEW-RECORD-HISTORY-READS-PAST-A-MALFORMED-FIRST-RECORDING tracks them.
+  - The reviewer recorded four observations it did not raise, carried in sweep-log.md.
+  - "Did not draw the board" rests on the record's statement; no other check confirms it. Ordering the board is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C6
+    type: satisfies
