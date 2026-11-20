@@ -449,3 +449,12 @@ The classes swept: a record that names Round 8 as the closing round of the layou
 | `BOARD-8` | `layout-plan.md` and `layout-review.md` (frozen rows); `owner-sign-off.md` 1 | 1 new | item 9 of the end-of-work list, the pass on body distance with the courtyard and pad figures under 20.0 mm |
 | `20.0 mm from`, `20.0 mm of hedge 8` | `layout-hedges.md` 3 lines | 0 stale | the hedge's target, stated without a measured figure |
 | `45.33`, `22.41`, `19.59`, `19.82`, `38.44` | `layout-plan.md` line 16 and the amendment note, `layout-review.md` rounds, `owner-sign-off.md` item 9 | 0 stale | the built figures, as the board file gives them |
+
+## 2026-11-20: records name no round as the closing round
+
+The class swept: a live record that names which round of the layout review is the closing round, which goes stale when another round is recorded (layout review findings 7.3 and 9.1). Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, phrases `closing round`, `closes at Round`, `close at Round`, `review closes`, `close of the review`, `Round N is the closing`. The round records of `layout-review.md` and the earlier sections of this file are history and are not edited.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `closing round`, `closes at Round`, `review closes` in `owner-sign-off.md` | 4 | 4 fixed | the W-13 line of the first-look list, W-13's closing note, the keeper's note under W-16 and item 8 of the end-of-work list: each now says the closing round is the last round recorded in `layout-review.md` and carries no round number for it; the Round 5 mentions in W-13 are his words' history and stand |
+| the same phrases elsewhere in the board folder and `docs/sunbeam-em7000/` | 0 | 0 | `hardware/README.md` describes the history command's closing-round check in general terms and names no round |
