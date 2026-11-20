@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C24
+type: criterion
+title: Each reachable connector's discharge level and clamp are declared, or the absence is recorded and accepted
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  For each connector of the board a person can reach, the board's records declare the discharge level the connector is held to and any clamp it carries, or record that no level is declared together with the owner's acceptance.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

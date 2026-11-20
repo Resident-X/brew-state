@@ -1,0 +1,28 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C8-ANALYSIS
+type: evidence
+title: Parts graded; triac revisit of the air figure recorded in the constraints record (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C8)
+status: active
+version: 1
+result: pass
+method: analysis
+observed_at: "2026-11-19T20:12:09Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: circuit-proof.md grading table, derating-policy.yaml, docs/sunbeam-em7000/controller-board-design-constraints.md (Amended 2026-11-20 note, commit 3eb142b4)
+  artifact_version: e422d9f38adb120387fdd2b87d32bfc0cdb08d7e
+text: |
+  Analysis at HEAD e422d9f3 (the revisit is in commit 3eb142b4) of the delivered records against each clause. This supplements the earlier evidence for this leaf; it supersedes the earlier statement that C8's last clause was unmet.
+
+  Clause 1, every part graded against the enclosure air temperature the constraints record holds: circuit-proof.md "Grading every part against the enclosure air" grades the 14 electrical parts and the one mechanical part H1 (not applicable) against 70 degC, and the triacs also against the 100 degC share ceiling. Arithmetic, from the table and W_margins.py: the triacs' steady junction at 70 degC air is 141.4 degC at h = 10 and 168.8 degC at h = 5 against 125 degC, so they do not hold; opto-triacs U911 and U921: 85 - 70 = 15 K of headroom to the 85 degC limit; resistors: 2 mW average against the 150 mW share; varistors: 105 - 70 = 35 K; J931: 59 mA against 3 A.
+
+  Clause 2, the grading is stated in the derating policy record: derating-policy.yaml header states 70 degC at every part, the part-by-part grading location, and (amended 2026-11-20) that the 45 degC working figure is superseded for the triacs' wall path by 25 degC nominal and 40 degC bound while 70 degC governs the board-side parts.
+
+  Clause 3, where no catalogue part holds at that figure, the revisit of the figure is recorded in the constraints record with its reason: docs/sunbeam-em7000/controller-board-design-constraints.md, the blockquote "Amended 2026-11-20, revisit of the figure for the heater wall board's triacs" (line 351). It states that no catalogue part holds at 70 degC on the wall path: the triacs (ST BTA16-800BWRG, Tj 125 degC, 100 degC share) reach 141.4 degC at the provisional 80.0 x 30.0 mm window (168.8 degC at the poor coefficient); the least window for 125 degC at 45 degC is 67 mm or 110 mm. It gives the reason: the wall path ends in the external household air, not the controller's enclosure air (owner, 2026-11-19, quoted), and the figure is revisited to 25 degC nominal and 40 degC bound (owner, "Yes sure"), with both triacs at full power giving 96.4 degC (123.8 degC at h = 5) at 25 degC and 111.4 degC (138.8 degC) at 40 degC. The same note appears at the two other rows that stated the 45 degC figure in that record (the enclosure-air row and the heat-spreader pending row), and the derivation is cited (controller-board-division.md, The heater wall assembly judged; constraints-figures.md).
+
+  Clause 4, the part's rating is not stretched: the note states "no part's rating is stretched"; the triacs keep their 125 degC maker rating and 100 degC share, and the held result is stated at the revisited air (96.4 degC against the 100 degC share at 25 degC, h = 10, no joint resistance; 111.4 degC at 40 degC against 125 degC only), with the unmeasured wall resistance, air coefficient and joint resistance settled by DEL-HW-BRING-UP.C11.
+
+  Stated limit: the revisited 25 and 40 degC figures are the owner's statements, unmeasured, and the triacs hold the 100 degC share only at 25 degC, h = 10, with no added joint resistance; that is recorded in the same note and not hidden. Measuring the enclosure air is out of scope as the criterion says.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C8
+    type: satisfies

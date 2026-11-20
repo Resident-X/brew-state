@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-METHOD-CATALOGUE-HOLDS-MFG-12-SILK-ON-ONE-SURFACE-AND-WORK-11-NO-ZONE-OUTLINE-STEP.C1
+type: criterion
+title: The catalogue holds MFG-12, a judgement item that a silk legend stands wholly on laminate or wholly inside one copper feature
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  docs/board-design-method.md holds the item MFG-12 in the manufacturing area, in the catalogue's item form, judgement kind, cosmetic severity, asking that each silk legend or reference stand wholly on bare laminate or wholly inside one copper feature, excepting by recorded reason a part-body outline a library footprint draws. Its Source names the heater wall board's layout review, round 7, finding 7.1. Out of scope, a measured rule and any board file.
+links:
+  - target: SOL-BOARD-LAYOUT-METHOD-CATALOGUE-HOLDS-MFG-12-SILK-ON-ONE-SURFACE-AND-WORK-11-NO-ZONE-OUTLINE-STEP
+    type: criterion-of

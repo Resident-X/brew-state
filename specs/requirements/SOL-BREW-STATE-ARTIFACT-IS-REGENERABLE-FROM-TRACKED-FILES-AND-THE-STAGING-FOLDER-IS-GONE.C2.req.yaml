@@ -1,0 +1,12 @@
+id: SOL-BREW-STATE-ARTIFACT-IS-REGENERABLE-FROM-TRACKED-FILES-AND-THE-STAGING-FOLDER-IS-GONE.C2
+type: criterion
+title: The verified three-dimensional placement values are carried into the tracked fitting and no part is left unresolved unrecorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every placement value in docs/staging-from-wall-board-session/brew-state-artifact/placements.yaml is held in a tracked table the fitting reads, or its absence is justified in the hardware notes. The main board's crystal Y601 is either given a placement that its datasheet and footprint support or recorded with the reading that leaves it as fitted.
+links:
+  - target: SOL-BREW-STATE-ARTIFACT-IS-REGENERABLE-FROM-TRACKED-FILES-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C10
+type: criterion
+title: The plate's earth bond is stated, with the owner's decision on a dedicated strap
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The case record states how the spreader plate is bonded to protective earth: the mechanism assumed, the plate screwed to the machine's steel wall, earthed through the mains-inlet earth, which the owner confirms, and the four-wire measurement the bring-up task holds it to. It also records the owner's decision, with his words and the date, whether the plate carries its own dedicated earth strap or relies on the wall alone, and the case drawing shows the strap if there is one. Taking the measurement is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C13
+type: criterion
+title: The board's header pins are listed and drawn in the order of the first three ways of the main board's J761
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The board's pin allocation record lists the three pins of its header J301 in the order the main board's drawing of J761 carries for its first three ways, pin 1 +5V_WB, pin 2 HEAT_C_LED_K and pin 3 HEAT_S_LED_K, and the schematic draws the header to that order. Out of scope: the main board's other header ways.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

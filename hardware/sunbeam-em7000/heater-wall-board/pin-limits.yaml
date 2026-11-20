@@ -1,0 +1,128 @@
+# The pin-limit record of the Sunbeam EM7000 heater wall board, read by the pre-order board check
+# (the pin-limit rule and the derated-voltage rule's net voltages). The semiconductors this board places are
+# the two opto-triacs (U911, U921, one catalogue number, C899868, the surface-mount MOC3083SVM, the V option; C111561 was the plain MOC3083SR2M and C23552 the through-hole MOC3083M, both before the V option was chosen on 2026-11-19) and the two triacs (T911, T921, C10065); each
+# is listed, found by its LCSC number, with the limits of each pin connected on a position of the part. The
+# check requires an entry for the opto-triacs (a part whose reference begins U) and does not for the triacs
+# (a reference beginning T is a passive or mechanical part to it); the triac is listed because its pins give the
+# nets they sit on their voltages, which the gate resistors' working voltage is read from. The resistors,
+# varistors, blades and header have no pin limits.
+#
+# Sources (design change of 2026-11-18, open-items.md D7): the onsemi MOC3083M/D Rev. 2 sheet (September 2022,
+# read 2026-11-18: safety and insulation ratings on its page 2, absolute maximum ratings on page 3, characteristics
+# on page 4) for the opto-triacs; the ST DS2114 Rev 11 sheet (May 2018, the BTA16 family, the Internet Archive's copy of
+# st.com bta16.pdf, read 2026-11-18: Table 1 absolute maximum ratings p.2, product summary p.1) for the BTA16-800BWRG
+# triacs. A figure a datasheet does not state is marked 'not stated' in the comment above the pin and the number
+# written is the nearest stated figure, never a guess, as the main board's record does; a pin whose sheet states no
+# voltage limit at all is not given one (the triac gate below).
+#
+# What the keys hold: absolute_max_v and absolute_min_v are the datasheet's absolute maximum ratings for the pin in
+# volts against the board's reference net, which for this board's mains pins is the mains span: a mains pin is written
+# at its off-state voltage rating, either polarity. tolerates_driven_unpowered is true only where the datasheet
+# states a tolerance for the pin with its part unpowered or the part has no supply to lose: the triac and the
+# opto-triac output have none, so their mains pins are true; the LED pins are false (the datasheet is silent).
+#
+# The board has no ground net: the LED current returns through the main board, so no domain is a ground. Mains
+# working voltage is the peak of the 253 V rms top of the declared span, 357.8 V (separation-basis.yaml working_voltage).
+# A domain that rides on another states the figure its host and fraction derive.
+domains:
+  # the LED supply from the main board's isolating link JP761, 4.75 to 5.25 V (main-board/circuit-proof.md, rails; D_margins.py section 5)
+  - name: supply5_wb
+    rail: /+5V_WB
+    highest_voltage_v: 5.25
+  # the two LED returns sunk by the main board's Q761 and Q771 through the 180 ohm R763 and R773: the cathode cannot rise above the +5V_WB figure. One domain serves HEAT_C_LED_K and HEAT_S_LED_K: the steam net takes it from its pin
+  - name: heater_led_cathode
+    rail: /HEAT_C_LED_K
+    highest_voltage_v: 5.25
+  # the neutral-side return RET, the common MT1 side of both triacs and both varistors; mains alternates, so the peak is stated both ways
+  - name: mains_ret
+    rail: /RET
+    highest_voltage_v: 357.8
+  # the element lead landing OUT_C, triac MT2 and opto-triac main terminal pin 6 (swapped with pin 4 on 2026-11-19): with the triac off this net follows the live through the element and never exceeds its peak. One domain serves OUT_C and OUT_S (the steam net takes it from its pins) since both are the switched live of the one supply
+  - name: mains_out
+    rail: /Coffee heater switch/OUT_C
+    highest_voltage_v: 357.8
+  # the opto-triac's other main terminal, pin 4, with the first gate resistor: it follows OUT_x (the opto-triac, off, drops no more than its leakage across its own 800 V rating), so it rides on mains_out at fraction 1
+  - name: mains_opto_mt
+    rail: /Coffee heater switch/HEAT_C_OPTO_MT
+    highest_voltage_v: 357.8
+    rides_on: mains_out
+    fraction: 1
+  # the coffee triac's gate network between R911 and R912: OUT_C - opto-triac - R911 (200 ohm) - this node - R912 (200 ohm) - the gate, which sits about 1.3 V (VGT max) above RET once the opto-triac conducts, so the two equal resistors share the peak, 0.5 x 357.8 = 178.9 V each if the opto-triac fires at the line peak (a false trigger; at a normal firing about 10 V each), as the main board's pump gate networks are read. Amended 2026-11-18 (round 4 finding 4.2): 178.9 V is the stress and not a figure within the part's rating; UNI-ROYAL V.3 p.5 gives RCWV 7.07 V and overload voltage 17.7 V for 200 ohm at 1/4 W, 200 V and 400 V being maxima, and no pulse rating (circuit-proof.md row (b))
+  - name: mains_gate_c
+    rail: /Coffee heater switch/HEAT_C_GATE_R
+    highest_voltage_v: 178.9
+    rides_on: mains_out
+    fraction: 0.5
+  # the steam triac's gate network between R921 and R922: as the coffee one
+  - name: mains_gate_s
+    rail: /Steam heater switch/HEAT_S_GATE_R
+    highest_voltage_v: 178.9
+    rides_on: mains_out
+    fraction: 0.5
+  # the coffee triac gate, driven only through the 400 ohm network: its voltage over MT1 is VGT, 1.3 V at most (BTA16 BW column, Table 4 p.3), written as the fraction 0.0037 of the 357.8 V peak, 1.32386 V, the smallest fraction that covers it; it rides on mains_out so that a gate resistor's two ends are read against one host. The triac's gate pin has no entry below (the sheet states no voltage limit for it), so each gate net is declared as a rail
+  - name: mains_triac_gate
+    rail: /Coffee heater switch/HEAT_C_TRIAC_G
+    highest_voltage_v: 1.32386
+    rides_on: mains_out
+    fraction: 0.0037
+  # the steam triac gate: as the coffee one
+  - name: mains_triac_gate_s
+    rail: /Steam heater switch/HEAT_S_TRIAC_G
+    highest_voltage_v: 1.32386
+    rides_on: mains_out
+    fraction: 0.0037
+parts:
+  # opto-triacs: U911, U921 (onsemi MOC3083SVM surface-mount V option, MOC3083M/D Rev. 2)
+  # Pin 3 (no connection) and pin 5 (no connection, the triac substrate, not connected) have no entry.
+  - lcsc: C899868
+    source:
+      document: "MOC3081M, MOC3082M, MOC3083M 6-Pin DIP Zero-Cross (the family sheet also covers the surface-mount option) Triac Driver Optocoupler (800 V Peak), onsemi, publication order number MOC3083M/D"
+      revision: "Rev. 2, September 2022"
+      section: "Absolute Maximum Ratings (page 3): IF 60 mA, VR 6 V, VDRM 800 V, TOPR -40 to 85 degC, TJ -40 to 100 degC; Electrical Characteristics (page 4): VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V"
+      read_on: 2026-11-18
+    pins:
+      # LED anode. The reverse voltage VR is 6 V; the forward limit is a current (IF 60 mA continuous, the emitter's 120 mW at 25 degC derating 1.41 mW/degC), set by the drive resistor on the main board and judged in circuit-proof.md. The anode is held to the +5V_WB ceiling.
+      - pin: "1"
+        domain: supply5_wb
+        absolute_max_v: 5.25
+        absolute_min_v: -6
+        tolerates_driven_unpowered: false
+      # LED cathode. May stand above the anode by VR = 6 V at most: 5.25 V + 6 V = 11.25 V.
+      - pin: "2"
+        domain: heater_led_cathode
+        absolute_max_v: 11.25
+        absolute_min_v: 0
+        tolerates_driven_unpowered: false
+      # Main terminal. Off-state output terminal voltage VDRM 800 V (either polarity); the sheet states a peak blocking current of 500 nA at 800 V. Pin 4 is on the gate chain (HEAT_x_OPTO_MT) since 2026-11-19.
+      - pin: "4"
+        domain: mains_opto_mt
+        absolute_max_v: 800
+        absolute_min_v: -800
+        tolerates_driven_unpowered: true
+      # Main terminal. VDRM 800 V. Pin 6 is on OUT_x since 2026-11-19.
+      - pin: "6"
+        domain: mains_out
+        absolute_max_v: 800
+        absolute_min_v: -800
+        tolerates_driven_unpowered: true
+  # triacs: T911, T921 (STMicroelectronics BTA16-800BWRG, DS2114 Rev 11)
+  - lcsc: C10065
+    source:
+      document: "T1610, T1635, T1650, BTA16, BTB16 Snubberless, logic level and standard 16 A Triacs, STMicroelectronics, DS2114 (BTA16-800BWRG is the BTA16 BW grade, 800 V, insulated TO-220AB)"
+      revision: "Rev 11, May 2018"
+      section: "Product summary (p.1): VDRM/VRRM 600, 800 V by grade; Table 1 Absolute maximum ratings (p.2): VDSM/VRSM VDRM/VRRM + 100 V (900 V), IGM 4 A (20 us, Tj 125 degC), PG(AV) 1 W; Table 4 (p.3): VGT 1.3 V max (BW column); Table 8 (p.15) and Table 9 (p.16): BTA16-800BW, BTA16-800BWRG"
+      read_on: 2026-11-18
+    pins:
+      # A1 (MT1), on RET. VDRM and VRRM 800 V either polarity (the non-repetitive 900 V of VDSM is for 10 ms).
+      - pin: "1"
+        domain: mains_ret
+        absolute_max_v: 800
+        absolute_min_v: -800
+        tolerates_driven_unpowered: true
+      # A2 (MT2), on OUT_x. VDRM and VRRM 800 V either polarity.
+      - pin: "2"
+        domain: mains_out
+        absolute_max_v: 800
+        absolute_min_v: -800
+        tolerates_driven_unpowered: true
+      # G, gate: no entry. The sheet states no absolute maximum for the gate voltage, and no voltage figure applies to it: the only gate maxima it states are currents, IGM 4 A (20 us, Tj 125 degC) and PG(AV) 1 W (Table 1 p.2). The earlier record wrote 600 V here, the main terminals' voltage, to give the form a number; that was not a gate figure and the 800 V of the main terminals is not either. The gate is held to about 1.3 V (VGT max, Table 4 p.3) over MT1 by the 400 ohm network, 0.9 A at most against IGM 4 A (circuit-proof.md, row b). The gate net's voltage is the domain mains_triac_gate above, read from the net and not from a pin limit.

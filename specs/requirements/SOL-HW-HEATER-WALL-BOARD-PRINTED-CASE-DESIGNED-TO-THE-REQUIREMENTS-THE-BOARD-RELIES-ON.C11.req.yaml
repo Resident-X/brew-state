@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C11
+type: criterion
+title: The fitting order and the reach of every fixing are stated
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The case record states the order in which the plate, case, board and lid are fitted and removed, and shows that the wall bolts stand outside the case so the plate, case and board leave the wall as one unit, that each triac tab screw is reached by a driver through the case, and that the blade terminals stay reachable with the lid on. Making the parts and fitting them to the machine are out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

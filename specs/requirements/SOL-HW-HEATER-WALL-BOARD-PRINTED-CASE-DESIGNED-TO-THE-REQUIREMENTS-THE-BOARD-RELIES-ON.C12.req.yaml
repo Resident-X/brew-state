@@ -1,0 +1,16 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C12
+type: criterion
+title: The plate's drawing, its interface materials and the depth the case adds are recorded for the printed-case form
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record gives the spreader plate's drawing in the printed-case form, a flat plate with nothing cut from it, how the plate is made or sourced, and the interface material of the triac faces to the plate and of the plate to the wall, since none is in the catalogue and none is priced. It states the depth the case and plate add behind the board and grades it as unconfirmed for the owner to check at assembly, and states the order in which the board, case and plate are fitted and removed. It replaces what the earlier ear-and-bracket form recorded for these (the bracket's drawing, its spacers and its mounts); the thermal analysis of the triacs' interface to the wall is the assembly judgement's and is out of scope, as is making or sourcing the plate.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of
+  - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5
+    type: supersedes
+  - target: SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C3
+    type: supersedes

@@ -1,0 +1,28 @@
+(version 1)
+# Every rule here has its row, figure and source in design-rules.md beside this file.
+(rule "Mains separation"
+	(condition "A.hasNetclass('Mains') && !B.hasNetclass('Mains')")
+	(constraint clearance (min 3.0mm))
+	(constraint creepage (min 10.0mm)))
+(rule "MainsTrunk track width"
+	(condition "A.hasNetclass('MainsTrunk')")
+	(constraint track_width (min 5.0mm)))
+(rule "MainsBranch track width"
+	(condition "A.hasNetclass('MainsBranch')")
+	(constraint track_width (min 2.05mm)))
+(rule "Supply5V track width"
+	(condition "A.hasNetclass('Supply5V')")
+	(constraint track_width (min 0.2mm)))
+(rule "Heavy mains pads solid"
+	(condition "A.Type == 'Pad' && (A.hasNetclass('MainsTrunk') || A.hasNetclass('MainsBranch'))")
+	(constraint zone_connection solid))
+(rule "Corners"
+	(constraint track_angle (min 135)))
+(rule "Jogs"
+	(constraint track_segment_length (min 1mm)))
+(rule "mains region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('mains') && A.Reference != 'J911' && A.Reference != 'J921' && A.Reference != 'J941' && A.Reference != 'R911' && A.Reference != 'R912' && A.Reference != 'R921' && A.Reference != 'R922' && A.Reference != 'RV911' && A.Reference != 'RV921' && A.Reference != 'T911' && A.Reference != 'T921' && A.Reference != 'U911' && A.Reference != 'U921'")
+	(constraint disallow footprint))
+(rule "low voltage region parts"
+	(condition "A.Type == 'Footprint' && A.intersectsArea('low voltage') && A.Reference != 'J931' && A.Reference != 'U911' && A.Reference != 'U921' && A.Reference != 'H1'")
+	(constraint disallow footprint))

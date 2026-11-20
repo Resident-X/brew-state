@@ -1,0 +1,56 @@
+# Verified 3D placement corrections and render settings for the Brew State artifact.
+# Offsets are in millimetres in the model's own frame, rotations in degrees about each axis, as the board file's
+# model entry holds them. These came from verification work against the parts' datasheets and footprints.
+# They were applied only in the artifact pipeline, not in hardware/tools/fetch_3d_models.py.
+
+wall_board:
+  triacs:
+    designators: [T911, T921]
+    vendor_model: LCSC C10065
+    rotate: [0, 0, 0]
+    offset: [2.54, 0.6425, 1.295]     # corrected from 3.145 (the value it replaced)
+    reason: >-
+      The tab-hole centre must stand 17.25 mm above the board face. The body underside is 4.83 mm above the
+      board. The maker's sheet (ST DS2114 rev 11, page 8) puts the hole centre about 12.75 mm above the body
+      underside.
+  opto_triacs:
+    designators: [U911, U921]
+    rotate_z: 90                      # was -90
+    offset: [0, 0, 1.85]
+  blade_tabs:
+    designators: [J911, J921, J941]
+    vendor_model: TE 63849-1, LCSC C86469
+    lower_by_mm: 1.52                 # model z 7.83 becomes 6.31
+
+main_board:
+  blade_tabs:
+    designators: [J101, J102, J103, J106, J107, J108, J109, J110]
+    vendor_model: TE 63849-1, LCSC C86469
+    lower_by_mm: 1.52                 # model z 7.83 becomes 6.31
+  relay:
+    designators: [K201]
+    part: HF115F-I
+    lower_by_mm: 2.04
+  turned_180:
+    designators: [U601, U602, U701, U711]
+    model_rotation_z: {from: -90, to: 90}
+  unresolved:
+    - designator: Y601
+      state: >-
+        Not fixed. The model's pin-1 dot is lower left and the footprint's pin 1 is lower right, and no turn
+        fits. Check the maker's datasheet and the footprint before choosing.
+  hero_render:
+    tool: KiCad render
+    size_px: [3200, 2200]
+    background: transparent
+    camera_rotate_deg: [-43, 0, 30]
+    projection: perspective
+    zoom: 0.615
+    fit: >-
+      Best fit within about 1.5 percent of the original hero; proportions 1.31 against 1.29.
+    crop: {width_px: 1600, height_px: 1301}
+    format: WebP
+
+model_packing:
+  method: lossless, deflate decoded in the browser
+  sizes_mb: {main_board: 2.12, wall_board: 0.20}

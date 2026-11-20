@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C22
+type: criterion
+title: The wall's steel grade and thickness are recorded at the cut and the triacs' thermal judgement holds on them
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  The steel's grade (magnetic or not) and thickness at the owner's cut are on record, and the triacs' thermal judgement of the wall assembly, stated with the thermal resistance of the bolted joint, holds on them within the limits the first judgement was held to; where it does not, the bracket's leg or the cut has changed and the owner has accepted the change.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

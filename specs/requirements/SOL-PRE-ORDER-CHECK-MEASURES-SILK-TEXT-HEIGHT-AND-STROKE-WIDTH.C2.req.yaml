@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-MEASURES-SILK-TEXT-HEIGHT-AND-STROKE-WIDTH.C2
+type: criterion
+title: The board rules table and the hardware notes state the silk rule's line and keys in place of the wording that the layout rule check enforces the minimums
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+scope: docs/board-design-method.md rules-table wording and hardware/README.md only
+text: "The method's rules-table wording for the silkscreen text height and line width rows, and the hardware notes' description of the pre-order check, state that the pre-order check measures both minimums and name the violation line it prints and the record key that states an acceptance, with no statement that the layout rule check enforces them. Out of scope: every other board-wide minimum's wording, which the layout rule check does report, and any board's own rules table, which follows the method. "
+links:
+  - target: SOL-PRE-ORDER-CHECK-MEASURES-SILK-TEXT-HEIGHT-AND-STROKE-WIDTH
+    type: criterion-of

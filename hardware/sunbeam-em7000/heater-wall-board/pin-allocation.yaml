@@ -1,0 +1,26 @@
+# The pin allocation record of the Sunbeam EM7000 heater wall board, read by the pre-order board
+# check (connectivity and pin_allocation rules).
+#
+# The board places no controller (controller: none). Every entry is a channel or rail that crosses
+# the three-way header J931 to positions 1 to 3 of the main board's ten-way J761. A far channel is
+# named as the main board's record names it (main-board/pin-allocation.yaml lists each with its
+# controller pin); the net is this board's own name for the conductor. The cable is not compared pin
+# for pin by the check. The mains-presence confirms stay off this board, so J761's other pins are
+# not on this cable.
+controller: none
+channels:
+  - channel: wb_5v_supply
+    net: +5V_WB
+    connector: J931
+    connector_pin: '1'
+    rail: +5V_WB
+  - channel: heat_c_drv
+    net: HEAT_C_LED_K
+    connector: J931
+    connector_pin: '2'
+    far_channel: heat_c_drv
+  - channel: heat_s_drv
+    net: HEAT_S_LED_K
+    connector: J931
+    connector_pin: '3'
+    far_channel: heat_s_drv

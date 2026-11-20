@@ -1,0 +1,28 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C9-INSPECTION
+type: evidence
+title: Selected triacs, opto-triacs, tab-hole height and varistors in schematic and layout (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C9)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: heater-wall-board schematic, parts-specification.yaml, layout-plan.md BOARD-6/7/9, layout-review.md round 4, layout-hedges.md
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection at HEAD db73f4b6 of the schematic, parts specification, layout and layout review (round 4, the board's design files unchanged since 60c665fc; commits after it change records and test fixtures only) against each clause.
+
+  Parts selected, in the schematic and the layout: the triacs T911 and T921 are ST BTA16-800BWRG (LCSC C10065), the opto-triacs U911 and U921 the surface-mount onsemi MOC3083SVM (C899868, V option; note after round 14 and owner-sign-off.md W-11), the varistors RV911 and RV921 07D471K, as parts-specification.yaml positions and the drawn fields (compared by script in rounds 11 and 14: all fields equal) state; the footprints heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads and heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M are in heater-wall-board.pretty and placed on the board. The gate's hw:verify (task check:round, exit 0) ended "RESULT | PASS | all 7 designs passed" with the wall board PASS, so the placed footprints equal the schematic's fields.
+
+  Tab hole at the height fixed on the spreader plate, with the board's fixing: the triacs stand upright at rotation 0 with the tab face toward the plate plane (the board's top edge), the pad row 2.86 mm inside it, at the 24.6 mm tab spacing (T921 pin 2 at x 32.60, T911 pin 2 at x 57.20), with the tab hole 17.25 mm above the board face and the leads straight (schematic-spec.yaml, sheets 100 and 200; layout-hedges.md hedges 8 and 16; the footprint's tab face 2.86 mm behind the pad row). The plate is held to the board by the printed case: one mounting hole H1 at (61.50, 92.50), and the case tray barrier of W-10 (owner-sign-off.md). layout-review.md round 4, rows BOARD-6 and BOARD-7, both pass on the placement and 3D views and the facts file, citing these coordinates.
+
+  Clamps as the judgements kept or dropped them, the varistors being kept: decision D7 (varistors kept, owner acceptance W-3 in his words on 2026-11-18); RV911 and RV921 are on the schematic across each triac and on the board; BOARD-9 passes (both stand more than 5 mm from every low-voltage part).
+
+  A departure from a judged figure is a finding recorded and resolved, not a silent change: the departures this board has are recorded (the opto-triac package change and its re-confirmation, W-9/W-11; the plate's provisional size; findings in layout-review.md rounds 1 to 4 and open-items.md).
+
+  Stated limits: the 17.25 mm tab-hole height is the figure of the hedges and the schematic notes and of the part's geometry; the layout review verifies the pad row, spacing and orientation that fix it, not a measurement of the hole height on a built board. Making the plate and the case, and redoing the judgements, are out of scope as the criterion states.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C9
+    type: satisfies

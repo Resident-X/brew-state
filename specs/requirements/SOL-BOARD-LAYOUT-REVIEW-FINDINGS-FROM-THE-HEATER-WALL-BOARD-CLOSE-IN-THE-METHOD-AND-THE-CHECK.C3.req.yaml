@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3
+type: criterion
+title: The pre-order check fails a Board Setup minimum below the maker's recommended figure unless the record states what forces it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A design whose Board Setup minimum is below the recommended_mm the manufacturer limits record gives fails, naming the setting and both figures, and a design whose record carries a below_recommended entry stating the figure, what forces it and the item it rests on passes; an entry that names no cause fails. Tests cover each case with synthetic designs and records, and the proof design's copy carries a seeded fault for the failure and one for the entry with no cause. Out of scope - limits the record gives no recommended figure for.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK
+    type: criterion-of

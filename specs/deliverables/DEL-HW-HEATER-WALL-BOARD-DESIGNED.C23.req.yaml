@@ -1,0 +1,13 @@
+id: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C23
+type: criterion
+title: Each mains gate-network resistor's pulse and working-voltage rating covers its stress or the residual is recorded and accepted
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+closes_by: cascade
+text: |
+  Each resistor in a mains gate network of the board has a maker-sourced pulse rating and rated working voltage that cover the stress the board puts on it, or the stress, the part's missing rating and the owner's acceptance of the residual are recorded together with the accepted exception the pre-order check reads.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED
+    type: criterion-of

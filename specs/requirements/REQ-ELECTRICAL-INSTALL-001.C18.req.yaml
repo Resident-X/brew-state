@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C18
+type: criterion
+title: A surface a person can touch stays within a touch-temperature limit while the machine runs at sustained full heat
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A person can touch the machine's outer surfaces while it runs, and parts that dissipate heat against the machine's wall or casing warm the outside of it. The limit is the touch-temperature limit the governing standard sets for the surface's material, contact duration and the appliance's class, taken from that standard or from a cited, freely available derivation of it; where none can be sourced, the owner's recorded acceptance of the absence stands in its place and the figure is still recorded. The surface's temperature is read on the machine running at sustained full heat with the enclosure closed, hottest at the patch the heat-dissipating parts warm, and corrected to the top of the declared ambient span, because a calculated figure alone rests on a heat-transfer coefficient and a duty that the machine itself settles.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

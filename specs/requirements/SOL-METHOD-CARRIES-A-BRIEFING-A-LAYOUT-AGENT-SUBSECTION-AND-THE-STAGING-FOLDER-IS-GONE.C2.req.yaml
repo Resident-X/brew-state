@@ -1,0 +1,12 @@
+id: SOL-METHOD-CARRIES-A-BRIEFING-A-LAYOUT-AGENT-SUBSECTION-AND-THE-STAGING-FOLDER-IS-GONE.C2
+type: criterion
+title: The staging folder for the layout agent briefing no longer exists
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The folder docs/staging-from-wall-board-session/layout-agent-briefing/ is absent from the repository, the staging folder's README no longer lists it, and the rulings it held are found in the method's subsection.
+links:
+  - target: SOL-METHOD-CARRIES-A-BRIEFING-A-LAYOUT-AGENT-SUBSECTION-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of

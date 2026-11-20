@@ -1,0 +1,70 @@
+# The catalogue extract of the Sunbeam EM7000 heater wall board: one entry for each distinct LCSC catalogue
+# number the parts-specification.yaml gives a position that this record could read.
+#
+# All six numbers were read from JLCPCB's parts library through the search service the main board's extract
+# names (the catalogue number posted as the keyword, one exact match each), on 2026-11-19, which is this
+# extract's read_on and each entry's lifecycle read_on. library_class is the service's `expand`, which this
+# repository writes `extended` (the main board's extract does the same); stock is `stockCount`; unit_price is
+# `initialPrice`; category is `firstSortName`, written only for C899868, the opto-triac, whose first category
+# name is the one the check lists as a part with no supply pin (hardware/README.md, The no-supply categories).
+#
+# C899868 (onsemi MOC3083SVM, the V-option surface-mount opto-triacs U911 and U921, DIN EN/IEC 60747-5-5 approved)
+# replaces C111561 (the plain MOC3083SR2M, which the layout agent first used, stock 13049 at 0.7727 USD) and C23552
+# (onsemi MOC3083M, the through-hole part, which the service showed at stock 0 on 2026-11-19). Same die, ratings and
+# package case 646BY: the family sheet onsemi MOC3081M / MOC3082M / MOC3083M covers all of them. No position uses
+# C111561 or C23552 any more, so their entries are removed, as the main board's extract removes an entry no position uses.
+#
+# The extract allows itself 14 days (max_age_days), so it is stale after 2026-12-03 and is read again before the order.
+read_on: 2026-11-19
+max_age_days: 14
+source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), read on 2026-11-19 for the six catalogue numbers of this board
+entries:
+- lcsc: C18002
+  library_class: extended
+  stock: 117518
+  unit_price: 0.005
+  lifecycle:
+    status: no source publishes one
+    source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+    read_on: 2026-11-19
+- lcsc: C86469
+  library_class: extended
+  stock: 192121
+  unit_price: 0.0678
+  lifecycle:
+    status: no source publishes one
+    source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+    read_on: 2026-11-19
+- lcsc: C2937625
+  library_class: extended
+  stock: 1020022
+  unit_price: 0.02
+  lifecycle:
+    status: no source publishes one
+    source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+    read_on: 2026-11-19
+- lcsc: C10065
+  library_class: extended
+  stock: 2180
+  unit_price: 1.0281
+  lifecycle:
+    status: no source publishes one
+    source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+    read_on: 2026-11-19
+- lcsc: C899868
+  library_class: extended
+  category: Triac, SCR Output Optoisolators
+  stock: 386
+  unit_price: 1.5748
+  lifecycle:
+    status: no source publishes one
+    source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+    read_on: 2026-11-19
+- lcsc: C49072860
+  library_class: extended
+  stock: 348361
+  unit_price: 0.031
+  lifecycle:
+    status: no source publishes one
+    source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
+    read_on: 2026-11-19

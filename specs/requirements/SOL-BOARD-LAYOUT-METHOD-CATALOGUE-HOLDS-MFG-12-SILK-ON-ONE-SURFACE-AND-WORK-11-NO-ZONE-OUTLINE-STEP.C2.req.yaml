@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-METHOD-CATALOGUE-HOLDS-MFG-12-SILK-ON-ONE-SURFACE-AND-WORK-11-NO-ZONE-OUTLINE-STEP.C2
+type: criterion
+title: The catalogue holds WORK-11, a judgement item that a zone outline carries no offset or step under 1 mm except a 45-degree chamfer
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  docs/board-design-method.md holds the item WORK-11 in the workmanship area, in the catalogue's item form, judgement kind, cosmetic severity, asking that a zone outline carry no offset or step under 1 mm other than a 45-degree chamfer at a corner or a neck. Its Source names the heater wall board's layout review, round 7, finding 7.2. Out of scope, a measured rule and any board file.
+links:
+  - target: SOL-BOARD-LAYOUT-METHOD-CATALOGUE-HOLDS-MFG-12-SILK-ON-ONE-SURFACE-AND-WORK-11-NO-ZONE-OUTLINE-STEP
+    type: criterion-of

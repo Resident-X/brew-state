@@ -1,0 +1,374 @@
+(kicad_sch
+	(version 20250610)
+	(generator "konnect")
+	(generator_version "10.0")
+	(uuid "04043b83-db29-4616-af37-34bc2be53a4f")
+	(paper "A4")
+	(lib_symbols)
+	(wire
+		(pts
+			(xy 111.76 33.02)
+			(xy 132.08 33.02)
+		)
+		(uuid "1c93b36d-97a0-47a5-bb75-0eb4724567f6")
+	)
+	(wire
+		(pts
+			(xy 111.76 35.56)
+			(xy 132.08 35.56)
+		)
+		(uuid "4750d2dc-5e7d-4b2d-ae64-a12946973519")
+	)
+	(wire
+		(pts
+			(xy 111.76 38.1)
+			(xy 114.3 38.1)
+		)
+		(uuid "25cfc258-f361-4ea7-a01f-75be7fba735f")
+	)
+	(wire
+		(pts
+			(xy 213.36 38.1)
+			(xy 215.9 38.1)
+		)
+		(uuid "24270ac7-6743-46fa-9482-381d9476c835")
+	)
+	(wire
+		(pts
+			(xy 213.36 114.3)
+			(xy 215.9 114.3)
+		)
+		(uuid "e213c13f-22ea-4a49-a594-1fcf77935883")
+	)
+	(wire
+		(pts
+			(xy 111.76 114.3)
+			(xy 114.3 114.3)
+		)
+		(uuid "2d26d606-ea44-499d-8cc1-564503465b7f")
+	)
+	(wire
+		(pts
+			(xy 111.76 116.84)
+			(xy 114.3 116.84)
+		)
+		(uuid "0a73812d-dc1a-4270-ae96-d819b72ec4b3")
+	)
+	(wire
+		(pts
+			(xy 111.76 119.38)
+			(xy 114.3 119.38)
+		)
+		(uuid "58fefe98-8b0a-4367-abd9-9355e2952bb9")
+	)
+	(label "RET"
+		(at 116.84 33.02 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "655a1b90-b863-4041-92af-bd14330c943f")
+	)
+	(label "+5V_WB"
+		(at 116.84 35.56 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "16acd3a5-4751-4481-93d7-42e7a0096abf")
+	)
+	(label "HEAT_C_LED_K"
+		(at 114.3 38.1 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "90944dda-edac-4753-a63b-f9e5188a0e49")
+	)
+	(label "HEAT_S_LED_K"
+		(at 215.9 38.1 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "ddd6d5f5-f942-4383-b3ff-59be835155d2")
+	)
+	(label "RET"
+		(at 215.9 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "344695bb-9ad6-4640-83aa-2198c9a89b00")
+	)
+	(label "+5V_WB"
+		(at 114.3 114.3 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "2c438825-994b-4e7e-ad73-d210f4dcce8c")
+	)
+	(label "HEAT_C_LED_K"
+		(at 114.3 116.84 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "0d6dfef4-3384-48ce-9a86-3154a35181ec")
+	)
+	(label "HEAT_S_LED_K"
+		(at 114.3 119.38 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left bottom)
+		)
+		(uuid "fd44b1e4-3f6f-4b22-8766-ba0298a2aec7")
+	)
+	(sheet
+		(at 30.48 30.48)
+		(size 81.28 50.8)
+		(fields_autoplaced)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0)
+		)
+		(uuid "ca4dbc98-b870-4ee0-ae0d-c3b97c94cd1d")
+		(property "Sheetname" "Coffee heater switch"
+			(at 30.48 29.845 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "100-coffee-heater-switch.kicad_sch"
+			(at 30.48 81.115 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "RET" bidirectional
+			(at 111.76 33.02 0)
+			(uuid "e0401174-bd3d-4b77-8cfa-dae15179a96a")
+		)
+		(pin "+5V_WB" input
+			(at 111.76 35.56 0)
+			(uuid "cdbc4dfd-7237-4ab1-a2ed-0d46d815f850")
+		)
+		(pin "HEAT_C_LED_K" output
+			(at 111.76 38.1 0)
+			(uuid "f4d84aae-3d02-40e2-8fae-4bcb47db73be")
+		)
+		(instances
+			(project "heater-wall-board"
+				(path "/04043b83-db29-4616-af37-34bc2be53a4f"
+					(page "2")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 132.08 30.48)
+		(size 81.28 50.8)
+		(fields_autoplaced)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0)
+		)
+		(uuid "0f42e050-7954-4807-9cde-b038d9edbba9")
+		(property "Sheetname" "Steam heater switch"
+			(at 132.08 29.845 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "200-steam-heater-switch.kicad_sch"
+			(at 132.08 81.115 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "RET" bidirectional
+			(at 132.08 33.02 180)
+			(uuid "9789a0d3-c725-49a4-8e22-31b93c9c10e6")
+		)
+		(pin "+5V_WB" input
+			(at 132.08 35.56 180)
+			(uuid "423ec74a-78f0-4160-94c8-1d579d15ceef")
+		)
+		(pin "HEAT_S_LED_K" output
+			(at 213.36 38.1 0)
+			(uuid "06c6bd3f-7c14-4238-84fc-2d990e7cd9cb")
+		)
+		(instances
+			(project "heater-wall-board"
+				(path "/04043b83-db29-4616-af37-34bc2be53a4f"
+					(page "3")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 30.48 111.76)
+		(size 81.28 50.8)
+		(fields_autoplaced)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0)
+		)
+		(uuid "985f7f40-53a4-4976-b009-ad7089f78077")
+		(property "Sheetname" "Low-voltage header"
+			(at 30.48 111.125 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "300-low-voltage-header.kicad_sch"
+			(at 30.48 162.395 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "+5V_WB" input
+			(at 111.76 114.3 0)
+			(uuid "d4df92ba-db0c-46a7-bc81-23a1e3503652")
+		)
+		(pin "HEAT_C_LED_K" input
+			(at 111.76 116.84 0)
+			(uuid "49ef46ff-4233-4174-b3e0-43b2ce5f574c")
+		)
+		(pin "HEAT_S_LED_K" input
+			(at 111.76 119.38 0)
+			(uuid "81cf78fd-05db-4553-af42-6007fea4ec2c")
+		)
+		(instances
+			(project "heater-wall-board"
+				(path "/04043b83-db29-4616-af37-34bc2be53a4f"
+					(page "4")
+				)
+			)
+		)
+	)
+	(sheet
+		(at 132.08 111.76)
+		(size 81.28 50.8)
+		(fields_autoplaced)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0)
+		)
+		(uuid "76efd80a-83a8-4a90-946b-283a52f044e9")
+		(property "Sheetname" "Return landing"
+			(at 132.08 111.125 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "400-return-landing.kicad_sch"
+			(at 132.08 162.395 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "RET" bidirectional
+			(at 213.36 114.3 0)
+			(uuid "3597238f-110e-4428-8e58-e444cca0b9e1")
+		)
+		(instances
+			(project "heater-wall-board"
+				(path "/04043b83-db29-4616-af37-34bc2be53a4f"
+					(page "5")
+				)
+			)
+		)
+	)
+	(embedded_fonts no)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)

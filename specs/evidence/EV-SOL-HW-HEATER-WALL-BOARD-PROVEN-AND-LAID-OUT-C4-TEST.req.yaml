@@ -1,0 +1,26 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C4-TEST
+type: evidence
+title: Wall board header channels resolve to the main board's controller-pin channels (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C4)
+status: superseded
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T14:05:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_no_controller.py (far-channel tests) and task hw:verify on hardware/sunbeam-em7000/heater-wall-board
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Tests, from the build round's one gate (task check:round at HEAD db73f4b6, exit 0, hw:verify and hw:test:round passed; log the round gate's log), and the real record.
+
+  The record, hardware/sunbeam-em7000/heater-wall-board/pin-allocation.yaml: controller none; channel wb_5v_supply (net +5V_WB, J931 pin 1, rail +5V_WB); channel heat_c_drv (net HEAT_C_LED_K, J931 pin 2, far_channel heat_c_drv); channel heat_s_drv (net HEAT_S_LED_K, J931 pin 3, far_channel heat_s_drv). It carries no controller pin and no converter-input map.
+
+  Resolution against the main board: hw:verify (same gate) ended "RESULT | PASS | all 7 designs passed", the wall board "DESIGN | ... heater-wall-board.kicad_pro | PASS", so each far channel found a channel of hardware/sunbeam-em7000/main-board/pin-allocation.yaml that carries a controller pin (heat_c_drv: PD11, heat_s_drv: PD12 in that record).
+
+  The tests that would catch a regression, test_board_check_no_controller.py (44 tests, "ok" in hw:test:round): test_a_far_channel_that_no_record_lists_fails_naming_the_channel (a far channel misspelled in the wall record, pump_drivee, fails naming it; this is the failure a disagreeing record produces), test_a_channel_another_record_lists_without_a_controller_pin_is_not_a_far_channel, test_a_channel_another_record_lists_with_a_connector_and_no_controller_pin_fails_naming_it, test_far_channels_that_another_design_lists_with_a_controller_pin_pass, test_an_entry_with_neither_a_far_channel_nor_a_rail_fails_naming_the_channel, test_an_entry_with_both_a_far_channel_and_a_rail_fails_naming_the_channel, test_an_entry_carrying_a_controller_pin_fails_naming_the_channel, test_a_listed_channel_the_design_lacks_fails_naming_the_channel, test_a_net_that_does_not_reach_its_connector_pin_fails_naming_the_channel. test_board_check_kicad_no_controller (5 tests, ok) runs the far-channel case in a machine folder through KiCad.
+
+  The firmware's pin and sensor checks (firmware/tools/tests/test_pin_assignment_checks.py, test_sensor_assignment_checks.py) are in the host tier of the same gate, which passed; they read the main board's pin allocation record, which is the record the wall board's far channels resolve to. Comparing the cable between the two headers pin for pin is out of scope as the criterion says.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C4
+    type: satisfies

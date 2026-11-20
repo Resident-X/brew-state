@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C2
+type: criterion
+title: The catalogue holds a judgement item that a connector's pins and terminals carry a silk legend naming what each is for
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The Layout practice catalogue holds MFG-11 in the manufacturing area in the catalogue's item form, judgement-kind and quality-severity, applying when the board carries a connector or terminal whose pins or terminals are not identical by position, with its Source naming the review's finding 1.10. Out of scope - the plan row a board appends for it.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK
+    type: criterion-of

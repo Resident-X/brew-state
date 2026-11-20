@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH.C4
+type: criterion
+title: Each recommended_mm figure in the limits records cites the maker's row it is read from
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every recommended_mm in the main board's and the heater wall board's manufacturer limits records carries a citation of its own to the row of docs/board-manufacturer-jlcpcb.md it equals (the two-layer annular ring 0.25 mm, the multilayer annular ring 0.20 mm and the hole-to-track 0.35 mm) with that row's read date, and a test or the record's own check holds the figure equal to the row. Out of scope: figures with no recommended value.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-RECOMMENDED-FIGURE-TOOLING-AND-RECORD-POLISH
+    type: criterion-of

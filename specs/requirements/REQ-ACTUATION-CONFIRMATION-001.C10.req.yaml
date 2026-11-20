@@ -1,0 +1,12 @@
+id: REQ-ACTUATION-CONFIRMATION-001.C10
+type: criterion
+title: A heater commanded off that still carries current is detected down to the current a partly failed part of its chain passes
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  A part of a heater's switching chain that has partly failed, a voltage clamp conducting through the heating element for example, passes a current well below the heater's rated current while every command reads off and every thermal check reads normal. The machine detects a heater commanded off that carries current, down to the lowest current such a failure passes in this machine as recorded in the heater chain's design records, and treats it as an output stuck on. A single half cycle of conduction does not count as a detection, and a detection withdraws the supply to the loads.
+links:
+  - target: REQ-ACTUATION-CONFIRMATION-001
+    type: criterion-of

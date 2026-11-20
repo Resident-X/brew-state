@@ -1,0 +1,27 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C7-INSPECTION
+type: evidence
+title: Pending constraints figures recorded or kept pending with their acts (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C7)
+status: superseded
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/constraints-figures.md, open-items.md, docs/sunbeam-em7000/controller-board-design-constraints.md (Pending marks)
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection at HEAD db73f4b6 of hardware/sunbeam-em7000/heater-wall-board/constraints-figures.md (the board's record of every pending mark of docs/sunbeam-em7000/controller-board-design-constraints.md held against it), open-items.md and the constraints record's Pending marks section.
+
+  The file has twelve rows (the eleven below and the outer-face temperature of the steel wall, a suggestion of review round 8 that no criterion asks for and that the owner's end-of-work list carries). Each states its source and finding for this board and a mark (Ended, Kept, or Ended-and-kept), and each Kept mark names the act that settles it: the enclosure air figure (kept, settled by DEL-HW-BRING-UP.C13 and C11); the heater switches' barrier-part rating (the opto-triac sheet figures stated, with the owner's acceptance carried by W-11 in owner-sign-off.md); the price and stock of the spreader plate, push-ons and joiners (kept, settled where the owner buys them, DEL-HW-PARTITION-AND-FEASIBILITY.C5); the heat spreader (judged; figures with sources; the unsourced Rc and steel grade named, settled by DEL-HW-BRING-UP.C11 and DEL-HW-HEATER-WALL-BOARD-DESIGNED.C22); the faston tab and joiner ratings (kept, settled by asking TE Connectivity; thermocouple step); the header (ended: J931, C2937625, stock 1067071, price read 2026-11-14); the fabrication charges (kept, settled by the quote before ordering); the JLCONE prices (kept); the surge withstand and the entry clamp's source impedance (kept for the unsourced inputs, settled by the owner reading the surge test standard, with W-3); held-off undriven (ended, circuit-proof.md row (c)).
+
+  The three kinds the criterion names, for this board:
+  - A rail's budget: the board's one rail is +5V_WB, entering from the main board, and the file's row "The header limit that binds this board" states it is Ended for this board (the board drives no line from its header; all three header pins are the LED supply entering and two LED returns sunk by the main board; the drawn header and pin-allocation.yaml are the source). The LED current figures the rail carries are in circuit-proof.md row (a) (W_margins.py, PASS).
+  - A branch fuse's rating: this board carries no fuse and no branch fuse. The heaters' protection is the main board's entry fuse F101 (SCT520PT 10 A), named in circuit-proof.md; its rating is the constraints record's own row, not a figure held against this board.
+  - The time a protective device takes to clear and the energy it lets through at the declared fault current: no maker's sheet prints it. The constraints record keeps this mark pending, with its act (the SETfuse enquiry for 6 kA clearing time and let-through, tracked in hardware/sunbeam-em7000/main-board/open-items.md) and the node REQ-ELECTRICAL-INSTALL-001.C7. constraints-figures.md does not list it because the devices are the main board's; open-items.md (line 78) names the dependent figure on this board, the 10.18 A copper at 1 oz against the fuse's let-through "which the maker has not stated", as the constraints record's pending mark. The mark therefore stays pending, with the act named, and this board's copper is judged with it pending.
+
+  Stated limits, not hidden: the constraints record (docs/sunbeam-em7000/controller-board-design-constraints.md, the pending row for the heat spreader and the enclosure-air rows) still states the earlier 45 degC and 116.4 degC figures; constraints-figures.md carries the live 25 and 40 degC figures of 2026-11-19, and says it does not edit the constraints record. The mark in the record stays pending with its act named, so the clause is met, but the record's own figures are the superseded ones.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C7
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-BREW-STATE-ARTIFACT-IS-REGENERABLE-FROM-TRACKED-FILES-AND-THE-STAGING-FOLDER-IS-GONE.C1
+type: criterion
+title: The Brew State page can be regenerated from tracked board files and tracked scripts
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The generators in docs/staging-from-wall-board-session/brew-state-artifact/ are tracked in the tooling folder, take every path as an argument or an environment variable, and have a test on a synthetic board. The hardware notes give the command sequence from the tracked boards to the page, and the page's source is tracked or rebuilt by that sequence, with the choice stated.
+links:
+  - target: SOL-BREW-STATE-ARTIFACT-IS-REGENERABLE-FROM-TRACKED-FILES-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of

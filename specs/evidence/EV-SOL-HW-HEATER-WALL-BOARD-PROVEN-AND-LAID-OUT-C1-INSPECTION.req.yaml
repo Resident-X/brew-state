@@ -1,0 +1,28 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C1-INSPECTION
+type: evidence
+title: 'Wall board schematic review: verdicts for every net and part, findings closed or carried (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C1)'
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/schematic-review.md (rounds 11 and 14), circuit-proof.md, owner-sign-off.md, HEAD db73f4b6
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection of hardware/sunbeam-em7000/heater-wall-board/ at HEAD db73f4b6 against each clause. The verdicts live in schematic-review.md (rounds 1 to 14), not in circuit-verdicts.md: circuit-verdicts.md describes itself as a skeleton whose every row reads "not yet reviewed" (header and counts table: 41 rows, 0 PASS) and the review rounds judge every row; the rounds' own tables are the record.
+
+  Every net and part has a recorded verdict. Round 14 (schematic judged at ceb7a92f, the last full round, kind "full (every item of the circuit practice catalogue against every net, part and sheet), judged afresh", by a reviewer who did not draw the schematic and did not judge rounds 1 to 13) holds 94 verdict rows: 36 pass, 47 fail (each citing an earlier finding closed by a change, a recorded reason or the owner's carry, or one of its five new findings), 11 not applicable, 0 cannot judge; counts re-derived from the netlist export: 15 parts, 16 nets, 5 sheets, 15 + 16 + 10 = 41 rows. Round 11 (schematic at 04a637eb) was the first clean full round: 93 rows, 0 new findings.
+
+  The method's circuit practice is applied, not only written: the rounds judge against circuit-proof.md and circuit-proof/W_margins.py (re-run in rounds 11 and 14: exit 0, 17 PASS, output identical to W_margins.log), with datasheets opened each round and sweeps of the records.
+
+  Every finding is closed by a change, a recorded reason or the owner's decision to carry it to a named criterion: round 14's findings 14.1 to 14.5 are closed by change (closing note after round 14, 2026-11-19); the carried findings 1.3, 2.2, 1.4, 2.3 (basis re-declaration, SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C5 and SOL-HW-SEPARATION-BASIS-SIGNED.C2; earth bond, DEL-HW-BRING-UP.C6), 1.5, 2.4 (REQ-ELECTRICAL-INSTALL-001.C10, REQ-ACTUATION-CONFIRMATION-001.C10), 1.6, 2.5 (DEL-HW-HEATER-WALL-BOARD-DESIGNED.C24, REQ-ELECTRICAL-INSTALL-001.C11), 1.7, 2.6, 1.10, 2.9 (DEL-HW-HEATER-WALL-BOARD-DESIGNED.C20, DEL-HW-BRING-UP.C15), 1.8, 2.7 (DEL-HW-BRING-UP.C11, DEL-HW-HEATER-WALL-BOARD-DESIGNED.C22), 1.9, 2.8 (DEL-HW-BRING-UP.C11, C13) each name a criterion and the owner's words or the on-behalf signature (owner-sign-off.md, "Carried to named later steps"). The fail rows' closure table at round 14 ("Earlier findings, closure") reads each against the records at ceb7a92f.
+
+  A reader with the repository can render every sheet: the rounds record kicad-cli sch export pdf of the root and four sheets, pages viewed (round 14: five pages), ERC 0.
+
+  Stated limits, not hidden: round 14 itself was not clean (five record-wording findings, closed by change by the design owner), and no later full round was run; the owner declined a further round after round 13 and the closing note after round 14 leaves a further round to the owner. After round 14 the opto-triac's catalogue number and MPN changed (MOC3083SR2M C111561 to the V option MOC3083SVM C899868, fields only, no net, pin, footprint or placement change; note after round 14). The criterion does not ask for a clean closing round (that is C6's layout review), and each change after the last round is a record or a field change that the record states.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C1
+    type: satisfies

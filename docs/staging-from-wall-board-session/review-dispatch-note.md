@@ -1,0 +1,12 @@
+# Running one pending workflow interrupt headless (a recipe, not the script)
+
+The pattern, as used to drive a review workflow's interrupts one at a time from a shell:
+
+1. Read the run. `wf runs get <run_id>` returns the pending state id, the workflow id, the executor brief, the input data, the output schema, the handover instruction, the required submission flags and a scope listing the tools the state may use. An empty pending state means the run is finished.
+2. Read the state. `wf state-info <workflow_id> <state_id>` returns the state's dispatch kind: generative (the executor writes the response) or executor-reported (the executor runs commands and records what it observed).
+3. Resolve the tier. `executor resolve <tier>` returns the model id and an invocation template with a prompt-file and a tool-list placeholder. The tier is chosen by the project's rule (see the repository instructions), not by the hint the engine serves.
+4. Build the child prompt as one text file: the task, the executor brief, the input data, the output schema, the run and state ids, the handover instruction, the required flags, the engine invocation and the working tree to run it from, the model id to name as the producing model, and the duties for the kind. Generative duties: produce the response, submit it with `wf interrupt`, correct and resubmit on a schema rejection, report only the settled outcome word. Executor-reported duties: run each command in the foreground, record only observed results with their verbatim excerpts, submit, report only the outcome word. Never let the child's payload come back to the caller.
+5. Map the scope's tools to the child's tool grant: repository read to read, search and glob; repository write to write and edit; engine command line and commit history to shell; delegation to agent. When the grant has no shell, still grant the shell narrowed to the interrupt-submission command alone. An executor-reported state gets shell, read, search and glob.
+6. Run the resolved invocation headless in the foreground from the working tree, with the placeholders filled, capture its JSON output, print the error flag, the cost, the turn count and the first lines of its result, then read the run again and print whether another state is pending.
+
+Why it is a note and not a tool: it is a thin loop over three engine commands, and the engine's own router skill already describes the same dispatch.

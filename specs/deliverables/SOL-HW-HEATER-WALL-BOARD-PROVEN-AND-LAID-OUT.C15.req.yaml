@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C15
+type: criterion
+title: Each residual risk the owner accepts for the board is recorded with the owner's words, the date and the limit it relies on
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The board's owner sign-off record states, for each residual risk the owner accepts for the board (the varistor kept with the firmware's stuck-on current threshold of 2.0 A or less, the opto-triac's creepage exception, the triac tab and pad-pair distances, and the provisional spreader), who accepted it, on what date, in whose words where the owner gave them, the figure or check the acceptance relies on, and which entries are signed on the owner's behalf. The firmware threshold is a limit the board's acceptance relies on and is stated there with its source. Out of scope: the firmware that holds the threshold, which the sensing work delivers.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

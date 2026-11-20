@@ -1,0 +1,24 @@
+id: EV-SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED-C2-INSPECTION
+type: evidence
+title: Entry-fuse wording in the readme and the method, inspected (SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C2)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/README.md (separation_basis row) and docs/board-design-method.md (MAINS_ENTRY declaration paragraph), commit 4c0262ba
+  artifact_version: 4c0262ba863c02904f706a4d7b8ab8d8539bfb4e
+text: |
+  Inspection of the delivered text at commit 4c0262ba against the clauses of the criterion.
+
+  hardware/README.md, the separation_basis row of the rules table now reads that an entry_fuse "that, on a design with a Mains_Entry net class, is no reference of the layout or has pads that do not stand one on a Mains_Entry net and one on a Mains net outside that class (a design declaring MAINS_ENTRY none is not held to the layout for it)" fails. That describes the fuse as checked against the layout of a design that declares a mains entry, and as not checked against the layout of one that declares none. The README's record-keys paragraph was edited in the same commit (diff of 4c0262ba, hardware/README.md, 4 changed lines).
+
+  docs/board-design-method.md, the paragraph on declaring MAINS_ENTRY (diff of 4c0262ba, 2 changed lines): "The record's entry_fuse is held to the layout only where the board declares present: it must be a reference of the layout with one pad on a Mains_Entry net and one on a Mains net outside that class. A board that declares none has no mains entry of its own, its entry fuse is a part of a ..." (the sentence continues that it is another board's part and is named, not checked).
+
+  Both documents state both halves (checked where a mains entry is declared; named but not checked where none is). No other paragraph of either document is in the criterion; the diff touches only those. The behaviour the text describes is the behaviour the tests of the sibling criterion C1 hold.
+links:
+  - target: SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C2
+    type: satisfies

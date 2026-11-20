@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C7
+type: criterion
+title: Every case screw keeps the mounting-hole distance from mains copper whatever it is made of
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Each screw or post of the case that meets the board, and the board's hole H1, keeps its pad and courtyard at the larger of the separation basis's signed clearance and creepage from mains copper, as the pre-order check's mounting_hole rule holds it, on every layer, so no safety property depends on a screw's material. The case drawing or model states each screw's centre and its distance from the nearest mains copper in the board's design. Out of scope: the position of the board's hole H1, which the layout fixed.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

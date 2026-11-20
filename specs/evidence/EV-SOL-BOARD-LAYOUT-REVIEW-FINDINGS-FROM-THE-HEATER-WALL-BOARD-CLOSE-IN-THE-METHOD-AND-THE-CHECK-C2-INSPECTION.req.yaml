@@ -1,0 +1,29 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK-C2-INSPECTION
+type: evidence
+title: 'MFG-11 inspected: judgement-kind, quality-severity, Source names finding 1.10 (SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C2)'
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md: MFG-11, commit 2560a35e'
+  artifact_version: 2560a35ee90a08cd2b9c23792fabbf4717a7f4b2
+text: |
+  Inspection of docs/board-design-method.md, the Layout practice catalogue, at commit 2560a35e.
+
+  MFG-11 "Every connector and terminal is named on the silkscreen, and the board carries its name and revision" (method lines 1801 to 1809):
+  - Area: manufacturing (the MFG- series, after MFG-10).
+  - Item form: Applies when / Asks / Passes / Fails, as the views show it / Judged on / Kind / Severity / Source, as the neighbouring items.
+  - Kind and severity line: "Kind: judgement. Severity: quality."
+  - Source line: "hardware/sunbeam-em7000/heater-wall-board/layout-review.md, round 1, finding 1.10."
+  - Applies when reads: "the schematic carries a connector, terminal, header or tab that a person wires or plugs, test points aside."
+
+  Clause to note: the criterion words the applicability as "when the board carries a connector or terminal whose pins or terminals are not identical by position". The delivered Applies-when is wider: every connector, terminal, header or tab a person wires or plugs. It therefore includes every case the criterion names, and the item's Passes and Fails (single-contact terminals each named, multi-pin connectors named with a pin-1 mark, identical terminals side by side told apart) state the not-identical-by-position case. The wording is not literally the criterion's; the criterion's text may want amending to the item's wording, or the item narrowed, and that is left to the owner of the leaf.
+
+  Out of scope as stated: the plan row a board appends for it (the heater wall board's own plan row is separate).
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C2
+    type: satisfies

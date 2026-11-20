@@ -1,7 +1,7 @@
 id: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5
 type: criterion
 title: Each wall-board triac can be fitted and removed without desoldering or re-bending a lead
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: analysis
@@ -10,3 +10,5 @@ text: |
 links:
   - target: SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED
     type: criterion-of
+attributes:
+  deprecation_reason: Records the earlier ear-and-bracket form; superseded by the printed-case solution's C12 (the case node)

@@ -1,0 +1,28 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK-C3-TEST
+type: evidence
+title: 'Recommended-figure rule tests: below fails, entry passes, no-cause entry fails (SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3)'
+status: superseded
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T14:05:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_minimums.py::ABoardSetupMinimumBelowTheRecommendedFigureFails
+  artifact_version: 2560a35ee90a08cd2b9c23792fabbf4717a7f4b2
+text: |
+  Tests in hardware/tools/tests/test_board_minimums.py (60 tests, all ok in hw:test:round of the build round's gate at HEAD db73f4b6, "ok test_board_minimums: 60 tests", log the round gate's log). Implemented in commit 2560a35e. Class ABoardSetupMinimumBelowTheRecommendedFigureFails, each over synthetic designs and records in a temporary directory:
+  - test_a_minimum_below_its_recommended_figure_with_no_entry_fails_naming_the_setting_and_both_figures: min_via_annular_width 0.2 mm against recommended 0.25 mm and no below_recommended entry fails with a violation at the setting's key naming "min_via_annular_width is 0.2 mm" and "below the 0.25 mm the manufacturer recommends".
+  - test_a_minimum_at_or_above_its_recommended_figure_passes_and_float_rounding_below_it_is_not_below, and test_a_limit_the_record_gives_no_recommended_figure_for_is_held_to_its_stated_limit_alone: no failure at or above the figure; a limit with no recommended_mm is out of the new rule's scope.
+  - test_every_setting_below_its_figure_is_reported_each_at_its_own_key.
+  - test_an_entry_stating_the_figure_its_cause_and_its_item_lets_a_setting_at_that_figure_pass: a below_recommended entry with figure_mm, forced_by and item lets the setting pass.
+  - test_an_entry_does_not_excuse_a_setting_smaller_than_the_figure_it_states_or_a_different_setting.
+  - test_an_entry_that_names_no_cause_fails_saying_so_whichever_of_cause_or_item_is_empty: an entry whose forced_by or item is empty fails.
+  - test_a_process_the_record_gives_no_recommended_figure_for_at_all_is_not_judged_by_the_new_rule.
+  Reading of the record keys: class TheRecommendedFigureAndTheEntriesBelowItAreRead (an entry with a blank cause is read so the rule can fail it; a malformed recommended_mm or entry fails the record naming the key).
+
+  These would fail if the rule stopped failing a below-recommended minimum, accepted an entry with no cause or one for another setting, or failed a design it should pass. The check also ran against the real tree: hw:verify in the same gate ended "RESULT | PASS | all 7 designs passed", and test_board_check_kicad_minimums (10 tests, ok in the same gate) runs the minimums rule through KiCad.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C3
+    type: satisfies

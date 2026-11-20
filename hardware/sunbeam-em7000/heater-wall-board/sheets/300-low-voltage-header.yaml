@@ -1,0 +1,52 @@
+sheet: Low-voltage header
+function: 'The three-way low-voltage cable header to the main board: the LED supply and the two LED returns.'
+parts:
+- ref: J931
+  lib_id: Connector_Generic:Conn_01x03
+  value: WB_LV3
+  rating: 1x3 2.54 mm pin header, 3 A, vertical (the main board's JP301 part)
+  footprint: Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical
+  mpn: PZ254V-11-03P
+  maker: XFCN
+  lcsc: C2937625
+  class: extended
+  hand: false
+  function: three-way low-voltage cable header to the main board's J761, positions 1 to 3
+  mains: false
+  sim_exclude: true
+  pinmap:
+    '1': +5V_WB
+    '2': HEAT_C_LED_K
+    '3': HEAT_S_LED_K
+  pinmap_source: the main board's JP301 part (parts-specification.yaml, XFCN PZ254V-11-03P, footprint PinHeader_1x03_P2.54mm_Vertical, pads 1..3); pin order is the first three ways of the main board's J761 (sheets/720 of the main board); the maker's drawing is not read here
+- ref: H1
+  lib_id: Mechanical:MountingHole
+  value: MountingHole
+  rating: M3 screw, 3.2 mm non-plated hole
+  footprint: MountingHole:MountingHole_3.2mm_M3
+  mpn: ''
+  maker: ''
+  lcsc: none
+  class: none
+  hand: false
+  function: "The board's single mounting hole (M3 screw, 3.2 mm non-plated): the 3D-printed case retains the board with a printed ledge and hold-down fingers or lid ribs, and the hole keeps the mounting_hole distance from Mains copper whatever the screw is made of; not in the bill of materials, not in the position file"
+  mains: false
+  sim_exclude: true
+nets:
+  +5V_WB:
+    scope: global
+    pins:
+    - J931.1
+  HEAT_C_LED_K:
+    scope: global
+    pins:
+    - J931.2
+  HEAT_S_LED_K:
+    scope: global
+    pins:
+    - J931.3
+no_connect: []
+custom_symbols: []
+custom_footprints: []
+power_flags: []
+notes: 'Header at the right edge of the sheet; no mains on this sheet. The cable lands on positions 1 to 3 of the main board''s ten-way J761: 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K. +5V_WB supplies the two opto-triac LED anodes on the switch sheets and is power-leaving at the main board''s end (JP761); nothing on this board sources it. HEAT_C_LED_K and HEAT_S_LED_K are the LED returns sunk by the main board''s Q761 and Q771. The board has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. H1 (the board''s single mounting hole) is a mechanical symbol on no net, drawn on this sheet with the LCSC field none: it takes an M3 screw, the board is a plain 45 x 75 mm rectangle with no ears, and the 3D-printed case retains it with a printed ledge and hold-down fingers or lid ribs (the layout''s decision of 2026-11-19, delegated by the owner). The hole is held to the pre-order check''s mounting_hole distance from Mains copper whatever the screw is made of, and H1 is not in the bill of materials or the position file. The board carries no fiducials: nothing is assembled by a service (a bare-PCB order with every part hand-fitted: through-hole T911, T921, J911, J921, J941, RV911, RV921, J931; surface-mount R911, R912, R921, R922, U911, U921; H1 a hole, 14 fitted parts), so a fiducial-free board is ordered. The symbol is drawn with in_bom yes; the exclusion is set on the placed footprint at layout (open-items.md). Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'

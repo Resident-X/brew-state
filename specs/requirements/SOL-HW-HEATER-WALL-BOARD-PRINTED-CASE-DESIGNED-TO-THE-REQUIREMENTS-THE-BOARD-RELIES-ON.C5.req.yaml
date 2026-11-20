@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C5
+type: criterion
+title: No lid screw or fixing sits against the wall opening where a driver cannot reach it
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case drawing or model places every lid screw or fixing where a driver reaches it with the case installed, and none right against the wall opening; the drawing states the driver's approach for each. If the lid is retained without screws, the drawing states the retention. Out of scope: the lid's shape and the machine's wall opening.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

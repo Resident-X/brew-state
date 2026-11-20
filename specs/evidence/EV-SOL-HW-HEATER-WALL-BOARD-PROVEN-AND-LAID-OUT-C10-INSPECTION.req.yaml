@@ -1,0 +1,27 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C10-INSPECTION
+type: evidence
+title: Fabrication notes name the coat, datasheet, timing, coverage and keep-outs (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C10)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/fabrication-notes.md, section Conformal coat
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection of hardware/sunbeam-em7000/heater-wall-board/fabrication-notes.md, section "Conformal coat" as committed at HEAD, against each clause. The notes are kept in the board's design records, which the order passes to the manufacturer.
+
+  - The coat is named with its type: "MG Chemicals 419D Acrylic Conformal Coating, aerosol, part number 419D-340G" (a one-part acrylic in an aerosol can), fallback Techspray Turbo-Coat Acrylic 2108-12S.
+  - The maker's current datasheet is cited: "419D Aerosol, Acrylic Conformal Coating", technical data sheet, 3 pages, 31 July 2025, Ver. 4.0, https://mgchemicals.com/downloads/tds/tds-419d-a.pdf (fetched 2026-11-17 for the main board's notes; this file states it was not fetched again). The notes say the sheet states no creepage or clearance credit and no pollution degree, so none is taken: the coat is a supporting measure; the pollution degree 2 credit rests on the enclosure (separation-basis.yaml conditions 1 and 2).
+  - Applied after bring-up, once the machine is deemed functional from a hardware perspective (owner, 2026-11-06).
+  - Where: both faces, covering the gaps between the mains pads of the nets OUT_C, OUT_S, RET, HEAT_C_OPTO_MT, HEAT_S_OPTO_MT, HEAT_C_GATE_R, HEAT_S_GATE_R, HEAT_C_TRIAC_G, HEAT_S_TRIAC_G (the Mains class) on T911, T921, U911, U921, R911, R912, R921, R922, RV911, RV921, J911, J921 and J941, with the mains region drawn at layout from (20.0, 21.0) to (65.0, 96.0) minus two low-voltage rectangles.
+  - Keep-outs, by reference designator, each with its drawn corners (dashed rectangles on F.Fab, note "DASHED BOXES: NO COAT"): J911, J921, J941 (blade contact surfaces), J931 (header pins and mating area), T911 and T921 (tab faces and the plate contact area); U911 and U921 no keep-out. No gap between mains pads is left uncovered without a listed keep-out.
+  - The consequence is stated: "Until then the board is uncoated: the first connection of this board's mains side and the bring-up bench tests run on the uncoated board, in a clean room, and the coat is no part of the bound on any fault between mains pads until it is applied."
+
+  The layout review (round 4) records that the notes' silk positions equal the board file's text anchors (finding 3.3's closure); the keep-out rectangles are the notes' drawn figures, which this inspection did not measure on the board. The check that reports a board whose notes name no coat is not a test of this file: the check reads the separation basis, and hardware/tools/tests/test_separation_basis_record.py (55 tests, ok in the gate) pins that the basis names this criterion and the coat and laminate conditions. This evidence is the inspection of the delivered notes. Choosing the coat's supplier and applying the coat are out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C10
+    type: satisfies

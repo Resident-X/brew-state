@@ -1,0 +1,27 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C13-INSPECTION
+type: evidence
+title: Header pins listed and drawn in the order of J761's first three ways (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C13)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/pin-allocation.yaml and schematic-spec.yaml against main-board sheets/720
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Inspection at HEAD db73f4b6 of pin-allocation.yaml, the schematic and the main board's drawing of J761.
+
+  The header the criterion calls J301 is the board's three-way header, which the board's 9xx reference series names J931 (schematic-spec.yaml: "header J931"; every record of the board uses J931, and no J301 exists in the schematic, the layout or the records). The criterion's designator is stale; the behaviour it asks for is evidenced for J931.
+
+  - Main board's drawing of J761, hardware/sunbeam-em7000/main-board/sheets/720-heater-led-drive-and-wall-board-header.yaml (nets): +5V_WB on J761.1, HEAT_C_LED_K on J761.2, HEAT_S_LED_K on J761.3 (the ten-way WB_LV10 header; J761.4 is GND). The first three ways are pins 1, 2, 3 in that order.
+  - This board's pin allocation record lists J931 pin '1' as channel wb_5v_supply, net +5V_WB (rail); pin '2' as heat_c_drv, net HEAT_C_LED_K; pin '3' as heat_s_drv, net HEAT_S_LED_K, in that order (pin-allocation.yaml; header comment: "positions 1 to 3 of the main board's ten-way J761").
+  - The schematic draws the header to that order: schematic-spec.yaml lists J931 pin 1 on +5V_WB, pin 2 on HEAT_C_LED_K, pin 3 on HEAT_S_LED_K, and rounds 11 to 14 of the schematic review read the netlist and the five sheets with this. The layout agrees (layout-review.md round 4, BOARD-10: "its pins 1, 2 and 3 carry +5V_WB, HEAT_C_LED_K and HEAT_S_LED_K (read from the board's pad nets)"; the silk table reads 1 +5V_WB, 2 HEAT_C_LED_K, 3 HEAT_S_LED_K).
+  - The regression catch is the pre-order check's connectivity rule: hw:verify in the build round's one gate (task check:round at HEAD db73f4b6, exit 0) passed the wall board, and test_board_check_no_controller (44 tests, ok) fails a design whose net does not reach its connector pin or whose listed pin the design lacks (test_a_net_that_does_not_reach_its_connector_pin_fails_naming_the_channel, test_a_listed_channel_the_design_lacks_fails_naming_the_channel). That check holds pin-to-net agreement between record and design; the order against J761 is held by this inspection.
+
+  Out of scope as stated: the main board's other header ways.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C13
+    type: satisfies

@@ -1,0 +1,26 @@
+id: EV-SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED-C1-TEST-2
+type: evidence
+title: 'Entry-fuse tests: no-entry design not failed, entry design still held (SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C1)'
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T20:32:51Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_mains_to_mains.py::test_a_design_with_no_mains_entry_is_not_failed_for_an_entry_fuse_that_is_on_another_board, in the round gate at db73f4b6
+  artifact_version: 4c0262ba863c02904f706a4d7b8ab8d8539bfb4e
+text: |
+  Two tests in hardware/tools/tests/test_board_mains_to_mains.py, both in the module that ran in the build round's gate (task check:round at HEAD db73f4b6, exit 0; hw:test:round line "ok test_board_mains_to_mains: 48 tests"; the round gate's log (task check:round, exit 0 at HEAD db73f4b6; its closing lines read "round gate: hw:verify passed", "RESULT | PASS | all 7 designs passed", "round gate: hw:test:round passed" and "EXIT 0")). The change is commit 4c0262ba.
+
+  test_a_design_with_no_mains_entry_is_not_failed_for_an_entry_fuse_that_is_on_another_board: for a design declaring no Mains_Entry class, board_check.mains_pairs returns no violation for three layouts (empty, parts with no fuse, and a layout holding F1 on Mains nets), so an entry fuse that is no reference of the layout does not fail. It then proves the record's entry_fuse key is still required: with entry_fuse None or "" the record is refused (rule separation_basis, location mains_to_mains.entry_fuse). It proves the rest of the mapping is still checked on such a design: a held_at_reinforced pair naming a net the design lacks still fails as mains_declaration.
+
+  test_a_design_with_a_mains_entry_is_still_held_to_its_entry_fuse_in_the_text_and_the_failure_line: for a design declaring a Mains_Entry net, an entry fuse with no reference on the layout fails separation_basis at mains_to_mains.entry_fuse with text "no reference on the layout" naming 'F1'; a fuse whose pads both stand on one side fails with "whose pads stand on"; a fuse with one pad on a Mains_Entry net and one on a Mains net outside it passes.
+
+  Each test would fail if the check again held the fuse to the layout of a design with no mains entry (first test), or stopped holding it where a mains entry is declared (second). Both declarations are covered with synthetic designs and records (DESIGN, RECORD and fixtures in the test module, no repository record). Out of scope as the criterion states: the signed figures, held_at_reinforced and the other mains_declaration checks.
+
+  Real-design confirmation: the same gate's hw:verify ended "RESULT | PASS | all 7 designs passed" with the heater wall board (MAINS_ENTRY none, record naming the main board's entry fuse) as "DESIGN | hardware/sunbeam-em7000/heater-wall-board/heater-wall-board.kicad_pro | PASS".
+links:
+  - target: SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C1
+    type: satisfies

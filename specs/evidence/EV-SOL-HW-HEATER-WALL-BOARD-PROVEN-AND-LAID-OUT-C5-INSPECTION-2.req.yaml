@@ -1,0 +1,28 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C5-INSPECTION-2
+type: evidence
+title: Layout held to the owner-signed board basis, unlisted barrier reported, corrected after W-14 (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C5)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T20:32:21Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/separation-basis.yaml (4ecd34de), owner-sign-off.md W-12 and W-14, the round gate's hw:verify report, layout-review.md round 5
+  artifact_version: d190924487d1a19c5cee333ed42211db58f0a2f7
+text: |
+  Correction of the earlier inspection evidence for this criterion, which said the re-confirmation was on his end-of-work list; the text below is the corrected whole.
+
+  Inspection at HEAD db73f4b6 of the signed basis, the check's report and the layout review against each clause.
+
+  The finished layout meets the signed separation basis: the board's own record hardware/sunbeam-em7000/heater-wall-board/separation-basis.yaml was signed by the owner (accepted_by David Baker, owner; accepted_on 2026-11-19; owner-sign-off.md W-12, "I'm signing those now. Take as signed. Proceed."), committed in 4ecd34de and unchanged since (git log shows that one commit). The pre-order check holds the layout to it on every layer the board has (F.Cu and B.Cu), reading the signed record's figures, not the board's own rules: in the build round's gate (task check:round at HEAD db73f4b6, exit 0; ; the round gate's log (task check:round, exit 0 at HEAD db73f4b6; its closing lines read "round gate: hw:verify passed", "RESULT | PASS | all 7 designs passed", "round gate: hw:test:round passed" and "EXIT 0")) hw:verify ended "RESULT | PASS | all 7 designs passed", the board "DESIGN | ... heater-wall-board.kicad_pro | PASS" with no VIOLATION line, and 24 ACCEPTED spacing_exception lines, which are the 24 pad-pair entries the owner signed in that record (the 1206 gate-resistor pads 1.8 mm, the triac pin pairs and opto-triac pad pairs 1.04 mm, the unconnected pin 5 pads). No distance is relaxed by the layout: the check's reading is the record's, and a pair below the signed floor with no entry is a violation. The layout review (layout-review.md round 4, MAINS-1 and BOARD-13 rows, judged on the layer, class and edge views of both copper layers) records the same.
+
+  A barrier the basis does not list is reported: the check's tests for the record's barrier entries (hardware/tools/tests/test_board_check.py::test_each_barrier_has_exactly_one_entry_naming_a_barrier_the_record_lists and test_separation_basis_record.py::test_a_barrier_without_an_entry_is_refused, both in hw:test:round, ok in the gate) fail a barrier with no entry. The wall record lists the heater-switch barrier and the mains-to-earthed-plate barrier; no part of the board forms a barrier the record omits (the opto-triacs U911 and U921, the barrier part, are named in it). The owner re-declared the basis (W-12) before the barrier parts are ordered; the board is not ordered.
+
+  Out of scope as stated: signing a basis amendment is the owner's.
+
+  What this evidence does not cover: the shared basis hardware/sunbeam-em7000/separation-basis.yaml is not amended (owner-sign-off.md says so); the owner's W-9 1a re-confirmation of the 7 mm creepage and clearance on the final opto-triac part (onsemi MOC3083SVM, C899868) is recorded as W-14 in owner-sign-off.md: accepted by David Baker, in his words "Yes and go", on 2026-11-20, and it supersedes the earlier statement that the re-confirmation was owed (W-11 recorded only that the part choice was delegated). W-14 does not sign the shared basis, W-9 1b or 1c, or any other line of his end-of-work list.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C5
+    type: satisfies

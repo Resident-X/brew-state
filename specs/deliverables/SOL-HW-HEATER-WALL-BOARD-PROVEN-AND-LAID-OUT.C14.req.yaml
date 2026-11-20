@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C14
+type: criterion
+title: The layout chooses how the printed case retains the board, and every mounting hole keeps the signed distance from mains copper
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The layout chooses how the printed case retains the board, a printed ledge, hold-down fingers or ribs, mounting holes, or a mix, so that the board is held securely and stably, and the drawing states what it chose. Each mounting hole the board carries keeps its pad and courtyard at the distance from mains copper that the separation basis signs for mounting holes, whatever the screw is made of, so no safety property depends on a particular screw. The drawing states the number and the centre of each hole, and what holds the board in the case when it is fitted. Designing the case is out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C1
+type: criterion
+title: The case's fixed tray carries a creepage barrier over the bare plate face, or the case holds the plate's lower edge 6.0 mm above the board
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The case's fixed base, the tray the board is screwed to and never the removable lid, carries an insulating barrier between the bare spreader plate face and the board's mains copper wherever the separation basis's basic creepage to the earthed plate would not otherwise hold. The barrier is a creepage barrier only and is not relied on as solid insulation. The case drawing or model states its minimum solid thickness (0.8 mm at the least), its height above the board face (within 2.0 mm and 3.5 mm under the triac bodies), that it spans the board's width, and the creepage path it gives from each triac pad edge to the first bare plate against the 2.6 mm the basis signs, and that its material is ASA, ABS or PC and prints at home. If the barrier cannot be made, the case instead holds the plate's lower edge at least 6.0 mm above the board's component face, which leaves the triac's leads 3.4 mm from the plate, and the drawing states which of the two the case takes. Making the plate and printing the case are out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

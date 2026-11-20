@@ -1,0 +1,31 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK-C1-INSPECTION
+type: evidence
+title: Amended catalogue items and planning steps inspected against findings 1.1, 1.2, 1.3, 1.5, 1.8 (SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C1)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'docs/board-design-method.md: POWER-3, POWER-5, MFG-1 Sources; Planning the layout steps 2 and 3, commit 2560a35e'
+  artifact_version: 2560a35ee90a08cd2b9c23792fabbf4717a7f4b2
+text: |
+  Inspection of docs/board-design-method.md at commit 2560a35e (unchanged since in these passages) against each clause.
+
+  Amended items, each naming the review and finding in its Source:
+  - POWER-3 (method line 1283): Source ends "amended after hardware/sunbeam-em7000/heater-wall-board/layout-review.md, round 1, finding 1.2, which records heavy nets that change layer only in soldered through-hole pads because no Mains via is allowed, a case the item gave no reading for." The Passes and Fails readings were extended in the same commit (the via count reads plated pad barrels and copper joined at one end).
+  - POWER-5 (line 1295, retitled "A switching part that sheds heat through its leads"): Source ends "amended after ... layout-review.md, round 1, finding 1.3, which records surface-mount opto-triacs on nets that may carry no via." Applies-when and Passes gain the reading for an isolated phototriac and a surface-mount part.
+  - MFG-1 (line 1701), finding 1.5: Source ends "amended after ... round 1, finding 1.5", and its Fails line names minimum_below_recommended.
+
+  Amended planning steps, each carrying the exact note at its end:
+  - Step 2 "Plan every catalogue item": ends with the two lines "Amended after hardware/sunbeam-em7000/heater-wall-board/layout-review.md, round 1, finding 1.1." and "... round 1, finding 1.5." (method lines 496 and 497). The step gained the arithmetic rule for a yes row stating a width, neck, gap or count (finding 1.1) and the board-minimums reading (finding 1.5).
+  - Step 3 "Commit the floorplan and plan before placement": ends with "Amended after ... round 1, finding 1.8." (line 520); the step gained the no-two-rows-contradict check.
+
+  Findings 1.1, 1.2, 1.3, 1.5 and 1.8 are each carried by an amended item or step; the notes use the exact form the criterion gives. Other items and steps carry earlier notes naming hardware/proof reviews (lines 493 to 495, 519), which this criterion does not govern and which this commit did not touch.
+
+  Limit of this evidence: the wording is checked against the criterion, not by a test; no test pins the Amended notes, so a later edit that dropped one would not fail a check.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C1
+    type: satisfies

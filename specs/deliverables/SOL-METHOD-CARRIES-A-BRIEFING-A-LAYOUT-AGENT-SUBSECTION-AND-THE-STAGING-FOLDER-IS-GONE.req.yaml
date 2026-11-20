@@ -1,0 +1,23 @@
+id: SOL-METHOD-CARRIES-A-BRIEFING-A-LAYOUT-AGENT-SUBSECTION-AND-THE-STAGING-FOLDER-IS-GONE
+type: deliverable
+category: solution
+title: The board design method carries a Briefing a layout agent subsection with the owner's standing rulings it does not yet carry, and the staging folder is removed
+status: active
+version: 1
+text: |
+  Why this exists. The owner's standing rulings to the agent that lays a board out, ownership of method, order and stopping, the ninety percent bar, neatness before count, relaxations listed for sign-off, what the agent may and may not change, the working mechanics and the plain-language rule, were given in a brief held outside the repository. The method's section on practice carries part of them (the ranking, the bar, the design owner and its sign-off list, the three send-backs, the picture deciding) and not the rest. A new agent told only to follow the method would not be told how to behave toward its owner. The rulings are held in a temporary staging folder, docs/staging-from-wall-board-session/layout-agent-briefing/, whose README maps each ruling to what the method already says and carries the proposed text.
+
+  Settled for the build:
+  - The method gains a subsection headed Briefing a layout agent that carries the rulings the method does not yet carry and points to the existing steps for those it does; it states nothing specific to one machine or one board.
+  - The existing statements are not repeated; where a ruling adds to one, the subsection states the addition only.
+  - The staging subfolder is deleted by the change that completes this item, and the staging README's row for it is removed.
+  - Not built.
+rationale: |
+  Restores the behaviour DEL-HW-DESIGN-METHOD.C5 and PER-ADOPTER-001.C3 ask of the method: another designer, or an agent with no prior context, can follow it. A rule that stood only in a brief outside the repository was a rule only the author could pass on, and the method's followability criteria did not catch it because the steps themselves are all present. Targets REQ-PUBLISHED-BUILD-PATH-001.C2 because the briefing is something the sequence depends on that only the author held.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: PER-ADOPTER-001.C3
+    type: targets

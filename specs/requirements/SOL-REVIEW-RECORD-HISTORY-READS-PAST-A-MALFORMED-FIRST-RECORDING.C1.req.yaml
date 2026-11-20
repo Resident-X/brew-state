@@ -1,0 +1,13 @@
+id: SOL-REVIEW-RECORD-HISTORY-READS-PAST-A-MALFORMED-FIRST-RECORDING.C1
+type: criterion
+title: The review record history command reports a round whose first recording cannot be read once, naming the commit and the round, and judges the later readable versions as the baseline
+status: active
+version: 2
+measurement_type: binary
+verification: test
+scope: hardware/tools/board_review_history.py and its tests only; the command's other checks, its report form and the method's other sections are unchanged
+text: |
+  The review record history command, given a record whose round was first recorded in a form it cannot read (a table cut by a blank line, a row with a stray cell separator), reports that first recording as one fault naming the commit and the round, and does not report the same fault again for each later version, or every row and finding of the round as added, once a later version of the round reads cleanly. A round whose first recording was readable is still held to it: a later version that changes its opening lines, a verdict or a finding, or drops a round, still fails. Tests build a synthetic record whose first recording has a cut table, and one whose first recording is readable and later changed, and show the first reports once and the second fails. The command's other checks and its report form are unchanged.  Out of scope: the command's other checks and its report form, which are unchanged, and any rewrite of a record's history.
+links:
+  - target: SOL-REVIEW-RECORD-HISTORY-READS-PAST-A-MALFORMED-FIRST-RECORDING
+    type: criterion-of

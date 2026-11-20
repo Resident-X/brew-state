@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED.C1
+type: criterion
+title: A design with no mains entry is not failed for an entry fuse that is on another board, while a design with a mains entry is still held to its entry fuse
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A design that declares MAINS_ENTRY none passes the entry-fuse check when the record names an entry fuse that is no reference of its layout, and the record's entry_fuse key must still be present and non-empty. A design that declares MAINS_ENTRY present still fails separation_basis naming an entry fuse that is no reference of the layout or whose pads do not stand between a Mains_Entry net and a Mains net outside it. Tests cover both declarations with synthetic designs and records. Out of scope: the figures the record signs, the held_at_reinforced reading and the mains_declaration checks.
+links:
+  - target: SOL-PRE-ORDER-CHECK-ENTRY-FUSE-HELD-TO-A-LAYOUT-ONLY-WHERE-A-MAINS-ENTRY-IS-DECLARED
+    type: criterion-of

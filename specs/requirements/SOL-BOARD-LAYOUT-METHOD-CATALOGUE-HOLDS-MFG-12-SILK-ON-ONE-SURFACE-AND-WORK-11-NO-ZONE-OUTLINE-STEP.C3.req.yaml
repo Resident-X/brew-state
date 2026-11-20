@@ -1,0 +1,12 @@
+id: SOL-BOARD-LAYOUT-METHOD-CATALOGUE-HOLDS-MFG-12-SILK-ON-ONE-SURFACE-AND-WORK-11-NO-ZONE-OUTLINE-STEP.C3
+type: criterion
+title: Each of the two items states why it is not a measured rule and what published figure would make it one
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Each of MFG-12 and WORK-11 states in its text that no published figure exists for it, with the maker's capability page for MFG-12 and WORK-5's track-only figure for WORK-11 as the reasons, and names the kind of published guide that would let the check hold it as a rule. Neither item adds a check line or a seeded fault, since there is no figure to measure against. Out of scope, the pre-order check.
+links:
+  - target: SOL-BOARD-LAYOUT-METHOD-CATALOGUE-HOLDS-MFG-12-SILK-ON-ONE-SURFACE-AND-WORK-11-NO-ZONE-OUTLINE-STEP
+    type: criterion-of

@@ -1,0 +1,24 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT-C3-TEST
+type: evidence
+title: Pre-order check passes on the wall board with its four records and a current catalogue extract (SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C3)
+status: superseded
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-19T14:05:14Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: python3 hardware/tools/board_check.py --root . (task hw:verify), design hardware/sunbeam-em7000/heater-wall-board/heater-wall-board.kicad_pro
+  artifact_version: db73f4b64ff2d7d01fa46a863af2698004031c2f
+text: |
+  Test at HEAD db73f4b6: the pre-order check on the real tree, python3 hardware/tools/board_check.py --root . (the command task hw:verify runs), in the build round's one gate (task check:round, exit 0; "round gate: hw:verify passed"). Log: the round gate's log. It ended "RESULT | PASS | all 7 designs passed" and for this board "DESIGN | hardware/sunbeam-em7000/heater-wall-board/heater-wall-board.kicad_pro | PASS" with no VIOLATION line; the board's report carries 28 ACCEPTED lines (24 spacing_exception, the pad pairs the board's own owner-signed separation basis lists, and 4 derating_exception, the gate resistors the derating policy lists with the owner's acceptance W-7(a)), each an owner-recorded exception and not a failure.
+
+  What the check holds the records to (each would fail if the record were missing, malformed or disagreed with the design): the pin allocation record pin-allocation.yaml (three channels across J931: wb_5v_supply as a rail, heat_c_drv and heat_s_drv as far channels, controller none), the parts specification parts-specification.yaml (every placed part's position, value, rating and LCSC number equal the drawn fields, compared by the schematic reviews as well), the derating policy derating-policy.yaml (resistor, integrated circuit, varistor, triac, blade and joiner, relay and connector classes, with the four accepted exceptions), the pin-limit record pin-limits.yaml, and the catalogue extract catalogue-extract.yaml, which lists the six catalogue numbers of the board, read 2026-11-19 with max_age_days 14, so it is current until 2026-12-03 and is read again before the order (its header says so). The parts_catalogue lines that round 14 recorded for catalogue numbers the extract lacked are gone: the extract was brought to the six numbers in commits 21102b93 and 6e36597d.
+
+  The checks' own tests that hold each of these rules to failing, from the same gate's hw:test:round: test_board_check_no_controller (44 tests, ok), test_board_check_kicad_no_controller (5 tests, ok), test_board_check_kicad_records (ok), test_board_minimums (60 tests, ok) and test_board_mains_to_mains (48 tests, ok), each over synthetic designs and records.
+
+  Ordering the board is out of scope as the criterion states; the board is not ordered.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PROVEN-AND-LAID-OUT.C3
+    type: satisfies

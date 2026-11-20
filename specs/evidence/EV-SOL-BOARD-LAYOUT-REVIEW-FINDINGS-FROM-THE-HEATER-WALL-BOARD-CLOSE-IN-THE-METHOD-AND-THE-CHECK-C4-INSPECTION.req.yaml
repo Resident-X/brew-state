@@ -1,0 +1,29 @@
+id: EV-SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK-C4-INSPECTION
+type: evidence
+title: Both limits records carry recommended figures and entries; every tracked design passes; readme states keys and line (SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C4)
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-19T14:10:46Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/manufacturer-limits.yaml, hardware/sunbeam-em7000/heater-wall-board/manufacturer-limits.yaml, hardware/README.md, commit 2560a35e; test_board_minimums.py::EveryTrackedDesignPassesTheRecommendedFigureRule
+  artifact_version: 2560a35ee90a08cd2b9c23792fabbf4717a7f4b2
+text: |
+  Inspection of the two manufacturer limits records and hardware/README.md at commit 2560a35e, with the tests that hold the same facts.
+
+  Records (the changes to hardware/sunbeam-em7000/main-board/manufacturer-limits.yaml and hardware/sunbeam-em7000/heater-wall-board/manufacturer-limits.yaml):
+  - Heater wall board: recommended_mm written beside each limit that has one (0.25 mm and 0.35 mm entries in the process's limits) and one below_recommended entry: setting min_via_annular_width, figure_mm 0.2, forced_by "the six oval triac pads of T911 and T921 (1.5 mm across the row on a 1.1 mm drill, (1.5 - 1.1) / 2 = 0.20 mm on the narrow side) ... and the board's one via at 0.3 mm drill over 0.7 mm diameter; at 0.25 mm the check reports those six pads and that via", item BOARD-1.
+  - Main board: recommended_mm (0.2 mm and 0.35 mm) on both processes the record lists and, for each, a below_recommended entry for min_via_annular_width, figure_mm 0.15, forced_by "the ordinary via of 0.6 mm diameter over a 0.3 mm drill, annular width (0.6 - 0.3) / 2 = 0.15 mm, ... 466 vias on the board of 2026-11-15", item MFG-3.
+  Each entry names its figure, its cause and the item it rests on.
+
+  README (hardware/README.md): the manufacturer limits paragraph and the record-form table row state the recommended_mm key and the below_recommended list; the rules table gains the row "minimum_below_recommended", which states the line's name and what fails it (a minimum smaller than recommended_mm with no entry, an entry naming no cause (forced_by or item empty), a setting smaller than the entry's figure_mm; a limit with no recommended_mm is exempt). test_the_notes_state_recommended_mm_below_recommended_its_four_keys_and_the_reported_name pins those phrases.
+
+  No tracked design fails the rule: in the build round's gate (HEAD db73f4b6), hw:verify ended "RESULT | PASS | all 7 designs passed" and test_every_tracked_record_that_states_a_recommended_figure_has_an_entry_for_each_board_setting_below_it (test_board_minimums.py, ok in that gate) walks every tracked non-synthetic record and project and requires an entry at or below the setting for each setting below its recommended figure, and requires that at least one such entry is exercised.
+
+  Out of scope as stated: the board designs themselves; recommended_mm for a limit the maker gives none is not asked.
+links:
+  - target: SOL-BOARD-LAYOUT-REVIEW-FINDINGS-FROM-THE-HEATER-WALL-BOARD-CLOSE-IN-THE-METHOD-AND-THE-CHECK.C4
+    type: satisfies
