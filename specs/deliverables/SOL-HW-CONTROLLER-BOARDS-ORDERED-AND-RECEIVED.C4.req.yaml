@@ -1,7 +1,7 @@
 id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C4
 type: criterion
 title: The finish of every via diameter each board uses is stated by the manufacturer and recorded before payment
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

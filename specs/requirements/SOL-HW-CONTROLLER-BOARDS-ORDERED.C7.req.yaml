@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED.C7
+type: criterion
+title: Each part carries a recorded choice of who fits it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The parts specification records for every part whether the assembler or the owner fits it. From the one design the files are written as two sets: one holding every part the assembler's catalogue states it can place, through-hole parts included, each corrected as the placement file's criterion requires, and one holding only the surface-mount parts, with every through-hole part in neither the parts list nor the placement file. A part with no catalogue number, or one the assembler lists as unavailable for assembly, is in neither set. Which set is uploaded is decided at order time and recorded with the order. A test over a synthetic design holds that the two sets differ by exactly the through-hole parts and that a part marked owner-fitted is in neither. Out of scope: assembling the through-hole parts.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED
+    type: criterion-of
