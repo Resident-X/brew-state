@@ -1,0 +1,21 @@
+id: SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS
+type: deliverable
+category: solution
+title: The three-dimensional model fitting places a polarised or tabbed part with its pin 1 or tab on the side the footprint marks, not by least overhang
+status: active
+version: 1
+text: |
+  Why this exists. The model fitting command (hardware/tools/fetch_3d_models.py) aligns a vendor's three-dimensional model to a footprint's pads over the four quarter turns. A part whose pads are symmetric fits at 0 and at 180 degrees alike, and the command chooses between the two by the turn whose body stands out least past the courtyard, not by the side the footprint marks. On the heater wall board the triacs T911 and T921 (ST BTA16-800BWRG, vendor model C10065) fit correctly at 0 degrees, where the body stands out 1.05 mm past the courtyard against the command's 1.0 mm limit, so the turn at 180 degrees was taken, with the metal flange on the side away from the plate; the opto-triacs U911 and U921 were also taken 180 degrees off, the model's pin-1 dot at the pin-4 corner. Symmetric parts on the main board's render are probably affected the same way. The pictures carry no safety weight, since the footprints and pins are right (checked against ST DS2114 rev 11), but they are published in the review artifact and could mislead a builder about which way round a part goes.
+
+  Settled for the build:
+  - For a polarised or tabbed part, the turn chosen puts the model's pin 1 or tab on the side the footprint marks (its pin-1 pad, its tab pad or its courtyard or silk mark); least overhang decides only among turns that put it on that side, and for a part whose footprint marks no side.
+  - A turn that puts the mark on the footprint's side is kept even when its overhang is past the limit; the part is then reported with its overhang, not turned the other way.
+  - Tests use synthetic footprints and synthetic models in a temporary folder; no vendor model is committed.
+  - Out of scope: the footprints, the board files, the pins, and the pictures' other views.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 relies on: a board is judged on views, the three-dimensional views are one of them, and a picture that shows a polarised or tabbed part the wrong way round misleads the judgement and the builder who reads the published artifact. The fault is in the choice among equally matching turns, and placed here as a defect in delivered tooling rather than left to be rediscovered at the next board.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
