@@ -1,6 +1,6 @@
 id: SOL-HW-CONTROLLER-BOARDS-ORDERED.C7
 type: criterion
-title: Each part carries a recorded choice of who fits it, and the production files are written for either choice
+title: Each part carries a recorded choice of who fits it
 status: active
 version: 1
 measurement_type: binary
