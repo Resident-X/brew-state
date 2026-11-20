@@ -1,0 +1,20 @@
+import re,sys
+s=open(sys.argv[1]).read()
+s=re.sub(r'<svg[^>]*>','',s,1).replace('</svg>','')
+s=re.sub(r'<rect width="1008"[^>]*/>\n?','',s)
+s=re.sub(r'<text x="6" y="18"[^<]*</text>\n?','',s)
+s=re.sub(r'<path d=""[^>]*/>\n?','',s)
+# board substrate
+s=s.replace('fill="#efe9d6" fill-rule="evenodd" stroke="#000" stroke-width="2.5"','class="wb-sub" fill-rule="evenodd"')
+s=re.sub(r'fill="#d03030" fill-opacity="([\d.]+)"',lambda m:'class="wb-f" fill-opacity="%s"'%m.group(1),s)
+s=re.sub(r'fill="#2a5fd0" fill-opacity="([\d.]+)"',lambda m:'class="wb-b" fill-opacity="%s"'%m.group(1),s)
+s=s.replace('fill="#d03030"','class="wb-f"').replace('fill="#2a5fd0"','class="wb-b"')
+s=s.replace('stroke="#d03030"','class="wb-fs"' if False else 'stroke="var(--l1)"').replace('stroke="#2a5fd0"','stroke="var(--l6)"')
+s=s.replace('fill="#fff"','class="wb-hole"').replace('fill="#111"','class="wb-txt"')
+s=s.replace('stroke="#222"','stroke="var(--fg)"').replace('stroke="#000"','stroke="var(--fg)"')
+s=s.replace('stroke="#888"','stroke="var(--muted)"')
+s=re.sub(r' font-family="Courier New,monospace" font-weight="bold"','',s)
+s=re.sub(r'(\d+\.\d)\d+',r'\1',s)
+# duplicate class attrs fix: merge if element has two class=
+s=re.sub(r'class="([^"]+)"([^>]*?) class="([^"]+)"',r'class="\1 \3"\2',s)
+open(sys.argv[2],'w').write(s)
