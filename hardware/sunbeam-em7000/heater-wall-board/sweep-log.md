@@ -404,3 +404,17 @@ Census of every `F.SilkS` and `B.SilkS` graphic and text of the board file, incl
 ## 2026-11-20: the review closes at Round 6, the silk widening and the pin-1 dots (layout review round 6, findings 6.1 and 6.2)
 
 The classes swept: a record that says the layout review closes at Round 5 (6.1's surround, W-13), a record that says the 29 strokes at 0.12 mm are accepted, and a record that names the opto-triacs for all seven pin-1 dots. Scope: `hardware/` and `docs/`, `*.md` and `*.yaml`, review records outside round text read as history. Phrases: `closing round`, `closes at`, `close at`, `at round 5`, `without a round 6`, `round 6` (the wall board's folder: 3 lines outside the review records, all in `owner-sign-off.md` W-13 and its look-first and end-of-work lines, amended; the other boards' review proofs under `hardware/proof/` are other records); `0.12 mm` with `accepted` or `exception` (live statements: 0, `design-rules.md` already says the exception no longer stands); `pin-1 dots` (1 live statement, `design-rules.md`, reworded from the board file: `fp_circle` of the SMDIP-6 footprint at U911 and U921, `gr_circle` at (56.7, 54.95) and (64.45, 61.45), and the `Tab_TE_63849-1` footprint circles at J941, J921 and J911). Finding 4.2's own Closed by is frozen history and is not edited; round 6's row 6.1 supersedes it.
+
+## 2026-11-20: critical routing pass 3, the leftover front OUT_C wedge filled, the U921 pin 4 track straightened, the +5V_WB via centred, reference labels aligned (workmanship review)
+
+The class swept: a record that states the front OUT_C zone's extent past the finger (the 44.425 y edge and the corner at x 49.875, y 44.425), the HEAT_S_OPTO_MT track's route from R921 to U921 pin 4, the `+5V_WB` via's position (58.1, 56.8), or the positions of the T911, RV911, R911, R912 and R922 reference texts. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, expressions run line by line over the working tree after the change, the sweeps of the earlier passes being history.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `44.425`, `49.875`, `44.4`, `46.4` | 0 outside the board file | 0 stale | no record in the folder or in `docs/sunbeam-em7000/` states the front OUT_C zone's vertices; `layout-plan.md` and `layout-review.md` quote none of them |
+| `wedge`, `ends at the finger`, `zone finger` | 1 | 0 stale | `design-rules.md` `MainsBranch` row: the spur "ends in a zone finger", still true of the zone with the wedge filled |
+| `56.8`, `58.1, 56`, `56.575`, `70.975`, `55.05` | 0 | 0 stale | no record states the via's coordinates or the HEAT_S_OPTO_MT track's vertices; `design-rules.md` names the one via on `+5V_WB` and its sizes only |
+| `HEAT_S_OPTO_MT` | 0 describing the route | 0 stale | the net is named in lists of Mains-class nets only |
+| `34.7`, `22.7`, `38.5`, `28.5`, `59.7`, `40.9` as reference positions | 0 before this change | 1 new | `fabrication-notes.md`, "Front silkscreen", now states the six reference positions |
+
+The copper record of the committed board holds 22 locked items on 11 critical-class nets (21 before this change, one track added for the U921 pin 4 run), and the pre-order check, the rule check (12 clearance findings, none unconnected) and the silk census (80 graphics at 0.15 mm or more, 38 texts of 1.0 mm or more at strokes of 0.15 mm or more) are as before.
