@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED.C8
+type: criterion
+title: The placed order and its confirmation are recorded against each board's check record
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  After the owner reports the order placed, the manufacturer's order confirmation, its date, the set of production files uploaded, the fitting choice taken and the cost paid are recorded beside each board's production-files check record, and the cost is entered against the running total. The leaf closes on that record. Out of scope: payment and the placing of the order, which are the owner's acts, and receipt, which is the received-boards leaf's.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED
+    type: criterion-of

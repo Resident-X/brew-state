@@ -1,0 +1,25 @@
+id: SOL-HW-CONTROLLER-BOARDS-RECEIVED
+type: deliverable
+category: solution
+title: The received controller boards are the ones the checked production files describe
+status: active
+version: 1
+text: |
+  Records the owner's report of each received board against the production files that were checked and ordered, so the boards that arrive are the ones the checked files describe. It begins when the order is in and ends on the owner's report, some weeks later. Bring-up of the received boards is out of scope.
+
+  Settled for the build: both boards arrive in one parcel and each is reported separately against its own check record; a difference found is named in the record and is not judged here.
+
+  Locus: the production-files check records and the order record beside each board under hardware/sunbeam-em7000/.
+rationale: |
+  Sized as its own leaf because it can only close on an owner's act weeks after the order, and the ordering leaf is finished work by then. It depends on the ordering leaf because the checked files and the order record it reports against are that leaf's. It was the last criterion of the earlier combined leaf and is split out so the wait for the boards does not hold the ordering work open.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C10
+    type: derives-from
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C10
+    type: derives-from
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED
+    type: depends-on
+  - target: DEC-BOARD-MANUFACTURER-JLCPCB
+    type: justified-by
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets

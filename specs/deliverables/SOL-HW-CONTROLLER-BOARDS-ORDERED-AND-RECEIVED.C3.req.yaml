@@ -1,7 +1,7 @@
 id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C3
 type: criterion
 title: The order-date catalogue read looks for the parts the boards' accepted rating shortfalls could be replaced by, and the limits for unpublished figures are stated before payment
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: inspection

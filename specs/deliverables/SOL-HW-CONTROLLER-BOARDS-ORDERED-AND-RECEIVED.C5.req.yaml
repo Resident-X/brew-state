@@ -1,7 +1,7 @@
 id: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED.C5
 type: criterion
 title: The written laminate request to the manufacturer and the laminate note on the order, with the answer, are recorded before payment; a comparative tracking index certificate is not a precondition at pollution degree 2
-status: active
+status: deprecated
 version: 2
 measurement_type: binary
 verification: inspection

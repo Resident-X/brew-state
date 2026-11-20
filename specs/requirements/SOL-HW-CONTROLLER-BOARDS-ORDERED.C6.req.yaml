@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED.C6
+type: criterion
+title: Each board's parts list gives one comment for each catalogue number
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The parts list export fails, naming the catalogue number and the texts, when positions that share a catalogue number are drawn with differing value text, so no row carries two comments. The design carries one spelling of the value for each number. A test over a synthetic schematic holds that two spellings under one number fail the export and that every row of a clean export carries one comment and no comma-joined values. Out of scope: choosing between catalogue parts.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED
+    type: criterion-of
