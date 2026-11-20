@@ -420,3 +420,16 @@ The class swept: a record that states the front OUT_C zone's extent past the fin
 | `34.7`, `22.7`, `38.5`, `28.5`, `59.7`, `40.9` as reference positions | 0 before this change | 1 new | `fabrication-notes.md`, "Front silkscreen", now states the six reference positions |
 
 The copper record of the committed board holds 22 locked items on 11 critical-class nets (21 before this change, one track added for the U921 pin 4 run), and the pre-order check, the rule check (12 clearance findings, none unconnected) and the silk census (80 graphics at 0.15 mm or more, 38 texts of 1.0 mm or more at strokes of 0.15 mm or more) are as before.
+
+## 2026-11-20: critical routing pass 4, OUT_C front band edge straightened, blade legends and RV921 reference moved off the copper edges (layout review round 7, findings 7.1 and 7.2)
+
+The class swept: a record that states the front OUT_C zone's right edge or left chamfer (x 58.4 and 58.1, 53.4, the 5.0 mm strip, the 8.8 mm body), the position or orientation of a blade legend, of the RV921 reference or of the maker mark (the names centred at x 24.5, 32.6 and 44.0 at y 80.3 and 82.3, x 46.55 and x 50.15), or a claim that silk stands clear of copper. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, expressions run line by line over the working tree after the change; `layout-plan.md` (frozen pass and baseline text) and the rounds of `layout-review.md` and `schematic-review.md` are history and are not edited.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `centred on x 24.5`, `y 80.3`, `y 82.3`, `x 50.15`, `46.55 to 49.6` | 4 in `fabrication-notes.md`, "Front silkscreen" | 4 fixed | now the blade legends' pairs read upward at their anchors, the maker lines at x 50.65 and the logo's span x 47.05 to 50.1; the board title block's `y 80.3 to 86` is the title block, not a legend, and stands |
+| `53.4`, `58.4`, `58.1`, `5.0 mm strip`, `8.8 mm`, `4.31` | 0 outside the round 7 text and `layout-plan.md` | 0 stale | no live record states the band's edges or the left chamfer; the figures are in the frozen round text and the board file |
+| `RV921` as a reference position | 0 before this change | 1 new | `fabrication-notes.md` now states (28.65, 35.7), reading upward |
+| silk clear of copper | 2 | 2 new | `design-rules.md`, row `Silkscreen across copper edges`, and `fabrication-notes.md`: the 12 library-drawn part-body outlines that cross copper edges are accepted by reason (the silk census of this change: 118 silk objects, 12 crossing a copper edge, all of them library outlines) |
+
+The copper record of the committed board holds 22 locked items on 11 critical-class nets and the compare against the record of the board before this change differs only in `OUT_C_F0`; the rule check reports 12 clearance findings and nothing unconnected, the same list as before; the silk census is 80 graphics at 0.15 mm or more and 38 texts of 1.0 mm or more at strokes of 0.15 mm or more, as before.
