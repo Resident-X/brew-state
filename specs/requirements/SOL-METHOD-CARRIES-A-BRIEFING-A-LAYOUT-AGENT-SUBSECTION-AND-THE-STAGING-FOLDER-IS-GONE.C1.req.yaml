@@ -1,0 +1,12 @@
+id: SOL-METHOD-CARRIES-A-BRIEFING-A-LAYOUT-AGENT-SUBSECTION-AND-THE-STAGING-FOLDER-IS-GONE.C1
+type: criterion
+title: The method carries a subsection Briefing a layout agent with each ruling the method did not already carry
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  docs/board-design-method.md has a subsection headed Briefing a layout agent that states each ruling the staging README in docs/staging-from-wall-board-session/layout-agent-briefing/ marks as new, and refers to the existing step for each ruling it marks as covered. It repeats none of the existing text and names no machine, board or person.
+links:
+  - target: SOL-METHOD-CARRIES-A-BRIEFING-A-LAYOUT-AGENT-SUBSECTION-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of
