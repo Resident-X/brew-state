@@ -1,0 +1,27 @@
+id: SOL-WALL-BOARD-LAYOUT-SCRIPTS-ARE-TRACKED-AT-THEIR-HOME-AND-THE-STAGING-FOLDER-IS-GONE
+type: deliverable
+category: solution
+title: The wall board's layout scripts are tracked at their proper home, reconciled with the scripted layout tools, and the staging folder is removed
+status: active
+version: 1
+text: |
+  Why this exists. The heater wall board's later layout passes, its silk changes and its checking were made by scripts that lived outside the repository. They are held in the repository only as a temporary staging folder, docs/staging-from-wall-board-session/wall-board-layout-scripts/, whose README lists each script, what it needs, the commit it produced and where it overlaps the scripted layout tools that SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD tracks. A reader on another machine cannot repeat those passes, and the staging folder is not a home: it is a laptop-sized stopgap.
+
+  Settled for the build:
+  - Read the tracked tools first and keep only what they do not already do; a script that a tracked tool replaces is dropped, with its reason stated in the hardware notes.
+  - A script specific to the wall board's geometry is tracked beside that board as a build script of that board; a generic measure or filter is tracked in the tooling folder with a test on a synthetic design.
+  - Every path, interpreter and tool is an argument or an environment variable, as the scripted layout tools leaf requires.
+  - The change logs of each pass are kept beside the board's records, or dropped where the board's history already records the same change.
+  - The staging subfolder is deleted by the change that completes this item, and the staging README's row for it is removed.
+  - Not built.
+rationale: |
+  Restores the behaviour PER-ADOPTER-001.C3 and REQ-PUBLISHED-BUILD-PATH-001.C2 require: a tool the work depended on is obtainable by a reader who is not the author. The wall board's layout was finished by scripts that no criterion required to be tracked, so the delivered board could be reached only by someone holding the author's working files. A maintenance item and not an amendment of the scripted layout tools leaf, whose scope is the main board's tools and whose build is finished.
+
+  Placement: the temporary staging folder exists only so that the scripts are not lost while this item is open; a graph node must not point at a local file system, so this item names the repository folder.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: PER-ADOPTER-001.C3
+    type: targets

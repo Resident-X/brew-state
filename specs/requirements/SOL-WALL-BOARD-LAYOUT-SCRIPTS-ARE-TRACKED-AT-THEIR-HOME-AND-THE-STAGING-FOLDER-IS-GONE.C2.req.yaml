@@ -1,0 +1,12 @@
+id: SOL-WALL-BOARD-LAYOUT-SCRIPTS-ARE-TRACKED-AT-THEIR-HOME-AND-THE-STAGING-FOLDER-IS-GONE.C2
+type: criterion
+title: Each kept layout script runs without a fixed local path and is proven on a synthetic design
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Each kept script takes every path, interpreter and tool as an argument or an environment variable, names the one it cannot find, and holds no absolute path of one machine. A test in the tooling tests runs each generic script on a synthetic board in a temporary folder and fails when its edit or its measure is wrong.
+links:
+  - target: SOL-WALL-BOARD-LAYOUT-SCRIPTS-ARE-TRACKED-AT-THEIR-HOME-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of

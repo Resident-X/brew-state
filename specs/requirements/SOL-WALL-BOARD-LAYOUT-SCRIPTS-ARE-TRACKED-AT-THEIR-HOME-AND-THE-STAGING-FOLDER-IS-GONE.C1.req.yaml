@@ -1,0 +1,12 @@
+id: SOL-WALL-BOARD-LAYOUT-SCRIPTS-ARE-TRACKED-AT-THEIR-HOME-AND-THE-STAGING-FOLDER-IS-GONE.C1
+type: criterion
+title: The wall board's layout scripts that nothing tracked replaces live at their proper home
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Each script in docs/staging-from-wall-board-session/wall-board-layout-scripts/ is either tracked at a stated home, beside the heater wall board for one specific to its geometry or in the tooling folder for a generic one, or is dropped with a reason stated in the hardware notes because a tracked layout tool already does what it did. The hardware notes name each kept script's command and what it needs.
+links:
+  - target: SOL-WALL-BOARD-LAYOUT-SCRIPTS-ARE-TRACKED-AT-THEIR-HOME-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of

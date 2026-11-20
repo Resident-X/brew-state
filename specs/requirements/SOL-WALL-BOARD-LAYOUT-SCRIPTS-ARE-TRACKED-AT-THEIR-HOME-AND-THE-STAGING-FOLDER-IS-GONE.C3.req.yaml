@@ -1,0 +1,12 @@
+id: SOL-WALL-BOARD-LAYOUT-SCRIPTS-ARE-TRACKED-AT-THEIR-HOME-AND-THE-STAGING-FOLDER-IS-GONE.C3
+type: criterion
+title: The staging folder for the wall board's layout scripts no longer exists
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The folder docs/staging-from-wall-board-session/wall-board-layout-scripts/ is absent from the repository, the staging folder's README no longer lists it, and the content that was in it is found at the homes the first criterion states.
+links:
+  - target: SOL-WALL-BOARD-LAYOUT-SCRIPTS-ARE-TRACKED-AT-THEIR-HOME-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of
