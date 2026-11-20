@@ -458,3 +458,12 @@ The class swept: a live record that names which round of the layout review is th
 |---|---|---|---|
 | `closing round`, `closes at Round`, `review closes` in `owner-sign-off.md` | 4 | 4 fixed | the W-13 line of the first-look list, W-13's closing note, the keeper's note under W-16 and item 8 of the end-of-work list: each now says the closing round is the last round recorded in `layout-review.md` and carries no round number for it; the Round 5 mentions in W-13 are his words' history and stand |
 | the same phrases elsewhere in the board folder and `docs/sunbeam-em7000/` | 0 | 0 | `hardware/README.md` describes the history command's closing-round check in general terms and names no round |
+
+## 2026-11-20: four observations of layout review round 10, seen and not raised
+
+Round 10 raised no finding. The reviewer saw these four and did not raise them; they are recorded here so that they are carried, none being a finding and none edited in the record it concerns.
+
+- `layout-plan.md`, the `FLOOR-1` baseline row (line 43): it quotes the courtyard extents of U911 and U921 (U911 y 45.33 to 55.06) that differ from the built footprints' by up to 1.2 mm (U911's built courtyard is y 44.19 to 56.19). The row's claim, that each part stands inside the rectangles of its region, is still true. It is a frozen baseline row and is not covered by the amendment note after layout review round 9.
+- `layout-review.md`, round 9, finding 9.1's Closed by: it says `owner-sign-off.md` names Round 9 as the closing round. That was true when written; the round number was removed from the live records in commit `026c8053`, and the Closed by is history and is not edited.
+- `CONN-1` stays not applicable: the varistors are surge clamps, which `SURGE-1` lists apart from the connectors.
+- `layout-hedges.md` hedge 17 says "H1 only" for the exclusion from the position file, while the six hand-fitted surface-mount parts (R911, R912, R921, R922, U911, U921) carry the same flag; line 33 of the same file and `open-items.md` say so, and no live statement is untrue.
