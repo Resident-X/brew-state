@@ -437,3 +437,15 @@ The copper record of the committed board holds 22 locked items on 11 critical-cl
 ## 2026-11-20: the triac and blade fitting order added, the production-files check record committed
 
 The class swept: a record that states an order of fitting the triacs, the blades or the plate that differs from "bolt the tabs to the plate, then solder the leads, blades last". Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, phrases `order of fitting`, `fit order`, `fitting order`, `fitting note`, `bolted`, `soldered first`, `before soldering`, `fit the blades` and `fitted last`. Result: `layout-hedges.md` hedge 9 (blades after the other parts, board supported) agrees; `fabrication-notes.md` "Home application steps" (every hand-fitted part fitted, the plate and triac mounting done and the heat compound applied, before the coat) agrees; `controller-board-division.md` has an order of fitting for the earlier bracket form, which its own amendment note of 2026-11-19 marks as that form's, so it states no live order; nothing else states one. `production-files-check.md` is now in the board folder (judged at 478d3b05).
+
+## 2026-11-20: layout review round 9, the closing round named, the BOARD-8 distances stated (findings 9.1 and 9.2)
+
+The classes swept: a record that names Round 8 as the closing round of the layout review; a record that states the opto-triac to triac distance as 20.7 mm or 20.73 mm or holds a figure out as meeting the 20.0 mm of hedge 8 for all three measures. Scope: `hardware/sunbeam-em7000/heater-wall-board/` and `docs/sunbeam-em7000/`, `*.md` and `*.yaml`, phrases `Round 8`, `closing round`, `20.7`, `20.73`, `45.33`, `BOARD-8`, `20.0 mm from`, `22.41`, `19.59`, `19.82`.
+
+| Phrase | Lines | Of which live | What they are |
+|---|---|---|---|
+| `Round 8` in `owner-sign-off.md` | 5 | 5 fixed | the W-13 line, W-13's closing note, the keeper's note under W-16, item 8 and its Round 6 to 8 sentence: Round 9 is the closing round, Round 8 raised no finding and ran no views |
+| `20.7`, `20.73` | `layout-plan.md` 3 lines (relaxation R3, the BOARD-8 rows of candidates 1 and 2), `layout-review.md` frozen rounds | 0 stale | baseline rows, not rewritten; `layout-plan.md` now carries an amendment note after layout review round 9 with the built figures |
+| `BOARD-8` | `layout-plan.md` and `layout-review.md` (frozen rows); `owner-sign-off.md` 1 | 1 new | item 9 of the end-of-work list, the pass on body distance with the courtyard and pad figures under 20.0 mm |
+| `20.0 mm from`, `20.0 mm of hedge 8` | `layout-hedges.md` 3 lines | 0 stale | the hedge's target, stated without a measured figure |
+| `45.33`, `22.41`, `19.59`, `19.82`, `38.44` | `layout-plan.md` line 16 and the amendment note, `layout-review.md` rounds, `owner-sign-off.md` item 9 | 0 stale | the built figures, as the board file gives them |
