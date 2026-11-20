@@ -1,0 +1,12 @@
+id: SOL-BREW-STATE-ARTIFACT-IS-REGENERABLE-FROM-TRACKED-FILES-AND-THE-STAGING-FOLDER-IS-GONE.C3
+type: criterion
+title: The staging folder for the Brew State artifact no longer exists
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The folder docs/staging-from-wall-board-session/brew-state-artifact/ is absent from the repository, the staging folder's README no longer lists it, and its content is found at the homes the first two criteria state.
+links:
+  - target: SOL-BREW-STATE-ARTIFACT-IS-REGENERABLE-FROM-TRACKED-FILES-AND-THE-STAGING-FOLDER-IS-GONE
+    type: criterion-of

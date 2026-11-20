@@ -1,0 +1,26 @@
+id: SOL-BREW-STATE-ARTIFACT-IS-REGENERABLE-FROM-TRACKED-FILES-AND-THE-STAGING-FOLDER-IS-GONE
+type: deliverable
+category: solution
+title: The Brew State artifact is regenerable from tracked board files and tracked scripts with the verified placement values, and the staging folder is removed
+status: active
+version: 1
+text: |
+  Why this exists. The Brew State artifact page is the published view of both boards, with their renders, layer pictures and three-dimensional models. Its generators, its verified three-dimensional placement corrections and its hero render settings were made outside the repository and are held only in a temporary staging folder, docs/staging-from-wall-board-session/brew-state-artifact/, whose README lists each file and what it needs. The page file in that folder is the only master of the published page. The corrections were applied in the artifact pipeline only, so a reader who rebuilds the page from the repository gets the old placements back.
+
+  Settled for the build:
+  - The generators are tracked in the tooling folder, with a test on a synthetic board for each, taking every path as an argument or an environment variable.
+  - The verified placement values in the staging folder's placements.yaml are carried into the model-fitting tool's own table, in coordination with SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS, so that a fresh fetch and render give the corrected placements; the one part left unresolved there, the main board's crystal Y601, is resolved against its datasheet and its footprint or recorded with the reading that leaves it as it is.
+  - The page is either tracked as a source with its way of reaching the reader stated, or rebuilt from the tracked generators and the tracked board files; the choice and its reason are stated in the hardware notes.
+  - The staging subfolder is deleted by the change that completes this item, and the staging README's row for it is removed.
+  - Not built.
+rationale: |
+  Restores the behaviour REQ-PUBLISHED-BUILD-PATH-001.C2 requires and REQ-BOARD-LAYOUT-PRACTICE-001.C1 relies on: the views a board is judged on, and that a builder reads, can be produced by a reader who is not the author. The page's only master and its verified corrections existed only in working files, so a laptop failure or a fresh checkout would lose them.
+
+  Kept apart from the model-fitting item because that item fixes the fitting command's choice of turn, and this one makes the page reproducible and carries the verified values; the two meet at the placement values and the first names the other.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-PUBLISHED-BUILD-PATH-001.C2
+    type: targets
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
