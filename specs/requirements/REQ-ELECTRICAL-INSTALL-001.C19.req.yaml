@@ -1,0 +1,12 @@
+id: REQ-ELECTRICAL-INSTALL-001.C19
+type: criterion
+title: Each conductor and joint on a heater's current path stays within a stated temperature rise at its worst-case current
+status: active
+version: 1
+measurement_type: threshold
+verification: test
+text: |
+  A conductor that is not a rated wire, such as a copper track on a board, a blade terminal, a push-on connector or an in-line joiner, carries the machine's heater current for years, and a high-resistance run or joint overheats where nothing monitors it. Each such conductor and joint on a heater's current path is shown to stay within a stated temperature rise over the enclosure air at the worst-case current it carries, with the limit and its source stated. Where a maker states no rating the rise is read on the built assembly at sustained full load, and a reading outside the limit fails.
+links:
+  - target: REQ-ELECTRICAL-INSTALL-001
+    type: criterion-of

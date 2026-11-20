@@ -1,0 +1,12 @@
+id: SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS.C3
+type: criterion
+title: Every polarised or tabbed part on both boards' pictures is checked against its footprint's marked side after the fix
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  After the fix the fetch and the render are run for the heater wall board and the main board, and each polarised or tabbed part's picture is read against its footprint's pin-1 or tab mark, naming the triacs T911 and T921 and the opto-triacs U911 and U921 by reference, with the reading of each recorded in the hardware notes. A part found still turned the wrong way is corrected before the criterion closes. Out of scope, the pictures' viewpoints.
+links:
+  - target: SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS
+    type: criterion-of

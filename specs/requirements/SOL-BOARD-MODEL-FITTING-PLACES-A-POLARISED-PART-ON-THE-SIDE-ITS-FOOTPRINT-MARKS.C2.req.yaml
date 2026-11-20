@@ -1,0 +1,12 @@
+id: SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS.C2
+type: criterion
+title: A test over a synthetic asymmetric part fails when the fitting is 180 degrees wrong
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A test runs the fitting over a synthetic footprint whose pads match at 0 and 180 degrees and a synthetic model with its tab or pin-1 mark on one side, where the correct turn overhangs the courtyard past the limit and the opposite turn does not, and requires the tab or pin-1 mark on the footprint's marked side. A seeded fault that restores the least-overhang choice makes the test fail. Out of scope, any vendor model.
+links:
+  - target: SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS
+    type: criterion-of

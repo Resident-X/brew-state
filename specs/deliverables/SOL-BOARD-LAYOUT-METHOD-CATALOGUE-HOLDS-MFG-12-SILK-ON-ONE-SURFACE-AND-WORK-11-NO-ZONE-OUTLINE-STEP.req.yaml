@@ -1,0 +1,23 @@
+id: SOL-BOARD-LAYOUT-METHOD-CATALOGUE-HOLDS-MFG-12-SILK-ON-ONE-SURFACE-AND-WORK-11-NO-ZONE-OUTLINE-STEP
+type: deliverable
+category: solution
+title: The layout method's catalogue holds the silk-on-one-surface item MFG-12 and the zone-outline-step item WORK-11 that the heater wall board's round 7 proposed
+status: active
+version: 1
+text: |
+  Why this exists. The heater wall board's layout review, round 7 (hardware/sunbeam-em7000/heater-wall-board/layout-review.md), raised two cosmetic findings that a measurement could not state because no published source gives a figure for them, and proposed one new judgement item for each, to be added to the method's catalogue (docs/board-design-method.md) so the next board is held to them without anyone remembering. The fixing change for the board did not add them to the method.
+  - Finding 7.1: silk legends and one reference printed across the edges of the copper under them, each reading half on laminate and half on mask-covered copper (OUT_S, OUT_C, COFFEE, RETURN, RV921 and the logo); appearance only. Proposed item MFG-12, a judgement-kind item of the manufacturing area, cosmetic: a silk legend or reference stands wholly on bare laminate or wholly inside one copper feature.
+  - Finding 7.2: the right edge of the front OUT_C zone stepped 0.3 mm inward (a 0.424 mm 45-degree run), the same kind of offset WORK-5 forbids in tracks, here in a zone outline. Proposed item WORK-11, a judgement-kind item of the workmanship area, cosmetic: a zone outline carries no offset or step under 1 mm other than a 45-degree chamfer at a corner or a neck.
+
+  Settled for the build:
+  - Both items are judgement-kind, cosmetic, in the catalogue's item form, and each Source names the review, round 7, and its finding.
+  - MFG-12 excepts by reason the silk outlines that library footprints draw for part bodies (the three blade rectangles, the triac and varistor bodies, the connector box), which are normal component outlines and cannot be cut without library edits; the item states that the exception is made by a recorded reason per part.
+  - Neither item is a measured rule: the maker's capability page states no silk-to-copper-edge figure for mask-covered copper, and WORK-5's 1 mm is a track figure with no source for zone outlines, which applied to outlines would flag the accepted 0.42 to 0.64 mm neck chamfers. Each item says so and names the published guide that would turn it into a rule; the method's step on findings that a measurement could state is the precedent for that wording.
+  - Out of scope: any change to a board's design files, the pre-order check, and the catalogue's other items.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of the practice: every board is judged against every applicable item, and an item that a review found missing and recorded as proposed is not an item until the catalogue holds it. Placed here because the finding rows record the additions as proposed and not made, and the next board would otherwise be judged without them.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets

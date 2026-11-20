@@ -1,0 +1,12 @@
+id: SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS.C1
+type: criterion
+title: The fitting turns a polarised or tabbed part's model so its pin 1 or tab stands on the side the footprint marks, not by least overhang
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  For a part whose footprint marks a pin 1 or a tab side, the fitting command takes, among the turns that match every pad, the one that puts the model's pin 1 or tab on the marked side, and chooses by least overhang only among turns that do so or for a part whose footprint marks no side. A turn that does so is kept even where its body stands out past the courtyard limit, and the part is reported with its overhang. Out of scope, the footprints and the board files.
+links:
+  - target: SOL-BOARD-MODEL-FITTING-PLACES-A-POLARISED-PART-ON-THE-SIDE-ITS-FOOTPRINT-MARKS
+    type: criterion-of
