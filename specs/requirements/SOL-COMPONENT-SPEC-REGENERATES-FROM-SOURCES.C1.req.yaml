@@ -1,0 +1,12 @@
+id: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C1
+type: criterion
+title: One task-runner command regenerates all three documents from repository-held sources
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A single task-runner command regenerates the component specification, the controller I/O enumeration and the purchase list from the requirement graph, the committed parameter descriptions and the reference machine's declared configuration, each served figure drawn from a named source, deterministically and from files held in the repository alone; authored judgement prose lives in committed source inputs the generator reads, not in the output. Out of scope: changing any figure, selection or wording the documents currently state, and selecting the controller.
+links:
+  - target: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C2
+type: criterion
+title: A provisional number never stands in for a derived one, and a mark ends when its work lands
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  A test fails when a cell carries both a numeric figure and a pending mark without stating the figure is an adopted estimate with its origin, and fails when a mark names a node that is built, because the figure is then derivable and the mark must be ended or re-pointed with its reason. The check reports in text and in JSON, each finding naming the document, the row and the node. Does not cover figures in documents other than the three named, and does not cover ambient or procurement inputs the specification already states as owner assertions.
+links:
+  - target: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK
+    type: criterion-of

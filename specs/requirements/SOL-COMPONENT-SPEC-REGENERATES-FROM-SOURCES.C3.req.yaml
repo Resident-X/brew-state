@@ -1,0 +1,12 @@
+id: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C3
+type: criterion
+title: The divergence check reuses the task runner and the round gate's selection
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The check is a task-runner target run by the round gate whenever the branch changes a path the documents or their sources live under, extending the existing generated-record convention that pins inputs by digest rather than a parallel mechanism, and is also part of the nightly verification. Out of scope: any new verification tier and any change to the sweep or board tiers.
+links:
+  - target: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
+    type: criterion-of

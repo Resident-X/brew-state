@@ -1,0 +1,12 @@
+id: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C1
+type: criterion
+title: Every pending mark names an active node that will settle it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  In the controller I/O enumeration, the component specification and the purchase list, every figure or input marked pending, and every cell that states a figure is not established, names the id of an active graph node whose work will settle it, and a test over a synthetic project fails when a mark names no node, a node that does not resolve, or a deprecated node. Where no node exists for an unsettled figure (the flow channel's accuracy is one), the node is authored in the graph in the same change rather than the mark left unnamed. Out of scope: deriving or choosing any figure the marks stand for, and amending the criterion text itself.
+links:
+  - target: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK
+    type: criterion-of
