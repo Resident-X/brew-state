@@ -1,0 +1,21 @@
+id: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED
+type: deliverable
+category: solution
+title: Every mains gate-network resistor of the heater wall board has a pulse rating and working voltage covering its stress, or the residual recorded with the owner's acceptance
+status: active
+version: 1
+text: |
+  Records, for the finished heater wall board, that every resistor in a mains gate network has a maker-sourced pulse rating and rated working voltage that cover the stress the board puts on it, or that its stress, its short or missing rating and the owner's acceptance of the residual are recorded in the position's accepted_exceptions entry that the pre-order check reads. The form is the one DEC-HEATER-WALL-BOARD-GATE-RESISTOR-PULSE-RESIDUAL-RECORDED-IN-ACCEPTED-EXCEPTION settles: the check judges the entry's working voltage and has no pulse rule, so no pre-order-check change is part of this leaf.
+
+  Placement: records and notes of the finished board in hardware/sunbeam-em7000/heater-wall-board/ (derating-policy.yaml, parts-specification.yaml, owner-sign-off.md, open-items.md), reusing the accepted_exceptions mechanism the check already reads. Rejected: a pulse field and rule in the check, and a record held only in owner-sign-off prose. Four entries exist already (R911, R912, R921, R922, accepted by the owner on 2026-11-19, owner-sign-off.md W-7(a)); the work derives the closed set of gate-network resistors from the board's schematic nets and parts record, so that a resistor beyond those four is found rather than assumed absent, and checks each against its rating or entry.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C23
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3
+    type: targets
+  - target: DEC-HEATER-WALL-BOARD-GATE-RESISTOR-PULSE-RESIDUAL-RECORDED-IN-ACCEPTED-EXCEPTION
+    type: justified-by
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by

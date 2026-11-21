@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C1
+type: criterion
+title: Every connector of the board is classed reachable or not, closed over the board's connector list
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every connector the board's records list is classed as reachable or not reachable by a person with the machine assembled, and the classification is stated over the whole connector list, which the records declare closed; a connector whose reachability depends on the printed case is classed reachable. Out of scope: the case design itself and any physical discharge measurement.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED
+    type: criterion-of

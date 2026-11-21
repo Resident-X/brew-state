@@ -1,0 +1,30 @@
+id: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT
+type: deliverable
+category: solution
+title: The wall steel's grade and thickness at the cut are on record and the triacs' thermal judgement is re-judged on them
+status: active
+version: 1
+text: |-
+  Record the steel's magnetic grade, thickness and bolted-joint thermal resistance at the owner's cut, with source or marked as the owner's measurement, and re-judge the triacs' wall-assembly thermal margin on them.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C22
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets
+  - target: DEC-HEATER-WALL-BOARD-IS-A-PLAIN-RECTANGLE-SCREWED-TO-A-PRINTED-CASE-ON-A-FLAT-SPREADER
+    type: justified-by
+  - target: DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP
+    type: justified-by
+interfaces:
+  - SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED thermal judgement
+  - hardware/sunbeam-em7000/heater-wall-board/owner-sign-off.md
+locus:
+  - marking: existing
+    ref: hardware/sunbeam-em7000/heater-wall-board/constraints-figures.md
+  - marking: existing
+    ref: hardware/sunbeam-em7000/heater-wall-board/open-items.md
+  - marking: existing
+    ref: docs/sunbeam-em7000/controller-board-design-constraints.md
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-HEATER-WALL-BOARD-DESIGNED-C22-C24-A
+  target: DEL-HW-HEATER-WALL-BOARD-DESIGNED

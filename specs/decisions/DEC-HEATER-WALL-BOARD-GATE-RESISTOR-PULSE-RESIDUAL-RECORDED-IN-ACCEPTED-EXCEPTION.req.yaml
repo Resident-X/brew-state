@@ -1,0 +1,31 @@
+id: DEC-HEATER-WALL-BOARD-GATE-RESISTOR-PULSE-RESIDUAL-RECORDED-IN-ACCEPTED-EXCEPTION
+type: decision
+category: tactical
+title: A gate-network resistor's missing pulse rating is recorded in its accepted-exception entry and the pre-order check judges only its working voltage
+status: active
+version: 1
+text: |
+  A mains gate-network resistor whose maker publishes no pulse rating, or a rated working voltage below the stress the board puts on it, is recorded in the board's derating-policy.yaml accepted_exceptions entry for that position. The entry carries the stress, the missing or short rating, the owner's acceptance with its date and the element that bounds the residual. The pre-order check judges only the working-voltage figure of the entry (accepted_v) against the position's stress and has no pulse rule, so no pulse field and no pulse rule are added to it. A pulse figure the maker leaves out is carried to bring-up as the unpublished-figure decision directs, except where the resistor forms a safety barrier, whose missing rating stays an owner-accepted residual in the same entry.
+
+  The heater wall board already records its four gate resistors this way: R911, R912, R921 and R922 carry accepted_exceptions entries accepted by the owner on 2026-11-19 (owner-sign-off.md W-7(a)), each stating the 7.07 V rated continuous working voltage, the 178.9 V surge each carries at the 253 V top of the span, the missing pulse rating and the bounding elements.
+rationale: |
+  Context: the criterion for the heater wall board's gate networks (DEL-HW-HEATER-WALL-BOARD-DESIGNED.C23) asks that a resistor's missing pulse rating, its stress and the owner's acceptance be recorded together with the accepted exception the pre-order check reads. Slicing found that exception mechanism voltage-only, which raised the question whether a pulse field and rule must be built first. The check's derated-voltage rule and its exception mechanism are built (SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-DERATING-EXCEPTIONS) and the check has no rule that judges a pulse figure, so nothing exists that would read a pulse exception.
+
+  Trade-off: a pulse field and rule would make the check judge a figure for which the makers of the parts in question publish nothing to judge it against, and it would be machinery the criterion does not need, since the working-voltage half of the criterion is already judged by the existing entry and the pulse half is a recorded finding that a rating is missing, which the hardware-proven-before-made criterion on written circuit practice accepts as a recorded finding that an item is met or does not apply. Recording the pulse residual only in owner-sign-off prose would leave the board's machine-read record and the owner's acceptance apart, so the entry that the check already reads carries both. The existing entries for R911, R912, R921 and R922 show the form works.
+
+  Consequence: the criterion's leaf is a record-completeness piece of work on the finished board, with no pre-order-check change.
+options_considered:
+  - option: Record the pulse residual in the position's accepted_exceptions entry; the check judges working voltage only
+    reason_rejected: ""
+  - option: Add a pulse field and a pulse rule to the pre-order check
+    reason_rejected: the part makers publish no pulse figure to judge against, and the criterion needs no check that judges pulse
+  - option: Record the pulse residual only in owner-sign-off prose
+    reason_rejected: the board's machine-read record and the owner's acceptance would be held apart
+chosen: Record the pulse residual in the position's accepted_exceptions entry; the check judges working voltage only
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C23
+    type: addresses
+  - target: DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP
+    type: addresses
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: addresses
