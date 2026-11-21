@@ -1,0 +1,346 @@
+# Per-part placement overrides for the main board: each part's pads differ from the assembler's own footprint for its
+# catalogue number, so the pad-fit step cannot place it by itself. Each entry gives the row the placement file carries
+# for the part (the point the assembler's footprint origin lands on, in the position export's frame, and the
+# counter-clockwise rotation in degrees) and why. Matched by pad number where the numbers agree, by pad shape where they
+# do not; the largest residual is the farthest pad of the assembler's footprint from the board's pad it is matched to.
+overrides:
+- reference: C202
+  x: 59.122
+  y: -117.31
+  rotation: 270
+  reason: 'Pad numbers match (2 pads, C97946) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.118 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: C204
+  x: 56.534
+  y: -111.658
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C97946) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.118 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: C302
+  x: 97.395
+  y: -62.478
+  rotation: 270
+  reason: 'Pad numbers match (2 pads, C165623) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.130 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: C419
+  x: 81.985
+  y: -78.305
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C107198) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.118 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: C607
+  x: 52.4
+  y: -82.35
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C97946) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.118 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: C792
+  x: 118.667
+  y: -15.061
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C4747957) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.100 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D201
+  x: 55.131
+  y: -120.898
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C21107) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.123 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D202
+  x: 59.8848
+  y: -121.852
+  rotation: 180
+  reason: 'Pad numbers match (3 pads, C48502) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.283 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D203
+  x: 55.826
+  y: -108.848
+  rotation: 0
+  reason: 'Pad numbers match (2 pads, C21107) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.123 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D204
+  x: 52.12
+  y: -112.6498
+  rotation: 90
+  reason: 'Pad numbers match (3 pads, C48502) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.283 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D205
+  x: 66.4
+  y: -97.6162
+  rotation: 270
+  reason: 'Pad numbers match (3 pads, C48502) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.283 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D206
+  x: 65.5328
+  y: -107.569
+  rotation: 180
+  reason: 'Pad numbers match (3 pads, C48502) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.283 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D402
+  x: 87.211
+  y: -88.639
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C207260) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.235 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D501
+  x: 97.974
+  y: -29.725
+  rotation: 0
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D502
+  x: 99.549
+  y: -35.6941
+  rotation: 270
+  reason: 'Pad numbers match (3 pads, C78606) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.117 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D503
+  x: 124.887
+  y: -65.21
+  rotation: 0
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D504
+  x: 128.3
+  y: -103.1131
+  rotation: 270
+  reason: 'Pad numbers match (3 pads, C78606) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.117 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D505
+  x: 119.875
+  y: -50.15
+  rotation: 0
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D506
+  x: 112.928
+  y: -56.6321
+  rotation: 270
+  reason: 'Pad numbers match (3 pads, C78606) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.117 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D520
+  x: 89.007
+  y: -34.82
+  rotation: 270
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D521
+  x: 111.355
+  y: -119.95
+  rotation: 0
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D522
+  x: 110.4
+  y: -122.7
+  rotation: 90
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D523
+  x: 91.921
+  y: -85.5439
+  rotation: 90
+  reason: 'Pad numbers match (3 pads, C78606) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.117 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D524
+  x: 77.5869
+  y: -95.685
+  rotation: 180
+  reason: 'Pad numbers match (3 pads, C78606) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.117 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D525
+  x: 117.478
+  y: -120.166
+  rotation: 180
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D526
+  x: 115.462
+  y: -119.591
+  rotation: 180
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D527
+  x: 120.1611
+  y: -117.822
+  rotation: 0
+  reason: 'Pad numbers match (3 pads, C78606) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.117 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D528
+  x: 76.704
+  y: -107.5239
+  rotation: 90
+  reason: 'Pad numbers match (3 pads, C78606) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.117 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D529
+  x: 102.9
+  y: -60.8
+  rotation: 180
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D530
+  x: 89.999
+  y: -97.858
+  rotation: 90
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D531
+  x: 101.411
+  y: -25.861
+  rotation: 180
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D570
+  x: 115.278
+  y: -58.272
+  rotation: 90
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D571
+  x: 109.49
+  y: -57.645
+  rotation: 0
+  reason: 'PESD5V0F1BL (C45961, SOD-882): the board''s footprint has four pad objects, 1 and 2 plus two unnamed pads lying exactly on them (name blank), the assembler''s has two (1, 2). Matched pad 1 to 1 and 2 to 2, the unnamed duplicates ignored; the origin is the midpoint of the pair. Largest residual 0.025 mm. The diode is bidirectional, so polarity is moot; no doubt left.'
+- reference: D731
+  x: 68.732
+  y: -41.95
+  rotation: 90
+  reason: 'Pad numbers match (2 pads, C2128) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.123 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D741
+  x: 67.372
+  y: -10.894
+  rotation: 90
+  reason: 'Pad numbers match (2 pads, C2128) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.122 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: D821
+  x: 116.329
+  y: -29.349
+  rotation: 0
+  reason: 'Pad numbers match (2 pads, C2128) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.123 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: F101
+  x: 30.3
+  y: -86.3
+  rotation: 0
+  reason: 'SETfuse SCT520PT 10 A axial cartridge fuse (C22447834, through-hole): pad numbers match (2 pads) and the tool''s own fit is rotation 0 with the origin at the midpoint of the pair, but the farthest pad is 2.000 mm off: the board''s pads are 28.0 mm apart, the assembler''s 24.0 mm. The assembler''s own footprint is used. The residual is large because the board takes the fuse''s leads at 28.0 mm pitch (soldered pigtail leads, per the part record) and the assembler''s footprint is a 24 mm pitch; the part is symmetric, so rotation and origin are not in doubt, only whether the assembler can form or fit its leads to 28 mm. Doubt: the lead pitch.'
+- reference: F401
+  x: 88.607
+  y: -69.222
+  rotation: 90
+  reason: 'Pad numbers match (2 pads, C17313) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.284 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: K201
+  x: 27.78
+  y: -112.18
+  rotation: 90
+  reason: 'HF115F-I relay (C2976795): the board has pads A1, A2 and two pads each for 13 and 14, the assembler''s six pads are numbered 1, 2, 5, 6, 7, 8. Matched by shape: the coil pair (7.56 mm) and the contact columns (5.04 mm apart, 20.16 mm from the coil) fit only at rotation 90: assembler 1 on A1, 2 on A2, 5 and 6 on 13, 7 and 8 on 14. Largest residual 0.000 mm. Doubt: which assembler pads are coil is inferred from the geometry, not from a datasheet.'
+- reference: K731
+  x: 53.08
+  y: -42.6999
+  rotation: 180
+  reason: 'HF32FA-G relay (C91370): the board names its pads 13, 14, A1, A2, the assembler''s 1 to 4, so numbers cannot be matched; matched by shape. The coil pair (7.6 mm apart) and the contact pair (6.35 mm apart) are different, so only one turn fits: rotation 180, assembler 1 on A2, 2 on A1, 3 on 13, 4 on 14. Largest residual 0.000 mm. Doubt: the coil pins are taken as the wider pair; coil polarity does not matter for this relay.'
+- reference: K741
+  x: 53.08
+  y: -7.5499
+  rotation: 180
+  reason: 'HF32FA-G relay (C91370): the board names its pads 13, 14, A1, A2, the assembler''s 1 to 4, so numbers cannot be matched; matched by shape. The coil pair (7.6 mm apart) and the contact pair (6.35 mm apart) are different, so only one turn fits: rotation 180, assembler 1 on A2, 2 on A1, 3 on 13, 4 on 14. Largest residual 0.000 mm. Doubt: the coil pins are taken as the wider pair; coil polarity does not matter for this relay.'
+- reference: Q822
+  x: 112.152
+  y: -20.4558
+  rotation: 90
+  reason: 'Pad numbers match (3 pads, C15127) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.283 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: R105
+  x: 7.0112
+  y: -84.9659
+  rotation: 180
+  reason: 'WSK2512 4-terminal current-sense resistor (C4248455): pad numbers match (4 pads) but the tool''s own number fit is 4.646 mm off at rotation 270, which would put the 2512 body 90 degrees from the board''s pads. The two footprints number the pads differently: the board''s 1 and 2 are the two pads at one end and 3 and 4 at the other, the assembler''s 1 and 3 are one end and 2 and 4 the other. Matched by end and position instead: rotation 180, assembler 1 on board 1, 3 on 2, 2 on 3, 4 on 4. Largest residual 0.501 mm, which is large; accepted because both footprints are two pads per end of a 2512 body (the board staggers its two pads per end by 0.8 mm), the terminals are interchangeable, and 0.5 mm is small against a 2512 terminal. Doubt: the force/sense pairing of the two pads at an end.'
+- reference: R601
+  x: 25.27
+  y: -71.66
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C2960835) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.104 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: R602
+  x: 25.27
+  y: -78.2
+  rotation: 0
+  reason: 'Pad numbers match (2 pads, C2960835) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.104 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: R603
+  x: 33.23
+  y: -78.2
+  rotation: 0
+  reason: 'Pad numbers match (2 pads, C2960835) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.104 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: R630
+  x: 25.27
+  y: -65.7
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C2775980) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.104 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: R631
+  x: 19.338
+  y: -56.18
+  rotation: 0
+  reason: 'Pad numbers match (2 pads, C2775980) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.104 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: RV101
+  x: 11.75
+  y: -62.6
+  rotation: 201.8009
+  reason: 'Pad numbers match (2 pads, C8852) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.289 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: SW401
+  x: 127.665
+  y: -70.308
+  rotation: 90
+  reason: 'TS-1187A tactile switch (C318884): the board names two pads 1 and two pads 2 (a pair per net), the assembler''s four are numbered 1 to 4; matched by shape. Pad centres are 6.0 by 3.7 mm in the assembler''s and 6.0 by 3.75 mm on the board, so rotation 90 or 270 (equal for a four-corner part; 90 used): assembler 1 and 2 on board net 1, 3 and 4 on net 2. Largest residual 0.025 mm. Doubt: whether the pads the board joins as one net (6 mm apart) are the legs the switch joins internally is not shown by the data; check the part''s connection diagram.'
+- reference: T701
+  x: 47.3973
+  y: -31.9987
+  rotation: 0
+  reason: 'T835-800B triac (C2971290, TO-252): the board has pads 1, 2, 3 plus four unnamed pads at the tab end; the assembler''s has three (1, 2, 3). Matched 1 to 1, 2 to 2, 3 to 3 (pin 1 and 3 on the same side, pin 2 on the tab side in both), the unnamed tab pads ignored. Largest residual 0.029 mm. Doubt: the unnamed tab copper is not compared with the assembler''s tab, and the assembler''s pin numbering is taken to follow the datasheet.'
+- reference: T711
+  x: 47.3973
+  y: -17.1987
+  rotation: 0
+  reason: 'T835-800B triac (C2971290, TO-252): the board has pads 1, 2, 3 plus four unnamed pads at the tab end; the assembler''s has three (1, 2, 3). Matched 1 to 1, 2 to 2, 3 to 3 (pin 1 and 3 on the same side, pin 2 on the tab side in both), the unnamed tab pads ignored. Largest residual 0.029 mm. Doubt: the unnamed tab copper is not compared with the assembler''s tab, and the assembler''s pin numbering is taken to follow the datasheet.'
+- reference: U201
+  x: 69.789
+  y: -108.5935
+  rotation: 90
+  reason: 'Pad numbers match (5 pads, C7486) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.255 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: U203
+  x: 60.368
+  y: -111.2995
+  rotation: 90
+  reason: 'Pad numbers match (5 pads, C7486) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.255 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: U301
+  x: 55.5
+  y: -62.35
+  rotation: 0
+  reason: 'IRM-20-5 AC-DC module (C6280121): same four pad positions, but the numbering is mirrored: the board''s pad 1 stands where the assembler''s pad 2 is and 3 where its 4 is (assembler 1 on board 2, 2 on 1, 3 on 4, 4 on 3). The pad pattern is not symmetric, so only rotation 0 lands it; residual 0.000 mm. Doubt: HIGH. Either the board footprint''s pin order is mirrored from the module''s, or the assembler''s is; the output polarity depends on it. Check the module''s datasheet pin positions against the board''s pads 3 and 4.'
+- reference: U302
+  x: 87.9609
+  y: -59.105
+  rotation: 180
+  reason: 'LT1963AEST-3.3 (C459918, SOT-223): the board has pads 1, 2, 3 and a second pad named 2 for the tab; the assembler''s has 1, 2, 3 and a tab pad numbered 4. Matched by shape, the tab to the board''s tab: rotation 180, 1 on 1, 2 on 2, 3 on 3, 4 on the board''s second 2. Largest residual 0.270 mm (tab 6.3 mm from the pins on the board, 5.94 mm in the assembler''s). Doubt: small, the three pins are in the same order.'
+- reference: U401
+  x: 104.0
+  y: -79.0
+  rotation: 90
+  reason: 'Pad numbers match (100 pads, C114409) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.125 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: U520
+  x: 95.7145
+  y: -37.359
+  rotation: 180
+  reason: 'Pad numbers match (5 pads, C7394034) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.135 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: U601
+  x: 62.5
+  y: -83.2
+  rotation: 0
+  reason: 'Pad numbers match (20 pads, C31423783) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.150 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: U602
+  x: 56.2
+  y: -24.398
+  rotation: 270
+  reason: 'Pad numbers match (4 pads, C108051) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.5 mm) leaves the farthest pad 0.500 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: U620
+  x: 93.85
+  y: -119.201
+  rotation: 0
+  reason: 'MAX31865ATP (C118474, TQFN-20): the board has pads 1 to 21 plus four unnamed pads inside the exposed pad (21); the assembler''s has 21 pads. Matched by number with pad 1 at the same corner and the same pin order, the origin on pad 21, the four unnamed pads ignored. Largest residual 0.136 mm (the assembler''s outer pads stand 0.137 mm further from the centre than the board''s). Doubt: none beyond the 0.14 mm.'
+- reference: U621
+  x: 82.75
+  y: -120.937
+  rotation: 0
+  reason: 'MAX31865ATP (C118474, TQFN-20): the board has pads 1 to 21 plus four unnamed pads inside the exposed pad (21); the assembler''s has 21 pads. Matched by number with pad 1 at the same corner and the same pin order, the origin on pad 21, the four unnamed pads ignored. Largest residual 0.136 mm (the assembler''s outer pads stand 0.137 mm further from the centre than the board''s). Doubt: none beyond the 0.14 mm.'
+- reference: U630
+  x: 111.605
+  y: -109.069
+  rotation: 0
+  reason: 'Pad numbers match (16 pads, C6705483) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.5 mm) leaves the farthest pad 0.398 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: U631
+  x: 96.193
+  y: -96.526
+  rotation: 0
+  reason: 'Pad numbers match (16 pads, C6705483) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.5 mm) leaves the farthest pad 0.398 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: Y401
+  x: 123.1
+  y: -77.8999
+  rotation: 180
+  reason: 'Pad numbers match (2 pads, C115962) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.200 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: Y601
+  x: 71.225
+  y: -96.0361
+  rotation: 90
+  reason: 'Pad numbers match (4 pads, C819601) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.135 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: Z201
+  x: 62.895
+  y: -99.0758
+  rotation: 90
+  reason: 'Pad numbers match (3 pads, C108437) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.283 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
+- reference: Z202
+  x: 63.6152
+  y: -103.777
+  rotation: 0
+  reason: 'Pad numbers match (3 pads, C108437) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.3 mm) leaves the farthest pad 0.283 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
