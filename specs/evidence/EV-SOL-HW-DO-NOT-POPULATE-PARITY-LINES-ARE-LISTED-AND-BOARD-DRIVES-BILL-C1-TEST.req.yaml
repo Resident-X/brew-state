@@ -1,0 +1,16 @@
+id: EV-SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL-C1-TEST
+type: evidence
+title: test evidence for SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-21T08:30:59.999679Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_kicad_dnp_agreement.py::test_the_ordering_steps_parts_list_leaves_out_a_symbol_marked_by_attribute_and_keeps_one_marked_only_by_a_text_field
+  artifact_version: b479427a93e318fe306f12d5547da01a40ef196f
+attested_by: crun-ef9180d4c05d1f5e
+links:
+  - target: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C1
+    type: satisfies
