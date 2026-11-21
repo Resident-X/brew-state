@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The main board is laid out, reviewed and proven against its design records before it is ordered
 status: active
-version: 12
+version: 13
 text: |
   Lays out the main controller board that the schematic leaf (SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN) drew and wrote records for, through the board design method (docs/board-design-method.md): the layout planned, placed, routed and reviewed from rendered views, and the pre-order check passing on the finished board. It lays out the schematic as that leaf left it; a schematic change found here is an amendment to that leaf, not a silent edit, and a layout change that moves a judged figure is a finding recorded and resolved.
 
@@ -15,6 +15,8 @@ text: |
   - The division record's note that the pump drives' margins are the design task's is corrected to name the pump-figures leaf (SOL-HW-PUMP-DRIVE-FIGURES-CLOSED), which owns them; the order leaf depends on it so a pump-drive part found later cannot follow the board's proof. The division record's selftest is rerun after any floorplan revision.
 
   Locus: hardware/sunbeam-em7000/ (the board's KiCad layout), docs/sunbeam-em7000/ division record. Ordering the board belongs to the order leaf.
+
+  Amended 2026-11-21: the pump-figures leaf named above (SOL-HW-PUMP-DRIVE-FIGURES-CLOSED) is retired. DEL-HW-MAIN-BOARD-DESIGNED.C18 closes the pump margins on the bounded worst case and the order leaf no longer depends on it; the wording above and C14 stand as the history of what the board's proof recorded, not as the current ownership of those margins.
 rationale: |
   Split on the owner's decision (2026-10-29): the layout starts from the reviewed schematic of the schematic leaf, and the layout and proof are the cost of full blind review rounds, which a board design change forces.
 links:

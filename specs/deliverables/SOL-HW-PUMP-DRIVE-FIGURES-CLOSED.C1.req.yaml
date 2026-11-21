@@ -1,7 +1,7 @@
 id: SOL-HW-PUMP-DRIVE-FIGURES-CLOSED.C1
 type: criterion
 title: Each open pump-drive figure is replaced by the owner's reading or the maker's answer and the margins recomputed
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: analysis

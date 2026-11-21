@@ -2,7 +2,7 @@ id: SOL-HW-PUMP-DRIVE-FIGURES-CLOSED
 type: deliverable
 category: solution
 title: The pump drives' open figures are replaced by the owner's readings and the margins recomputed
-status: active
+status: deprecated
 version: 1
 text: |
   Why this exists. The pump drives' surge and emission margins cannot close until the quantities only the owner can supply are known: the pump coil's inductance, the series diode's rating and marking, and the pump's running current. The judgement leaf for the main board states the margins from the figures sourced and records each of these as open with the owner's act that settles it. The parent criterion asks for the margins closed from sourced or measured figures, so it stays open until these are in.
@@ -23,3 +23,5 @@ links:
     type: targets
   - target: SOL-HW-MAIN-BOARD-INTERLOCK-ENTRY-JUDGED
     type: depends-on
+attributes:
+  deprecation_reason: DEL-HW-MAIN-BOARD-DESIGNED.C18 now closes on the bounded worst case, so no owner reading is owed before the order; a reading of the pump coil cannot be taken before the board exists to power it
