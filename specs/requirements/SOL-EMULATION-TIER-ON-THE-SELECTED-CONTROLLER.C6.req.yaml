@@ -5,8 +5,8 @@ status: active
 version: 1
 measurement_type: binary
 verification: inspection
-text: |-
-  The emulation tier task, the seam's host-simulated implementation and the plant-model identity solution cite the baseline decision, not the superseded nomination, as their justification, and the emulation-tool decision's text no longer describes the emulated machine as the stand-in. Each is read after the change and the reading recorded. Out of scope: the justification links of nodes that never named the stand-in.
+text: |
+  The emulation tier task, the seam's host-simulated implementation and the plant-model identity solution cite the baseline decision, not the superseded nomination, as their justification. The emulation-tool decision's text states the selected part's family as the one whose register maps it uses and no longer describes the emulated machine as the stand-in. Each is read after the change and the reading recorded. Out of scope: the justification links of nodes that never named the stand-in.
 links:
   - target: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER
     type: criterion-of

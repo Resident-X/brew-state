@@ -1,0 +1,12 @@
+id: SOL-HW-CONTROLLER-BOARDS-ORDERED.C9
+type: criterion
+title: Each firmware channel's function is carried by the pin the board gives it, shown before payment
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Before payment, for every output, sensor and serial channel the firmware drives or reads, the controller pin table record is read at the pin the board gives that channel and shows the pin carries the function the channel needs: a timer output for each phase-controlled pump gate, a plain output for each heater drive, a converter input for each sensor, an edge-capable input for the supply crossing detection and the flow meter, and the bus pins for each serial link. The reading names each channel, its pin and the alternate function from the record, and a channel whose pin does not carry its function stops the order. Out of scope: whether the firmware's own tables spell the same pin, which the firmware-side check compares after the order.
+links:
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED
+    type: criterion-of

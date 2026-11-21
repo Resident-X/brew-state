@@ -21,8 +21,6 @@ links:
     type: derives-from
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C4
     type: derives-from
-  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
-    type: targets
   - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
     type: justified-by
   - target: SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN
@@ -31,3 +29,7 @@ links:
     type: depends-on
   - target: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED
     type: depends-on
+  - target: DEC-FIRMWARE-PIN-CHECK-FOLLOWS-THE-BOARD-AND-DOES-NOT-GATE-ORDERING
+    type: justified-by
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets
