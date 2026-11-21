@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The main board's unfitted parts carry the do-not-populate attribute on the footprint and the symbol, so the parts list leaves them out and the parity check reports no line for them
 status: active
-version: 2
+version: 3
 text: |
   Records and holds the main board's do-not-populate marks as they now stand. A part the board leaves unfitted carries the do-not-populate attribute on its footprint in the layout and on its symbol in the schematic. The ordering step builds the production parts list from the schematic with the exporter's exclude-do-not-populate option, which reads the symbol's attribute, and builds the placement file from the layout, which reads the footprint's attribute, so the attribute on both is what leaves a part out of both files.
 
@@ -12,7 +12,7 @@ text: |
   Settled for the build:
   - The main board's six unfitted parts, R522, R572, R576, R643, R648 and RT301, carry the attribute on the footprint and on the symbol, and the parts record lists each as not fitted with its reason.
   - The production parts list built from the schematic with the exclude-do-not-populate option omits a symbol marked by attribute and lists the fitted parts.
-  - The pre-order check reports any footprint_symbol_mismatch line as a violation, and the main board has none for these parts.
+  - The pre-order check's dnp_agreement rule, which no acceptance record can waive, fails a part the footprint, the symbol and the parts record do not mark alike, and the main board has none; the board's schematic-to-board parity check also reports no footprint_symbol_mismatch line for these parts. That line alone is waivable by an acceptance record, so it is not what holds the marks together.
   - Agreement between the layout, the schematic and the parts record is held by the pre-order check's own rule, which is the subject of SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER, not of this item.
   - Out of scope: the upstream tool's missing parameter, and any other mark of the ordering files.
 rationale: |
@@ -22,3 +22,5 @@ links:
     type: targets
   - target: DEL-HW-MAIN-BOARD-DESIGNED.C3
     type: derives-from
+  - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
+    type: depends-on

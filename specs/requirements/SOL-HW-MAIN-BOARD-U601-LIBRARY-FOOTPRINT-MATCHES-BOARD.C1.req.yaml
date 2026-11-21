@@ -1,7 +1,7 @@
 id: SOL-HW-MAIN-BOARD-U601-LIBRARY-FOOTPRINT-MATCHES-BOARD.C1
 type: criterion
 title: The U601 library footprint's pad 17 and paste-only pad match the board's
-status: active
+status: deprecated
 version: 1
 measurement_type: binary
 verification: test

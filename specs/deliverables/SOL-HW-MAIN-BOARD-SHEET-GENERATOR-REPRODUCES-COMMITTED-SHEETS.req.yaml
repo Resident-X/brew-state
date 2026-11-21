@@ -3,9 +3,9 @@ type: deliverable
 category: solution
 title: The main board's circuit-proof generator reproduces the committed sheets and names only parts they carry
 status: active
-version: 1
+version: 2
 text: |
-  Brings the circuit-proof generator back to the committed sheets of the main board. The generator holds the parts table that writes the board's schematic sheets and that the proof's decks and front-end scripts read, so the proof and the sheets are meant to stand on one table. Seven of the sheets were edited afterwards through the schematic editor and reviewed in that form, and the generator no longer reproduces them; its source also still names test points removed from the board. The committed sheets govern: the generator is corrected to them, never the sheets to the generator.
+  Brings the circuit-proof generator back to the committed sheets of the main board. The generator holds the parts table that writes the board's schematic sheets and that the proof's decks and front-end scripts read, so the proof and the sheets are meant to stand on one table. The sheets were edited afterwards through the schematic editor and reviewed in that form, and the generator came apart from them; its source also named test points removed from the board. An earlier change brought the generator, its parts table and the decks back to the committed sheets, and this item holds that they stay together: the generator reproduces the sheets it writes and the decks model the committed fit. The committed sheets govern: the generator is corrected to them, never the sheets to the generator.
 
   Settled for the build:
   - The generator, its checks and the proof's decks stay the proof's own scripts; they read the committed sheets and write nothing to them except through the generator's own documented run.
