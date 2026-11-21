@@ -10,6 +10,10 @@ import tempfile
 import unittest
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+import main_board_fixtures  # noqa: E402
+
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 BOARD = os.path.join(REPO, "hardware", "sunbeam-em7000", "main-board")
 PROOF = os.path.join(BOARD, "circuit-proof")
@@ -138,10 +142,13 @@ class ProofDecks(unittest.TestCase):
 
     def test_no_deck_carries_a_part_the_committed_sheets_mark_do_not_populate(self):
         # SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C3: No deck of the proof that reads the generator's parts table carries a part the committed sheets mark do-not-populate, and the decks of the flow-meter input carry the fitted buffer and its supply capacitor, with the buffer's input leakage at the datasheet maximum, and the committed log of each holds every measurement the deck asks for. Out of scope is any change to a committed sheet.
-        unfitted = set()
+        unfitted = main_board_fixtures.unfitted()
+        self.assertTrue(unfitted, "no symbol of the committed sheets is marked do-not-populate")
+        # the generator's own sheets mark nothing the committed schematic leaves fitted
+        written = set()
         for name in WRITTEN:
-            unfitted.update(ref for ref, flag in dnp_flags(read(os.path.join(SHEETS, name))).items() if flag)
-        self.assertEqual(sorted(unfitted), ["R522", "R572", "R576"])
+            written.update(ref for ref, flag in dnp_flags(read(os.path.join(SHEETS, name))).items() if flag)
+        self.assertEqual(sorted(written - unfitted), [])
         decks = [n for n in os.listdir(PROOF) if re.match(r"C_.*\.cir$", n)]
         self.assertGreaterEqual(len(decks), 20)
         for name in decks:

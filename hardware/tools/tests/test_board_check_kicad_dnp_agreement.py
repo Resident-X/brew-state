@@ -43,6 +43,7 @@ def symbol_block(text, reference):
 
 class KiCadsPartsListReadsTheSymbolAttributeAndNotATextField(unittest.TestCase):
     def test_the_ordering_steps_parts_list_leaves_out_a_symbol_marked_by_attribute_and_keeps_one_marked_only_by_a_text_field(self):
+        # SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C1: On a synthetic schematic with one symbol marked do-not-populate by attribute and one fitted, the parts list the production seed builds lists no row for the marked part and lists the fitted one. Out of scope is a symbol marked only by a text field, which the parts list does not read.
         # SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C3: A schematic symbol whose text field says do-not-populate while its attribute says fitted fails the design
         with tempfile.TemporaryDirectory(prefix="dnp-bom-") as scratch:
             design = os.path.join(scratch, "gate-proof")
