@@ -1,0 +1,12 @@
+id: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER.C3
+type: criterion
+title: Every modelled peripheral reads and writes the selected part's registers
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Each peripheral model uses the selected part's register offsets and widths, including the converter's 16-bit data, and the emulation tier's addressing check passes on the machine for every modelled access. A test makes the firmware touch a register the selected part does not have at the stand-in's offset and asserts the addressing check reports it. Out of scope: peripherals the firmware does not drive, and the timing of the target, which only the board can measure.
+links:
+  - target: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

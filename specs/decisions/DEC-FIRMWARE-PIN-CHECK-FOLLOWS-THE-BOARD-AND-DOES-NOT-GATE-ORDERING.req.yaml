@@ -1,0 +1,30 @@
+id: DEC-FIRMWARE-PIN-CHECK-FOLLOWS-THE-BOARD-AND-DOES-NOT-GATE-ORDERING
+type: decision
+category: tactical
+title: The firmware's pin comparison follows the board and does not gate ordering, while every needed pin function is shown before payment
+status: active
+version: 1
+decided_by: david
+text: |
+  The board's pins are the authority for which pin does what, and the firmware follows them. A controller board is proven against its design record before it is ordered, and that proof includes showing that every function the machine needs is carried by the pin the board gives it. The comparison of the firmware's own pin assignment against the board's pin allocation record is a firmware-side check that runs once the firmware names the selected controller's pins, and ordering does not wait for it.
+rationale: |
+  Context: the main and wall boards' pin-check criteria and the pin-check wiring leaf had made the firmware-against-board comparison a condition of ordering, so the board order waited behind a firmware retarget from the stand-in part to the selected part.
+
+  Trade-offs: the respin the pre-order rule guards against comes from a board that lacks a function the machine needs, not from a firmware table that spells a pin differently. The first is settled before payment by the board-side proof and by the controller selection's showing that every function lands on a pin that carries it. The second costs a firmware edit, because the firmware follows the board. Holding the order for the second delays the first's benefit without removing any respin risk. The cost is that a name mismatch is found after the boards exist rather than before, which the firmware-side check then finds at no board cost.
+
+  Reversibility: high. The dependency from the order leaf to the pin-check wiring leaf is one edge and can be restored.
+
+  Consequences: the order leaf no longer depends on the pin-check wiring leaf, and it carries its own criterion that each firmware channel's function is available on the pin the board gives it. The two board design criteria that name the pin checks no longer say the checks run before the order. The requirement that a design pass its verification before it is ordered stands unchanged, and is served by the board-side proof, not by the firmware-side check.
+options_considered:
+  - option: The firmware's pin comparison follows the board and does not gate ordering, while every needed pin function is shown before payment
+    reason_rejected: ""
+  - option: The firmware's pin comparison gates ordering
+    reason_rejected: It holds the order behind a firmware retarget while removing no respin risk, since a name mismatch costs a firmware edit and the function a pin carries is already proven before payment
+  - option: Drop the firmware's pin comparison
+    reason_rejected: The comparison still catches a firmware that drifts from the board, which costs nothing to keep once the firmware follows the board
+chosen: The firmware's pin comparison follows the board and does not gate ordering, while every needed pin function is shown before payment
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C4
+    type: addresses
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C4
+    type: addresses

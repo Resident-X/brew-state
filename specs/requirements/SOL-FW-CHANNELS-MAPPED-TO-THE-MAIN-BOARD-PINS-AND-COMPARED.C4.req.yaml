@@ -1,0 +1,12 @@
+id: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED.C4
+type: criterion
+title: The sensor check refuses every disagreement through the converter-input map
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The sensor-channel check fails when a channel's converter input resolves, through the controller's converter-input map, to a different port or pin than the record's entry, or to an input the map does not list, and passes across more than one port. A test per refusal drives it with a synthetic record, map and table. No refusal the check had before is dropped. Out of scope: the output check, and wiring the check into the check target, which the wiring leaf carries.
+links:
+  - target: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER.C2
+type: criterion
+title: The converter's full scale and sample time follow the selected part's converter
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The count-to-value scaling in the seam implementation uses the selected part's converter resolution, and the sample time it configures is one the selected part's converter supports. A test drives the seam's conversion with a full-scale count and with a mid-scale count and asserts the value the control logic receives is the same physical quantity as before the retarget. Out of scope: the front-end circuit, and the accuracy the control needs, which measurement on the built machine settles.
+links:
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

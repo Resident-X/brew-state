@@ -1,0 +1,12 @@
+id: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED.C3
+type: criterion
+title: The output check refuses every disagreement between the tables and the record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The output-channel check fails when a channel sits on a different port, a different pin or a different drive form from the record's entry, when a channel is named twice or two share a pin, and when a record entry's channel or drive form cannot be read; and passes when they agree across more than one port. A test per refusal drives it with a synthetic record and table. No refusal the check had before is dropped. Out of scope: the sensor check, and wiring the check into the check target, which the wiring leaf carries.
+links:
+  - target: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED
+    type: criterion-of

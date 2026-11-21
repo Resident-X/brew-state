@@ -1,0 +1,12 @@
+id: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER.C4
+type: criterion
+title: The closed-loop run is recorded again on the selected machine
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The closed-loop run of the target image against the plant model passes on the selected-part machine, and its evidence replaces the evidence recorded on the stand-in: the records pin the new machine's inputs, and none still describes the stand-in. Out of scope: a closed-loop run of the stand-in machine, which is retired, and hardware in the loop.
+links:
+  - target: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

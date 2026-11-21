@@ -1,0 +1,12 @@
+id: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED.C5
+type: criterion
+title: Both checks pass on the main board's real record and the firmware's tables
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Run on the main board's pin allocation record and converter-input map and on the seam implementation's tables as they stand after the target-build leaf, both checks exit successfully. The run is recorded. Out of scope: wiring the checks into the check target or the round gate, which the wiring leaf carries.
+links:
+  - target: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED
+    type: criterion-of

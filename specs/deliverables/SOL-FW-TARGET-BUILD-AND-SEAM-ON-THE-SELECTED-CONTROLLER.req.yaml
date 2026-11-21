@@ -1,0 +1,33 @@
+id: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+type: deliverable
+category: solution
+title: The firmware's target build, seam implementation and pin tables name the selected controller part
+status: active
+version: 1
+text: |
+  Moves the firmware's target build and the hardware-backed implementation of the seam from the STM32F407 stand-in to the controller the baseline decision selected. It changes the target environment's board definition and its explanatory comment, the seam implementation's device header and its converter full scale and sample time, the implementation's interrupt vector and startup source, the firmware's pin and converter-input tables so every entry names a pin that exists on the selected part's package, the processor core named by the check that recognises target object code, and the firmware notes that call the F4 a stand-in. It changes no control-logic source: the seam is chosen at build time, so the retarget stays under the hardware directory and the build configuration.
+
+  Settled for the build:
+  - The selected part is the one the controller selection records, with its package; the build names it exactly and the build reads no other part's name. Which PlatformIO board definition expresses it, and which vendor startup file matches it, are found by reading the framework as installed, not settled here.
+  - The converter on the selected part resolves 16 bits where the stand-in resolved 12. The full-scale constant and the sample time follow the selected part's converter, and the count-to-value scaling the seam reports to the control logic is unchanged in meaning: the control logic still receives the same physical quantity.
+  - The selected part's core is a Cortex-M7 with a double-precision-capable floating-point unit configuration; the arithmetic-pin scan recognises target code by the core name the build now uses, and the control logic's arithmetic stays byte-identical across the host and target builds.
+  - The emulation machine is not changed here. The target image this leaf builds does not run under the stand-in emulated machine, so the emulation leaf that depends on this one is built on the same branch and gated once with this one: the round gate's emulation tier runs for any change under firmware/, and a branch holding only this leaf fails it.
+  - The pin tables keep the shape they have; which firmware channel is wired to which board pin, and how a plain-output channel is expressed, belong to the channel-mapping leaf, which in turn depends on this one.
+  - The clock tree stays at reset, as it does today; bring-up settles it.
+
+  Locus: firmware/platformio.ini (target environment), firmware/src/hw/stm32/ (the seam implementation and its vector source), firmware/tools/check_plant_arithmetic.py (the core name), firmware/README.md.
+rationale: |
+  Split from the emulation tier's retarget because the two differ in size and in who reads them: this half is a handful of files and is what the firmware's pin checks need, while the emulation half rewrites peripheral models against another register description. They cannot merge apart, since the gate's emulation tier runs the target image against the machine the emulation half moves, so the dependency is one-way (the emulation leaf depends on this one) and the two are built on one branch.
+links:
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C1
+    type: derives-from
+  - target: REQ-CONTROL-HARDWARE-SEAM-001.C3
+    type: targets
+  - target: REQ-HARDWARE-HEADROOM-001.C5
+    type: targets
+  - target: DEC-CONTROLLER-BASELINE-STM32H743
+    type: justified-by
+  - target: DEC-HARDWARE-SEAM-AT-BUILD-TIME
+    type: justified-by
+  - target: SOL-HW-CONTROLLER-MCU-SELECTED
+    type: depends-on

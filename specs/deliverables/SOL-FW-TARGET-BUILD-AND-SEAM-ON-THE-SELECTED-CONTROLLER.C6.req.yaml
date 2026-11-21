@@ -1,0 +1,12 @@
+id: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER.C6
+type: criterion
+title: The target build and the seam implementation name no other part as the controller
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  A search of the tracked target build configuration, the seam implementation and its vector source, and the firmware notes finds no part other than the selected one named as the controller, except in a sentence saying it is not chosen. The reading is the search and each hit's disposition. Out of scope: the emulation files and their tests, which the emulation leaf holds.
+links:
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED.C1
+type: criterion
+title: Each firmware channel the board wires carries its enumerator in the pin allocation record
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every entry of the main board's pin allocation record whose channel the firmware drives or reads carries the firmware channel or firmware sensor key naming that channel exactly as the firmware's enumeration does, and an entry the firmware has no channel for carries neither. The record's header comment no longer says no such key is written. A test reads the record and the enumerations and asserts every enumerator is named by exactly one entry, and the record's controller pin, net and connector pin for every entry are unchanged from before this leaf. Out of scope: moving any pin on the board.
+links:
+  - target: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED
+    type: criterion-of
