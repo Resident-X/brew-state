@@ -1,0 +1,12 @@
+id: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C2
+type: criterion
+title: A committed document that differs from regenerated output fails
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Over a synthetic tempdir project with generic ids, a test fails when each of the three generated documents differs from regenerated output, and when a change to any one of the graph, the parameter descriptions or the declared configuration is made without regenerating, and passes when regenerated. Does not cover the content of the real graph or real requirement ids.
+links:
+  - target: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
+    type: criterion-of

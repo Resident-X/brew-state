@@ -1,0 +1,46 @@
+id: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
+type: deliverable
+category: solution
+title: The component specification, controller I/O enumeration and purchase list regenerate from the graph, committed parameters and declared configuration
+status: active
+version: 1
+text: |-
+  A task-runner command regenerates the three documents from the requirement graph, the committed parameter descriptions and the reference machine's declared configuration, and a test fails when a committed document differs from regenerated output.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION.C6
+    type: derives-from
+  - target: OBL-PHYSICAL-CONFIGURATION-001.C1
+    type: targets
+design_question_answers:
+  - answered_by: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C2
+    class: new-condition
+  - answered_by: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C1
+    class: served-statement
+  - answered_by: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C3
+    class: existing-capability
+  - answered_by: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C4
+    class: consumer-intent
+  - answered_by: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C1
+    class: consumer-self-sufficiency
+interfaces:
+  - Taskfile.yml check:round and fw:verify
+  - firmware/tools/round_gate.py HOST_READS
+  - firmware/params declarations
+  - docs/sunbeam-em7000/reference-machine.md declared configuration
+  - staircase show / query
+locus:
+  - marking: existing
+    ref: docs/sunbeam-em7000/component-specification.md
+  - marking: existing
+    ref: docs/sunbeam-em7000/controller-io.md
+  - marking: existing
+    ref: docs/sunbeam-em7000/controller-io-bom.csv
+  - marking: existing
+    ref: Taskfile.yml
+  - marking: existing
+    ref: firmware/tools/round_gate.py
+  - marking: created
+    ref: document generator and its source inputs under firmware/tools
+plan_provenance:
+  approved_plan_id: PLAN-DEL-COMPONENT-SPECIFICATION-C3-C6
+  target: DEL-COMPONENT-SPECIFICATION

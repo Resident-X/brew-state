@@ -1,0 +1,12 @@
+id: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C1
+type: criterion
+title: Every pending mark names an active node that will settle it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  In the controller I/O enumeration, the component specification and the purchase list, every figure or input marked pending, and every cell that states a figure is not established, names the id of an active graph node whose work will settle it. Over a synthetic project with generic ids, a test fails, in text and in JSON, when a mark names no node, a node that does not resolve, or a deprecated node, when a mark's cell is empty or its node id is malformed, and when a listed document is missing. A figure no active node would settle is not given a new node by this work; the node that settles it already exists in the graph, or the gap is recorded there separately before the mark is written. Out of scope: deriving or choosing any figure the marks stand for, and amending the criterion text itself.
+links:
+  - target: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK
+    type: criterion-of

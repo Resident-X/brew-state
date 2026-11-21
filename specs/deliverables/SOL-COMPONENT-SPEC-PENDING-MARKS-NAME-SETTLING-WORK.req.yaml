@@ -1,0 +1,38 @@
+id: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK
+type: deliverable
+category: solution
+title: Every pending mark in the specification names live work that will settle it, and a mark whose work has landed fails the check
+status: active
+version: 1
+text: |-
+  Each pending figure in the controller I/O enumeration, the component specification and the purchase list names an active graph node that will settle it, is stated in plain words, and is checked mechanically so a stale or unnamed mark fails.
+links:
+  - target: DEL-COMPONENT-SPECIFICATION.C3
+    type: derives-from
+  - target: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
+    type: depends-on
+design_question_answers:
+  - answered_by: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C2
+    class: new-condition
+  - answered_by: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C1
+    class: served-statement
+  - answered_by: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C1
+    class: existing-capability
+  - answered_by: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C3
+    class: consumer-intent
+interfaces:
+  - staircase show / query for node resolution
+  - Taskfile.yml fw:check
+  - firmware/tools/round_gate.py HOST_READS
+locus:
+  - marking: existing
+    ref: docs/sunbeam-em7000/controller-io.md
+  - marking: existing
+    ref: docs/sunbeam-em7000/component-specification.md
+  - marking: existing
+    ref: docs/sunbeam-em7000/controller-io-bom.csv
+  - marking: created
+    ref: pending-mark check under firmware/tools with its tests
+plan_provenance:
+  approved_plan_id: PLAN-DEL-COMPONENT-SPECIFICATION-C3-C6
+  target: DEL-COMPONENT-SPECIFICATION

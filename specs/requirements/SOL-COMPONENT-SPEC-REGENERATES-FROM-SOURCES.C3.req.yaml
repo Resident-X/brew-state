@@ -1,0 +1,12 @@
+id: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C3
+type: criterion
+title: The divergence check runs in the round when the documents or their sources change, and nightly
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The divergence check is a task-runner target that the build round runs whenever the branch changes a path the documents or their sources live under and does not run when it changes none of them, and that the nightly verification also runs; a test of the round's selection shows both cases. It extends the repository's existing convention for generated records that pin their inputs rather than adding a parallel mechanism. Out of scope: any new verification tier and any change to the sweep or board tiers.
+links:
+  - target: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
+    type: criterion-of
