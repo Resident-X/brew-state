@@ -32,7 +32,7 @@ def judge(root, tracked=None):
 
 class CommittedMainBoard(unittest.TestCase):
     def test_the_committed_board_passes_the_rule_and_a_flipped_symbol_mark_is_reported_naming_the_part(self):
-        # SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C2: A part marked do-not-populate on its footprint and not on its symbol, or the reverse, is reported by the check's dnp_agreement rule naming the part, and the committed main board passes that rule, with no footprint_symbol_mismatch line for a part it leaves unfitted in the pre-order check's own run. Out of scope is the check's other parity lines.
+        # SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C2: A part marked do-not-populate on its footprint and not on its symbol, or the reverse, is reported by the check's dnp_agreement rule naming the part, and the committed main board passes that rule. Out of scope is the check's other parity lines.
         unfitted = main_board.unfitted()
         self.assertTrue(unfitted, "no symbol of the committed board is marked do-not-populate")
         self.assertEqual([v.line() for v in judge(main_board.REPO)], [])
