@@ -43,6 +43,6 @@ links:
   - target: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED
     type: supersedes
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 independent brief reviewer
-  fingerprint: 25687bf0f2ed9cf99382cda38268a0fcda1ee0b0e4fba461cdcb7ccd9bc0b772
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: 79dfcb9b935f20511bbf1fa648eba55b4a58cf810175b5ffb54f9d2df2106b93
   gating_profile: ""
