@@ -18,3 +18,7 @@ links:
     type: targets
   - target: DEL-HW-MAIN-BOARD-DESIGNED.C1
     type: derives-from
+brief_confirmation:
+  confirmer: claude-session-reviewer (claude-sonnet-5-5)
+  fingerprint: 4e67e15bef01a3330d8885aad9d34e4efa582cf5eae8dbb6b119b489f2a14d35
+  gating_profile: ""
