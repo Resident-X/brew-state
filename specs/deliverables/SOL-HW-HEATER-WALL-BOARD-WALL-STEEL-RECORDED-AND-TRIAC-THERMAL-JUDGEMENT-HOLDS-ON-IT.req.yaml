@@ -20,6 +20,10 @@ links:
     type: justified-by
   - target: DEC-UNPUBLISHED-MAKER-FIGURES-CARRIED-TO-BRING-UP
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 review executor
+  fingerprint: 1a867602a2462b364eced81d5adb5462dee28c7ae643143bc5334f0e07403f3d
+  gating_profile: ""
 interfaces:
   - SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED thermal judgement
   - hardware/sunbeam-em7000/heater-wall-board/owner-sign-off.md

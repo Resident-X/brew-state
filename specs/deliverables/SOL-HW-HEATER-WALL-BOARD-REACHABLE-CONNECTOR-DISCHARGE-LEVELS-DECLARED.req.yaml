@@ -20,6 +20,10 @@ links:
     type: justified-by
   - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
     type: justified-by
+brief_confirmation:
+  confirmer: claude-review-executor (claude-sonnet-5-5)
+  fingerprint: 609baf6db5f9599bb5b49b531c4f01ed8eabd0fcac9a2058c0b99ecbaca8f0b9
+  gating_profile: ""
 design_question_answers:
   - answered_by: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C1
     class: whole-set
