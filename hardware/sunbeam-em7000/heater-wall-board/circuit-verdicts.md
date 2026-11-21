@@ -35,7 +35,7 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 15 parts (the
 | R911 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | R912 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | RV911 (07D471K) | PINV-1, SURGE-1, DERATE-2, TOUCH-1 | not yet reviewed | |
-| J911 (blade TAB_OUT_C) | PINV-1, CABLE-1, DERATE-2 | not yet reviewed | |
+| J911 (blade TAB_OUT_C) | PINV-1, CABLE-1, ESD-1, DERATE-2 | ESD-1 only: reachable in service with the case off, not in normal use, classed reachable (case unbuilt); no level declared, no clamp, absence accepted: `owner-sign-off.md` W-5b; list in `circuit-proof.md` 'ESD at the connectors' | |
 
 ### Nets
 
@@ -66,7 +66,7 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 15 parts (the
 | R921 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | R922 (200 ohm 1206) | PINV-1, DERATE-2, FAULT-1, SURGE-1 | not yet reviewed | |
 | RV921 (07D471K) | PINV-1, SURGE-1, DERATE-2, TOUCH-1 | not yet reviewed | |
-| J921 (blade TAB_OUT_S) | PINV-1, CABLE-1, DERATE-2 | not yet reviewed | |
+| J921 (blade TAB_OUT_S) | PINV-1, CABLE-1, ESD-1, DERATE-2 | ESD-1 only: reachable in service with the case off, not in normal use, classed reachable (case unbuilt); no level declared, no clamp, absence accepted: `owner-sign-off.md` W-5b; list in `circuit-proof.md` 'ESD at the connectors' | |
 
 ### Nets
 
@@ -92,7 +92,7 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 15 parts (the
 
 | item | catalogue items | verdict | evidence or closing action |
 |---|---|---|---|
-| J931 (WB_LV3, XFCN PZ254V-11-03P, C2937625) | PINV-1, CABLE-1, POLAR-1, SUPPLY-1, ESD-1, DERATE-2 | not yet reviewed | |
+| J931 (WB_LV3, XFCN PZ254V-11-03P, C2937625) | PINV-1, CABLE-1, POLAR-1, SUPPLY-1, ESD-1, DERATE-2 | ESD-1 only: reachable in service with the case off, not in normal use, classed reachable (case unbuilt); no level declared, no clamp, absence accepted: `owner-sign-off.md` W-5b; list in `circuit-proof.md` 'ESD at the connectors' | |
 | H1 (M3 case-screw hole, the board's single mounting hole) | DERATE-2 | not yet reviewed | mechanical, no electrical function and no pin: graded not applicable in `circuit-proof.md`; in no protective chain, no barrier part, no connector; its exclusion from the bill of materials and position file is `layout-hedges.md` 17 (H1 only) |
 
 ### Nets
@@ -113,7 +113,7 @@ The board has 5 sheets (the four drawn sheets and the root sheet), 15 parts (the
 
 | item | catalogue items | verdict | evidence or closing action |
 |---|---|---|---|
-| J941 (blade TAB_RET) | PINV-1, CABLE-1, DERATE-2 | not yet reviewed | |
+| J941 (blade TAB_RET) | PINV-1, CABLE-1, ESD-1, DERATE-2 | ESD-1 only: reachable in service with the case off, not in normal use, classed reachable (case unbuilt); no level declared, no clamp, absence accepted: `owner-sign-off.md` W-5b; list in `circuit-proof.md` 'ESD at the connectors' | |
 
 ### Nets
 

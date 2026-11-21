@@ -2,11 +2,11 @@ id: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RAT
 type: criterion
 title: Each listed resistor's pulse rating and working voltage cover its stress with the arithmetic shown, or an exception entry stands
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |-
-  For each resistor of the closed set, the records give the maker-sourced pulse rating and rated working voltage beside the stress the board puts on it at the top of the declared supply span, with the arithmetic, and the ratings cover the stress; a resistor whose rating is missing or short has an accepted_exceptions entry in derating-policy.yaml instead. Out of scope: changing a part to a pulse-rated class, which is the owner's hedge in the open items.
+text: |
+  For each resistor of the closed set, the records give in one table the maker-sourced rated working voltage and pulse rating beside the stress the board puts on it at the top of the declared supply span, with the arithmetic, and either the ratings cover the stress or the resistor has an accepted exception entry instead; every stress, power and current figure the records state for these resistors is recomputed and agrees with that arithmetic. Out of scope: changing a part to a pulse-rated class, which is the owner's hedge in the open items.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED
     type: criterion-of

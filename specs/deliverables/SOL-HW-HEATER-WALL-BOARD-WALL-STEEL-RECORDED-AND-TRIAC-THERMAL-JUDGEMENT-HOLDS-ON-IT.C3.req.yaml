@@ -2,11 +2,11 @@ id: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOL
 type: criterion
 title: The owner's dated statement of the wall's steel grade and thickness is on record
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  The owner's dated statement of the wall's steel grade and thickness at the cut is on the board's records and replaces every owner's-measurement mark that the grade and thickness carried. The criterion closes only on that statement. Out of scope: making the measurement on the owner's behalf.
+  The owner's dated statement of the wall's material, grade (magnetic or not) and thickness at the cut is on the board's records, quoted as given with the test it rests on, and replaces every owner's-measurement mark that those quantities carried. The criterion closes only on that statement. Out of scope: making the measurement on the owner's behalf.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT
     type: criterion-of

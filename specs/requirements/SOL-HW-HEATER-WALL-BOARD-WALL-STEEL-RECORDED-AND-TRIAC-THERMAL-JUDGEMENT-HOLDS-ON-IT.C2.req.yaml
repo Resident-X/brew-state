@@ -2,11 +2,11 @@ id: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOL
 type: criterion
 title: Triac thermal judgement re-stated on the recorded wall and held to its first limits
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 text: |
-  The triacs' thermal judgement of the wall assembly is re-stated with the steel and joint resistance the records hold, with the arithmetic shown at both enclosure air temperatures and the junction ceiling the first judgement used, and holds within those limits; each quantity still marked as the owner's measurement is taken at its stated bounding figure and the judgement is marked provisional until the owner's statement of the measured figures is on record, when it is re-stated on them. Where it does not hold, the bracket's leg or the cut is changed and the owner's acceptance of the change is recorded. Does not cover re-selection of the triacs or any change to board copper.
+  The triacs' thermal judgement of the wall assembly is re-stated on the material, thickness and joint resistance the records hold, with the arithmetic shown at the two external-air temperatures the live basis holds (25 and 40 degC), for both heaters on and for the steam heater alone, at each joint-resistance value the record carries, against the maker's 125 degC junction ceiling and the 100 degC policy share, with a pass or fail stated for each case. The wall-path figures at the stainless conductivity stay in the record as the stated bounding case beside the recorded material's. Each quantity still marked as the owner's measurement is taken at its stated bounding figure and the judgement is marked provisional until the owner's statement is on record, when it is re-stated on it. Where a case does not hold, the shortfall is recorded against the owner's existing acceptance of it, or the bracket's leg or the cut is changed and the owner's acceptance of the change is recorded. Does not cover re-selection of the triacs or any change to board copper.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT
     type: criterion-of

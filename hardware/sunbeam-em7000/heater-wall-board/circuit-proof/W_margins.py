@@ -214,6 +214,70 @@ for e_air in (25.0, 40.0):
             print("   air %.0f degC, h = %d, Rc = %.0f K/W: steam triac junction %.1f degC, case %.1f degC; 0.5 current share %.2f A (chord, capped at the 16 A rating's share) to %.2f A (model) against the steam element's 5.38 A" % (e_air, e_h, e_rc, e_tj, e_tc, e_ch, e_md))
 print("NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (division record); Rc is an unsourced assumption; bring-up measures the case temperature (DEL-HW-BRING-UP.C11)")
 
+# 2026-11-21 amendment: the wall is aluminium, 2.5 mm, non-magnetic (owner's statement of 2026-11-21 in owner-sign-off.md W-17: scratched
+# easily with a screwdriver to bright bare metal under a dark grey finish; no eddy-current test was made). Only the wall's conductivity changes in
+# the model; the 304 stainless k = 15 W/(m.K) table above stays as the stated bounding case, because the identification rests on a scratch test and
+# the appearance. The plate and paste terms are kept at the record's own 0.139 + 0.027 K/W: the 0.139 is the plate's 5.0 mm conduction at the
+# floor of 15 W/(m.K) the record states "under any metal", so with an aluminium plate it is conservative (about 0.02 K/W at 150 W/(m.K)).
+print("\n== (e) amendment 2026-11-21: the wall is aluminium 2.5 mm; the case temperature at the external air (25 and 40 degC), the maker's 125 degC and the 100 degC policy share")
+W_H, W_L, W_T = 0.030, 0.080, 0.0025          # division record: 80 x 30 mm window, 2.5 mm wall (owner)
+K_STAINLESS = 15.0                           # division record: stated floor for stainless, W/(m.K)
+K_ALU_LOW = 110.0                            # lowest plausible wrought aluminium sheet: EN AW-5083 H244 listed 110 to 140 W/(m.K) (mfgrobots.com EN 573-3 AW-5083 H244 page, https://www.mfgrobots.com/Article/material/metal/40251.html, read 2026-11-21); RS PRO 5083 aluminium sheet datasheet 121 (https://docs.rs-online.com/2d8e/A700000015689049.pdf, retrieved 2026-11-21); 2024 T3/T4 about 120 (Honda Technical Review 34-2, table garbled, not relied on). A cast alloy (about 96 to 100) is not a sheet wall and is not the bound
+W_PERIM = 2.0 * (W_H + W_L)
+W_TJ_LIMIT, W_TJ_SHARE = 125.0, 100.0         # maker's absolute junction ceiling (ST DS2114 Rev 11 Table 1); 0.8 x 125 policy share (derating-policy.yaml)
+W_P_BOTH, W_P_STEAM_ALONE = 9.09, 4.84
+W_SHARE_STEAM = 0.5325
+
+
+def r_wall(k, h):
+    return 1.0 / (h * W_H * W_L + W_PERIM * math.sqrt(h * k * W_T))
+
+
+check("wall model reproduces the 2026-11-19 stainless figures", abs(r_wall(K_STAINLESS, 10) - E_R_WALL[10]) < 0.01 and abs(r_wall(K_STAINLESS, 5) - E_R_WALL[5]) < 0.01,
+      "R_wall(k 15) = %.3f K/W (h 10) and %.3f K/W (h 5) against the record's 6.30 and 9.32" % (r_wall(K_STAINLESS, 10), r_wall(K_STAINLESS, 5)))
+w_cases = []
+for w_name, w_k in (("aluminium, k %.0f W/(m.K) (recorded wall, lowest plausible sheet)" % K_ALU_LOW, K_ALU_LOW), ("304 stainless, k %.0f W/(m.K) (stated bounding case)" % K_STAINLESS, K_STAINLESS)):
+    print("   -- wall: " + w_name)
+    for w_h in (10, 5):
+        print("      h = %d W/(m2.K): R_wall = 1 / (%d x %.4f + %.3f x sqrt(%d x %.0f x %.4f)) = %.3f K/W; plate and paste %.3f K/W" % (w_h, w_h, W_H * W_L, W_PERIM, w_h, w_k, W_T, r_wall(w_k, w_h), E_R_LEG))
+    for w_air in (25.0, 40.0):
+        for w_h in (10, 5):
+            for w_rc in (0.0, 1.0, 3.0):
+                w_path = r_wall(w_k, w_h) + E_R_LEG + w_rc
+                w_both = w_air + W_P_BOTH * w_path + W_P_BOTH * W_SHARE_STEAM * (0.50 + E_RTH_JC)
+                w_steam = w_air + W_P_STEAM_ALONE * (w_path + 0.50 + E_RTH_JC)
+                for w_load, w_tj in (("both heaters on", w_both), ("steam heater alone", w_steam)):
+                    w_v125 = "HOLDS" if w_tj <= W_TJ_LIMIT else "FAILS"
+                    w_v100 = "HOLDS" if w_tj <= W_TJ_SHARE else "FAILS"
+                    print("      air %.0f degC, h = %2d, Rc = %.0f K/W, %-18s: junction %6.2f degC; 125 degC %s (%+.1f K), 100 degC share %s (%+.1f K)" % (w_air, w_h, w_rc, w_load, w_tj, w_v125, W_TJ_LIMIT - w_tj, w_v100, W_TJ_SHARE - w_tj))
+                    w_cases.append((w_k, w_air, w_h, w_rc, w_load, w_tj))
+w_alu = [c for c in w_cases if c[0] == K_ALU_LOW]
+w_alu_125 = [c for c in w_alu if c[5] > W_TJ_LIMIT]
+w_alu_100 = [c for c in w_alu if c[5] > W_TJ_SHARE]
+check("aluminium wall holds the maker's 125 degC in every case", not w_alu_125, "%d of %d cases over 125 degC; the hottest is %.1f degC (both on, 40 degC air, h = 5, Rc = 3 K/W)" % (len(w_alu_125), len(w_alu), max(c[5] for c in w_alu)))
+print("NOTE  aluminium wall, the 100 degC policy share: %d of %d cases hold; the cases over it: %s" % (len(w_alu) - len(w_alu_100), len(w_alu), "; ".join("%.0f degC air h %d Rc %.0f %s %.1f degC" % (c[1], c[2], c[3], c[4], c[5]) for c in w_alu_100) or "none"))
+w_alu_rc3_both = [c for c in w_alu if c[3] == 3.0 and c[4] == "both heaters on"]
+print("NOTE  Rc = 3 K/W is the stated limit that the bring-up case-temperature measurement closes: both on at Rc 3 K/W gives %s" % "; ".join("%.0f degC air h %d %.1f degC" % (c[1], c[2], c[5]) for c in w_alu_rc3_both))
+w_rc_max = {}
+for w_air in (25.0, 40.0):
+    for w_h in (10, 5):
+        w_rc_max[(w_air, w_h)] = (W_TJ_SHARE - w_air - W_P_BOTH * (r_wall(K_ALU_LOW, w_h) + E_R_LEG) - W_P_BOTH * W_SHARE_STEAM * (0.50 + E_RTH_JC)) / W_P_BOTH
+print("NOTE  the joint resistance both-on that the 100 degC share leaves on the aluminium wall: %s (a negative figure would mean no joint resistance is allowed)" % "; ".join("%.0f degC air, h = %d: %.2f K/W" % (a, h, v) for (a, h), v in sorted(w_rc_max.items())))
+w_face = W_P_BOTH * r_wall(K_ALU_LOW, 10)
+w_face5 = W_P_BOTH * r_wall(K_ALU_LOW, 5)
+print("NOTE  outer face of the wall at the contact patch, both on, aluminium k %.0f: rises %.1f K over the external air at h = 10 and %.1f K at h = 5 (%.2f W x R_wall, the same product the record's stainless 57.3 K and 84.7 K are)" % (K_ALU_LOW, w_face, w_face5, W_P_BOTH))
+for w_k_face, w_label in ((K_ALU_LOW, "aluminium k %.0f (recorded wall)" % K_ALU_LOW), (K_STAINLESS, "304 stainless k %.0f (stated bounding case, the hotter)" % K_STAINLESS)):
+    for w_air in (25.0, 40.0):
+        print("NOTE  outer face temperature at the patch, both on, %s, %.0f degC external air: %.1f degC at h = 10 (%.2f W x %.3f K/W = %.1f K) and %.1f degC at h = 5 (%.2f W x %.3f K/W = %.1f K)" % (w_label, w_air, w_air + W_P_BOTH * r_wall(w_k_face, 10), W_P_BOTH, r_wall(w_k_face, 10), W_P_BOTH * r_wall(w_k_face, 10), w_air + W_P_BOTH * r_wall(w_k_face, 5), W_P_BOTH, r_wall(w_k_face, 5), W_P_BOTH * r_wall(w_k_face, 5)))
+w_e_pa = {}
+for w_air in (25.0, 40.0):
+    w_tj = w_air + W_P_BOTH * (r_wall(K_ALU_LOW, 10) + E_R_LEG + 3.0) + W_P_BOTH * W_SHARE_STEAM * (0.50 + E_RTH_JC)
+    w_tc = w_tj - E_P_STEAM * E_RTH_JC
+    w_pa = (E_TJ_MAX - w_tc) / E_RTH_JC
+    w_cur = (-E_VTO * 0.9 + math.sqrt((E_VTO * 0.9) ** 2 + 4 * E_RD * w_pa)) / (2 * E_RD) / 2
+    print("   current share, aluminium k %.0f, h = 10, Rc = 3 K/W, air %.0f degC: steam triac case %.1f degC; 0.5 current share %.2f A (model) against the steam element's 5.38 A" % (K_ALU_LOW, w_air, w_tc, w_cur))
+    check("current share holds on the aluminium wall at Rc 3 K/W, air %.0f degC" % w_air, w_cur > 5.38, "%.2f A against 5.38 A" % w_cur)
+
 # ---- (f) opto-triac temperature (finding 1.9)
 print("\n== (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2")
 SLOPE_TOTAL = 2.94e-3  # onsemi p.3: total device power 250 mW at 25 degC, derate 2.94 mW/degC: implies a junction-to-ambient resistance of 1/2.94 mW/degC = 340 K/W (a derivation from the sheet, not a stated thermal resistance)
