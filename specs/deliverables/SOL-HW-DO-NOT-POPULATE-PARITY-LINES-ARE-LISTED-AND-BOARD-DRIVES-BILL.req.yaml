@@ -24,3 +24,7 @@ links:
     type: derives-from
   - target: SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER
     type: depends-on
+brief_confirmation:
+  confirmer: claude-session-reviewer (claude-sonnet-5-5)
+  fingerprint: 2c6b6d9ccacf48f4097b6e0534496239031f859d32b956350d800a472280b263
+  gating_profile: ""
