@@ -2,11 +2,11 @@ id: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C2
 type: criterion
 title: A do-not-populate mark that the footprint and the symbol do not share is reported naming the part
 status: active
-version: 2
+version: 4
 measurement_type: binary
 verification: test
 text: |
-  A part marked do-not-populate on its footprint and not on its symbol, or the reverse, is reported by the check naming the part, and the main board's check reports no footprint_symbol_mismatch line for a part it leaves unfitted. Out of scope is the check's other parity lines.
+  A part marked do-not-populate on its footprint and not on its symbol, or the reverse, is reported by the check's dnp_agreement rule naming the part, and the committed main board passes that rule. Out of scope is the check's other parity lines.
 links:
   - target: SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL
     type: criterion-of

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS-C1-TEST
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-21T08:31:35.732975Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_circuit_proof_sheet_generator.py::test_the_generator_writes_each_committed_sheet_it_writes_unchanged_and_the_proofs_check_agrees
+  artifact_version: b479427a93e318fe306f12d5547da01a40ef196f
+attested_by: crun-6ac96cbe90b5d473
+links:
+  - target: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C1
+    type: satisfies

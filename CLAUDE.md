@@ -144,10 +144,14 @@ or against that.
   column, and `/staircase-wf`'s tier→model table (use it only to look up a model's exact id once the
   tier is chosen). Choose by what the task actually is, and name that before each dispatch:
   - `small-fast` (Haiku): graph reads, code reads, simple code writes, test runs, classifications and minor judgement.
-  - `mid-tier` (Sonnet): moderate consideration, reasoning or acting, such as a readiness pass, implementing, fixing and reviewing.
+  - `mid-tier` (Sonnet): moderate consideration, reasoning or acting, such as implementing, fixing and reviewing.
   - `reasoning-tier` (Opus): only really complex understanding and reasoning on complicated topics.
 
   When unsure between two tiers, take the lower and escalate only on evidence from the work.
+
+  **Exception: the readiness pass is not constrained by this rule.** It runs at the tier the workflow
+  recommends (`/stage0-build`'s tier column, which is reasoning-tier). A readiness miss comes back as a
+  fix round that costs several times the tier difference, so the pass keeps the judgement tier.
 - Branch: `req/{REQ-ID}/{short-slug}`. Never push to `main`; PRs only. The tracked
   `.githooks/pre-push` hook refuses it, but it is a catch for the mistake, not enforcement: it is inert
   until `task repo:hooks` points `core.hooksPath` at that directory (`task sc:init` and `task sc:update`

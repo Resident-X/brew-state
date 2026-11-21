@@ -75,6 +75,7 @@ class Agreement(parts.Design):
 
 class LayoutAndSchematicDisagree(Agreement):
     def test_a_part_the_layout_marks_and_the_schematic_leaves_fitted_fails_naming_the_part_and_the_sources(self):
+        # SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C2: A part marked do-not-populate on its footprint and not on its symbol, or the reverse, is reported by the check's dnp_agreement rule naming the part, and the committed main board passes that rule. Out of scope is the check's other parity lines.
         # SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C1: A part the layout marks do-not-populate and the schematic does not, or the reverse, fails the design, naming the part
         found = self.judge([footprint("R1", True), footprint("R2")], [symbol("R1"), symbol("R2")])
         self.assertEqual([v.location for v in found], ["R1"])
@@ -82,6 +83,7 @@ class LayoutAndSchematicDisagree(Agreement):
         self.assertIn("the schematic marks it fitted", found[0].message)
 
     def test_a_part_the_schematic_marks_and_the_layout_leaves_fitted_fails_naming_the_part(self):
+        # SOL-HW-DO-NOT-POPULATE-PARITY-LINES-ARE-LISTED-AND-BOARD-DRIVES-BILL.C2: A part marked do-not-populate on its footprint and not on its symbol, or the reverse, is reported by the check's dnp_agreement rule naming the part, and the committed main board passes that rule. Out of scope is the check's other parity lines.
         # SOL-PRE-ORDER-CHECK-HOLDS-DO-NOT-POPULATE-TO-ONE-ANSWER.C1: A part the layout marks do-not-populate and the schematic does not, or the reverse, fails the design, naming the part
         found = self.judge([footprint("R1"), footprint("R2")], [symbol("R1", "yes"), symbol("R2")])
         self.assertEqual([v.location for v in found], ["R1"])

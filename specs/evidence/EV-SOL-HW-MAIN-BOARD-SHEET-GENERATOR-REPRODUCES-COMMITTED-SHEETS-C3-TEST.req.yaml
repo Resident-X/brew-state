@@ -1,0 +1,16 @@
+id: EV-SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS-C3-TEST
+type: evidence
+title: test evidence for SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-21T08:31:35.95056Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_circuit_proof_sheet_generator.py::test_no_deck_carries_a_part_the_committed_sheets_mark_do_not_populate
+  artifact_version: b479427a93e318fe306f12d5547da01a40ef196f
+attested_by: crun-6ac96cbe90b5d473
+links:
+  - target: SOL-HW-MAIN-BOARD-SHEET-GENERATOR-REPRODUCES-COMMITTED-SHEETS.C3
+    type: satisfies
