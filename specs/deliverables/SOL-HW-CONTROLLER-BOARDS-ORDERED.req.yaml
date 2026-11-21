@@ -38,8 +38,6 @@ links:
     type: depends-on
   - target: SOL-HW-MAIN-BOARD-PROVEN-AND-LAID-OUT
     type: depends-on
-  - target: SOL-HW-PUMP-DRIVE-FIGURES-CLOSED
-    type: depends-on
   - target: SOL-HW-FIRMWARE-PIN-CHECKS-READ-MAIN-BOARD-RECORDS
     type: depends-on
   - target: SOL-HW-CONTROLLER-BOARDS-ORDERED-AND-RECEIVED

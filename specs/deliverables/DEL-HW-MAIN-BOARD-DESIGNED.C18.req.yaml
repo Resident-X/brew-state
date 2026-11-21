@@ -1,13 +1,13 @@
 id: DEL-HW-MAIN-BOARD-DESIGNED.C18
 type: criterion
-title: The pump drives' surge and emission margins are closed from sourced figures
+title: The pump drives' surge and emission margins are closed on the bounded worst case
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: analysis
 closes_by: cascade
 text: |
-  The pump coil's inductance, the series diode's rating, the circuit's commutating rate and the conducted emission against the surge and emission criteria are each sourced or measured, and an assumed figure counts as open.
+  The pump drives' surge and emission margins are closed on the bounded worst case: the turn-off voltage across each pump's switching element is bounded by a part the board carries, from that part's published figures, and stated against the element's blocking rating; the circuit's commutating rate is stated against the element's published figure; the surge reaching the element is judged against its blocking rating with the judgement stated as one; and each figure no source or home measurement supplies (the pump coil's inductance, the series diode's rating, a surge withstand and the conducted emission) is shown to leave the turn-off voltage and the commutating margin unchanged across its credible range, or is judged against stated design practice, and none is held open for a measurement.
 links:
   - target: DEL-HW-MAIN-BOARD-DESIGNED
     type: criterion-of
