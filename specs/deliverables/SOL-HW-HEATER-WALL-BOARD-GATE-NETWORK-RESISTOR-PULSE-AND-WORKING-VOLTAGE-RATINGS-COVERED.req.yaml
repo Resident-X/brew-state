@@ -3,11 +3,14 @@ type: deliverable
 category: solution
 title: Every mains gate-network resistor of the heater wall board has a pulse rating and working voltage covering its stress, or the residual recorded with the owner's acceptance
 status: active
-version: 1
+version: 2
 text: |
   Records, for the finished heater wall board, that every resistor in a mains gate network has a maker-sourced pulse rating and rated working voltage that cover the stress the board puts on it, or that its stress, its short or missing rating and the owner's acceptance of the residual are recorded in the position's accepted_exceptions entry that the pre-order check reads. The form is the one DEC-HEATER-WALL-BOARD-GATE-RESISTOR-PULSE-RESIDUAL-RECORDED-IN-ACCEPTED-EXCEPTION settles: the check judges the entry's working voltage and has no pulse rule, so no pre-order-check change is part of this leaf.
 
   Placement: records and notes of the finished board in hardware/sunbeam-em7000/heater-wall-board/ (derating-policy.yaml, parts-specification.yaml, owner-sign-off.md, open-items.md), reusing the accepted_exceptions mechanism the check already reads. Rejected: a pulse field and rule in the check, and a record held only in owner-sign-off prose. Four entries exist already (R911, R912, R921, R922, accepted by the owner on 2026-11-19, owner-sign-off.md W-7(a)); the work derives the closed set of gate-network resistors from the board's schematic nets and parts record, so that a resistor beyond those four is found rather than assumed absent, and checks each against its rating or entry.
+
+
+  Settled at readiness, 2026-11-21: the closed set is R911, R912, R921 and R922 (UNI-ROYAL 1206W4F2000T5E, 200 ohm, 1/4 W); the board places no other resistor, and no snubber, discharge or bleed resistor. The four accepted-exception entries already exist and carry the stress, the missing rating, the owner's acceptance of 2026-11-19 and the bounding elements, so the work is the closed-set statement, the per-resistor stress table, and the correction of two arithmetic figures in the open-items prose that do not agree with their own inputs (178.9 V across 200 ohm is 160 W, and 387.5 V across 200 ohm is 750.8 W), after the figures are checked against the circuit-proof record. The gate resistors do not form the safety barrier (the opto-triac and the board spacing do), so the unpublished-figure rule's carve-out does not apply and the owner's existing acceptance stands without a second request. The fourth criterion's test is a new board-record test modelled on the existing derating-policy record test: the passing case reads the committed heater wall board records, and the failing case is a temporary copy whose entry's accepted working voltage is below the 178.9 V stress. Whether that failing case needs the board check run with the KiCad tool or the reader alone is found while building.
 links:
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C23
     type: derives-from
@@ -19,3 +22,7 @@ links:
     type: justified-by
   - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
     type: justified-by
+brief_confirmation:
+  confirmer: claude-review-executor (claude-sonnet-5-5)
+  fingerprint: 992619b791859739b27d375cb34b86815c43f25022d403ef07d4942722c2942b
+  gating_profile: ""

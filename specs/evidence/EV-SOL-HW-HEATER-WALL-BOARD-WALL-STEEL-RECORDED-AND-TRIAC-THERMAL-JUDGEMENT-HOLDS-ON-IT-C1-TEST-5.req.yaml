@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT-C1-TEST-5
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-21T15:13:24.051132Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_heater_wall_wall_steel_record.py::test_the_outer_face_temperature_is_stated_for_the_recorded_wall_beside_the_stainless_bound
+  artifact_version: 045e593d3a99d5f35e29c945f5cc0447220ca9a2
+attested_by: crun-bfee0ecfad553f4d
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT.C1
+    type: satisfies
