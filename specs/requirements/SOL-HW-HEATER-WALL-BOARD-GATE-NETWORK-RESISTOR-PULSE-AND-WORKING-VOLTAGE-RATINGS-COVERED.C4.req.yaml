@@ -1,0 +1,13 @@
+id: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED.C4
+type: criterion
+title: The pre-order check passes the board with the gate-network records in place
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pre-order check run on the heater wall board passes its derated-voltage rule for every gate-network resistor with the records as committed, and an entry whose accepted working voltage is below the position's stress fails it in a copy of the board's records, so that the pass is shown to depend on the entry.
+   Out of scope: any change to the check's rules and any pulse rule.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED
+    type: criterion-of

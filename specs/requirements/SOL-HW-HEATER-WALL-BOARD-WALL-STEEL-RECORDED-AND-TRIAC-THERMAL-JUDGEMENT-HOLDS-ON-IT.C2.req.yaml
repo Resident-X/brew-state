@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT.C2
+type: criterion
+title: Triac thermal judgement re-stated on the recorded wall and held to its first limits
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The triacs' thermal judgement of the wall assembly is re-stated with the steel and joint resistance the records hold, with the arithmetic shown at both enclosure air temperatures and the junction ceiling the first judgement used, and holds within those limits; each quantity still marked as the owner's measurement is taken at its stated bounding figure and the judgement is marked provisional until the owner's statement of the measured figures is on record, when it is re-stated on them. Where it does not hold, the bracket's leg or the cut is changed and the owner's acceptance of the change is recorded. Does not cover re-selection of the triacs or any change to board copper.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT
+    type: criterion-of

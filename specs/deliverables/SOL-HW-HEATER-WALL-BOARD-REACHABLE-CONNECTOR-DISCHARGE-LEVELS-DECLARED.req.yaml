@@ -1,0 +1,35 @@
+id: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED
+type: deliverable
+category: solution
+title: Every reachable connector of the heater wall board has a declared discharge level and clamp, or an accepted absence
+status: active
+version: 1
+text: |
+  Declare in the wall board's records the static-discharge level and any clamp for each connector a person can reach with the machine assembled, citing the level's source, or record the absence with the owner's acceptance.
+
+  This closes the open item that no discharge level is declared for the board's header and blades. The connector list covers the header, the blades and every other connector the schematic places, so that no connector is judged only because an earlier finding named it.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C24
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C11
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+design_question_answers:
+  - answered_by: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C1
+    class: whole-set
+interfaces:
+  - SOL-HW-MAIN-BOARD-SCHEMATIC-PROVEN.C11 precedent
+  - hardware/sunbeam-em7000/heater-wall-board/parts-specification.yaml
+locus:
+  - marking: existing
+    ref: hardware/sunbeam-em7000/heater-wall-board/constraints-figures.md
+  - marking: existing
+    ref: hardware/sunbeam-em7000/heater-wall-board/owner-sign-off.md
+  - marking: existing
+    ref: hardware/sunbeam-em7000/heater-wall-board/pin-allocation.yaml
+plan_provenance:
+  approved_plan_id: PLAN-DEL-HW-HEATER-WALL-BOARD-DESIGNED-C22-C24-A
+  target: DEL-HW-HEATER-WALL-BOARD-DESIGNED

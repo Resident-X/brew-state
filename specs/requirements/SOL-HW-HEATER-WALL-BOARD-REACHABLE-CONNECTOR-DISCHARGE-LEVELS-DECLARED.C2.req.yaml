@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C2
+type: criterion
+title: Each reachable connector declares its level, source and clamp, or the owner accepts the absence
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Each reachable connector has in the board's records the discharge level it is held to with the governing standard or cited free derivation it is taken from, and any clamp it carries with its part; or the record states that no level is declared and carries the owner's dated acceptance. Does not cover non-reachable connectors, and the main board's connectors are excluded.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED
+    type: criterion-of
