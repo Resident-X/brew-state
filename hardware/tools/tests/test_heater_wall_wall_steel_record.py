@@ -259,6 +259,38 @@ def earth_bond_problems(sign_off: str, open_items: str) -> List[str]:
     return problems
 
 
+def outer_face_figures(k: float, air: float, h: float) -> str:
+    """The outer-face temperature at the patch, both triacs on, from the stated model, to one decimal."""
+    return "%.1f" % (air + 9.09 * r_wall(k, h))
+
+
+def outer_face_problems(constraints: str, open_items: str, log: str) -> List[str]:
+    """The outer-face statements: the recorded wall's own figures beside the stainless bounding case, and no steel assertion."""
+    problems = []
+    row = next((l for l in constraints.splitlines() if l.startswith("| Outer-face temperature of the")), "")
+    para = next((l for l in open_items.splitlines() if l.startswith("**Outer-face temperature of the")), "")
+    for name, blob in (("constraints row", row), ("open-items paragraph", para)):
+        if not blob:
+            problems.append("no %s" % name)
+            continue
+        if "steel sheet" in blob or "steel wall" in blob:
+            problems.append("%s calls the wall steel" % name)
+        if "aluminium" not in blob or "bounding case" not in blob or "W-17" not in blob:
+            problems.append("%s does not state the aluminium wall with the stainless bounding case and the owner's statement" % name)
+        for k in (110.0, K_STAINLESS):
+            for air in (25.0, 40.0):
+                for h in (10, 5):
+                    figure = outer_face_figures(k, air, h)
+                    if figure not in blob and "%.0f degC" % float(figure) not in blob:
+                        problems.append("%s lacks the %.1f degC figure (k %.0f, air %.0f, h %d)" % (name, float(figure), k, air, h))
+    for k in (110.0, K_STAINLESS):
+        for air in (25.0, 40.0):
+            for h in (10, 5):
+                if "%s degC at h = %d" % (outer_face_figures(k, air, h), h) not in log:
+                    problems.append("the log does not derive the %s degC figure (k %.0f, air %.0f, h %d)" % (outer_face_figures(k, air, h), k, air, h))
+    return problems
+
+
 class WallSteelRecord(unittest.TestCase):
     def setUp(self):
         self.proof = board("circuit-proof.md")
@@ -267,6 +299,16 @@ class WallSteelRecord(unittest.TestCase):
         self.open_items = board("open-items.md")
         self.division = read(DIVISION)
         self.code, self.out = script_output()
+
+    # SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT.C1: The heater wall board's records state the wall's material, its grade (magnetic or not) and its thickness at the owner's cut, the conductivity of that material at the lowest plausible value for its kind with the source, whether a coating lies between the spreader plate and the wall at the joint, and the thermal resistance of the bolted joint, each with its source; a quantity only the owner can measure on the machine is marked as the owner's measurement, states its bounding figure and names the measurement that closes it, and that mark is reconciled with the owner's recorded acceptance that carries the grade and thickness to the cut-time checks, so that the owner is asked once. Out of scope: measuring the wall on the owner's behalf and the cut's size, which the cut-confirmation work already covers.
+    def test_the_outer_face_temperature_is_stated_for_the_recorded_wall_beside_the_stainless_bound(self):
+        constraints = board("constraints-figures.md")
+        self.assertEqual(outer_face_problems(constraints, self.open_items, self.out), [])
+        stale = constraints.replace("The outer face is the same wall sheet the spreader plate is bolted to", "The outer face is the same steel sheet")
+        self.assertNotEqual(stale, constraints)
+        self.assertIn("calls the wall steel", " ".join(outer_face_problems(stale, self.open_items, self.out)))
+        no_alu = self.open_items.replace("48.4 degC", "xx").replace("48 degC", "xx")
+        self.assertTrue(outer_face_problems(constraints, no_alu, self.out))
 
     # SOL-HW-HEATER-WALL-BOARD-WALL-STEEL-RECORDED-AND-TRIAC-THERMAL-JUDGEMENT-HOLDS-ON-IT.C1: The heater wall board's records state the wall's material, its grade (magnetic or not) and its thickness at the owner's cut, the conductivity of that material at the lowest plausible value for its kind with the source, whether a coating lies between the spreader plate and the wall at the joint, and the thermal resistance of the bolted joint, each with its source; a quantity only the owner can measure on the machine is marked as the owner's measurement, states its bounding figure and names the measurement that closes it, and that mark is reconciled with the owner's recorded acceptance that carries the grade and thickness to the cut-time checks, so that the owner is asked once. Out of scope: measuring the wall on the owner's behalf and the cut's size, which the cut-confirmation work already covers.
     def test_every_wall_quantity_is_recorded_with_its_source(self):

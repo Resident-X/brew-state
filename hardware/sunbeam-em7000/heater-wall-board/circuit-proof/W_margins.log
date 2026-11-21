@@ -129,6 +129,10 @@ NOTE  aluminium wall, the 100 degC policy share: 21 of 24 cases hold; the cases 
 NOTE  Rc = 3 K/W is the stated limit that the bring-up case-temperature measurement closes: both on at Rc 3 K/W gives 25 degC air h 10 89.7 degC; 25 degC air h 5 100.0 degC; 40 degC air h 10 104.7 degC; 40 degC air h 5 115.0 degC
 NOTE  the joint resistance both-on that the 100 degC share leaves on the aluminium wall: 25 degC air, h = 5: 3.00 K/W; 25 degC air, h = 10: 4.13 K/W; 40 degC air, h = 5: 1.35 K/W; 40 degC air, h = 10: 2.48 K/W (a negative figure would mean no joint resistance is allowed)
 NOTE  outer face of the wall at the contact patch, both on, aluminium k 110: rises 23.4 K over the external air at h = 10 and 33.7 K at h = 5 (9.09 W x R_wall, the same product the record's stainless 57.3 K and 84.7 K are)
+NOTE  outer face temperature at the patch, both on, aluminium k 110 (recorded wall), 25 degC external air: 48.4 degC at h = 10 (9.09 W x 2.572 K/W = 23.4 K) and 58.7 degC at h = 5 (9.09 W x 3.704 K/W = 33.7 K)
+NOTE  outer face temperature at the patch, both on, aluminium k 110 (recorded wall), 40 degC external air: 63.4 degC at h = 10 (9.09 W x 2.572 K/W = 23.4 K) and 73.7 degC at h = 5 (9.09 W x 3.704 K/W = 33.7 K)
+NOTE  outer face temperature at the patch, both on, 304 stainless k 15 (stated bounding case, the hotter), 25 degC external air: 82.3 degC at h = 10 (9.09 W x 6.300 K/W = 57.3 K) and 109.7 degC at h = 5 (9.09 W x 9.323 K/W = 84.7 K)
+NOTE  outer face temperature at the patch, both on, 304 stainless k 15 (stated bounding case, the hotter), 40 degC external air: 97.3 degC at h = 10 (9.09 W x 6.300 K/W = 57.3 K) and 124.7 degC at h = 5 (9.09 W x 9.323 K/W = 84.7 K)
    current share, aluminium k 110, h = 10, Rc = 3 K/W, air 25 degC: steam triac case 79.6 degC; 0.5 current share 8.93 A (model) against the steam element's 5.38 A
 PASS  current share holds on the aluminium wall at Rc 3 K/W, air 25 degC: 8.93 A against 5.38 A
    current share, aluminium k 110, h = 10, Rc = 3 K/W, air 40 degC: steam triac case 94.6 degC; 0.5 current share 6.61 A (model) against the steam element's 5.38 A

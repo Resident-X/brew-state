@@ -266,6 +266,9 @@ print("NOTE  the joint resistance both-on that the 100 degC share leaves on the 
 w_face = W_P_BOTH * r_wall(K_ALU_LOW, 10)
 w_face5 = W_P_BOTH * r_wall(K_ALU_LOW, 5)
 print("NOTE  outer face of the wall at the contact patch, both on, aluminium k %.0f: rises %.1f K over the external air at h = 10 and %.1f K at h = 5 (%.2f W x R_wall, the same product the record's stainless 57.3 K and 84.7 K are)" % (K_ALU_LOW, w_face, w_face5, W_P_BOTH))
+for w_k_face, w_label in ((K_ALU_LOW, "aluminium k %.0f (recorded wall)" % K_ALU_LOW), (K_STAINLESS, "304 stainless k %.0f (stated bounding case, the hotter)" % K_STAINLESS)):
+    for w_air in (25.0, 40.0):
+        print("NOTE  outer face temperature at the patch, both on, %s, %.0f degC external air: %.1f degC at h = 10 (%.2f W x %.3f K/W = %.1f K) and %.1f degC at h = 5 (%.2f W x %.3f K/W = %.1f K)" % (w_label, w_air, w_air + W_P_BOTH * r_wall(w_k_face, 10), W_P_BOTH, r_wall(w_k_face, 10), W_P_BOTH * r_wall(w_k_face, 10), w_air + W_P_BOTH * r_wall(w_k_face, 5), W_P_BOTH, r_wall(w_k_face, 5), W_P_BOTH * r_wall(w_k_face, 5)))
 w_e_pa = {}
 for w_air in (25.0, 40.0):
     w_tj = w_air + W_P_BOTH * (r_wall(K_ALU_LOW, 10) + E_R_LEG + 3.0) + W_P_BOTH * W_SHARE_STEAM * (0.50 + E_RTH_JC)
