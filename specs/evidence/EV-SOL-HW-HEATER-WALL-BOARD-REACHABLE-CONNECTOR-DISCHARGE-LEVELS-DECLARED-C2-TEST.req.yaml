@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED-C2-TEST
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-21T13:45:55.075486Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_heater_wall_connector_discharge_record.py::test_levels_absence_and_owner_acceptance_are_recorded
+  artifact_version: 2a9a41f45201bee3d57ff1424b7b7cfe14059bdb
+attested_by: crun-a6b46ea122e5ed5f
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C2
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED-C3-TEST-2
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-21T13:45:42.674087Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_derating_policy_record_heater_wall.py::test_the_checks_own_reader_accepts_the_committed_policy_and_refuses_a_broken_entry
+  artifact_version: 2a9a41f45201bee3d57ff1424b7b7cfe14059bdb
+attested_by: crun-713387a0f69f1bd1
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED.C3
+    type: satisfies
