@@ -4,8 +4,10 @@ category: solution
 title: The wall steel's grade and thickness at the cut are on record and the triacs' thermal judgement is re-judged on them
 status: active
 version: 1
-text: |-
+text: |
   Record the steel's magnetic grade, thickness and bolted-joint thermal resistance at the owner's cut, with source or marked as the owner's measurement, and re-judge the triacs' wall-assembly thermal margin on them.
+
+  The leaf cannot close before the owner's dated statement of the measured grade and thickness exists (its third criterion): the judgement is made provisionally on bounding figures meanwhile, and the owner's existing acceptance that carries these quantities to the cut-time checks is the statement's home, not a second request.
 links:
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C22
     type: derives-from

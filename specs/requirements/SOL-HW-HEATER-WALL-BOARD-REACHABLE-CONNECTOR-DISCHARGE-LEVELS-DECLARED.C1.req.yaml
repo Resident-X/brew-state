@@ -5,8 +5,8 @@ status: active
 version: 1
 measurement_type: binary
 verification: inspection
-text: |-
-  Every connector the board's records list is classed as reachable or not reachable by a person with the machine assembled, and the classification is stated over the whole connector list, which the records declare closed; a connector whose reachability depends on the printed case is classed reachable. Out of scope: the case design itself and any physical discharge measurement.
+text: |
+  The board's records list every connector the board places, derived from its schematic and parts record, and state the list as complete; each is classed reachable or not reachable by a person with the machine assembled. A connector whose reachability depends on the printed case is classed reachable, and its record names the printed-case design as the work that can relax the class. Out of scope: the case design itself and any physical discharge measurement.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED
     type: criterion-of

@@ -5,8 +5,8 @@ status: active
 version: 1
 measurement_type: binary
 verification: inspection
-text: |-
-  Every accepted_exceptions entry of a gate-network resistor states the stress and the accepted working voltage, the rating the maker leaves out or falls short on, the owner's acceptance with its date and the element that bounds the residual, as the entries for R911, R912, R921 and R922 do, and the check reads the entry through its existing reader. Out of scope: a pulse field or pulse rule in the check.
+text: |
+  Every accepted_exceptions entry of a gate-network resistor states the stress and the accepted working voltage, the rating the maker leaves out or falls short on, the owner's acceptance with its date and the element that bounds the residual, and the check reads the entry through its existing reader. Out of scope: a pulse field or pulse rule in the check.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED
     type: criterion-of

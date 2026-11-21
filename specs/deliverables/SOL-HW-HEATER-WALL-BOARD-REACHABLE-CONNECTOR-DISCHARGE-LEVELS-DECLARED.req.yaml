@@ -4,8 +4,10 @@ category: solution
 title: Every reachable connector of the heater wall board has a declared discharge level and clamp, or an accepted absence
 status: active
 version: 1
-text: |-
+text: |
   Declare in the wall board's records the static-discharge level and any clamp for each connector a person can reach with the machine assembled, citing the level's source, or record the absence with the owner's acceptance.
+
+  This closes the open item that no discharge level is declared for the board's header and blades. The connector list covers the header, the blades and every other connector the schematic places, so that no connector is judged only because an earlier finding named it.
 links:
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C24
     type: derives-from
