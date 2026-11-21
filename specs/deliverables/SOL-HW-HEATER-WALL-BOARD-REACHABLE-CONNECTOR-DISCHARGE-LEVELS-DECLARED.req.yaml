@@ -3,11 +3,14 @@ type: deliverable
 category: solution
 title: Every reachable connector of the heater wall board has a declared discharge level and clamp, or an accepted absence
 status: active
-version: 1
+version: 2
 text: |
   Declare in the wall board's records the static-discharge level and any clamp for each connector a person can reach with the machine assembled, citing the level's source, or record the absence with the owner's acceptance.
 
   This closes the open item that no discharge level is declared for the board's header and blades. The connector list covers the header, the blades and every other connector the schematic places, so that no connector is judged only because an earlier finding named it.
+
+
+  Settled at readiness, 2026-11-21: the board places four connectors, the three mains blades J911, J921 and J941 and the three-way header J931, and no test point; the mounting hole H1 is named as excluded. All four are reachable in service with the case off and not reachable in normal use, and are classed reachable because the printed-case design is unbuilt. The route is the accepted absence: a clamp cannot be placed on a mains blade, and a clamp on the header's low-voltage lines needs a design change that would reopen the proven board, so the records state that no level is declared and carry the owner's dated acceptance, as the board's existing owner-sign-off entry W-5b already does on his behalf under his standing instruction; that entry is amended with the connector list and the printed-case reference and re-dated. Where the records name a level, it is the owner's declaration of IEC 61000-4-2 level 4 as the main board declares it for its own connectors, and the record says it is not a household-appliance product-standard level. Placement: prose records only, the open-items item for the header and blades, the circuit-verdicts rows for J911, J921, J931 and J941, a connector-list table in the circuit-proof record, and the owner-sign-off entry with its counts; no new key is added to the parts specification record, whose reader accepts a closed key set, and the signed separation basis and the generated schematic specification are not edited.
 links:
   - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C24
     type: derives-from

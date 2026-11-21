@@ -2,11 +2,11 @@ id: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RAT
 type: criterion
 title: The set of mains gate-network resistors is derived from the schematic nets and stated as closed
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
-text: |-
-  The board's records list every resistor that sits in a mains gate network, derived from the schematic's nets and the parts record rather than from the four resistors already known, and state that list as the complete set; a resistor in a gate network on any sheet that is missing from the list fails the criterion. Out of scope: resistors outside a gate network and any change to the circuit.
+text: |
+  The board's records state which resistors are mains gate-network resistors, defined as every resistor with a pad on a net between an opto-triac output and a triac gate, derived from the schematic's references and the parts record, and state that list as the complete set; a resistor in a gate network on any sheet that is missing from the list fails the criterion. Out of scope: resistors outside a gate network and any change to the circuit.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED
     type: criterion-of
