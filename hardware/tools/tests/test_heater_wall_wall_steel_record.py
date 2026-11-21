@@ -101,6 +101,9 @@ def quantity_problems(sec: str, sign_off: str) -> List[str]:
         problems.append("the conductivity row does not state the lowest plausible figure with the stainless bounding case")
     if "mfgrobots.com" not in cond[2] or "read 2026-11-21" not in cond[2] or "110 to 140" not in cond[2]:
         problems.append("the conductivity has no source with its date and range")
+    for address in ("https://www.mfgrobots.com/Article/material/metal/40251.html", "https://docs.rs-online.com/2d8e/A700000015689049.pdf"):
+        if address not in cond[2]:
+            problems.append("the conductivity source %s is not cited by its full address" % address)
     if "under the joint" not in rows["Coating between plate and wall"][1]:
         problems.append("the coating row does not say whether the finish lies under the joint")
     rc = rows["Bolted-joint thermal resistance Rc"]
@@ -183,8 +186,11 @@ def provisional_problems(sec: str, out: str) -> List[str]:
     for air, h, rc, t in over:
         if "%.2f degC" % t not in sec:
             problems.append("the over-share case air %.0f h %.0f Rc %.0f (%.2f degC) is not stated in the reading" % (air, h, rc, t))
-    if "Reading." in sec and "21 of 24 hold the 100 degC share" not in sec:
-        problems.append("the count of cases holding the share is not stated as 21 of 24")
+    aluminium = [t for (k, a, h, r, ld), t in script_cases(out).items() if k == 110.0]
+    holding = sum(1 for t in aluminium if t <= 100.0)
+    stated = "%d of %d hold the 100 degC share" % (holding, len(aluminium))
+    if "Reading." in sec and stated not in sec:
+        problems.append("the count of cases holding the share is not stated as %s" % stated)
     return problems
 
 
@@ -216,7 +222,9 @@ def statement_problems(sign_off: str, open_items: str) -> List[str]:
     heading = re.search(r"## Owner's own words \((\d+) entries\)", sign_off)
     if not count or int(count.group(1)) != len(entries):
         problems.append("the header count differs from the %d entries held" % len(entries))
-    if not own_count or not heading or own_count.group(1) != heading.group(1) or int(own_count.group(1)) != len(entries) - 3:
+    behalf_heading = re.search(r"## Signed on behalf \((\d+) entries", sign_off)
+    if not own_count or not heading or not behalf_heading or own_count.group(1) != heading.group(1) \
+            or int(own_count.group(1)) != len(entries) - int(behalf_heading.group(1)):
         problems.append("the owner's-own-words counts disagree with the entries")
     row = next((l for l in open_items.splitlines() if l.startswith("| D11.")), "")
     if "owner-sign-off.md` W-17" not in row or "the cut measures the steel (a magnet and thickness check)" in row:
@@ -300,7 +308,9 @@ class WallSteelRecord(unittest.TestCase):
 
     def test_a_wrong_figure_or_verdict_in_the_table_is_found(self):
         row = next(l for l in self.sec.splitlines() if l.startswith("| 40 | 10 | 3 | both on |"))
-        wrong_figure = self.sec.replace(row, row.replace("104.74", "94.74"))
+        figure = cells(row)[4]
+        wrong_figure = self.sec.replace(row, row.replace(figure, "%.2f" % (float(figure) - 10.0), 1))
+        self.assertNotEqual(wrong_figure, self.sec)
         self.assertTrue(table_problems(wrong_figure, self.out))
         wrong_verdict = self.sec.replace(row, row.replace("fails", "holds", 1))
         self.assertTrue(any("verdict" in p for p in table_problems(wrong_verdict, self.out)))
@@ -314,8 +324,9 @@ class WallSteelRecord(unittest.TestCase):
 
     def test_the_stainless_bounding_case_stays_beside_the_recorded_wall(self):
         rows = {tuple(r[:4]): r for r in case_rows(self.sec)}
-        self.assertEqual(rows[("25", "10", "0", "both on")][7], "96.36")
-        self.assertEqual(rows[("40", "5", "3", "both on")][7], "166.11")
+        for key in (("25", "10", "0", "both on"), ("40", "5", "3", "both on")):
+            expected = "%.2f" % junction(K_STAINLESS, float(key[0]), float(key[1]), float(key[2]), key[3])
+            self.assertEqual(rows[key][7], expected)
         self.assertIn("96.4 degC", read(LOG), "the 2026-11-19 stainless lines of the log are gone")
         self.assertIn("123.8 °C", self.division, "the 2026-11-19 stainless table is gone from the division record")
         self.assertIn("2026-11-21 amendment: the wall is aluminium", self.division)
@@ -323,15 +334,26 @@ class WallSteelRecord(unittest.TestCase):
     def test_the_judgement_is_marked_provisional_and_the_shortfall_is_recorded(self):
         self.assertEqual(provisional_problems(self.sec, self.out), [])
         self.assertTrue(provisional_problems(self.sec.replace("provisional on the joint resistance only", "final"), self.out))
-        self.assertTrue(provisional_problems(self.sec.replace("104.74 degC", "104 degC"), self.out))
+        over = max(t for (k, a, h, r, ld), t in script_cases(self.out).items() if k == 110.0 and t > 100.0)
+        dropped = self.sec.replace("%.2f degC" % over, "%d degC" % over)
+        self.assertNotEqual(dropped, self.sec)
+        self.assertTrue(provisional_problems(dropped, self.out))
+        count = re.search(r"(\d+) of (\d+) hold the 100 degC share", self.sec)
+        self.assertIsNotNone(count)
+        miscounted = self.sec.replace(count.group(0), "%d of %s hold the 100 degC share" % (int(count.group(1)) + 1, count.group(2)))
+        self.assertNotEqual(miscounted, self.sec)
+        self.assertTrue(any("count of cases" in p for p in provisional_problems(miscounted, self.out)))
 
     def test_the_script_check_fails_when_the_wall_does_not_hold(self):
         with tempfile.TemporaryDirectory() as tmp:
             mutated = os.path.join(tmp, "W_margins.py")
             source = read(SCRIPT)
-            self.assertIn("K_ALU_LOW = 110.0 ", source)
+            bound = re.search(r"^K_ALU_LOW = [\d.]+(?= )", source, re.M)
+            self.assertIsNotNone(bound)
+            weakened = source.replace(bound.group(0), "K_ALU_LOW = %s" % K_STAINLESS, 1)
+            self.assertNotEqual(weakened, source)
             with open(mutated, "w", encoding="utf-8") as handle:
-                handle.write(source.replace("K_ALU_LOW = 110.0 ", "K_ALU_LOW = 15.0 ", 1))
+                handle.write(weakened)
             code, out = script_output(mutated)
         self.assertEqual(code, 1)
         self.assertIn("FAIL  aluminium wall holds the maker's 125 degC in every case", out)
@@ -343,7 +365,10 @@ class WallSteelRecord(unittest.TestCase):
     def test_a_statement_without_its_test_or_date_is_found(self):
         self.assertTrue(statement_problems(self.sign_off.replace("accepted_on: 2026-11-21. **The test", "accepted_on: 2026-11-20. **The test"), self.open_items))
         self.assertTrue(statement_problems(self.sign_off.replace("No eddy-current (magnet-drag) test was made", "A test was made"), self.open_items))
-        self.assertTrue(statement_problems(self.sign_off.replace("There are 20 entries", "There are 19 entries"), self.open_items))
+        count = int(re.search(r"There are (\d+) entries", self.sign_off).group(1))
+        wrong_count = self.sign_off.replace("There are %d entries" % count, "There are %d entries" % (count - 1))
+        self.assertNotEqual(wrong_count, self.sign_off)
+        self.assertTrue(statement_problems(wrong_count, self.open_items))
         self.assertTrue(statement_problems(self.sign_off.replace("I made those scratches fairly easily with a screw driver", "paraphrase"), self.open_items))
 
     def test_no_owner_measurement_mark_remains_on_the_grade_and_thickness(self):

@@ -7,12 +7,17 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import unittest
 from typing import List, Set
 
 import yaml
 
 TOOLS = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, TOOLS)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from board_check import sexpr, walk  # noqa: E402
+from test_derating_policy_record_heater_wall import Board  # noqa: E402
 REPO = os.path.dirname(os.path.dirname(TOOLS))
 BOARD = os.path.join(REPO, "hardware", "sunbeam-em7000", "heater-wall-board")
 PRINTED_CASE = "SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON"
@@ -23,15 +28,36 @@ def read(name: str) -> str:
         return handle.read()
 
 
+def parts_references() -> Set[str]:
+    """Every reference the parts record places."""
+    return {p["reference"] for p in yaml.safe_load(read("parts-specification.yaml"))["positions"]}
+
+
+def schematic_references() -> Set[str]:
+    """Every component reference of KiCad's own netlist of the committed schematic, pinless parts included."""
+    return {str(sexpr.child(comp, "ref")[1]) for comp in walk(Board.load().parsed, "comp")}
+
+
+def placement_problems(schematic: Set[str], parts: Set[str]) -> List[str]:
+    """Where the schematic and the parts record disagree on which connectors and mounting parts the board places."""
+    problems = []
+    for prefix, name in (("J", "connector"), ("H", "non-connector")):
+        in_schematic = {r for r in schematic if r.startswith(prefix)}
+        in_parts = {r for r in parts if r.startswith(prefix)}
+        for ref in sorted(in_schematic - in_parts):
+            problems.append("%s %s is in the schematic and not in the parts record" % (name, ref))
+        for ref in sorted(in_parts - in_schematic):
+            problems.append("%s %s is in the parts record and not in the schematic" % (name, ref))
+    return problems
+
+
 def placed_connectors() -> Set[str]:
-    """The references of the parts record that are connectors: every J position."""
-    positions = yaml.safe_load(read("parts-specification.yaml"))["positions"]
-    return {p["reference"] for p in positions if p["reference"].startswith("J")}
+    """The connectors the board places: every J reference of the schematic's netlist."""
+    return {r for r in schematic_references() if r.startswith("J")}
 
 
 def non_connectors() -> Set[str]:
-    positions = yaml.safe_load(read("parts-specification.yaml"))["positions"]
-    return {p["reference"] for p in positions if p["reference"].startswith("H")}
+    return {r for r in schematic_references() if r.startswith("H")}
 
 
 def connector_section(proof: str) -> str:
@@ -123,8 +149,10 @@ def sign_off_counts_problems(sign_off: str) -> List[str]:
     if not count or int(count.group(1)) != len(entries):
         problems.append("the header count %s differs from %d entries" % (count and count.group(1), len(entries)))
     behalf = re.search(r"## Signed on behalf \((\d+) entries", sign_off)
-    if not behalf or int(behalf.group(1)) != 3:
-        problems.append("the signed-on-behalf count is not 3")
+    section = re.search(r"## Signed on behalf.*?(?=\n## )", sign_off, re.S)
+    held = len(re.findall(r"^- W-\d+[a-d]?\b", section.group(0), re.M)) if section else -1
+    if not behalf or int(behalf.group(1)) != held:
+        problems.append("the signed-on-behalf count %s differs from the %d entries held" % (behalf and behalf.group(1), held))
     return problems
 
 
@@ -137,6 +165,7 @@ class ConnectorDischargeRecord(unittest.TestCase):
 
     # SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C1: The board's records list every connector the board places, derived from its schematic and parts record, name any non-connector part (such as a mounting hole) that the list leaves out, and state the list as complete; each is classed for use in service with the case off and for normal use with the machine assembled, and is classed reachable if either state lets a person touch it. A connector whose reachability depends on the printed case is classed reachable, and its record names the printed-case design as the work that can relax the class. Out of scope: the case design itself and any physical discharge measurement.
     def test_connector_list_is_closed_over_the_parts_record(self):
+        self.assertEqual(placement_problems(schematic_references(), parts_references()), [])
         self.assertEqual(self.placed, {"J911", "J921", "J931", "J941"})
         self.assertEqual(self.holes, {"H1"})
         self.assertEqual(list_problems(self.section, self.placed, self.holes), [])
@@ -161,6 +190,18 @@ class ConnectorDischargeRecord(unittest.TestCase):
     def test_list_follows_a_connector_added_to_the_parts_record(self):
         self.assertIn("connector J951 is placed and not listed",
                       list_problems(self.section, self.placed | {"J951"}, self.holes))
+
+    # SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C1: The board's records list every connector the board places, derived from its schematic and parts record, name any non-connector part (such as a mounting hole) that the list leaves out, and state the list as complete; each is classed for use in service with the case off and for normal use with the machine assembled, and is classed reachable if either state lets a person touch it. A connector whose reachability depends on the printed case is classed reachable, and its record names the printed-case design as the work that can relax the class. Out of scope: the case design itself and any physical discharge measurement.
+    def test_a_connector_in_only_one_of_the_schematic_and_the_parts_record_is_found(self):
+        schematic, parts = schematic_references(), parts_references()
+        self.assertIn("connector J951 is in the schematic and not in the parts record",
+                      placement_problems(schematic | {"J951"}, parts))
+        self.assertIn("connector J941 is in the parts record and not in the schematic",
+                      placement_problems(schematic - {"J941"}, parts))
+        self.assertIn("non-connector H2 is in the schematic and not in the parts record",
+                      placement_problems(schematic | {"H2"}, parts))
+        self.assertIn("connector J952 is in the parts record and not in the schematic",
+                      placement_problems(schematic, parts | {"J952"}))
 
     # SOL-HW-HEATER-WALL-BOARD-REACHABLE-CONNECTOR-DISCHARGE-LEVELS-DECLARED.C2: Each reachable connector has in the board's records the discharge level it is held to with the governing standard or cited free derivation it is taken from, and any clamp it carries with its part; or the record states that no level is declared and carries the owner's dated acceptance. Does not cover non-reachable connectors, and the main board's connectors are excluded.
     def test_levels_absence_and_owner_acceptance_are_recorded(self):
@@ -188,6 +229,10 @@ class ConnectorDischargeRecord(unittest.TestCase):
         wrong = sign_off.replace(f"There are {count} entries", f"There are {count - 1} entries")
         self.assertNotEqual(wrong, sign_off)
         self.assertTrue(sign_off_counts_problems(wrong))
+        held = int(re.search(r"## Signed on behalf \((\d+) entries", sign_off).group(1))
+        wrong_behalf = sign_off.replace(f"## Signed on behalf ({held} entries", f"## Signed on behalf ({held + 1} entries")
+        self.assertNotEqual(wrong_behalf, sign_off)
+        self.assertTrue(sign_off_counts_problems(wrong_behalf))
 
 
 if __name__ == "__main__":

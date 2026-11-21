@@ -259,7 +259,7 @@ class ExceptionEntries(unittest.TestCase):
                 for words in ("opto-triac", "K201", "thermostat", "firmware"):
                     self.assertIn(words, entry["bounded_by"])
                 # the entry is no more than its own text: an emptied or placeholder acceptance is found unsigned
-                for field, value in (("accepted_by", ""), ("accepted_by", "tbd"), ("accepted_on", ""), ("accepted_on", "2026-11-22")):
+                for field, value in (("accepted_by", ""), ("accepted_by", "tbd"), ("accepted_on", ""), ("accepted_on", (TODAY + datetime.timedelta(days=1)).isoformat())):
                     self.assertIsNotNone(board_check.entry_unsigned(dict(entry, **{field: value}), None, TODAY), (field, value))
 
     def test_the_checks_own_reader_accepts_the_committed_policy_and_refuses_a_broken_entry(self):
@@ -344,7 +344,7 @@ class PreOrderCheck(unittest.TestCase):
                     self.assertEqual(len(mine), 1, [v.line() for v in failing])
                     self.assertIn(f"{design.schematic} {ref}", mine[0].location)
                     self.assertIn("above 7.07 V", mine[0].message)
-                    self.assertEqual(len(accepted), 3)
+                    self.assertEqual(len(accepted), len(entries) - 1)
 
     def test_an_entry_unsigned_or_for_no_gate_resistor_does_not_pass_the_board(self):
         # SOL-HW-HEATER-WALL-BOARD-GATE-NETWORK-RESISTOR-PULSE-AND-WORKING-VOLTAGE-RATINGS-COVERED.C4: The pre-order check run on the heater wall board passes its derated-voltage rule for every gate-network resistor with the records as committed, and an entry whose accepted working voltage is below the position's stress fails it in a temporary copy of the board's records, so that the pass is shown to depend on the entry. Out of scope: any change to the check's rules and any pulse rule.
@@ -352,7 +352,7 @@ class PreOrderCheck(unittest.TestCase):
         entries = policy["accepted_exceptions"]
         for label, changed, rule in (
                 ("unsigned", [dict(entries[0], accepted_by="tbd")] + entries[1:], "derated_voltage"),
-                ("dated after the check's day", [dict(entries[0], accepted_on="2026-11-22")] + entries[1:], "derated_voltage"),
+                ("dated after the check's day", [dict(entries[0], accepted_on=(TODAY + datetime.timedelta(days=1)).isoformat())] + entries[1:], "derated_voltage"),
                 ("a stale entry", entries + [dict(entries[0], position="R999")], "derating_exception")):
             with self.subTest(label):
                 with tempfile.TemporaryDirectory() as folder:

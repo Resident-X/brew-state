@@ -222,7 +222,7 @@ print("NOTE  the 2026-11-19 case temperatures are on the model's stated inputs (
 print("\n== (e) amendment 2026-11-21: the wall is aluminium 2.5 mm; the case temperature at the external air (25 and 40 degC), the maker's 125 degC and the 100 degC policy share")
 W_H, W_L, W_T = 0.030, 0.080, 0.0025          # division record: 80 x 30 mm window, 2.5 mm wall (owner)
 K_STAINLESS = 15.0                           # division record: stated floor for stainless, W/(m.K)
-K_ALU_LOW = 110.0                            # lowest plausible wrought aluminium sheet: EN AW-5083 H244 listed 110 to 140 W/(m.K) (mfgrobots.com EN 573-3 AW-5083 H244 page, read 2026-11-21); RS PRO 5083 sheet datasheet 121; 2024 T3/T4 about 120 (Honda Technical Review 34-2, table garbled, not relied on). A cast alloy (about 96 to 100) is not a sheet wall and is not the bound
+K_ALU_LOW = 110.0                            # lowest plausible wrought aluminium sheet: EN AW-5083 H244 listed 110 to 140 W/(m.K) (mfgrobots.com EN 573-3 AW-5083 H244 page, https://www.mfgrobots.com/Article/material/metal/40251.html, read 2026-11-21); RS PRO 5083 aluminium sheet datasheet 121 (https://docs.rs-online.com/2d8e/A700000015689049.pdf, retrieved 2026-11-21); 2024 T3/T4 about 120 (Honda Technical Review 34-2, table garbled, not relied on). A cast alloy (about 96 to 100) is not a sheet wall and is not the bound
 W_PERIM = 2.0 * (W_H + W_L)
 W_TJ_LIMIT, W_TJ_SHARE = 125.0, 100.0         # maker's absolute junction ceiling (ST DS2114 Rev 11 Table 1); 0.8 x 125 policy share (derating-policy.yaml)
 W_P_BOTH, W_P_STEAM_ALONE = 9.09, 4.84
