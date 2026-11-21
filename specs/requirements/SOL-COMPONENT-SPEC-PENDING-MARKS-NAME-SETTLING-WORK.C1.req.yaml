@@ -5,8 +5,8 @@ status: active
 version: 1
 measurement_type: binary
 verification: test
-text: |-
-  In the controller I/O enumeration, the component specification and the purchase list, every figure or input marked pending, and every cell that states a figure is not established, names the id of an active graph node whose work will settle it, and a test over a synthetic project fails when a mark names no node, a node that does not resolve, or a deprecated node. Where no node exists for an unsettled figure (the flow channel's accuracy is one), the node is authored in the graph in the same change rather than the mark left unnamed. Out of scope: deriving or choosing any figure the marks stand for, and amending the criterion text itself.
+text: |
+  In the controller I/O enumeration, the component specification and the purchase list, every figure or input marked pending, and every cell that states a figure is not established, names the id of an active graph node whose work will settle it. Over a synthetic project with generic ids, a test fails, in text and in JSON, when a mark names no node, a node that does not resolve, or a deprecated node, when a mark's cell is empty or its node id is malformed, and when a listed document is missing. A figure no active node would settle is not given a new node by this work; the node that settles it already exists in the graph, or the gap is recorded there separately before the mark is written. Out of scope: deriving or choosing any figure the marks stand for, and amending the criterion text itself.
 links:
   - target: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK
     type: criterion-of

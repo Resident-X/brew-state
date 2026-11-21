@@ -9,10 +9,8 @@ text: |-
 links:
   - target: DEL-COMPONENT-SPECIFICATION.C3
     type: derives-from
-  - target: REQ-MEASUREMENT-001.C2
-    type: targets
-  - target: REQ-MEASUREMENT-001.C6
-    type: targets
+  - target: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
+    type: depends-on
 design_question_answers:
   - answered_by: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C2
     class: new-condition

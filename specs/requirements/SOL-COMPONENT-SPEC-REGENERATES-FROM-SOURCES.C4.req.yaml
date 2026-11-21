@@ -1,12 +1,12 @@
 id: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES.C4
 type: criterion
-title: The verdict is legible in text and JSON without the producer's context
+title: The verdict names the document, the source and the regenerating command, in text and JSON
 status: active
 version: 1
 measurement_type: binary
 verification: test
-text: |-
-  The regeneration and the divergence check each report in text and in JSON the document, the source that changed and the command that regenerates it, so a builder or an agent holding only the repository can act on a failure; an unreadable source and an empty source produce distinct messages. Does not apply to the documents' own content.
+text: |
+  The regeneration and the divergence check each report in text and in JSON the document, the source that changed and the command that regenerates it, so a builder or an agent holding only the repository can act on a failure. A missing, unreadable, malformed or empty source each produce a distinct message naming the source. Does not apply to the documents' own content.
 links:
   - target: SOL-COMPONENT-SPEC-REGENERATES-FROM-SOURCES
     type: criterion-of

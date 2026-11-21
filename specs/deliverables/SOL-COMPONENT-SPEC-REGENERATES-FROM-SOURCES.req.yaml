@@ -9,8 +9,6 @@ text: |-
 links:
   - target: DEL-COMPONENT-SPECIFICATION.C6
     type: derives-from
-  - target: REQ-COST-DISCIPLINE-001.C6
-    type: targets
   - target: OBL-PHYSICAL-CONFIGURATION-001.C1
     type: targets
 design_question_answers:

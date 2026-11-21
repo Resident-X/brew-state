@@ -1,11 +1,11 @@
 id: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK.C3
 type: criterion
-title: A mark is legible to a builder without the producer's context
+title: A mark states what is awaited and where it is read, in plain words
 status: active
 version: 1
 measurement_type: binary
 verification: inspection
-text: |-
+text: |
   Each pending mark states in plain words what is awaited and where it will be read or measured, so a builder holding only the repository can tell what ends it; verified by inspection of every mark in the three documents against that statement. Out of scope: rewriting prose around marks that already meet it.
 links:
   - target: SOL-COMPONENT-SPEC-PENDING-MARKS-NAME-SETTLING-WORK
