@@ -1,0 +1,12 @@
+id: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER.C5
+type: criterion
+title: Nothing in the build or emulation names another part as the controller
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  A search of the tracked build configuration, emulation files, their tooling and their tests finds no other part named as the controller, except in a sentence saying it is not chosen, and except a test naming another part's header or core only as the synthetic input it gives a check. The reading is the search and each hit's disposition. Out of scope: the target build's own files, which the target-build leaf holds.
+links:
+  - target: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

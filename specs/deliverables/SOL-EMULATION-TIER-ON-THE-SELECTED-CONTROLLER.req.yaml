@@ -1,0 +1,35 @@
+id: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER
+type: deliverable
+category: solution
+title: The emulation tier's machine, register maps and peripheral models are those of the selected controller part
+status: active
+version: 1
+text: |
+  Moves the emulation tier from the STM32F407 stand-in to the selected controller. It replaces the emulated machine's description with one for the selected part (memory map, clock and reset controller, and the peripherals the firmware drives), regenerates the register maps for the modelled peripherals from the maker's register description of that part with the description pinned by content, rewrites the peripheral models to the selected part's registers and offsets, and records the addressing checks and the closed-loop run again on that machine, replacing the evidence recorded on the stand-in. It then makes every remaining naming of the stand-in as the controller in the build configuration, the emulation files, their tooling and their tests disappear, and moves the history links and the emulation-tool decision's text that still call the stand-in the machine.
+
+  Settled for the build:
+  - The machine description stays hand-written, as the stand-in's is, so that an access to a register nothing models is visible rather than absorbed by an emulator-supplied description. That precedent is in the stand-in's own description file; the maker's register description supplies the register maps.
+  - The register description is the manufacturer's own file for the selected part, taken from a pinned source and recorded with its address and its content hash, as the stand-in's is. Which file and source carry it is found by reading the candidate sources, not settled here.
+  - The converter model reflects the selected part's converter, which resolves 16 bits; the model's full scale follows the target-build leaf's constant.
+  - This leaf depends on SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER and is built on the same branch and gated once with it, because the emulation tier runs the target image that leaf builds.
+  - The clock tree is a decision for bring-up. The machine description carries whatever reset-state clock the selected part starts from, and no model claims a clock configuration the firmware does not set.
+  - The history links are moved by this leaf because this is when the finished work stands on the selected part: the emulation tier task, the seam's host-simulated implementation and the plant-model identity solution, which cite the superseded nomination as their justification, cite the baseline decision instead. The emulation-tool decision's text stops calling the machine a stand-in.
+
+  Locus: firmware/emulation/ (platform description, peripheral models, register-description pin, runners, README), the nodes and decision text named above.
+rationale: |
+  It is the half of the task's retarget that the firmware's pin checks and the board order do not need, and the larger half: a different register description and rewritten peripheral models. It is its own leaf so that the target-build leaf can close on its own criteria. Because the gate's emulation tier reads all of firmware/, the two are built together on one branch.
+links:
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C2
+    type: derives-from
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C3
+    type: derives-from
+  - target: DEL-FIRMWARE-TARGET-ON-SELECTED-CONTROLLER.C4
+    type: derives-from
+  - target: REQ-PREENERGISATION-VERIFICATION-001.C2
+    type: targets
+  - target: DEC-EMULATION-TIER-RENODE
+    type: justified-by
+  - target: DEC-CONTROLLER-BASELINE-STM32H743
+    type: justified-by
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: depends-on

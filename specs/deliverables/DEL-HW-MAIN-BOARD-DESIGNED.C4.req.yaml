@@ -2,12 +2,12 @@ id: DEL-HW-MAIN-BOARD-DESIGNED.C4
 type: criterion
 title: The firmware's output-channel and sensor-channel pin checks read this board's pin allocation record
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 closes_by: cascade
 text: |
-  The controller's converter-input map that the sensor check reads is authored beside the record, so a pin assignment in the firmware that disagrees with the board fails a check before the board is ordered.
+  The controller's converter-input map that the sensor check reads is authored beside the record, so a pin assignment in the firmware that disagrees with the board fails a check that runs in the firmware's check target once the firmware names the selected controller's pins. The firmware follows the board's pins, so a disagreement found after the board is ordered is corrected in the firmware.
 links:
   - target: DEL-HW-MAIN-BOARD-DESIGNED
     type: criterion-of

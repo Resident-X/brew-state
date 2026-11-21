@@ -1,0 +1,12 @@
+id: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER.C5
+type: criterion
+title: No control-logic source changes and the host and target builds agree
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  No file under the control directory differs between this leaf's branch and its base, and the host and target builds still produce the same control behaviour. The reading is a diff of that directory and the project's existing byte-identity check of the control logic's arithmetic across the two builds. Out of scope: the hardware directory and the build configuration, which this leaf changes by design.
+links:
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

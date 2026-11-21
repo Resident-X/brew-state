@@ -1,0 +1,12 @@
+id: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER.C4
+type: criterion
+title: The check that recognises target object code names the selected part's core
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The arithmetic-pin check recognises target object code by the selected part's processor core, and a test feeds it an object built for that core and one built for the stand-in's core and asserts the first is judged as target code. A build whose objects carry the stand-in's core is not judged as target code. Out of scope: the control logic's arithmetic itself, which the check only classifies.
+links:
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

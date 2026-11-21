@@ -1,0 +1,12 @@
+id: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER.C3
+type: criterion
+title: The pin and converter-input tables name only pins the selected part's package has
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  Every port and pin the seam implementation's output, sensor and serial tables name is a pin of the selected part's package, checked against the controller pin table record in the machine's hardware folder, with the entry-by-entry reading shown. Out of scope: which channel is wired to which board pin, which the channel-mapping leaf carries.
+links:
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

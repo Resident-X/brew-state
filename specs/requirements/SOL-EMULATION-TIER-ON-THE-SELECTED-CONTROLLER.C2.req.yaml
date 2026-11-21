@@ -1,0 +1,12 @@
+id: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER.C2
+type: criterion
+title: The register maps come from the maker's description of the selected part and are pinned by content
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The register maps for the modelled peripherals are generated from the manufacturer's register description of the selected part. The description's source address and content hash are recorded, and a test alters the stored description by one byte and asserts the emulation tier's check refuses to run on it. Out of scope: the peripheral models, which the next criterion holds, and the target-build leaf's changes.
+links:
+  - target: SOL-EMULATION-TIER-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

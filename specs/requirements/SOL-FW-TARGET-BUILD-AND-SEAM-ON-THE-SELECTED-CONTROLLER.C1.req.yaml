@@ -1,0 +1,12 @@
+id: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER.C1
+type: criterion
+title: The target build names the selected part and builds the seam against it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The target environment's board definition, the seam implementation's device header, and that implementation's interrupt vector and startup source name the part the controller selection records, and the target environment builds an image for it. The environment's comment no longer says the family is nominated for a pre-hardware build. Out of scope: the emulated machine, which the emulation leaf carries; the clock tree.
+links:
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED.C2
+type: criterion
+title: The seam implementation's tables express timer outputs, plain outputs and inputs on any port
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The seam implementation's output table states each output channel's port, pin and drive form (a timer channel or a plain output), and its sensor table states each input's port and converter input, so a heater drive on a plain output on one port and a pump gate on a timer channel on another are both expressible. A test over the tables asserts no entry is expressed by a shape that assumes a single port. Out of scope: the checks' comparison, which the next two criteria hold.
+links:
+  - target: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED
+    type: criterion-of

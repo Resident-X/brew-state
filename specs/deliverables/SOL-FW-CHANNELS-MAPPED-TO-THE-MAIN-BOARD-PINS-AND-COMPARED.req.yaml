@@ -1,0 +1,28 @@
+id: SOL-FW-CHANNELS-MAPPED-TO-THE-MAIN-BOARD-PINS-AND-COMPARED
+type: deliverable
+category: solution
+title: The firmware's channels are named in the main board's pin record and the two pin checks compare the board's real pin shapes
+status: active
+version: 1
+text: |
+  Maps each of the firmware's output and sensor channels to the main board's pins and makes the two existing pin checks able to compare the real board. The main board's pin allocation record names no firmware channel today, and the real board does not fit the firmware's table shape: the pump gates are on timer outputs and the heater drives are plain outputs, on different ports, and the sensors sit on several ports. This leaf authors the keys that name each firmware channel in the record, widens the seam implementation's output and sensor tables to express a timer-driven output, a plain output and an input on any port, and widens the two checks to compare those tables with the record.
+
+  Settled for the build:
+  - The board is the authority for pins: the keys name the firmware's own channel enumerators against the pin the board's record already gives, and the firmware's tables follow the record. No pin on the board moves.
+  - An output channel's table entry carries its drive form (timer channel, or plain output) beside its port and pin, so a plain-output heater drive is expressible. The check compares drive form against what the controller pin table record says the pin is used as.
+  - The tables' output half is provisional while the mains-phased actuation task rewrites the output layer; the keys and the comparison are not, since they follow the board.
+  - The two checks keep their strict readers and their exit statuses. Their comparison widens from one port and timer shape to the table shape above; no existing refusal is dropped.
+  - Wiring the checks into the firmware's check target and the round gate's host reads is the pin-check wiring leaf's, which depends on this leaf.
+
+  Locus: hardware/sunbeam-em7000/main-board/pin-allocation.yaml (the keys), firmware/src/hw/stm32/ (the tables), firmware/tools/check_pin_assignment.py and check_sensor_assignment.py with their tests.
+rationale: |
+  Found while slicing the firmware retarget: the pin-check wiring leaf assumed the checks could simply be pointed at the board's record, but the record carries no firmware channel names and the firmware's table cannot express the board's drive forms, so the checks would fail as empty comparisons. This leaf holds that work apart so the wiring leaf stays a wiring change, and it depends on the target-build leaf because the tables it widens are the ones that leaf re-targets.
+links:
+  - target: DEL-HW-MAIN-BOARD-DESIGNED.C4
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-BOARD-DESIGN-RECORDS-AS-YAML
+    type: justified-by
+  - target: SOL-FW-TARGET-BUILD-AND-SEAM-ON-THE-SELECTED-CONTROLLER
+    type: depends-on
