@@ -15,6 +15,11 @@
 #   showed stock 1383, extended, 0.8058 USD at 1 to 9 on that reading; no position uses it.
 # unit_price: US dollars for one unit at the quantity tier of 1 to 9 pieces, the price the
 #   service lists for the first tier.
+# comment: one line of plain text for each number, describing the part as the assembler's parts list (BOM) shows it:
+#   maker, maker part number and what the part is. It is the only source of the parts list's comment column
+#   (production_files.py parts-list --catalogue), so it is one record for the number however many positions use it
+#   and however the schematic spells each position's value (a net or role label, a cartridge rating). Not blank,
+#   one line, no comma (the parts list is comma-separated).
 # C23179 (UNI-ROYAL 0603WAF4700T5E, 470 ohm, positions R607, R608 and R791 to R795) was read on
 #   2026-11-06 with the same search service and the same exact match, for the value change that
 #   replaced C23138 (330 ohm, R607 and R608) and moved R791 to R795 off C22775; the extract's entry
@@ -77,6 +82,7 @@ max_age_days: 14
 source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), read 2026-11-14 (every number re-read; 2026-10-29 for the first reading)
 entries:
   - lcsc: C1523
+    comment: "FH 0402B102K500NT - capacitor 1 nF 0402"
     library_class: basic
     stock: 3580414
     unit_price: 0.0036
@@ -85,6 +91,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C1588
+    comment: "Samsung Electro-Mechanics CL10B102KB8NNNC - capacitor 1 nF 0603"
     library_class: basic
     stock: 5768918
     unit_price: 0.0082
@@ -93,6 +100,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C1589
+    comment: "Samsung Electro-Mechanics CL10B103KB8NNNC - capacitor 10 nF 0603"
     library_class: extended
     stock: 1576377
     unit_price: 0.0074
@@ -101,6 +109,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C1622
+    comment: "Samsung Electro-Mechanics CL10B473KB8NNNC - capacitor 47 nF 0603"
     library_class: basic
     stock: 1911499
     unit_price: 0.0056
@@ -109,6 +118,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C1648
+    comment: "Samsung Electro-Mechanics CL10C200JB8NNNC - capacitor 20 pF 0603"
     library_class: basic
     stock: 1824354
     unit_price: 0.0089
@@ -117,6 +127,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C1669
+    comment: "FH (Guangdong Fenghua Advanced Tech) 0603CG4R7C500NT - capacitor 4.7 pF 0603"
     library_class: preferred
     stock: 570163
     unit_price: 0.0054
@@ -125,6 +136,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C2128
+    comment: "JSCJ 1N4148WS - switching diode 1N4148WS SOD-323"
     library_class: basic
     stock: 4114486
     unit_price: 0.011
@@ -133,6 +145,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C3131
+    comment: "XC Electronics BLX-A - fuse holder for 5x20 mm cartridges (the holder only; the cartridge is a separate owner-fitted part)"
     library_class: extended
     stock: 125865
     unit_price: 0.0809
@@ -141,6 +154,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C3790
+    comment: "RUILON (Shenzhen Ruilongyuan Elec) NTC 10D-9 - NTC thermistor 10 ohm disc"
     library_class: extended
     stock: 32864
     unit_price: 0.0913
@@ -149,6 +163,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C4184
+    comment: "UNI-ROYAL 0603WAF2002T5E - resistor 20 kohm 0603"
     library_class: basic
     stock: 4821531
     unit_price: 0.0021
@@ -157,6 +172,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C4190
+    comment: "UNI-ROYAL 0603WAF2201T5E - resistor 2.2 kohm 0603"
     library_class: basic
     stock: 4621423
     unit_price: 0.0018
@@ -165,6 +181,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C7519
+    comment: "STMicroelectronics USBLC6-2SC6 - USB ESD protection array USBLC6-2SC6 SOT-23-6"
     library_class: extended
     stock: 42311
     unit_price: 0.157
@@ -173,6 +190,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C8852
+    comment: "Ruilon 14D471K - varistor 14D471K disc"
     library_class: extended
     stock: 98370
     unit_price: 0.1476
@@ -181,6 +199,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C7394034
+    comment: "UMW SN74LVC1G17DCKR(UMW) - Schmitt-trigger buffer SN74LVC1G17 SC-70-5"
     library_class: extended
     stock: 3125
     unit_price: 0.0493
@@ -189,6 +208,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C14663
+    comment: "YAGEO CC0603KRX7R9BB104 - capacitor 100 nF X7R 0603"
     library_class: basic
     stock: 35014609
     unit_price: 0.0055
@@ -197,6 +217,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C15127
+    comment: "Alpha & Omega Semiconductor AO3401A - P-channel MOSFET AO3401A SOT-23"
     library_class: basic
     stock: 1542439
     unit_price: 0.0814
@@ -205,6 +226,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C15849
+    comment: "Samsung Electro-Mechanics CL10A105KB8NNNC - capacitor 1 uF 0603"
     library_class: basic
     stock: 13401679
     unit_price: 0.0083
@@ -213,6 +235,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C15850
+    comment: "Samsung Electro-Mechanics CL21A106KAYNNNE - capacitor 10 uF 0805"
     library_class: basic
     stock: 8960870
     unit_price: 0.0311
@@ -221,6 +244,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C17313
+    comment: "Bourns MF-MSMF050-2 - resettable fuse 1812"
     library_class: extended
     stock: 100917
     unit_price: 0.0851
@@ -229,6 +253,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C17888
+    comment: "UNI-ROYAL 1206W4F0000T5E - resistor 0 ohm 1206 (link)"
     library_class: basic
     stock: 1845021
     unit_price: 0.0085
@@ -237,6 +262,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C17901
+    comment: "UNI-ROYAL 1206W4F1000T5E - resistor 100 ohm 1206"
     library_class: basic
     stock: 2026760
     unit_price: 0.0059
@@ -245,6 +271,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C17924
+    comment: "UNI-ROYAL 1206W4F1800T5E - resistor 180 ohm 1206"
     library_class: preferred
     stock: 149546
     unit_price: 0.0055
@@ -253,6 +280,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C17927
+    comment: "UNI-ROYAL 1206W4F1004T5E - resistor 1 Mohm 1206"
     library_class: basic
     stock: 2850447
     unit_price: 0.0042
@@ -261,6 +289,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C18002
+    comment: "UNI-ROYAL 1206W4F2000T5E - resistor 200 ohm 1206"
     library_class: extended
     stock: 124703
     unit_price: 0.005
@@ -269,6 +298,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C19666
+    comment: "Samsung Electro-Mechanics CL10A475KO8NNNC - capacitor 4.7 uF 0603"
     library_class: basic
     stock: 3575114
     unit_price: 0.015
@@ -277,6 +307,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C19702
+    comment: "Samsung Electro-Mechanics CL10A106KP8NNNC - capacitor 10 uF 0603"
     library_class: basic
     stock: 11690210
     unit_price: 0.0233
@@ -285,6 +316,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C20917
+    comment: "Alpha & Omega Semiconductor AO3400A - N-channel MOSFET AO3400A SOT-23"
     library_class: basic
     stock: 1018648
     unit_price: 0.0789
@@ -293,6 +325,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C21107
+    comment: "onsemi BAT54HT1G - Schottky diode BAT54HT1G SOD-323"
     library_class: extended
     stock: 160264
     unit_price: 0.0336
@@ -301,6 +334,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C21189
+    comment: "UNI-ROYAL 0603WAF0000T5E - resistor 0 ohm 0603 (link)"
     library_class: basic
     stock: 17326291
     unit_price: 0.0021
@@ -309,6 +343,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C21190
+    comment: "UNI-ROYAL 0603WAF1001T5E - resistor 1 kohm 0603"
     library_class: basic
     stock: 27530798
     unit_price: 0.0017
@@ -317,6 +352,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C22775
+    comment: "UNI-ROYAL 0603WAF1000T5E - resistor 100 ohm 0603"
     library_class: basic
     stock: 11580396
     unit_price: 0.0019
@@ -325,6 +361,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C22962
+    comment: "UNI-ROYAL 0603WAF2200T5E - resistor 220 ohm 0603"
     library_class: basic
     stock: 1958947
     unit_price: 0.0019
@@ -333,6 +370,7 @@ entries:
       source: JLCPCB parts-library copy (Konnect's library tools), which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C22967
+    comment: "UNI-ROYAL 0603WAF2702T5E - resistor 27 kohm 0603"
     library_class: basic
     stock: 551196
     unit_price: 0.0028
@@ -341,6 +379,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C23140
+    comment: "UNI-ROYAL 0603WAF330JT5E - resistor 33 ohm 0603"
     library_class: basic
     stock: 3277722
     unit_price: 0.0024
@@ -349,6 +388,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C23179
+    comment: "UNI-ROYAL 0603WAF4700T5E - resistor 470 ohm 0603"
     library_class: basic
     stock: 3607316
     unit_price: 0.0023
@@ -357,6 +397,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C23185
+    comment: "UNI-ROYAL 0603WAF499JT5E - resistor 49.9 ohm 0603"
     library_class: basic
     stock: 1409031
     unit_price: 0.002
@@ -365,6 +406,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C23190
+    comment: "UNI-ROYAL 0603WAF5604T5E - resistor 5.6 Mohm 0603"
     library_class: extended
     stock: 15919
     unit_price: 0.0027
@@ -373,6 +415,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C23241
+    comment: "UNI-ROYAL 0603WAF7500T5E - resistor 750 ohm 0603"
     library_class: preferred
     stock: 255115
     unit_price: 0.0035
@@ -381,6 +424,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C23254
+    comment: "UNI-ROYAL 0603WAF8202T5E - resistor 82 kohm 0603"
     library_class: basic
     stock: 919411
     unit_price: 0.0027
@@ -389,6 +433,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C23630
+    comment: "Samsung Electro-Mechanics CL10A225KO8NNNC - capacitor 2.2 uF 0603"
     library_class: basic
     stock: 3071884
     unit_price: 0.01
@@ -397,6 +442,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C25803
+    comment: "UNI-ROYAL 0603WAF1003T5E - resistor 100 kohm 0603"
     library_class: basic
     stock: 14863524
     unit_price: 0.0029
@@ -405,6 +451,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C25804
+    comment: "UNI-ROYAL 0603WAF1002T5E - resistor 10 kohm 0603"
     library_class: basic
     stock: 41188838
     unit_price: 0.0022
@@ -413,6 +460,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C31850
+    comment: "UNI-ROYAL 0603WAF2202T5E - resistor 22 kohm 0603"
     library_class: basic
     stock: 2427781
     unit_price: 0.0042
@@ -421,6 +469,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C32346
+    comment: "Seiko Epson Q13FC13500004 - 32.768 kHz crystal 3.2x1.5 mm"
     library_class: basic
     stock: 417466
     unit_price: 0.1524
@@ -429,6 +478,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C45961
+    comment: "Nexperia PESD5V0F1BL - ESD protection diode PESD5V0F1BL SOD-882"
     library_class: extended
     stock: 138788
     unit_price: 0.0841
@@ -437,6 +487,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C48502
+    comment: "Nexperia BAS116 - switching diode BAS116 SOT-23"
     library_class: extended
     stock: 119001
     unit_price: 0.0213
@@ -445,6 +496,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C49257
+    comment: "2.54mm 1x3 header - 2.54 mm pitch 1x3 pin header"
     library_class: extended
     stock: 222443
     unit_price: 0.029
@@ -453,6 +505,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C57369
+    comment: "BOOMELE 2.54-1*10PPin - 2.54 mm pitch 1x10 pin header"
     library_class: extended
     stock: 12051
     unit_price: 0.0727
@@ -461,6 +514,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C78606
+    comment: "Nexperia BAT54SW - dual Schottky diode BAT54SW SOT-323"
     library_class: extended
     stock: 8255
     unit_price: 0.0599
@@ -469,6 +523,7 @@ entries:
       source: JLCPCB parts-library record read from the local copy of the library (Konnect jlcpcb.db) on 2026-11-07, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C85980
+    comment: "Murata GRM1885C1H472JA01D - capacitor 4.7 nF 0603"
     library_class: extended
     stock: 117034
     unit_price: 0.0187
@@ -477,6 +532,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C86469
+    comment: "TE Connectivity 63849-1 - 6.3 mm blade PC tab (board-mounted quick-connect tab)"
     library_class: extended
     stock: 198467
     unit_price: 0.0678
@@ -485,6 +541,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C91370
+    comment: "Hongfa HF32FA-G/005-HSL1 - relay HF32FA-G/005-HSL1"
     library_class: extended
     stock: 2893
     unit_price: 1.6165
@@ -493,6 +550,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C92811
+    comment: "TAIYO YUDEN LMK212BBJ226MG-T - capacitor 22 uF 0805"
     library_class: extended
     stock: 48119
     unit_price: 0.1167
@@ -501,6 +559,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C97946
+    comment: "Murata GRM31C5C1H104JA01L - capacitor 100 nF 1206"
     library_class: extended
     stock: 58391
     unit_price: 0.3075
@@ -509,6 +568,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C105936
+    comment: "IHHEC (Holy Stone) C0805N472K050T - capacitor 4.7 nF 0805"
     library_class: extended
     stock: 1947
     unit_price: 0.0182
@@ -517,6 +577,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C106858
+    comment: "YAGEO CC0603KRX7R8BB105 - capacitor 1 uF 0603"
     library_class: extended
     stock: 37444
     unit_price: 0.0223
@@ -525,6 +586,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C107198
+    comment: "YAGEO CC1206KKX7RCBB472 - capacitor 4.7 nF 1206"
     library_class: extended
     stock: 74606
     unit_price: 0.0321
@@ -533,6 +595,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C108051
+    comment: "Lite-On LTV-814S-TA1-A - optocoupler LTV-814S SMD 4-pin"
     library_class: extended
     category: Transistor, Photovoltaic Output Optoisolators
     stock: 9926
@@ -542,6 +605,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C108437
+    comment: "Nexperia BZX84-C12 - 12 V zener diode BZX84-C12 SOT-23"
     library_class: extended
     stock: 206147
     unit_price: 0.0171
@@ -550,6 +614,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C114409
+    comment: "STMicroelectronics STM32H743VIT6 - microcontroller STM32H743VIT6 LQFP-100"
     library_class: extended
     stock: 36
     unit_price: 10.3665
@@ -558,6 +623,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C115962
+    comment: "YXC X50328MSB2GI - 8 MHz crystal 5.0x3.2 mm"
     library_class: basic
     stock: 504900
     unit_price: 0.2461
@@ -566,6 +632,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C118474
+    comment: "Analog Devices (Maxim) MAX31865ATP+T - RTD-to-digital converter MAX31865ATP TQFN-20"
     library_class: extended
     stock: 15453
     unit_price: 4.2736
@@ -574,6 +641,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C131334
+    comment: "JST B4B-PH-K-S(LF)(SN) - JST PH 2.00 mm pitch 4-way vertical header"
     library_class: extended
     stock: 86401
     unit_price: 0.0455
@@ -582,6 +650,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C132016
+    comment: "Texas Instruments TLV803SDBZR - voltage supervisor TLV803S SOT-23"
     library_class: extended
     stock: 34758
     unit_price: 0.1926
@@ -590,6 +659,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C133937
+    comment: "TAI-TECH FCM1608KF-601T05 - ferrite bead 600 ohm at 100 MHz 0603"
     library_class: extended
     stock: 313916
     unit_price: 0.0102
@@ -598,6 +668,7 @@ entries:
       source: JLCPCB parts-library record read from the local copy of the library (Konnect jlcpcb.db) on 2026-11-07, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C151285
+    comment: "Littelfuse SMCJ400CA - bidirectional TVS diode SMCJ400CA SMC"
     library_class: extended
     stock: 475
     unit_price: 1.0439
@@ -606,6 +677,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C157968
+    comment: "JST B9B-PH-K-S(LF)(SN) - JST PH 2.00 mm pitch 9-way vertical header"
     library_class: extended
     stock: 9958
     unit_price: 0.1401
@@ -614,6 +686,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C163517
+    comment: "Bourns MF-NSMF012-2 - resettable fuse 1206"
     library_class: extended
     stock: 65526
     unit_price: 0.038
@@ -622,6 +695,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C165623
+    comment: "SamYoung Electronics MVK 16V47 M 6.3*5.2 - aluminium electrolytic capacitor 47 uF 16 V"
     library_class: extended
     stock: 2028
     unit_price: 0.0848
@@ -630,6 +704,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C179399
+    comment: "Nexperia NX3008NBK - N-channel MOSFET NX3008NBK SOT-23"
     library_class: extended
     stock: 34066
     unit_price: 0.0382
@@ -638,6 +713,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C207260
+    comment: "Littelfuse SMF6.0A - TVS diode SMF6.0A SOD-123F"
     library_class: extended
     stock: 7087
     unit_price: 0.1835
@@ -646,6 +722,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C318884
+    comment: "XKB Connection TS-1187A-B-A-B - tactile reset switch SMD"
     library_class: basic
     stock: 813550
     unit_price: 0.0215
@@ -654,6 +731,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C436096
+    comment: "Texas Instruments SN74HCT541PWR - octal buffer SN74HCT541 TSSOP-20"
     library_class: extended
     stock: 24428
     unit_price: 0.4663
@@ -662,6 +740,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C459918
+    comment: "Analog Devices (Linear Technology) LT1963AEST-3.3#TRPBF - 3.3 V LDO regulator LT1963A SOT-223"
     library_class: extended
     stock: 944
     unit_price: 7.3151
@@ -670,6 +749,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C489079
+    comment: "KNSCHA MPX104K31C3KN15600 - X2 safety capacitor 100 nF film"
     library_class: extended
     stock: 364295
     unit_price: 0.0383
@@ -678,6 +758,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C491130
+    comment: "Panasonic ERA3AEB4021V - resistor 4.02 kohm 0603"
     library_class: extended
     stock: 11905
     unit_price: 0.0799
@@ -686,6 +767,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C492401
+    comment: "XFCN PZ254V-11-02P - 2.54 mm pitch 1x2 pin header"
     library_class: extended
     stock: 774838
     unit_price: 0.019
@@ -694,6 +776,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C492404
+    comment: "XFCN PZ254V-11-05P - 2.54 mm pitch 1x5 pin header"
     library_class: extended
     stock: 211151
     unit_price: 0.0331
@@ -702,6 +785,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C7486
+    comment: "Texas Instruments SN74AHCT1G14DCKR - Schmitt-trigger inverter SN74AHCT1G14 SC-70-5"
     library_class: extended
     stock: 2090
     unit_price: 0.1069
@@ -710,6 +794,7 @@ entries:
       source: JLCPCB parts-library copy (Konnect's library tools), which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C819601
+    comment: "SiTime SiT8008BI-22-33E-8.000000 - 8.000 MHz MEMS oscillator 3.2x2.5 mm"
     library_class: extended
     stock: 190
     unit_price: 1.0423
@@ -718,6 +803,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C899826
+    comment: "onsemi MOC3052SVM - opto-triac driver MOC3052SVM SMD 6-pin"
     library_class: extended
     category: Triac, SCR Output Optoisolators
     stock: 380
@@ -727,6 +813,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C2775980
+    comment: "UNI-ROYAL HP122WF5902T4E - resistor 59 kohm 2512"
     library_class: extended
     stock: 3854
     unit_price: 0.0612
@@ -735,6 +822,7 @@ entries:
       source: JLCPCB parts-library record read from the local copy of the library (Konnect jlcpcb.db) on 2026-11-07, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C2898948
+    comment: "Kinghelm (JST PH family) KH-PH-5P-Z - JST PH 2.00 mm pitch 5-way vertical header (drill 0.85 mm)"
     library_class: extended
     stock: 1787
     unit_price: 0.0212
@@ -743,6 +831,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C2937625
+    comment: "XFCN PZ254V-11-03P - 2.54 mm pitch 1x3 pin header"
     library_class: extended
     stock: 1067071
     unit_price: 0.02
@@ -751,6 +840,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C2960835
+    comment: "FOJAN FRC2512F3003TS - resistor 300 kohm 2512"
     library_class: extended
     stock: 17594
     unit_price: 0.0334
@@ -759,6 +849,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C2971290
+    comment: "STMicroelectronics T835-800B - triac T835-800B 800 V TO-252"
     library_class: extended
     stock: 68
     unit_price: 1.2304
@@ -767,6 +858,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C2976795
+    comment: "Hongfa (Xiamen Hongfa Electroacoustic) HF115F-I/005-1HS3A - relay HF115F-I/005-1HS3A"
     library_class: extended
     stock: 20
     unit_price: 2.7913
@@ -775,6 +867,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C4248455
+    comment: "Vishay Dale WSK25121L000FEA - current-sense resistor 1 mohm 2512 4-terminal"
     library_class: extended
     stock: 3903
     unit_price: 1.3073
@@ -783,6 +876,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C4747957
+    comment: "KNSCHA RST47UF16V034 - aluminium electrolytic capacitor 47 uF 16 V"
     library_class: extended
     stock: 104905
     unit_price: 0.0305
@@ -791,6 +885,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C5258885
+    comment: "ZHOURI (JST XH family) XH-4PA - JST XH 2.50 mm pitch 4-way vertical header"
     library_class: extended
     stock: 4009
     unit_price: 0.0159
@@ -799,6 +894,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C6280121
+    comment: "Mean Well IRM-20-5 - AC-DC supply module IRM-20-5 5 V 20 W"
     library_class: extended
     stock: 1273
     unit_price: 6.3826
@@ -807,6 +903,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C6705483
+    comment: "Avia Semiconductor (Xiamen) HX711 - 24-bit load-cell ADC HX711 SOIC-16"
     library_class: extended
     stock: 128573
     unit_price: 0.5072
@@ -815,6 +912,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C22447834
+    comment: "SETfuse (Xiamen SET Electronics) SCT520PT10A250V - 10 A 250 V time-lag cartridge fuse (axial)"
     library_class: extended
     stock: 767
     unit_price: 0.1716
@@ -823,6 +921,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C31423783
+    comment: "Texas Instruments AMC131M02DFMR - isolated dual-channel delta-sigma ADC AMC131M02 SOIC-20W"
     library_class: extended
     stock: 62
     unit_price: 9.8135
@@ -831,6 +930,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C32713268
+    comment: "2.54mm 1x2 header - 2.54 mm pitch 1x2 pin header"
     library_class: extended
     stock: 193396
     unit_price: 0.0155
@@ -839,6 +939,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C32713270
+    comment: "2.54mm 1x4 header - 2.54 mm pitch 1x4 pin header"
     library_class: extended
     stock: 114480
     unit_price: 0.0328
@@ -847,6 +948,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C41376037
+    comment: "hanxia PZ1.27-2x5P TP - 1.27 mm pitch 2x5 SMD pin header (SWD)"
     library_class: extended
     stock: 32748
     unit_price: 0.0977
@@ -855,6 +957,7 @@ entries:
       source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
       read_on: 2026-11-14
   - lcsc: C42431798
+    comment: "JXTCONN + BOOMELE PH2.54-1X2P-H25 + 2.54 Short Circuit Cap Closed - 2.54 mm pitch 1x2 pin header with closed shorting cap (link)"
     library_class: extended
     stock: 27233
     unit_price: 0.016

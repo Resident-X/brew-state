@@ -48,6 +48,7 @@ import secrets
 import shutil
 import subprocess
 import sys
+import unicodedata
 import tempfile
 from fractions import Fraction
 from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
@@ -2158,16 +2159,57 @@ CATALOGUE_NAME = "catalogue-extract.yaml"
 
 #: The keys a position of the specification record holds; reference and lcsc are required, and class is
 #: required of every position by the derated-voltage rule, which reports a position without it.
-POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class", "fitted")
+POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class", "fitted", "fitted_by")
 #: The one value of a position's optional `fitted` key: the position is not fitted (do not populate). A position with
 #: no `fitted` key is fitted.
 NOT_FITTED = "no"
+#: The two values of a position's optional `fitted_by` key: who fits the part, the assembler or the owner (by hand after
+#: delivery). The production-files step requires it of every position it writes into either file set.
+FITTERS = ("assembler", "owner")
+#: The third value of `fitted_by`: the position is not a part to be fitted by anyone (a mounting hole, a fiducial, a net
+#: tie: copper or drilling only, no bill-of-materials line). It is in neither file set of the production-files step.
+NOT_A_PART = "none"
+FITTED_BY_VALUES = FITTERS + (NOT_A_PART,)
+#: A position's `lcsc` where it has no catalogue number.
+NO_CATALOGUE_NUMBER = "none"
+
+
+def comment_problem(comment: object) -> Optional[str]:
+    """Why `comment` is not an entry's parts-list comment (one line of plain text, not blank, no comma), or None."""
+    if (not isinstance(comment, str) or not comment.strip() or "," in comment
+            or any(unicodedata.category(c)[0] == "C" or unicodedata.category(c) in ("Zl", "Zp") for c in comment)):
+        return (f"{comment!r}, where it is one line of plain text, not blank, with no comma (a comma joins several "
+                "values, and the parts list is comma-separated) and no control or separator character")
+    return None
+
+
+def is_numbered(number: object) -> bool:
+    """Whether `number` is a real catalogue number: text, not blank once trimmed, and not `none` in any case. The one
+    answer every check and tool uses to tell a numbered position from an unnumbered one."""
+    return isinstance(number, str) and bool(number.strip()) and number.strip().lower() != NO_CATALOGUE_NUMBER
+
+
+def fitter_problem(fitter: object, number: object) -> Optional[str]:
+    """Why a position's `fitted_by` does not agree with its catalogue number, or None. A numbered part is fitted by the
+    assembler or the owner, never `none`; a position with no number is not fitted by the assembler, which places only
+    catalogue parts."""
+    if not isinstance(fitter, str):
+        return None
+    numbered = is_numbered(number)
+    if fitter == NOT_A_PART and numbered:
+        return (f"fitted_by is {NOT_A_PART} but its catalogue number is {number.strip()}, so it is a part: write {' or '.join(FITTERS)}; "
+                f"{NOT_A_PART} is for a position that is not a part (a hole, a fiducial, a net tie, a test point)")
+    if fitter == "assembler" and not numbered:
+        return ("fitted_by is assembler but it has no catalogue number, which the assembler needs to place a part: write owner "
+                f"for a real part the owner supplies and fits, or {NOT_A_PART} for a position that is not a part")
+    return None
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
 #: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present and
 #: which the lifecycle rule requires on the entry of every part the design places, and a category, the first category
-#: name of the part's parts-library record, a non-empty string when present.
-OPTIONAL_ENTRY_KEYS = ("lifecycle", "category")
+#: name of the part's parts-library record, a non-empty string when present, and a comment, the one line of plain text the
+#: assembler's parts list carries for the number (not blank, no comma).
+OPTIONAL_ENTRY_KEYS = ("lifecycle", "category", "comment")
 #: The parts-library first category names of parts that have no supply pin, read on 2026-10-30 from the records of
 #: C108051 (LITEON LTV-814S-TA1-A) and C899826 (onsemi MOC3052SVM). Optocouplers with a gate-driver or logic output and
 #: digital isolators have supply pins and are not listed.
@@ -2346,6 +2388,13 @@ def read_specification(yaml, root: str, repository: Repository, design: Design, 
             if isinstance(entry.get("fitted"), str) and entry["fitted"].strip() and entry["fitted"] != NOT_FITTED:
                 bad(f"{where}.fitted", f"{where}.fitted is {entry['fitted']!r}, where its one value is '{NOT_FITTED}', "
                                        "a position not fitted (do not populate); leave the key out of a fitted position")
+            if isinstance(entry.get("fitted_by"), str) and entry["fitted_by"].strip() and entry["fitted_by"] not in FITTED_BY_VALUES:
+                bad(f"{where}.fitted_by", f"{where}.fitted_by is {entry['fitted_by']!r}, where it is one of "
+                                          f"{', '.join(FITTED_BY_VALUES)}: who fits the part, or {NOT_A_PART} for a position "
+                                          "that is not a part (a hole, a fiducial, a net tie)")
+            mismatch = fitter_problem(entry.get("fitted_by"), entry.get("lcsc"))
+            if mismatch:
+                bad(f"{where}.fitted_by", f"{where} ({entry.get('reference')}): {mismatch}")
             reference = entry.get("reference")
             if isinstance(reference, str) and reference.strip():
                 if reference in stated:
@@ -2451,6 +2500,9 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                 if "category" in entry and (not isinstance(category, str) or not category.strip()):
                     bad(f"{where}.category", f"{where}.category is {category!r}, where it is a non-empty string")
                     category = None
+                comment = entry.get("comment")
+                if "comment" in entry and comment_problem(comment):
+                    bad(f"{where}.comment", f"{where}.comment is {comment_problem(comment)}")
                 klass = entry.get("library_class")
                 if "library_class" in entry and (not isinstance(klass, str) or not klass.strip()):
                     bad(f"{where}.library_class", f"{where}.library_class is {klass!r}, where it is a non-empty string")
@@ -2880,8 +2932,6 @@ def placed_positions(root: str, design: Design, repository: Repository
     return placed, repeated, disagreements
 
 
-#: What a position the manufacturer does not place states in place of a catalogue number; the catalogue is not read for it.
-NO_CATALOGUE_NUMBER = "none"
 
 
 def check_parts(yaml, root: str, design: Design, repository: Repository, today: datetime.date,
@@ -2915,9 +2965,9 @@ def check_parts(yaml, root: str, design: Design, repository: Repository, today: 
                             f"the position {reference} {key} differs: the record states '{record[key]}' and the design "
                             f"has '{part[key] if part[key] is not None else ABSENT}'"))
         number = part["lcsc"]
-        if number is not None and number.strip() == NO_CATALOGUE_NUMBER:
+        if not is_numbered(number):
             continue
-        if catalogue is not None and number is not None and number.strip():
+        if catalogue is not None:
             if number.strip() not in catalogue.stock:
                 found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
                                        f"the position {reference} has the catalogue number {number}, which the "

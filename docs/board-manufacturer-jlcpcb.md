@@ -258,6 +258,15 @@ The price of a part changes between orders and between JLCPCB and its sister dis
 
 The disagreement in JLCPCB's wording is recorded as found: its assembly capabilities page says through-hole parts are soldered by wave soldering, while its assembly FAQ says parts marked *Wave Soldering* "will be assembled manually". The charge is the same either way, the manual assembly rate per joint, so this record takes the charge and does not settle the process.
 
+## The assembler's published footprints
+
+| Rule | Value | Condition | Grade | Source | Read |
+|---|---|---|---|---|---|
+| Where the footprint for a catalogue number is published | The component service of JLCPCB's sister design tool answers a catalogue number with the part's footprint, its pads by number with their places. Its footprints are the JLCEDA/EasyEDA Official Library, the source to be named wherever its content is shown (JLCEDA https://lceda.cn/, EasyEDA https://easyeda.com) | Any catalogue number the library holds | published unverified, read at source | https://easyeda.com/api/products/{LCSC number}/components, a request answered with JSON on 2026-11-22 for C25804, made with the service's version string `6.4.19.5` (`FOOTPRINT_SERVICE` in `hardware/tools/production_files.py`) | 2026-11-22 |
+| Units and frame of the footprint | Pad places in units of 0.254 mm, Y running down, from the footprint's own origin, which the answer gives in its head (x and y) | The footprint's own frame | read from one answer (C25804): its two pads stand 2.966 units, 0.753 mm, either side of the origin | 2026-11-22 |
+| Pace the service accepts | No limit is published. The tool asks one request a second and keeps each number's footprint once, outside the repository | Any | unmeasured: no page states a limit; the pace is the tool's own | 2026-11-22 |
+| Origin the placement file uses | **Unmeasured.** The placement file is written for the footprint origin the service gives; whether the assembler's placement reads that origin, and the direction it counts a rotation and the origin of a bottom-side part, is what its first real preview shows | Any | unmeasured until the first preview | |
+
 ## File formats
 
 | File | What JLCPCB accepts | Grade | Source | Read |

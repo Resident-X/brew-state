@@ -383,15 +383,18 @@ class PartsWithoutCatalogueNumber(Design):
         self.position(rating="2A")
         self.assertIn("the position TP1 rating differs: the record states '1A' and the design has '2A'", self.only())
 
-    def test_only_the_lowercase_word_is_none_and_any_other_spelling_is_looked_up(self):
+    def test_the_word_none_in_any_case_is_none_and_any_other_spelling_is_looked_up(self):
         # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
-        for spelling in ("None", "NONE", "nonee"):
+        for spelling in ("None", "NONE"):
             with self.subTest(spelling=spelling):
                 self.write("hw/machine/parts-specification.yaml",
                            RECORD + self.RECORD_TP.replace("lcsc: none", f'lcsc: "{spelling}"') + "synthetic: true\n")
                 self.position(lcsc=spelling)
-                self.assertIn(f"the position TP1 has the catalogue number {spelling}, which the catalogue extract does not list",
-                              self.only())
+                self.assertEqual(self.lines(), [])
+        self.write("hw/machine/parts-specification.yaml",
+                   RECORD + self.RECORD_TP.replace("lcsc: none", 'lcsc: "nonee"') + "synthetic: true\n")
+        self.position(lcsc="nonee")
+        self.assertIn("the position TP1 has the catalogue number nonee, which the catalogue extract does not list", self.only())
 
     def test_a_none_position_with_surrounding_spaces_is_none(self):
         # SOL-PRE-ORDER-CHECK-PARTS-WITHOUT-CATALOGUE-NUMBER.C1: A position stated as none passes the parts rule without a lookup, and any other mismatch still fails
@@ -538,6 +541,60 @@ class UsableRecords(Design):
         # SOL-HW-PARTS-CHECK.C3: A design with no usable specification record or catalogue extract fails, and a synthetic one passes only a design not for manufacture
         self.write("hw/machine/parts-specification.yaml", RECORD.replace("value: 10k", "valeu: 10k") + "synthetic: true\n")
         self.assertIn("holds the key 'valeu', which is not one a position has", self.only())
+
+    def test_a_fitted_by_that_is_not_text_or_is_blank_is_reported(self):
+        # SOL-HW-CONTROLLER-BOARDS-ORDERED.C7: The parts specification records for every part whether the assembler or the owner fits it
+        for who in ("5", "[owner]", "true", "''", "'   '"):
+            with self.subTest(who=who):
+                self.setUp()
+                self.write("hw/machine/parts-specification.yaml", RECORD.replace("    lcsc: C100\n  - reference: U1", f"    lcsc: C100\n    fitted_by: {who}\n  - reference: U1", 1) + "synthetic: true\n")
+                messages = [v.message for v in self.run_check() if v.rule == "parts_record"]
+                self.assertTrue(any("fitted_by is" in m and "non-empty string" in m for m in messages), messages)
+
+    def test_the_fitted_by_key_takes_the_assembler_the_owner_or_none_for_a_position_that_is_not_a_part_and_nothing_else(self):
+        # SOL-HW-CONTROLLER-BOARDS-ORDERED.C7: The parts specification records for every part whether the assembler or the owner fits it
+        stated = lambda who: RECORD.replace("    lcsc: C100\n  - reference: U1", f"    lcsc: C100\n    fitted_by: {who}\n  - reference: U1", 1) + "synthetic: true\n"  # noqa: E731
+        self.write("hw/machine/parts-specification.yaml", stated("somebody"))
+        self.assertIn("fitted_by is 'somebody', where it is one of assembler, owner, none", self.only())
+        for who in ("assembler", "owner"):
+            with self.subTest(who=who):
+                self.setUp()
+                self.write("hw/machine/parts-specification.yaml", stated(who))
+                self.assertEqual([v.line() for v in self.run_check() if v.rule == "parts_record"], [])
+        # none is for a position with no catalogue number; assembler is refused on such a position
+        self.setUp()
+        self.write("hw/machine/parts-specification.yaml", stated("none"))
+        self.assertIn("R1): fitted_by is none but its catalogue number is C100", self.only())
+        unnumbered = lambda who: stated(who).replace("    lcsc: C100\n    fitted_by", "    lcsc: none\n    fitted_by", 1)  # noqa: E731
+        self.setUp()
+        self.write("hw/machine/parts-specification.yaml", unnumbered("assembler"))
+        self.assertIn("R1): fitted_by is assembler but it has no catalogue number", self.only())
+        for who in ("owner", "none"):
+            self.setUp()
+            self.write("hw/machine/parts-specification.yaml", unnumbered(who))
+            self.assertNotIn("fitted_by", " ".join(v.message for v in self.run_check() if v.rule == "parts_record"))
+        # an unnumbered position is one in any spelling: blank, whitespace, none in any case or not text
+        for number in ('""', '"   "', '"None"', '"NONE"', "12", "null"):
+            self.setUp()
+            self.write("hw/machine/parts-specification.yaml", stated("assembler").replace("    lcsc: C100\n    fitted_by", f"    lcsc: {number}\n    fitted_by", 1))
+            self.assertTrue(any("assembler but it has no catalogue number" in v.message for v in self.run_check()), number)
+            self.setUp()
+            self.write("hw/machine/parts-specification.yaml", stated("none").replace("    lcsc: C100\n    fitted_by", f"    lcsc: {number}\n    fitted_by", 1))
+            self.assertFalse(any("fitted_by is none but" in v.message for v in self.run_check()), number)
+
+    def test_an_entrys_comment_is_one_line_of_plain_text_with_no_comma_and_is_optional_for_the_check(self):
+        # SOL-HW-CONTROLLER-BOARDS-ORDERED.C6: Each board's parts list gives one comment for each catalogue number
+        stated = lambda text: EXTRACT.replace("    stock: 500\n", f"    comment: {text}\n    stock: 500\n", 1) + "synthetic: true\n"  # noqa: E731
+        for text in ('"resistor 10 kohm"', "plain resistor text"):
+            with self.subTest(text=text):
+                self.setUp()
+                self.write("hw/machine/catalogue-extract.yaml", stated(text))
+                self.assertEqual([v.line() for v in self.run_check() if v.rule == "parts_record"], [])
+        for text in ('""', '"   "', '"100 nF, 100n"', '"two\\nlines"', '"a\\tb"', '"a\\u2028b"', '"a\\vb"', '"a\\fb"', '"a\\x85b"', "12", "[a]"):
+            with self.subTest(text=text):
+                self.setUp()
+                self.write("hw/machine/catalogue-extract.yaml", stated(text))
+                self.assertIn("comment is", self.only())
 
     def test_a_record_and_an_extract_that_list_nothing_fail(self):
         # SOL-HW-PARTS-CHECK.C3: A design with no usable specification record or catalogue extract fails, and a synthetic one passes only a design not for manufacture

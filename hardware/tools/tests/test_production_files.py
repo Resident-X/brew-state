@@ -103,39 +103,37 @@ def write_positions(path, rows):
         writer.writerows(rows)
 
 
+def converted(positions):
+    """The rows the position export converts to before the assembler's frame is found: the placement file's columns, in the export's order."""
+    return production_files.placement_rows(production_files.read_positions(positions))
+
+
 class ThePlacementConversion(unittest.TestCase):
-    """SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment."""
+    """SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment"""
 
     def setUp(self):
         self.work = tempfile.mkdtemp(prefix="production-files-placement-")
-        self.out = os.path.join(self.work, "placement.csv")
 
     def tearDown(self):
         shutil.rmtree(self.work, ignore_errors=True)
 
     def test_the_export_is_converted_to_the_assemblers_columns_with_a_row_for_every_part(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
-        status, lines = run(["placement", "--positions", _STATE["positions"], "--out", self.out])
-        self.assertEqual(status, 0, lines)
-        self.assertEqual(lines[-1], f"RESULT | WRITTEN | {self.out}")
+        rows = converted(_STATE["positions"])
         exported = read_rows(_STATE["positions"])[1:]
-        rows = read_rows(self.out)
-        self.assertEqual(rows[0], ["Designator", "Mid X", "Mid Y", "Layer", "Rotation"])
-        self.assertEqual([row[0] for row in rows[1:]], [row[0] for row in exported])
-        self.assertEqual(len(rows) - 1, 31, "the proof design places 31 parts")
-        for row in rows[1:]:
+        self.assertEqual([row[0] for row in rows], [row[0] for row in exported])
+        self.assertEqual(len(rows), 31, "the proof design places 31 parts")
+        for row in rows:
             self.assertIn(row[3], ("Top", "Bottom"))
             self.assertTrue(0 <= float(row[4]) < 360, row)
-        self.assertEqual({row[3] for row in rows[1:]}, {"Top", "Bottom"})
-        self.assertIn("PARTS | 31 parts | 6 on the bottom side", lines)
+        self.assertEqual({row[3] for row in rows}, {"Top", "Bottom"})
+        self.assertEqual(sum(row[3] == "Bottom" for row in rows), 6)
 
     def test_the_converted_coordinates_are_in_the_frame_of_the_exported_gerber_files(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
-        # The step states that the export's Y is in the Gerber frame, so TP1, at editor (37, 30), is flashed at (37, -30) in
-        # the bottom copper file and the converted file gives that point; a Y with its sign changed would put it at (37, 30).
-        status, lines = run(["placement", "--positions", _STATE["positions"], "--out", self.out])
-        self.assertEqual(status, 0, lines)
-        converted = {row[0]: row for row in read_rows(self.out)[1:]}
+        # The export's Y is in the Gerber frame, so TP1, at editor (37, 30), is flashed at (37, -30) in the bottom copper file
+        # and the converted row gives that point; a Y with its sign changed would put it at (37, 30).
+        rows = {row[0]: row for row in converted(_STATE["positions"])}
         script = ("import warnings, json, sys; warnings.simplefilter('ignore'); "
                   "from gerbonara import LayerStack; from gerbonara.graphic_objects import Flash; "
                   "layer = LayerStack.open(sys.argv[1])['bottom', 'copper']; "
@@ -144,10 +142,10 @@ class ThePlacementConversion(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         flashes = {tuple(point) for point in json.loads(result.stdout)}
         for designator in ("TP1", "TP3", "TP6"):
-            x, y = float(converted[designator][1]), float(converted[designator][2])
+            x, y = float(rows[designator][1]), float(rows[designator][2])
             self.assertIn((round(x, 3), round(y, 3)), flashes, f"{designator} is not where the Gerber file flashes its pad")
             self.assertNotIn((round(x, 3), round(-y, 3)), flashes, f"{designator}'s mirror image is flashed too")
-        self.assertEqual((converted["TP1"][1], converted["TP1"][2]), ("37", "-30"))
+        self.assertEqual((rows["TP1"][1], rows["TP1"][2]), ("37", "-30"))
 
     def test_the_rotation_is_written_counter_clockwise_in_zero_to_three_hundred_sixty_degrees(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
@@ -157,18 +155,14 @@ class ThePlacementConversion(unittest.TestCase):
                                     ["A3", "x", "p", "10", "-5", "360", "top"],
                                     ["A4", "x", "p", "10", "-5", "-180", "top"],
                                     ["A5", "x, with a comma", "p", "-16.774999", "4", "45.5", "top"]])
-        self.assertEqual(run(["placement", "--positions", positions, "--out", self.out])[0], 0)
-        self.assertEqual(read_rows(self.out), [
-            ["Designator", "Mid X", "Mid Y", "Layer", "Rotation"],
+        self.assertEqual(converted(positions), [
             ["A1", "1.5", "-2.25", "Top", "270"], ["A2", "0", "0", "Bottom", "0"], ["A3", "10", "-5", "Top", "0"],
             ["A4", "10", "-5", "Top", "180"], ["A5", "-16.775", "4", "Top", "45.5"]])
 
     def refused(self, positions, because):
-        status, lines = run(["placement", "--positions", positions, "--out", self.out])
-        self.assertEqual(status, 1, lines)
-        self.assertTrue(any(line.startswith("REFUSED | ") and because in line for line in lines), lines)
-        self.assertEqual(lines[-1], "RESULT | REFUSED | nothing was written")
-        self.assertFalse(os.path.exists(self.out))
+        with self.assertRaises(production_files.Refused) as caught:
+            converted(positions)
+        self.assertIn(because, str(caught.exception))
 
     def test_an_export_with_other_columns_is_refused(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
@@ -199,23 +193,23 @@ class ThePlacementConversion(unittest.TestCase):
         write_positions(positions, [["R1", "x", "p", "1", "2", "0", "top"], ["r1", "x", "p", "3", "4", "0", "top"]])
         self.refused(positions, "lists r1 twice")
 
-    def test_a_missing_export_and_an_output_that_exists_are_refused(self):
+    def test_a_missing_export_is_refused_and_the_command_leaves_an_existing_output_alone(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
         self.refused(os.path.join(self.work, "no-such.csv"), "cannot be read")
-        with open(self.out, "w", encoding="utf-8") as handle:
+        out = os.path.join(self.work, "left")
+        os.makedirs(out)
+        with open(os.path.join(out, "kept"), "w", encoding="utf-8") as handle:
             handle.write("left from an earlier run")
-        status, lines = run(["placement", "--positions", _STATE["positions"], "--out", self.out])
-        self.assertEqual((status, lines[-1]), (1, "RESULT | REFUSED | nothing was written"), lines)
-        self.assertEqual(open(self.out, encoding="utf-8").read(), "left from an earlier run")
-        os.remove(self.out)
-        os.makedirs(self.out)
-        status, lines = run(["placement", "--positions", _STATE["positions"], "--out", self.out])
+        status, lines = run(["placement", "--positions", _STATE["positions"], "--board", _STATE["seed"].path(".kicad_pcb"),
+                             "--assembler-footprints", self.work, "--fitting", os.path.join(self.work, "none.yaml"), "--out", out])
         self.assertEqual(status, 1, lines)
-        self.assertTrue(any("is a folder" in line for line in lines), lines)
+        self.assertTrue(any("already holds files" in line for line in lines), lines)
+        with open(os.path.join(out, "kept"), encoding="utf-8") as handle:
+            self.assertEqual(handle.read(), "left from an earlier run")
 
-    def test_the_method_names_the_conversion_command_as_it_is_run(self):
+    def test_the_method_names_the_placement_command_as_it_is_run(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
-        self.assertIn("python3 hardware/tools/production_files.py placement --positions <work>/positions.csv --out <work>/placement.csv",
+        self.assertIn("python3 hardware/tools/production_files.py placement --positions <work>/positions.csv --board <board>.kicad_pcb",
                       ordering_section())
         self.assertTrue(os.path.isfile(os.path.join(TOOLS, "production_files.py")))
 

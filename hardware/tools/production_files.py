@@ -5,17 +5,28 @@ KiCad's command-line tool exports the position file, the parts list, the Gerber
 layers and the drill file, and the method's ordering step names those commands.
 Three things it cannot do are done here:
 
-    production_files.py placement --positions <KiCad position export, CSV> --out <placement file, CSV>
+    production_files.py fetch-footprints --board <layout, .kicad_pcb> --out <folder outside the repository> --fitting <parts specification record> [--format text|json]
+    production_files.py placement --positions <KiCad position export, CSV> --board <layout> --assembler-footprints <folder> --fitting <parts specification record> --out <new or empty folder> [--overrides <record>] --unavailable <record> [--format text|json]
+    production_files.py parts-list --schematic <root schematic> --board <layout> --fitting <parts specification record> --catalogue <catalogue extract> --out <new or empty folder> --unavailable <record> [--format text|json]
     production_files.py render --gerbers <folder of exported Gerber and drill files> --out <new or empty folder> [--resvg ...]
     production_files.py footprints --board <layout, .kicad_pcb> --out <new or empty folder> [--kicad-cli ...] [--resvg ...]
 
-`placement` writes the assembler's placement file from the position export:
-the columns the manufacturer's record gives for it, Designator, Mid X, Mid Y,
-Layer and Rotation, in millimetres and degrees counter-clockwise. The export's
-coordinates agree with the Gerber files it was exported with, so they are kept as
-they are; only the columns, the side's name and the rotation's range change. How
-the assembler reads the file is what its own preview shows, and the method's
-ordering step checks that.
+`fetch-footprints` keeps the assembler's published footprint of each catalogue number the board's
+assembler-fitted parts carry, once for each number and a second apart, in a folder outside the repository.
+
+`placement` writes the assembler's placement file in the assembler's own footprint frame, as two sets from the one
+design: the full set, every part the parts specification record gives to the assembler, through-hole parts included, and the
+surface-mount set. The columns are the manufacturer's record's, Designator, Mid X, Mid Y, Layer and Rotation. A part's
+row is found by matching the board's pads to the assembler's footprint by pad number: the rotation, counter-clockwise in
+degrees, and the position of the assembler's footprint origin that bring the one onto the other. The position export names
+which parts are placed and is checked against the board; its own origin and rotation are not carried through. A part whose
+pads cannot all be matched is refused by name and enters only through a recorded per-part override with its reason.
+
+`parts-list` writes the parts list in the same two sets, one row for each catalogue number with one comment. The comment
+is the one the board's catalogue extract holds for the number, so it does not depend on how the schematic spells a
+position's value (a net label, a cartridge rating). It refuses a number whose extract entry is missing or has no comment,
+and a number the extract holds twice, naming the number. A position whose fitted_by is `none` (a hole, a fiducial, a net
+tie) is in neither set.
 
 `render` draws every Gerber layer and the drill file from the exported files
 themselves, each into a PNG of its own in one common frame, so a layer that is
@@ -43,13 +54,16 @@ from __future__ import annotations
 import argparse
 import copy
 import csv
+import datetime
 import json
+import math
 import os
 import re
 import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import warnings
 from typing import Dict, List, Optional, Tuple
 
@@ -58,6 +72,7 @@ sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
 import board_views  # noqa: E402
+import schematic_facts  # noqa: E402
 import sexpr  # noqa: E402
 
 #: The one gerbonara version the drawings are made with.
@@ -182,26 +197,590 @@ def write_placement(path: str, rows: List[List[str]]) -> None:
         writer.writerows(rows)
 
 
-def placement(positions: str, out: str, stream=None) -> int:
-    stream = stream or sys.stdout
-    if os.path.isdir(out):
-        print(f"REFUSED | {out} is a folder", file=stream)
-        print("RESULT | REFUSED | nothing was written", file=stream)
-        return 1
-    if os.path.exists(out):
-        print(f"REFUSED | {out} already exists; give a new file name", file=stream)
-        print("RESULT | REFUSED | nothing was written", file=stream)
-        return 1
+# --- The assembler's footprint frame, the two file sets and the parts list ----------------------
+
+#: How far, in millimetres, a part's pads may stand from the assembler's footprint after the fit before the part is refused.
+FIT_TOLERANCE_MM = 0.1
+#: The assembler's published footprint source (the component service its parts library is drawn from) and its units: its
+#: footprint shapes are in units of 0.01 inch (10 mil, 0.254 mm), with Y running down from the footprint's own origin.
+FOOTPRINT_SERVICE = "https://easyeda.com/api/products/{lcsc}/components?version=6.4.19.5"
+FOOTPRINT_UNIT_MM = 0.254
+#: Seconds between two requests to the service: one a second, a pace no page of the service states a limit below.
+FETCH_PACE_SECONDS = 1.0
+SET_FILES = {"placement": ("placement-full.csv", "placement-smd.csv"), "parts": ("parts-list-full.csv", "parts-list-smd.csv")}
+PARTS_COLUMNS = ["Comment", "Designator", "Footprint", "LCSC"]
+OVERRIDE_KEYS = ("reference", "x", "y", "rotation", "reason")
+
+
+class BoardPart:
+    """One footprint of a board layout as the ordering step reads it: the pads' places in the export's frame (Y up, as the
+    Gerber files are), its side, its catalogue number and how it is mounted."""
+
+    def __init__(self, reference, side, x, y, rotation, lcsc, mount, excluded, dnp, pads):
+        self.reference, self.side, self.x, self.y, self.rotation = reference, side, x, y, rotation
+        self.lcsc, self.mount, self.excluded, self.dnp, self.pads = lcsc, mount, excluded, dnp, pads
+
+
+def export_frame(x: float, y: float) -> Tuple[float, float]:
+    """An editor point in the frame of the position export and the Gerber files: Y runs up there and down in the editor."""
+    return x, -y
+
+
+def row_angle(theta: float) -> float:
+    """The angle the placement file carries for the turn found: counter-clockwise, as the manufacturer's record gives it."""
+    return theta
+
+
+def row_position(part: BoardPart, shift: Tuple[float, float]) -> Tuple[float, float]:
+    """The point the placement file carries for the part: where the assembler's footprint origin lands, which is not the
+    board footprint's own origin unless the two footprints share one."""
+    return shift
+
+
+def turn(point: Tuple[float, float], theta: float, shift: Tuple[float, float], mirror: bool) -> Tuple[float, float]:
+    """A point of the assembler's footprint (Y up) put on the board by the placement row: mirrored in X for the bottom side,
+    turned counter-clockwise by `theta` degrees about the footprint's origin, then shifted to the row's point."""
+    x, y = (-point[0] if mirror else point[0]), point[1]
+    angle = math.radians(theta)
+    return (x * math.cos(angle) - y * math.sin(angle) + shift[0], x * math.sin(angle) + y * math.cos(angle) + shift[1])
+
+
+def board_parts(path: str) -> Dict[str, BoardPart]:
+    """Every footprint of the layout by reference: Refused when the file cannot be read, or a footprint has no reference, a
+    side other than the front or the back copper, or a reference twice."""
     try:
-        rows = placement_rows(read_positions(positions))
+        with open(path, encoding="utf-8") as handle:
+            tree = sexpr.parse_one(handle.read())
+    except (OSError, UnicodeDecodeError, sexpr.SexprError, IndexError, RecursionError) as error:
+        raise Refused(f"the board {path} cannot be read ({error})") from None
+    found: Dict[str, BoardPart] = {}
+    for footprint in sexpr.children(tree, "footprint"):
+        props = {str(p[1]): str(p[2]) for p in sexpr.children(footprint, "property") if len(p) > 2}
+        reference = props.get("Reference", "").strip()
+        if not reference:
+            raise Refused(f"the board {path} holds a footprint with no Reference")
+        if reference in found:
+            raise Refused(f"the board {path} holds the reference {reference} twice")
+        layer = sexpr.child(footprint, "layer")
+        side = {"F.Cu": "top", "B.Cu": "bottom"}.get(str(layer[1]) if layer and len(layer) > 1 else "")
+        if side is None:
+            raise Refused(f"{reference} is on a layer that is neither F.Cu nor B.Cu")
+        at = sexpr.child(footprint, "at")
+        try:
+            fx, fy = float(at[1]), float(at[2])
+            frot = float(at[3]) if len(at) > 3 else 0.0
+            attr = [str(word) for word in (sexpr.child(footprint, "attr") or [])[1:]]
+            pads: Dict[str, List[Tuple[float, float]]] = {}
+            for pad in sexpr.children(footprint, "pad"):
+                place = sexpr.child(pad, "at")
+                px, py = float(place[1]), float(place[2])
+                angle = math.radians(frot)
+                editor = (fx + px * math.cos(angle) + py * math.sin(angle), fy - px * math.sin(angle) + py * math.cos(angle))
+                pads.setdefault(str(pad[1]), []).append(export_frame(*editor))
+        except (TypeError, ValueError, IndexError):
+            raise Refused(f"{reference}'s place or one of its pads cannot be read as numbers") from None
+        mount = "smd" if "smd" in attr else "through_hole" if "through_hole" in attr else ""
+        found[reference] = BoardPart(reference, side, fx, -fy, frot, props.get("LCSC", "").strip(), mount,
+                                     "exclude_from_pos_files" in attr, "dnp" in attr, pads)
+    return found
+
+
+def read_assembler_footprint(folder: str, lcsc: str) -> Dict[str, List[Tuple[float, float]]]:
+    """The pads of the assembler's footprint for a catalogue number, by pad number, in the assembler's frame (millimetres, Y
+    up, from the footprint's origin), from the file `fetch-footprints` kept: Refused when it is missing or unreadable."""
+    path = os.path.join(folder, f"{lcsc}.json")
+    try:
+        with open(path, encoding="utf-8") as handle:
+            data = json.load(handle)
+    except FileNotFoundError:
+        raise Refused(f"no footprint of the assembler's is kept for {lcsc} in {folder}; run fetch-footprints") from None
+    except (OSError, UnicodeDecodeError, ValueError) as error:
+        raise Refused(f"the assembler's footprint file {path} cannot be read ({error})") from None
+    pads: Dict[str, List[Tuple[float, float]]] = {}
+    try:
+        if data["lcsc"] != lcsc:
+            raise ValueError(f"it is for {data['lcsc']}")
+        for key in ("source", "read_on"):
+            if not isinstance(data.get(key), str) or not data[key].strip():
+                raise ValueError(f"it states no {key}, which every kept footprint carries")
+        for pad in data["pads"]:
+            number = str(pad["number"]).strip()
+            x, y = float(pad["x"]), float(pad["y"])
+            if not number or not (math.isfinite(x) and math.isfinite(y)):
+                raise ValueError("a pad has no number or a place that is not a finite number")
+            pads.setdefault(number, []).append((x, y))
+        if not pads:
+            raise ValueError("it lists no pad")
+    except (KeyError, TypeError, ValueError) as error:
+        raise Refused(f"the assembler's footprint file {path} is not a footprint ({error})") from None
+    return pads
+
+
+def landing_error(theta: float, shift: Tuple[float, float], part: BoardPart, assembler: Dict[str, List[Tuple[float, float]]]) -> float:
+    """The farthest any pad of the assembler's footprint, put on the board by the row `theta`, `shift`, lies from the nearest
+    unused pad of the same number the board has; infinity where the pad numbers or their counts differ."""
+    mirror = part.side == "bottom"
+    if {n: len(p) for n, p in assembler.items()} != {n: len(p) for n, p in part.pads.items()}:
+        return float("inf")
+    worst = 0.0
+    for number, points in assembler.items():
+        free = list(part.pads[number])
+        for point in points:
+            landed = turn(point, theta, shift, mirror)
+            near = min(free, key=lambda other: math.dist(other, landed))
+            free.remove(near)
+            worst = max(worst, math.dist(near, landed))
+    return worst
+
+
+def fit_part(part: BoardPart, assembler: Dict[str, List[Tuple[float, float]]], tolerance: float = FIT_TOLERANCE_MM):
+    """The rotation (counter-clockwise degrees in 0 to 360) and the shift that bring the assembler's footprint onto the part's
+    pads, matched by pad number, with the farthest pad's distance left over. Refused, naming the part, when its pad numbers
+    differ from the assembler's, no rotation fits within `tolerance`, or the pads fix no rotation."""
+    here, there = sorted(part.pads), sorted(assembler)
+    if here != there:
+        raise Refused(f"{part.reference}'s pads cannot all be matched: the board has the pad numbers {', '.join(here)} and the "
+                      f"assembler's footprint {', '.join(there)}")
+    if {n: len(p) for n, p in part.pads.items()} != {n: len(p) for n, p in assembler.items()}:
+        raise Refused(f"{part.reference}'s pads cannot all be matched: the board and the assembler's footprint have a different "
+                      "number of pads under one pad number")
+    mirror = part.side == "bottom"
+    source = [(-p[0] if mirror else p[0], p[1]) for number in there for p in assembler[number]]
+    target = [p for number in there for p in part.pads[number]]
+    centre = lambda points: (sum(p[0] for p in points) / len(points), sum(p[1] for p in points) / len(points))  # noqa: E731
+    cs, ct = centre(source), centre(target)
+    candidates = [0.0, 90.0, 180.0, 270.0, part.rotation % 360]
+    # The turn between the two centred pad sets, number by number, where the pads fix one.
+    cross = dot = 0.0
+    for number in there:
+        a = centre([(-p[0] if mirror else p[0], p[1]) for p in assembler[number]])
+        b = centre(part.pads[number])
+        a, b = (a[0] - cs[0], a[1] - cs[1]), (b[0] - ct[0], b[1] - ct[1])
+        cross += a[0] * b[1] - a[1] * b[0]
+        dot += a[0] * b[0] + a[1] * b[1]
+    if math.hypot(cross, dot) > 1e-9:
+        candidates.insert(0, math.degrees(math.atan2(cross, dot)) % 360)
+    best = None
+    for theta in candidates:
+        moved = turn(cs, theta, (0.0, 0.0), False)
+        shift = (ct[0] - moved[0], ct[1] - moved[1])
+        error = landing_error(theta, shift, part, assembler)
+        if error <= tolerance:
+            gap = abs((theta - part.rotation + 180) % 360 - 180)
+            if best is None or (round(error, 6), round(gap, 3)) < (round(best[2], 6), round(best[3], 3)):
+                best = (theta, shift, error, gap)
+    if best is None:
+        raise Refused(f"{part.reference}'s pads cannot all be matched: no turn of the assembler's footprint brings every pad "
+                      f"within {tolerance} mm of the board's")
+    theta = best[0] % 360
+    theta = round(theta) % 360 if abs(theta - round(theta)) < 1e-6 else theta
+    return theta, best[1], best[2]
+
+
+def load_yaml(path: str, what: str):
+    """The parsed YAML of a record; PyYAML is loaded here and not at the top, because the render command runs under a
+    gerbonara environment that holds no PyYAML. Refused when the file cannot be read or parsed."""
+    try:
+        import yaml
+    except ImportError:
+        raise board_check.CannotRun(f"PyYAML could not be imported by {sys.executable}, which the {what} needs") from None
+    try:
+        with open(path, encoding="utf-8") as handle:
+            return yaml.safe_load(handle)
+    except (OSError, UnicodeDecodeError, yaml.YAMLError) as error:
+        raise Refused(f"the {what} {path} cannot be read ({error})") from None
+
+
+def fitting_record(path: str) -> Dict[str, dict]:
+    """The positions of a parts specification record by reference: Refused when it cannot be read or lists no position."""
+    data = load_yaml(path, "parts specification record")
+    positions = data.get("positions") if isinstance(data, dict) else None
+    if not isinstance(positions, list) or not positions or not all(isinstance(p, dict) and isinstance(p.get("reference"), str)
+                                                                    for p in positions):
+        raise Refused(f"the parts specification record {path} lacks positions, a list of entries each naming a reference")
+    return {entry["reference"]: entry for entry in positions}
+
+
+def availability_record(path: Optional[str]) -> set:
+    """The catalogue numbers the assembler's catalogue lists as unavailable for assembly, from the order-date reading the
+    record at `path` holds (its source and the date read are required). The record is required: without it a part the
+    assembler cannot supply would stand in both sets."""
+    if path is None:
+        raise Refused("--unavailable is required: give the order-date record of catalogue numbers the assembler lists as "
+                      "unavailable for assembly (an empty list where none), so no part it cannot supply enters either set")
+    data = load_yaml(path, "availability record")
+    listed = data.get("unavailable") if isinstance(data, dict) else None
+    if (not isinstance(listed, list) or not all(isinstance(n, str) and n.strip() for n in listed)
+            or not all(data.get(key) is not None and str(data[key]).strip() for key in ("source", "read_on"))):
+        raise Refused(f"the availability record {path} lacks unavailable (a list of catalogue numbers, empty where none), "
+                      "source or read_on, each non-blank text")
+    return {n.strip() for n in listed}
+
+
+def catalogue_comments(path: str) -> Tuple[Dict[str, str], List[str]]:
+    """The comment of each catalogue number the catalogue extract at `path` holds, and the numbers it holds more than once.
+    Refused when the extract cannot be read or lists no entries."""
+    data = load_yaml(path, "catalogue extract")
+    entries = data.get("entries") if isinstance(data, dict) else None
+    if not isinstance(entries, list) or not all(isinstance(e, dict) for e in entries):
+        raise Refused(f"the catalogue extract {path} lacks entries, a list of entries each carrying an lcsc number")
+    comments: Dict[str, str] = {}
+    twice: List[str] = []
+    for index, entry in enumerate(entries):
+        number = entry.get("lcsc")
+        if not isinstance(number, str) or not number.strip():
+            raise Refused(f"the catalogue extract {path} entry {index} (counting from 0) has no lcsc number, or one that is not "
+                          f"non-blank text ({number!r})")
+        number = number.strip()
+        if number in comments or number in twice:
+            if number not in twice:
+                twice.append(number)
+            continue
+        text = entry.get("comment")
+        blank = text is None or (isinstance(text, str) and not text.strip())
+        if not blank and board_check.comment_problem(text):
+            raise Refused(f"the catalogue extract holds for {number} a comment that is {board_check.comment_problem(text)}")
+        comments[number] = text.strip() if isinstance(text, str) else ""
+    return comments, twice
+
+
+def classify(reference: str, part: Optional[BoardPart], entry: Optional[dict], unavailable: set) -> Tuple[str, str]:
+    """Which file sets a position is in, `both` (the full set and the surface-mount set), `full` (the full set only) or
+    `none`, and why. Refused, naming the position, when its place in the sets cannot be told."""
+    if part is None:
+        raise Refused(f"{reference} is not on the board")
+    if entry is None:
+        raise Refused(f"the parts specification record lists no position for {reference}")
+    if entry.get("fitted") == board_check.NOT_FITTED:
+        return "none", "not fitted (do not populate)"
+    fitter = entry.get("fitted_by")
+    if fitter not in board_check.FITTED_BY_VALUES:
+        raise Refused(f"the parts specification record gives {reference} no fitted_by of {' or '.join(board_check.FITTED_BY_VALUES)}"
+                      + (f", only {fitter!r}" if fitter is not None else ""))
+    stated = entry.get("lcsc")
+    lcsc = stated.strip() if isinstance(stated, str) else ""
+    if part.lcsc != lcsc:
+        raise Refused(f"{reference}'s catalogue number is {part.lcsc or 'absent'} on the board and {lcsc or 'absent'} in the "
+                      "parts specification record")
+    mismatch = board_check.fitter_problem(fitter, stated)
+    if mismatch:
+        raise Refused(f"the parts specification record gives {reference} {mismatch}")
+    if fitter == board_check.NOT_A_PART:
+        return "none", "not a part to be fitted"
+    if fitter == "owner":
+        return "none", "fitted by the owner"
+    if lcsc in unavailable:
+        return "none", f"{lcsc} is unavailable for assembly"
+    if part.excluded:
+        raise Refused(f"{reference} is marked for the assembler but its footprint is excluded from the position files, so no "
+                      "placement row can be written for it; mark it fitted by the owner")
+    if part.mount == "smd":
+        return "both", "surface-mount"
+    if part.mount == "through_hole":
+        return "full", "through-hole"
+    raise Refused(f"{reference} is marked for the assembler but its footprint is neither surface-mount nor through-hole")
+
+
+def new_folder(out: str) -> Optional[str]:
+    if os.path.isfile(out):
+        return f"{out} is a file"
+    if os.path.isdir(out) and os.listdir(out):
+        return f"{out} already holds files; give a new or empty folder"
+    return None
+
+
+def report(stream, fmt: str, result: str, refused: List[str], lines: List[str], document: dict) -> int:
+    """The command's report in the format asked for: text lines or one JSON document with the same facts."""
+    if fmt == "json":
+        print(json.dumps({"result": result, "refused": refused, **document}, indent=2), file=stream)
+    else:
+        for why in refused:
+            print(f"REFUSED | {board_check.clean(why)}", file=stream)
+        for line in lines:
+            print(line, file=stream)
+    return 1 if result == "REFUSED" else 0
+
+
+def read_overrides(path: Optional[str]) -> Dict[str, dict]:
+    """The recorded per-part overrides by reference: each states the reference, x, y, rotation and a non-blank reason."""
+    if path is None:
+        return {}
+    data = load_yaml(path, "overrides record")
+    listed = data.get("overrides") if isinstance(data, dict) else None
+    if not isinstance(listed, list):
+        raise Refused(f"the overrides record {path} lacks overrides, a list that is empty where none")
+    found: Dict[str, dict] = {}
+    for index, entry in enumerate(listed):
+        where = f"overrides[{index}] of {path}"
+        if not isinstance(entry, dict) or set(entry) != set(OVERRIDE_KEYS):
+            raise Refused(f"{where} is not a mapping of exactly the keys {', '.join(OVERRIDE_KEYS)}")
+        if not isinstance(entry["reason"], str) or not entry["reason"].strip():
+            raise Refused(f"{where} gives no reason; a part's override states why its pads cannot be matched")
+        for key in ("x", "y", "rotation"):
+            if isinstance(entry[key], bool) or not isinstance(entry[key], (int, float)) or not math.isfinite(entry[key]):
+                raise Refused(f"{where}.{key} is {entry[key]!r}, not a finite number")
+        if not isinstance(entry["reference"], str) or entry["reference"] in found:
+            raise Refused(f"{where} names no reference, or one already overridden")
+        found[entry["reference"]] = entry
+    return found
+
+
+def placement(positions: str, board: str, footprints: str, record: str, out: str, overrides: Optional[str] = None,
+              unavailable: Optional[str] = None, fmt: str = "text", stream=None, tolerance: float = FIT_TOLERANCE_MM) -> int:
+    """Write the full set and the surface-mount set of the placement file into the new or empty folder `out`, each row in the
+    assembler's own footprint frame."""
+    stream = stream or sys.stdout
+    problems: List[str] = []
+    rows: Dict[str, List[str]] = {}
+    omitted: List[dict] = []
+    used: List[dict] = []
+    try:
+        why = new_folder(out)
+        if why:
+            raise Refused(why)
+        exported = placement_rows(read_positions(positions))
+        parts, entries, gone = board_parts(board), fitting_record(record), availability_record(unavailable)
+        replaced = read_overrides(overrides)
+        modes: Dict[str, str] = {}
+        for row in exported:
+            reference = row[0]
+            try:
+                part = parts.get(reference)
+                modes[reference], reason = classify(reference, part, entries.get(reference), gone)
+                if modes[reference] == "none":
+                    omitted.append({"reference": reference, "reason": reason})
+                    continue
+                side = SIDES["bottom" if part.side == "bottom" else "top"]
+                if row[3] != side or math.dist((float(row[1]), float(row[2])), (part.x, part.y)) > 0.01:
+                    raise Refused(f"the position export and the board disagree on {reference}: the export places it on the "
+                                  f"{row[3]} at ({row[1]}, {row[2]}), the board on the {side} at ({figure(part.x)}, {figure(part.y)})")
+                try:
+                    theta, shift, _ = fit_part(part, read_assembler_footprint(footprints, part.lcsc), tolerance)
+                except Refused as error:
+                    if reference not in replaced:
+                        raise Refused(f"{error}; it enters the file only through a recorded override with its reason") from None
+                    given = replaced.pop(reference)
+                    rows[reference] = [reference, figure(given["x"]), figure(given["y"]), side, figure(given["rotation"] % 360)]
+                    used.append({"reference": reference, "reason": given["reason"].strip()})
+                    continue
+                if reference in replaced:
+                    raise Refused(f"the override for {reference} is stale: its pads match the assembler's footprint, so the "
+                                  "file takes the fitted row and the override is removed")
+                x, y = row_position(part, shift)
+                row_out = [reference, figure(x), figure(y), side, figure(row_angle(theta) % 360)]
+                landed = landing_error(float(row_out[4]), (float(row_out[1]), float(row_out[2])), part,
+                                       read_assembler_footprint(footprints, part.lcsc))
+                if landed > tolerance + 0.001:
+                    raise Refused(f"{reference}'s row ({', '.join(row_out[1:])}) does not land the assembler's footprint on the "
+                                  f"board's pads: its farthest pad is {landed:.3f} mm away")
+                rows[reference] = row_out
+            except Refused as error:
+                problems.append(str(error))
+        for reference in sorted(set(replaced) - {r for r in rows}):
+            problems.append(f"the override for {reference} names a part that is not placed in the full set")
+        listed = {row[0] for row in exported}
+        for reference, entry in entries.items():
+            if reference not in listed and entry.get("fitted_by") == "assembler" and entry.get("fitted") != board_check.NOT_FITTED:
+                problems.append(f"{reference} is marked for the assembler but the position export lists no row for it")
     except Refused as error:
-        print(f"REFUSED | {board_check.clean(str(error))}", file=stream)
-        print("RESULT | REFUSED | nothing was written", file=stream)
-        return 1
-    write_placement(out, rows)
-    print(f"PARTS | {len(rows)} parts | {sum(row[3] == 'Bottom' for row in rows)} on the bottom side", file=stream)
-    print(f"RESULT | WRITTEN | {out}", file=stream)
-    return 0
+        problems.append(str(error))
+    if problems:
+        return report(stream, fmt, "REFUSED", problems, ["RESULT | REFUSED | nothing was written"], {"written": []})
+    full = [rows[row[0]] for row in exported if row[0] in rows]
+    smd = [rows[ref] for ref in (row[0] for row in exported) if ref in rows and modes[ref] == "both"]
+    os.makedirs(out, exist_ok=True)
+    names = SET_FILES["placement"]
+    write_placement(os.path.join(out, names[0]), full)
+    write_placement(os.path.join(out, names[1]), smd)
+    lines = [f"SET | full | {len(full)} parts | {names[0]}", f"SET | smd | {len(smd)} parts | {names[1]}"]
+    if tolerance != FIT_TOLERANCE_MM:
+        lines.append(f"NOTE | the pad-match tolerance is {tolerance} mm, not the default {FIT_TOLERANCE_MM} mm; a larger figure weakens the check that each part's pads land on the board's")
+    lines += [f"OMITTED | {item['reference']} | {item['reason']}" for item in omitted]
+    lines += [f"OVERRIDE | {item['reference']} | {item['reason']}" for item in used]
+    lines.append(f"RESULT | WRITTEN | {out}")
+    return report(stream, fmt, "WRITTEN", [], lines, {"out": out, "sets": {"full": full, "smd": smd}, "omitted": omitted,
+                                                       "overrides": used, "tolerance": tolerance})
+
+
+def natural(reference: str) -> list:
+    return [int(piece) if piece.isdigit() else piece for piece in re.split(r"(\d+)", reference)]
+
+
+def schematic_parts(root: str) -> Dict[str, Dict[str, str]]:
+    """Every placed part of the schematic whose root file is `root`, sheets below it included, by reference: its Value,
+    Footprint and LCSC texts. A part drawn not to be in the bill of materials, or do not populate, is left out. Refused where
+    a file cannot be read or one reference is drawn with two sets of fields."""
+    project = os.path.splitext(os.path.basename(root))[0]
+    found: Dict[str, Dict[str, str]] = {}
+
+    def walk(path: str, ancestry: Tuple[str, ...]) -> None:
+        try:
+            with open(path, encoding="utf-8") as handle:
+                tree = sexpr.parse_one(handle.read())
+        except (OSError, UnicodeDecodeError, sexpr.SexprError, IndexError, RecursionError) as error:
+            raise Refused(f"the schematic file {path} cannot be read ({error})") from None
+        for symbol in sexpr.children(tree, "symbol"):
+            flags = {str(sexpr.head(node)): str(node[1]) for node in symbol if sexpr.head(node) in ("in_bom", "dnp") and len(node) > 1}
+            if flags.get("in_bom") == "no" or flags.get("dnp") == "yes":
+                continue
+            fields = {str(p[1]): str(p[2]) for p in sexpr.children(symbol, "property") if len(p) > 2}
+            for reference in schematic_facts.references(symbol, project):
+                if reference.startswith("#"):
+                    continue
+                fresh = {"Value": fields.get("Value", ""), "Footprint": fields.get("Footprint", ""),
+                         "LCSC": fields.get("LCSC", "").strip()}
+                if reference in found and found[reference] != fresh:
+                    raise Refused(f"{reference} is drawn with two different sets of fields")
+                found[reference] = fresh
+        if path in ancestry:
+            return
+        for sheet in sexpr.children(tree, "sheet"):
+            target = schematic_facts.sheet_file_of(sheet)
+            if target is None:
+                raise Refused(f"a sheet of {path} names no one file")
+            walk(os.path.normpath(os.path.join(os.path.dirname(path), target)), ancestry + (path,))
+
+    walk(root, ())
+    return found
+
+
+def parts_list(schematic: str, board: str, record: str, catalogue: str, out: str, unavailable: Optional[str] = None,
+               fmt: str = "text", stream=None) -> int:
+    """Write the full set and the surface-mount set of the parts list into the new or empty folder `out`: one row for each
+    catalogue number with the one comment the catalogue extract `catalogue` holds for it, the designators of the set's positions that carry it, the footprint and the number."""
+    stream = stream or sys.stdout
+    problems: List[str] = []
+    members: Dict[str, str] = {}
+    omitted: List[dict] = []
+    drawn: Dict[str, Dict[str, str]] = {}
+    try:
+        why = new_folder(out)
+        if why:
+            raise Refused(why)
+        drawn = schematic_parts(schematic)
+        parts, entries, gone = board_parts(board), fitting_record(record), availability_record(unavailable)
+        for reference in sorted(drawn, key=natural):
+            try:
+                if not drawn[reference]["LCSC"]:
+                    raise Refused(f"{reference} carries no LCSC field in the schematic; state a catalogue number, or the word "
+                                  f"{board_check.NO_CATALOGUE_NUMBER} for a part the assembler does not place")
+                if reference in entries and reference in parts and drawn[reference]["LCSC"] != str(entries[reference].get("lcsc", "")).strip():
+                    raise Refused(f"{reference}'s catalogue number is {drawn[reference]['LCSC']} in the schematic and "
+                                  f"{entries[reference].get('lcsc', 'absent')} in the parts specification record")
+                members[reference], reason = classify(reference, parts.get(reference), entries.get(reference), gone)
+                if members[reference] == "none":
+                    omitted.append({"reference": reference, "reason": reason})
+            except Refused as error:
+                problems.append(str(error))
+        for reference, entry in entries.items():
+            if reference not in drawn and entry.get("fitted_by") == "assembler" and entry.get("fitted") != board_check.NOT_FITTED:
+                problems.append(f"{reference} is marked for the assembler but the schematic draws no such part")
+        comments, twice = catalogue_comments(catalogue)
+        for number in sorted(twice):
+            problems.append(f"the catalogue extract holds the catalogue number {number} more than once; keep one entry, with one comment, for each number")
+        for number in sorted({drawn[ref]["LCSC"] for ref, mode in members.items() if mode != "none"}):
+            if number not in twice and not comments.get(number):
+                problems.append(f"the catalogue extract holds {'no comment' if number in comments else 'no entry'} for the catalogue number "
+                                f"{number}, which the parts list needs one comment for")
+    except Refused as error:
+        problems.append(str(error))
+    if problems:
+        return report(stream, fmt, "REFUSED", problems, ["RESULT | REFUSED | nothing was written"], {"written": []})
+
+    def rows(wanted: Tuple[str, ...]) -> List[List[str]]:
+        groups: Dict[str, List[str]] = {}
+        for reference, mode in members.items():
+            if mode in wanted:
+                groups.setdefault(drawn[reference]["LCSC"], []).append(reference)
+        found = []
+        for number, refs in groups.items():
+            refs.sort(key=natural)
+            first = drawn[refs[0]]
+            found.append([comments[number], ", ".join(refs), first["Footprint"], number])
+        return sorted(found, key=lambda row: natural(row[1].split(", ")[0]))
+
+    sets = {"full": rows(("both", "full")), "smd": rows(("both",))}
+    os.makedirs(out, exist_ok=True)
+    for name, key in zip(SET_FILES["parts"], ("full", "smd")):
+        with open(os.path.join(out, name), "w", encoding="utf-8", newline="") as handle:
+            writer = csv.writer(handle, lineterminator="\n")
+            writer.writerow(PARTS_COLUMNS)
+            writer.writerows(sets[key])
+    lines = [f"SET | {key} | {len(sets[key])} rows | {name}" for key, name in zip(("full", "smd"), SET_FILES["parts"])]
+    lines += [f"OMITTED | {item['reference']} | {item['reason']}" for item in omitted]
+    lines.append(f"RESULT | WRITTEN | {out}")
+    return report(stream, fmt, "WRITTEN", [], lines, {"out": out, "sets": sets, "omitted": omitted})
+
+
+def footprint_from_service(text: str, lcsc: str) -> dict:
+    """The kept form of the assembler's footprint for a catalogue number from the service's answer: its pads by number in
+    millimetres, Y up, from the footprint's own origin. Refused when the answer holds no footprint with a pad."""
+    try:
+        answer = json.loads(text)
+        detail = answer["result"]["packageDetail"]["dataStr"]
+        origin = (float(detail["head"]["x"]), float(detail["head"]["y"]))
+        pads = []
+        for shape in detail["shape"]:
+            fields = shape.split("~")
+            if fields[0] == "PAD":
+                pads.append({"number": fields[8].strip(), "x": round((float(fields[2]) - origin[0]) * FOOTPRINT_UNIT_MM, 4) + 0.0,
+                             "y": round((origin[1] - float(fields[3])) * FOOTPRINT_UNIT_MM, 4) + 0.0})
+    except (KeyError, TypeError, ValueError, IndexError):
+        raise Refused(f"the service's answer for {lcsc} holds no footprint it can be read from") from None
+    if not pads or any(not pad["number"] for pad in pads):
+        raise Refused(f"the service's answer for {lcsc} holds no pad, or a pad with no number")
+    return {"lcsc": lcsc, "source": FOOTPRINT_SERVICE.format(lcsc=lcsc), "read_on": datetime.date.today().isoformat(), "pads": pads}
+
+
+def fetch_service(lcsc: str) -> str:
+    import urllib.request
+    request = urllib.request.Request(FOOTPRINT_SERVICE.format(lcsc=lcsc), headers={"User-Agent": "board-tooling"})
+    try:
+        with urllib.request.urlopen(request, timeout=30) as answer:
+            return answer.read().decode("utf-8")
+    except (OSError, ValueError) as error:
+        raise Refused(f"the service gave no footprint for {lcsc} ({error})") from None
+
+
+def fetch_footprints(board: str, out: str, record: str, pace: float = FETCH_PACE_SECONDS, fmt: str = "text",
+                     stream=None, fetch=fetch_service, sleep=time.sleep) -> int:
+    """Keep the assembler's footprint for each catalogue number the board's assembler-fitted parts carry, once for each number, `pace` seconds apart, in the folder `out`, which stands outside
+    the repository: a number already kept is not fetched again."""
+    stream = stream or sys.stdout
+    problems: List[str] = []
+    fetched: List[str] = []
+    kept: List[str] = []
+    try:
+        if inside(out, os.path.dirname(os.path.dirname(TOOLS))):
+            raise Refused(f"{out} is inside the repository; the assembler's footprints are kept outside it")
+        parts = board_parts(board)
+        entries = fitting_record(record)
+        numbers = sorted({part.lcsc for part in parts.values() if board_check.is_numbered(part.lcsc) and not part.dnp
+                          and entries.get(part.reference, {}).get("fitted_by") == "assembler"
+                          and entries[part.reference].get("fitted") != board_check.NOT_FITTED})
+        os.makedirs(out, exist_ok=True)
+        for number in numbers:
+            target = os.path.join(out, f"{number}.json")
+            if os.path.isfile(target):
+                kept.append(number)
+                continue
+            if fetched:
+                sleep(pace)
+            try:
+                kept_form = footprint_from_service(fetch(number), number)
+            except Refused as error:
+                problems.append(str(error))
+                continue
+            with open(target, "w", encoding="utf-8") as handle:
+                json.dump(kept_form, handle, indent=2)
+                handle.write("\n")
+            fetched.append(number)
+    except Refused as error:
+        problems.append(str(error))
+    if problems:
+        return report(stream, fmt, "REFUSED", problems, ["RESULT | REFUSED | not every footprint is kept"], {"fetched": fetched, "kept": kept})
+    lines = [f"FOOTPRINTS | {len(fetched)} fetched | {len(kept)} already kept | {out}", f"RESULT | WRITTEN | {out}"]
+    return report(stream, fmt, "WRITTEN", [], lines, {"fetched": fetched, "kept": kept, "out": out})
 
 
 # --- Drawing the layers -----------------------------------------------------------------------
@@ -609,9 +1188,30 @@ def write_footprint_index(out: str, board: str, images: List[dict]) -> None:
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     commands = parser.add_subparsers(dest="command", required=True)
-    convert = commands.add_parser("placement", help="write the assembler's placement file from KiCad's position export")
+    convert = commands.add_parser("placement", help="write the assembler's placement file, in its own footprint frame, as a full set and a surface-mount set")
     convert.add_argument("--positions", required=True, help="the position export, as kicad-cli pcb export pos --format csv writes it")
-    convert.add_argument("--out", required=True, help="the placement file to write, a new file")
+    convert.add_argument("--board", required=True, help="the board layout, .kicad_pcb, the export was made from")
+    convert.add_argument("--assembler-footprints", required=True, help="the folder fetch-footprints kept the assembler's footprints in")
+    convert.add_argument("--fitting", required=True, help="the board's parts specification record, parts-specification.yaml")
+    convert.add_argument("--overrides", help="the record of per-part overrides, each with its reason")
+    convert.add_argument("--unavailable", help="required: the order-date record of catalogue numbers the assembler lists as unavailable for assembly (empty list where none)")
+    convert.add_argument("--tolerance", type=float, default=FIT_TOLERANCE_MM, help="the farthest a pad may stand from the assembler's footprint, in millimetres")
+    convert.add_argument("--format", choices=("text", "json"), default="text", help="the report's form")
+    convert.add_argument("--out", required=True, help="the folder to write placement-full.csv and placement-smd.csv into, new or empty")
+    listing = commands.add_parser("parts-list", help="write the assembler's parts list as a full set and a surface-mount set")
+    listing.add_argument("--schematic", required=True, help="the root schematic, .kicad_sch")
+    listing.add_argument("--board", required=True, help="the board layout, .kicad_pcb")
+    listing.add_argument("--fitting", required=True, help="the board's parts specification record, parts-specification.yaml")
+    listing.add_argument("--catalogue", required=True, help="the board's catalogue extract, catalogue-extract.yaml, whose comment for each number is the parts list's comment")
+    listing.add_argument("--unavailable", help="required: the order-date record of catalogue numbers the assembler lists as unavailable for assembly (empty list where none)")
+    listing.add_argument("--format", choices=("text", "json"), default="text", help="the report's form")
+    listing.add_argument("--out", required=True, help="the folder to write parts-list-full.csv and parts-list-smd.csv into, new or empty")
+    keep = commands.add_parser("fetch-footprints", help="keep the assembler's published footprint of each catalogue number the board uses, outside the repository")
+    keep.add_argument("--board", required=True, help="the board layout, .kicad_pcb")
+    keep.add_argument("--fitting", required=True, help="the parts specification record; only the assembler-fitted parts' numbers are kept")
+    keep.add_argument("--pace", type=float, default=FETCH_PACE_SECONDS, help="seconds between two requests")
+    keep.add_argument("--format", choices=("text", "json"), default="text", help="the report's form")
+    keep.add_argument("--out", required=True, help="the folder to keep the footprints in, outside the repository")
     draw = commands.add_parser("render", help="draw every exported Gerber layer and the drill file into one frame")
     draw.add_argument("--gerbers", required=True, help="the folder the Gerber and drill files were exported into")
     draw.add_argument("--out", required=True, help="the folder to write the images and their index into, new or empty")
@@ -624,8 +1224,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "footprints":
         return footprints(os.path.abspath(args.board), os.path.abspath(args.out), args.kicad_cli, args.resvg)
-    if args.command == "placement":
-        return placement(os.path.abspath(args.positions), os.path.abspath(args.out))
+    try:
+        if args.command == "placement":
+            return placement(os.path.abspath(args.positions), os.path.abspath(args.board), os.path.abspath(args.assembler_footprints),
+                             os.path.abspath(args.fitting), os.path.abspath(args.out), args.overrides and os.path.abspath(args.overrides),
+                             args.unavailable and os.path.abspath(args.unavailable), args.format, tolerance=args.tolerance)
+        if args.command == "parts-list":
+            return parts_list(os.path.abspath(args.schematic), os.path.abspath(args.board), os.path.abspath(args.fitting),
+                              os.path.abspath(args.catalogue), os.path.abspath(args.out), args.unavailable and os.path.abspath(args.unavailable), args.format)
+        if args.command == "fetch-footprints":
+            return fetch_footprints(os.path.abspath(args.board), os.path.abspath(args.out), os.path.abspath(args.fitting),
+                                    args.pace, args.format)
+    except board_check.CannotRun as error:
+        print(f"CANNOT RUN | {board_check.clean(str(error))}", file=sys.stderr)
+        return 2
     return render(os.path.abspath(args.gerbers), os.path.abspath(args.out), args.resvg)
 
 

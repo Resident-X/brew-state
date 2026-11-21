@@ -408,7 +408,11 @@ class TheMethodAndTheReadme(unittest.TestCase):
     def test_the_step_names_the_export_commands_the_seeding_command_runs(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
         section = ordering_section()
-        for template, last in ((production_seed.POSITIONS_COMMAND, "--output"), (production_seed.PARTS_COMMAND, "--output"),
+        # The parts list is now written by the repository's own parts-list command, which takes one comment for each
+        # catalogue number from the board's catalogue extract; the seeding command's parts list keeps the same columns from kicad-cli, the proof design having
+        # no parts specification record to partition by.
+        self.assertIn("production_files.py parts-list --schematic <schematic>.kicad_sch", section)
+        for template, last in ((production_seed.POSITIONS_COMMAND, "--output"),
                                (production_seed.GERBERS_COMMAND, "--layers"), (production_seed.DRILL_COMMAND, "--output")):
             self.assertIn(" ".join(["kicad-cli"] + template[:template.index(last) + 1]), section)
         layers = production_seed.GERBERS_COMMAND[production_seed.GERBERS_COMMAND.index("--layers") + 1]
@@ -451,8 +455,9 @@ class TheMethodAndTheReadme(unittest.TestCase):
     def test_the_step_claims_only_that_the_converted_coordinates_agree_with_the_gerber_files(self):
         # SOL-BOARD-PRODUCTION-FILES-CHECKED-BEFORE-PAYMENT.C1: The method's ordering step compares every placed part's position, rotation and polarity with the assembler's preview before payment
         squeezed = re.sub(r"\s+", " ", ordering_section())
-        self.assertIn("keeps the export's two coordinates, which agree with the Gerber files exported with them", squeezed)
-        self.assertIn("how the assembler reads the file is what its own preview shows in step 3 and step 4 checks", squeezed)
+        self.assertIn("its origin and rotation are not carried into the placement file", squeezed)
+        self.assertIn("the position of the assembler's footprint origin in the Gerber files' frame", squeezed)
+        self.assertIn("is what its own preview shows in step 3 and step 4 checks", squeezed)
         self.assertIn("does not test the assembler's own reading of the placement file's coordinates, rotation or bottom-side parts", squeezed)
         self.assertNotIn("the Gerber files it is laid on", squeezed)
         with open(os.path.join(REPO, "hardware", "tools", "production_files.py"), encoding="utf-8") as handle:
