@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C1
+type: criterion
+title: The varistor footprint's two pads sit 7.5 mm apart along the part and 3.0 mm across it, matching the leads
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |
+  The footprint `RV_Disc_14D471K_P7.5mm` has its two pads 7.5 mm apart along the part and 3.0 mm apart across it, the lead offset the assembler's footprint for the part draws and 0.2 mm under the 3.2 mm typical of the Bourns drawing of the like 14 mm disc varistor, with the drill and pad size unchanged, and its description states the offset. The footprint's rotation-0 drawing shows the staggered pair. Every other footprint of the library and the wall board's varistor footprint are out of scope.
+links:
+  - target: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS
+    type: criterion-of

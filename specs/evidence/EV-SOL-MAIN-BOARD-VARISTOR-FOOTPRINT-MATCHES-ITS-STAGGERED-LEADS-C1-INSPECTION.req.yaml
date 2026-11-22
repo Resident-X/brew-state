@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-22T18:04:15.344466Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_footprint_audit.py::TheBodyTableOfTheMainBoard.test_the_relay_fuse_and_varistor_carry_the_makers_body_with_a_cited_page_and_sit_where_their_pads_put_them
+  artifact_version: 930c937f862485a6bd6ea88c40bb771f3264024c
+attested_by: crun-3406e330740271ab
+links:
+  - target: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C1
+    type: satisfies
