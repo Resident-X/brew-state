@@ -247,8 +247,8 @@ overrides:
 - reference: RV101
   x: 11.75
   y: -62.6
-  rotation: 180
-  reason: 'Ruilon 14D471K disc varistor (C8852, through-hole, leads 7.5 mm apart in line): the assembler''s footprint has its two pads 3.0 mm out of line (pad 1 at -3.75, +1.5 and pad 2 at +3.75, -1.5 from its origin), which the board''s in-line pads cannot match. The tool''s best fit turned the part 21.8 degrees (rotation 201.8) to bring the pad pair onto the board''s, which would tilt the body and put the leads off the holes, so that fit is not used. The varistor is not polar and its body is a disc, so the placement is axis-aligned: rotation 180, the same as the board footprint''s own, with pad 1 on the board''s pad 1 side, and the origin at the midpoint of the pad pair (11.75, -62.6). The farthest pad then stands 1.5 mm off the assembler''s footprint, in the direction across the pair. Doubt: low; check in the preview that the body sits along the two pads and not at an angle.'
+  rotation: 201.8009
+  reason: 'Ruilon 14D471K disc varistor (C8852, through-hole): the board takes its leads in line, 7.5 mm apart, and the assembler''s footprint has the two pads 7.5 mm along and 3.0 mm across (pad 1 at -3.75, +1.5 and pad 2 at +3.75, -1.5 from its origin), 8.08 mm apart. The disc''s leads are on its two faces, so they are offset across its thickness: the maker''s side view shows the two leads apart within the body thickness, and the same family''s Bourns drawing dimensions that offset (a, 3.2 mm typical for the 14D471K). The part therefore stands tilted when its leads are put into an in-line pair of holes. The tool''s best fit, rotation 201.8 with the origin at the midpoint of the pair, turns the footprint 21.8 degrees so its lead pair lies along the board''s, and leaves the farthest pad 0.289 mm from the board''s pad, inside the maker''s 7.5 +-1.0 mm lead pitch. That tilt is the part''s real orientation in these holes, not a placement fault. An axis-aligned placement was tried and put each lead 1.5 mm off its hole, so it is not used. Doubt: low; in the preview the body should stand about 22 degrees off the pad line.'
 - reference: SW401
   x: 127.665
   y: -70.308
