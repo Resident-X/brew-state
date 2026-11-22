@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C2
+type: criterion
+title: RV101 stands square to the board, clear of its neighbours, and passes the layout rule check
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The varistor stands at rotation 0 or 180 degrees so its body edges run parallel to the board edges, its body and courtyard overlap no other part's courtyard, its two nets are routed to the new pads, and the layout rule check run with the design tool's command line reports no violation that the board did not report before the change. Every part other than the varistor and the copper of its two nets is out of scope, except a part the new courtyard requires moved by the least distance that clears it.
+links:
+  - target: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS
+    type: criterion-of

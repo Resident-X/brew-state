@@ -1,0 +1,12 @@
+id: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C3
+type: criterion
+title: The mains separation and creepage of the entry parts stand at or above the board's signed basis
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  After the change the pre-order check passes, including its mains barrier and same-part mains pad pair measurements, and every mains-to-low-voltage and mains-to-mains distance at the varistor and the entry fuse holder is no smaller than the board's separation basis requires. Changing the separation basis record is out of scope.
+links:
+  - target: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS
+    type: criterion-of

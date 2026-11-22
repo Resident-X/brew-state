@@ -1,0 +1,17 @@
+id: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS
+type: deliverable
+category: solution
+title: The main board's varistor footprint matches the part's staggered leads so RV101 stands square
+status: active
+version: 1
+text: |
+  Corrects the main board's varistor footprint `RV_Disc_14D471K_P7.5mm`, whose two pads lie in one line 7.5 mm apart while the part's leads do not. A disc varistor of this family (the 14 mm 470 V part, 7.5 mm lead pitch) has its leads on the faces of the disc, offset across the thickness: the manufacturer's drawing gives that offset (its `a` dimension, 3.2 mm typical) and the assembler's own footprint for the part draws the pads 7.5 mm apart along and about 3 mm across. With the in-line pads the only way to fit the part is to tilt it about 22 degrees, so RV101 sits visibly crooked in its holes, and the footprint's own description wrongly says the leads are "straight in one plane". The layout was judged and ordered-ready with the tilt in place; it is a workmanship shortfall of the placement, not a safety or function fault.
+
+  The correction makes the footprint a staggered pair at the drawing's pitch and offset (drill and pad size kept), states the stagger in its description, places RV101 square to the board, and re-routes its two mains nets, with the mains separation and creepage held to the board's signed basis and no other part moved beyond what the new footprint needs. The wall board's varistor RV911 uses a staggered footprint already and is not touched.
+rationale: |
+  REQ-BOARD-LAYOUT-PRACTICE-001 names the workmanship of placement in its scope, and a board judged against it is changed, not accepted as unimportant, when an item fails. A part that stands crooked in holes drawn for a different lead arrangement is a workmanship failure that the owner chose to correct before the next order. The change touches mains copper, so it is held to the separation basis and the board's full checks, and its design-file change is reviewed blind as any design change to this board is.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
