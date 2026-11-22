@@ -208,7 +208,7 @@ FOOTPRINT_UNIT_MM = 0.254
 #: Seconds between two requests to the service: one a second, a pace no page of the service states a limit below.
 FETCH_PACE_SECONDS = 1.0
 SET_FILES = {"placement": ("placement-full.csv", "placement-smd.csv"), "parts": ("parts-list-full.csv", "parts-list-smd.csv")}
-PARTS_COLUMNS = ["Comment", "Designator", "Footprint", "JLCPCB Part #"]
+PARTS_COLUMNS = ["Comment", "Designator", "Footprint", "JLCPCB Part #（optional）"]
 OVERRIDE_KEYS = ("reference", "x", "y", "rotation", "reason")
 
 

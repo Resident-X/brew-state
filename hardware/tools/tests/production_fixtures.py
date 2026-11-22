@@ -44,7 +44,7 @@ def placement_text(parts=PLACED) -> str:
 
 
 def parts_text() -> str:
-    return ("Comment,Designator,Footprint,JLCPCB Part #\n"
+    return ("Comment,Designator,Footprint,JLCPCB Part #（optional）\n"
             f"10k,\"{', '.join(RESISTORS)}\",Lib:R_0603,C0001\n100n,\"C1, C2\",Lib:C_0603,C0002\nchip,U1,Lib:U_8,C0003\n"
             "odd,\"X1, X2\",Lib:Odd_1,C0004\nbare,Y1,,C0005\n")
 
