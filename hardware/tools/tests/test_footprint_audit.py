@@ -504,7 +504,7 @@ class TheBodyTableOfTheMainBoard(unittest.TestCase):
         # SOL-BOARD-METHOD-SCRIPTED-LAYOUT-TOOLS-ARE-TRACKED-AND-REUSED-BY-THE-NEXT-BOARD.C10: Over a synthetic board and a body table, the audit reports the gap between each pair of part bodies from the table's body dimensions in footprint coordinates, and names any part the table does not hold. A part's body is its maker's drawing or, where the parts list names no maker part, the footprint's courtyard; the report states which basis each part rests on and the verdict counts the parts on a courtyard stand-in. A pad-table dump lists each pad of a footprint with its number, position, size and layers. A rotation solver, given a part, a target pad position and the pads' positions, returns the rotation in which the pads land on the target, or states that none does. Tests cover bodies apart, touching and overlapping, a rotated part, a missing table entry, a part on a courtyard stand-in counted in the verdict, a pad dump of a footprint with a rotated and an unrotated pad, and a rotation that exists and one that does not, in text and in JSON. This does not cover reading the maker's drawings or fetching an assembler's footprints, which are manual steps.
         found = footprint_audit.read_table(os.path.join(HARDWARE, "sunbeam-em7000", "main-board", "part-bodies.yaml"))
         pads = {"main-board:Relay_HF115F-I_1HS3A": [(0, 0), (0, 7.56), (20.16, 0), (20.16, 7.56), (25.2, 0), (25.2, 7.56)],
-                "main-board:RV_Disc_14D471K_P7.5mm": [(0, 0), (7.5, 0)]}
+                "main-board:RV_Disc_14D471K_P7.5mm": [(0, 0), (7.5, 3.0)]}
         for name, points in pads.items():
             with self.subTest(footprint=name):
                 entry = found[name]

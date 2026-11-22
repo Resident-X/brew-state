@@ -52,14 +52,14 @@ MIN_WIDTH = 0.25
 #   NORTH: west edge 21.0 (clear of the H3 pull-back, which reaches x 20.16, and of the F711 / F701 antipads, which end at 20.25),
 #     except a block x 14.3..21.0, y 36.0..45.5 that takes F731.2; north edge 2.7, east edge 50.9 (closed-slot wall at 52.48, inner
 #     copper 1.5 from it, rounded down), south edge 45.5 (above the JP303 / RT301 antipads).
-#   SOUTH: west edge 1.5 (board edge 1.0, copper 0.3 from it); a west strip x 1.5..11.5 up to y 61.0 (RV101.2, C101.2) and a band from
+#   SOUTH: west edge 1.5 (board edge 1.0, copper 0.3 from it); a west strip x 1.5..11.5 up to y 59.5 (RV101.2, whose staggered pad stands at y 61.1, and C101.2) and a band from
 #     y 70.4 (below the R601.1 / R630.1 via antipads) down, east edge 34.45 (the U301
 #     mains pad group ends at 34.5; the strip beyond it holds no copper), south edge 78.2 east of x 12.5 (leaves the corridor
 #     y 78.2..82 for the Kelvin pair's In2 run) and 80.4 west of it (the J110 rings).
 BASE_N = [(21.0, 2.7), (50.9, 2.7), (50.9, 45.5), (23.1, 45.5), (23.1, 54.0), (34.45, 54.0), (34.45, 78.2), (12.5, 78.2), (12.5, 80.4),
-          (1.5, 80.4), (1.5, 61.0), (11.5, 61.0), (11.5, 70.4), (19.3, 70.4), (19.3, 54.0), (21.35, 54.0), (21.35, 45.5), (14.3, 45.5),
+          (1.5, 80.4), (1.5, 59.5), (11.5, 59.5), (11.5, 70.4), (19.3, 70.4), (19.3, 54.0), (21.35, 54.0), (21.35, 45.5), (14.3, 45.5),
           (14.3, 36.0), (21.0, 36.0)]
-BASE_S = [(1.5, 61.0), (11.5, 61.0), (11.5, 70.4), (34.45, 70.4), (34.45, 78.2), (12.5, 78.2), (12.5, 80.4), (1.5, 80.4)]
+BASE_S = [(1.5, 59.5), (11.5, 59.5), (11.5, 70.4), (34.45, 70.4), (34.45, 78.2), (12.5, 78.2), (12.5, 80.4), (1.5, 80.4)]
 STRIP_MARGIN = 0.05
 # Hand-drawn extra cut-outs (board mm) that take out teeth the antipads leave between each other.
 EXTRA_HOLES = [
