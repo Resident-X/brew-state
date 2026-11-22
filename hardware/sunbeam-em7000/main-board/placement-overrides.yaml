@@ -278,7 +278,7 @@ overrides:
   x: 55.5
   y: -62.35
   rotation: 0
-  reason: 'IRM-20-5 AC-DC module (C6280121): same four pad positions, but the numbering is mirrored: the board''s pad 1 stands where the assembler''s pad 2 is and 3 where its 4 is (assembler 1 on board 2, 2 on 1, 3 on 4, 4 on 3). The pad pattern is not symmetric, so only rotation 0 lands it; residual 0.000 mm. Doubt: HIGH. Either the board footprint''s pin order is mirrored from the module''s, or the assembler''s is; the output polarity depends on it. Check the module''s datasheet pin positions against the board''s pads 3 and 4.'
+  reason: 'IRM-20-5 AC-DC module (C6280121): same four pad positions, but the numbering is mirrored: the board''s pad 1 stands where the assembler''s pad 2 is and 3 where its 4 is (assembler 1 on board 2, 2 on 1, 3 on 4, 4 on 3). The pad pattern is not symmetric, so only rotation 0 lands it; residual 0.000 mm. The numbering difference does not change which pin lands on which pad: the module has one physical pin pattern and it fits the pads in one orientation only. Checked against the maker''s mechanical drawing (Mean Well IRM-20 specification, bottom view: AC/N and AC/L 20.8 mm apart on one side, -V and +V 8 mm apart on the other, 45 mm between the two columns, -V in line with AC/N): seen from above, the board''s pad 1 (net LINE_MOD) is the AC/L pin, pad 2 (NEUTRAL) the AC/N pin, pad 3 (GND) the -V pin and pad 4 (+5V_MOD) the +V pin, so the nets are right for the physical module. The assembler''s numbering is a label only. No doubt left.'
 - reference: U302
   x: 87.9609
   y: -59.105
