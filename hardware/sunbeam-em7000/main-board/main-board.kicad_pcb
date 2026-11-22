@@ -54106,7 +54106,7 @@
 		(at 15.5 64.1 180)
 		(descr "Ruilon 14D471K metal oxide varistor, disc 17.0 max x 6.2 max thick (14D series datasheet A3 page 4), leads 0.8 mm on the two faces of the disc, offset across its thickness: pads 7.5 mm apart along the disc and 3.0 mm across it (staggered pair, as the assembler's footprint for LCSC C8852 draws it; Bourns 14D drawing dimension a 3.2 mm typical)")
 		(property "Reference" "RV101"
-			(at 3.5037 5.3932 0)
+			(at 3.75 5.3932 0)
 			(unlocked yes)
 			(layer "F.SilkS")
 			(uuid "9e71abe5-5f4b-4683-ba9f-16cd03ea4ea5")
