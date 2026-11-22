@@ -2,11 +2,11 @@ id: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C1
 type: criterion
 title: The varistor footprint's two pads sit at the manufacturer drawing's lead pitch and lead offset
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: inspection
 text: |
-  The footprint `RV_Disc_14D471K_P7.5mm` has its two pads 7.5 mm apart along the part and offset across it by the lead offset of the manufacturer's drawing for the 14 mm 470 V disc varistor, with the drill and pad size unchanged, and its description states the offset. The footprint's rotation-0 drawing shows the staggered pair. Every other footprint of the library and the wall board's varistor footprint are out of scope.
+  The footprint `RV_Disc_14D471K_P7.5mm` has its two pads 7.5 mm apart along the part and 3.0 mm apart across it, the lead offset the assembler's footprint for the part draws and within the manufacturer's typical 3.2 mm for the 14 mm 470 V disc varistor, with the drill and pad size unchanged, and its description states the offset. The footprint's rotation-0 drawing shows the staggered pair. Every other footprint of the library and the wall board's varistor footprint are out of scope.
 links:
   - target: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS
     type: criterion-of
