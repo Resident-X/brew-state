@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-22T18:06:58Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/main-board/varistor-footprint-record.md
+  artifact_version: e329831145c173daf56dce04718d00248e2be4da
+links:
+  - target: SOL-MAIN-BOARD-VARISTOR-FOOTPRINT-MATCHES-ITS-STAGGERED-LEADS.C2
+    type: satisfies
