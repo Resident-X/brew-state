@@ -25,6 +25,7 @@ sys.path.insert(0, TOOLS)
 
 import board_check  # noqa: E402
 import production_files  # noqa: E402
+import review_caller_production_files  # noqa: E402
 
 #: The assembler's footprint of the synthetic three-pad part, in its own frame (Y up, from its own origin, which is pad 1).
 THREE_PADS = [("1", 0.0, 0.0), ("2", 2.0, 0.0), ("3", 1.0, -1.5)]
@@ -607,7 +608,7 @@ class TheParts(Synthetic):
         status, lines, folder = self.list(self.clean())
         self.assertEqual(status, 0, lines)
         full = read_rows(os.path.join(folder, "parts-list-full.csv"))
-        self.assertEqual(full[0], ["Comment", "Designator", "Footprint", "LCSC"])
+        self.assertEqual(full[0], ["Comment", "Designator", "Footprint", "JLCPCB Part #"])
         numbers = [row[3] for row in full[1:]]
         self.assertEqual(len(numbers), len(set(numbers)), "one row for each catalogue number")
         by_number = {row[3]: row for row in full[1:]}
@@ -615,6 +616,24 @@ class TheParts(Synthetic):
         for row in full[1:]:
             self.assertNotIn(",", row[0], row)
         self.assertNotIn("none", numbers)
+
+    def test_the_parts_list_header_names_the_catalogue_column_as_the_manufacturers_tool_reads_it_and_the_review_reader_still_reads_it(self):
+        # SOL-HW-CONTROLLER-BOARDS-ORDERED.C6: A test over a synthetic schematic holds that every row of a clean export carries one comment and no comma-joined values
+        header = ["Comment", "Designator", "Footprint", "JLCPCB Part #"]
+        self.assertEqual(production_files.PARTS_COLUMNS, header)
+        for fmt in ("text", "json"):
+            status, lines, folder = self.list(self.clean(), fmt=fmt, out="list-" + fmt)
+            self.assertEqual(status, 0, lines)
+            for name in ("parts-list-full.csv", "parts-list-smd.csv"):
+                with open(os.path.join(folder, name), encoding="utf-8", newline="") as handle:
+                    first_line = handle.readline()
+                self.assertEqual(first_line, "Comment,Designator,Footprint,JLCPCB Part #\n", (fmt, name))
+                self.assertNotIn("LCSC", first_line)
+            review = os.path.join(self.work, "review-" + fmt)
+            os.makedirs(os.path.join(review, "production"))
+            shutil.copy(os.path.join(folder, "parts-list-full.csv"), os.path.join(review, "production", "parts-list.csv"))
+            self.assertEqual(review_caller_production_files.parts_footprints(review),
+                             {"u1": "Lib:F", "r1": "Lib:F", "c1": "Lib:F", "j1": "Lib:F"})
 
     def test_the_two_parts_lists_follow_the_two_placement_sets(self):
         # SOL-HW-CONTROLLER-BOARDS-ORDERED.C7: one holding every part the assembler's catalogue states it can place, through-hole parts included, and one holding only the surface-mount parts, with every through-hole part in neither the parts list nor the placement file
@@ -625,7 +644,7 @@ class TheParts(Synthetic):
         self.assertEqual(designators(document["sets"]["full"]), ["C1", "J1", "R1", "U1"])
         self.assertEqual(designators(document["sets"]["smd"]), ["C1", "R1", "U1"])
         self.assertIn({"reference": "X1", "reason": "fitted by the owner"}, document["omitted"])
-        self.assertEqual(read_rows(os.path.join(folder, "parts-list-smd.csv"))[0], ["Comment", "Designator", "Footprint", "LCSC"])
+        self.assertEqual(read_rows(os.path.join(folder, "parts-list-smd.csv"))[0], ["Comment", "Designator", "Footprint", "JLCPCB Part #"])
 
     def test_a_part_with_no_catalogue_number_field_a_differing_one_and_a_part_missing_from_the_board_are_refused(self):
         # SOL-HW-CONTROLLER-BOARDS-ORDERED.C6: The design carries one spelling of the value for each number
