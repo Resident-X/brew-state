@@ -244,11 +244,6 @@ overrides:
   y: -56.18
   rotation: 0
   reason: 'Pad numbers match (2 pads, C2775980) but a pad stands off the assembler''s footprint: the tool''s own best fit (smallest tolerance that lands, 0.15 mm) leaves the farthest pad 0.104 mm from the board''s pad, past the 0.1 mm default. The assembler''s own footprint is used at that rotation and shift; origin at the fitted point.'
-- reference: RV101
-  x: 11.75
-  y: -62.6
-  rotation: 201.8009
-  reason: 'Ruilon 14D471K disc varistor (C8852, through-hole): the board takes its leads in line, 7.5 mm apart, and the assembler''s footprint has the two pads 7.5 mm along and 3.0 mm across (pad 1 at -3.75, +1.5 and pad 2 at +3.75, -1.5 from its origin), 8.08 mm apart. The disc''s leads are on its two faces, so they are offset across its thickness: the maker''s side view shows the two leads apart within the body thickness, and the same family''s Bourns drawing dimensions that offset (a, 3.2 mm typical for the 14D471K). The part therefore stands tilted when its leads are put into an in-line pair of holes. The tool''s best fit, rotation 201.8 with the origin at the midpoint of the pair, turns the footprint 21.8 degrees so its lead pair lies along the board''s, and leaves the farthest pad 0.289 mm from the board''s pad, inside the maker''s 7.5 +-1.0 mm lead pitch. That tilt is the part''s real orientation in these holes, not a placement fault. An axis-aligned placement was tried and put each lead 1.5 mm off its hole, so it is not used. Doubt: low; in the preview the body should stand about 22 degrees off the pad line.'
 - reference: SW401
   x: 127.665
   y: -70.308
