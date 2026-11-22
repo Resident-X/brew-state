@@ -113,9 +113,11 @@ footprints:
     source: 'Ruilon 14D series metal oxide varistor data sheet Version A3, revised 2023-10-27
       (datasheet.lcsc.com 305ba13b482fd415d345c9b9446eb189.pdf) p.4: D(max) 17.0, H(max) 20.0,
       D1 7.5 +/-1.0, T(max) 6.2 for the 430-560 V models (Table 2); the disc stands on its two leads,
-      17.0 wide centred between them and 6.2 thick'
+      which leave it on its two faces, 7.5 apart along it and 3.0 across it (the footprint''s staggered
+      pair, pad 2 at 7.5, 3.0 from pad 1), so the disc is 17.0 wide and 6.2 thick, centred on the
+      midpoint of the pair'
     rects:
-    - {name: disc, x0: -4.75, y0: -3.1, x1: 12.25, y1: 3.1, height_mm: 20.0}
+    - {name: disc, x0: -4.75, y0: -1.6, x1: 12.25, y1: 4.6, height_mm: 20.0}
   main-board:Relay_HF115F-I_1HS3A:
     kind: relay
     hand_fitted: true
