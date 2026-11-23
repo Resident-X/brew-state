@@ -1,0 +1,12 @@
+id: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1
+type: criterion
+title: The six surface-mount parts are in the position file and the board carries three fiducials clear of the mains copper
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The heater wall board's U911, U921, R911, R912, R921 and R922 are no longer excluded from the position file, the board carries three fiducial marks on the side of those parts, and every fiducial lies at or beyond the board's low-voltage clearance and creepage distance from any mains copper. The layout rule check reports no violation that the board did not report before the change. The mains copper and the separation basis are out of scope and stay as they were.
+links:
+  - target: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER
+    type: criterion-of
