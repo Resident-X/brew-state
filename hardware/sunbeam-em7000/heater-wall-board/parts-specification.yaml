@@ -3,7 +3,7 @@
 #
 # Form: the keys board_check.py reads of a position (reference, value, package, rating, lcsc, class)
 # and no others, as the main board's record (main-board/parts-specification.yaml) states. So the figures
-# the schema has no key for (maker, MPN, catalogue class, hand-fitted) sit in the comment above each
+# the schema has no key for (maker, MPN, catalogue class) sit in the comment above each
 # position, from schematic-spec.yaml. The fields mean what they mean there: package is the footprint's
 # library item name; rating is the drawn symbol's Rating field exactly as the drawn schematic carries it (shorter than the sheet specification's text where a comment says so), leading
 # with the part's maximum rated voltage where it has one (the drawn fields are shorter than the ratings of schematic-spec.yaml, whose fuller text sits in the comment above each position where they differ) (the derated-voltage rule reads the first
@@ -14,13 +14,17 @@
 # derating-policy.yaml), integrated circuit (the two opto-triacs, as the main board classes its
 # MOC3052SVM), resistor (the four 1206 gate resistors), varistor (the two 07D471K). The three blade
 # terminals and the three-way header state no voltage in their rating, so they take none; their current
-# ratings are not stated by the maker's drawing (unsourced), see open-items.md. The one case-screw hole (H1, the board's single mounting hole; the printed case retains the board with a ledge and fingers or ribs, and the hole is held to the mounting_hole distance from Mains copper whatever the screw) states no voltage and takes none; it is not in the bill of materials or the position file (set on the placed footprint at layout, open-items.md). The board carries no fiducials (layout decision of 2026-11-19: the four 1206 gate resistors are hand-fitted, so no assembled surface-mount part needs them).
+# ratings are not stated by the maker's drawing (unsourced), see open-items.md. The one case-screw hole (H1, the board's single mounting hole; the printed case retains the board with a ledge and fingers or ribs, and the hole is held to the mounting_hole distance from Mains copper whatever the screw) states no voltage and takes none; it is not in the bill of materials or the position file (set on the placed footprint at layout, open-items.md). The board carries no fiducials (layout decision of 2026-11-19); since the owner's decision of 2026-11-23 the six surface-mount parts are assembled, and the board is ordered without fiducials under the signed exception board-rules.yaml assembler_fiducials (JLCPCB adds its own for Economic assembly).
 #
-# The four 1206 gate resistors R911, R912, R921 and R922 are hand-fitted (8 joints; excluded from the position file; the board is a bare-PCB order and every part is hand-fitted, no assembly service); they keep their catalogue numbers (C18002) and are compared like any other position. The triacs T911 and T921 take the board's own footprint heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads (oval pads 1.5 x 2.5, drill 1.1, tab face 2.86 mm behind the pad row), so their package is that footprint's item name.
+# Who fits each part is its fitted_by key. Owner decision of 2026-11-23: JLCPCB fits all 14 numbered parts in its
+# Economic assembly mode, so every numbered position is fitted_by assembler and H1 (a hole) fitted_by none; this replaces
+# the bare-PCB order of 2026-11-19, under which the owner fitted every part by hand and the six surface-mount parts were
+# excluded from the position file (they no longer are; assembler-fitting-record.md). U911 and U921 are placed through the
+# recorded overrides of placement-overrides.yaml. The four 1206 gate resistors R911, R912, R921 and R922 keep their catalogue numbers (C18002) and are compared like any other position. The triacs T911 and T921 take the board's own footprint heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads (oval pads 1.5 x 2.5, drill 1.1, tab face 2.86 mm behind the pad row), so their package is that footprint's item name.
 #
 # Design change of 2026-11-18 (the design opinion of that day, .stage0/wall-design-opinion.md; open-items.md D7):
 # the triacs BTA16-600BRG (C9100) became BTA16-800BWRG (ST, C10065), the opto-triacs Lite-On MOC3083 (C10797)
-# became onsemi MOC3083M (C23552, through-hole; changed on 2026-11-19 to the surface-mount MOC3083SR2M, C111561, hand-fitted, and the same day to the V-option MOC3083SVM, C899868), and the references moved to the 9xx series so that none equals a reference of
+# became onsemi MOC3083M (C23552, through-hole; changed on 2026-11-19 to the surface-mount MOC3083SR2M, C111561, then hand-fitted, and the same day to the V-option MOC3083SVM, C899868), and the references moved to the 9xx series so that none equals a reference of
 # the main board or of the shared separation basis's exceptions. The drawn Rating fields of the four parts
 # carry the rating strings below (the opto-triacs' corrected in ceb7a92f); catalogue figures of C10065
 # and C23552 (later C111561, then C899868) are not read (catalogue-extract.yaml; C899868 is read there).
@@ -51,7 +55,7 @@
 #   XFCN PZ254V-11-03P (C2937625): the main board's JP301 part; the maker's drawing REV A1 p.1 (3 A, -40 to +105 degC, 500 V AC withstanding) as the schematic review round 1 read it
 positions:
   # ---- sheet: Coffee heater switch
-  # T911: maker STMicroelectronics; MPN BTA16-800BWRG; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
+  # T911: maker STMicroelectronics; MPN BTA16-800BWRG; catalogue class extended (carried from the part it replaces; the new number's class is not read); fitted by the assembler
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V 16 A insulated TO-220AB snubberless (3-quadrant, BW grade) triac, ST DS2114 Rev 11, May 2018 (VDRM/VRRM 800 V (product summary p.1, Table 8 p.15), VDSM VDRM+100 V = 900 V, IGM 4 A at 20 us, PG(AV) 1 W, IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
   - reference: T911
     value: "BTA16-800BWRG"
@@ -60,7 +64,7 @@ positions:
     lcsc: C10065
     class: triac
     fitted_by: assembler
-  # U911: maker onsemi; MPN MOC3083SVM (the DIN EN/IEC 60747-5-5 V option, SMT 6-pin lead bend, case 646BY); surface-mount, hand-fitted (owner decision of 2026-11-19, option A; part choice delegated to the layout agent, W-11); LCSC C899868, catalogue class extended
+  # U911: maker onsemi; MPN MOC3083SVM (the DIN EN/IEC 60747-5-5 V option, SMT 6-pin lead bend, case 646BY); surface-mount (owner decision of 2026-11-19, option A; part choice delegated to the layout agent, W-11); fitted by the assembler (owner decision of 2026-11-23); LCSC C899868, catalogue class extended
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver MOC3083SVM (the DIN EN/IEC 60747-5-5 V option), surface-mount lead bend SMDIP-6 (CASE 646BY), 9.53 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage and clearance >= 7 mm stated once for the family, not per package; the ordered part is the DIN EN/IEC 60747-5-5 option MOC3083SVM, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
   # U911 rating below is the drawn Rating field verbatim (compared by the board check); its creepage clause is the sheet's 7 mm stated once for the family, carried by the approved V-option part (owner-sign-off.md W-11, W-9 1a).
   - reference: U911
@@ -69,23 +73,23 @@ positions:
     rating: "800 V zero-cross opto-triac driver, MOC3083SVM: SMT 6-pin lead bend, DIN EN/IEC 60747-5-5 option, of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated once for the family, not per package"
     lcsc: C899868
     class: integrated circuit
-    fitted_by: owner
-  # R911: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
+    fitted_by: assembler
+  # R911: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; fitted by the assembler
   - reference: R911
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
-    fitted_by: owner
-  # R912: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
+    fitted_by: assembler
+  # R912: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; fitted by the assembler
   - reference: R912
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
-    fitted_by: owner
+    fitted_by: assembler
   # RV911: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (electrical table p.2, operating temperature p.1); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
   - reference: RV911
@@ -95,7 +99,7 @@ positions:
     lcsc: C49072860
     class: varistor
     fitted_by: assembler
-  # J911: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  # J911: maker TE Connectivity; MPN 63849-1; catalogue class extended; fitted by the assembler
   - reference: J911
     value: "TAB_OUT_C"
     package: Tab_TE_63849-1
@@ -104,7 +108,7 @@ positions:
     class: none
     fitted_by: assembler
   # ---- sheet: Steam heater switch
-  # T921: maker STMicroelectronics; MPN BTA16-800BWRG; catalogue class extended (carried from the part it replaces; the new number's class is not read); hand-fitted
+  # T921: maker STMicroelectronics; MPN BTA16-800BWRG; catalogue class extended (carried from the part it replaces; the new number's class is not read); fitted by the assembler
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V 16 A insulated TO-220AB snubberless (3-quadrant, BW grade) triac, ST DS2114 Rev 11, May 2018 (VDRM/VRRM 800 V (product summary p.1, Table 8 p.15), VDSM VDRM+100 V = 900 V, IGM 4 A at 20 us, PG(AV) 1 W, IT(RMS) 16 A at Tc 86 degC for the insulated package, ITSM 160 A at 50 Hz 20 ms, I2t 144 A2s, Tj -40 to +125 degC (Table 1 p.2); VT 1.55 V max at 22.5 A, VTO 0.85 V, RD 25 mohm, IDRM 2 mA at 125 degC (Table 2 p.2); IGT 50 mA max quadrants I-II-III (no quadrant IV), VGT 1.3 V max, VGD 0.2 V min at 125 degC, IH 50 mA max, IL 70 mA max quadrants I-III and 80 mA II, dV/dt 1000 V/us min, (dI/dt)c 14 A/ms min without snubber (BW column, Table 4 p.3); Rth(j-c) 2.1 K/W insulated (Table 5 p.3); insulated tab rated 2500 Vrms, UL1557 file E81734 (features p.1))
   - reference: T921
     value: "BTA16-800BWRG"
@@ -113,7 +117,7 @@ positions:
     lcsc: C10065
     class: triac
     fitted_by: assembler
-  # U921: maker onsemi; MPN MOC3083SVM (the DIN EN/IEC 60747-5-5 V option, SMT 6-pin lead bend, case 646BY); surface-mount, hand-fitted (owner decision of 2026-11-19, option A; part choice delegated to the layout agent, W-11); LCSC C899868, catalogue class extended
+  # U921: maker onsemi; MPN MOC3083SVM (the DIN EN/IEC 60747-5-5 V option, SMT 6-pin lead bend, case 646BY); surface-mount (owner decision of 2026-11-19, option A; part choice delegated to the layout agent, W-11); fitted by the assembler (owner decision of 2026-11-23); LCSC C899868, catalogue class extended
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 800 V zero-cross opto-triac driver MOC3083SVM (the DIN EN/IEC 60747-5-5 V option), surface-mount lead bend SMDIP-6 (CASE 646BY), 9.53 mm row, onsemi MOC3083M/D Rev. 2, September 2022 (VDRM 800 V, ITSM 1 A single cycle 60 Hz, PD detector 150 mW, IF 60 mA, VR 6 V, emitter PD 120 mW derating 1.41 mW/degC above 25 degC, TOPR -40 to +85 degC, TJ -40 to +100 degC (p.3); VF 1.5 V max at IF 30 mA, IDRM1 500 nA max at 800 V LED off, dv/dt 600 V/us min static (p.4); IFT 5 mA max at 3 V main-terminal voltage, VTM 3.0 V max, inhibit voltage 20 V max, IDRM2 2 mA max with the LED at rated IFT (p.4); VISO 4170 Vrms 1 minute (p.4); external creepage and clearance >= 7 mm stated once for the family, not per package; the ordered part is the DIN EN/IEC 60747-5-5 option MOC3083SVM, VIORM 850 Vpk, VIOTM 6000 Vpk, pollution degree 2, CTI 175 (p.2); pins 1 anode, 2 cathode, 3 NC, 4 main terminal, 5 NC (triac substrate, do not connect), 6 main terminal (p.1))
   - reference: U921
     value: "MOC3083SVM"
@@ -121,23 +125,23 @@ positions:
     rating: "800 V zero-cross opto-triac driver, MOC3083SVM: SMT 6-pin lead bend, DIN EN/IEC 60747-5-5 option, of the MOC3083M family, onsemi MOC3083M/D Rev 2; VF 1.5 V max at 30 mA, IFT 5 mA max, TOPR -40 to +85 degC; creepage and clearance 7 mm stated once for the family, not per package"
     lcsc: C899868
     class: integrated circuit
-    fitted_by: owner
-  # R921: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
+    fitted_by: assembler
+  # R921: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; fitted by the assembler
   - reference: R921
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
-    fitted_by: owner
-  # R922: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; hand-fitted
+    fitted_by: assembler
+  # R922: maker UNI-ROYAL; MPN 1206W4F2000T5E; catalogue class extended; fitted by the assembler
   - reference: R922
     value: "200"
     package: R_1206_3216Metric
     rating: "1% 250mW RCWV 7.07V 1206"
     lcsc: C18002
     class: resistor
-    fitted_by: owner
+    fitted_by: assembler
   # RV921: maker Zhuhai Hongjiacheng (R+O); MPN 07D471K; catalogue class extended
   # sheet specification rating (schematic-spec.yaml), fuller than the drawn Rating field below: 07D471K 470 V disc varistor, 5 mm lead pitch, Zhuhai Hongjiacheng 07D series Rev 1.2 (300 VAC / 385 VDC max, V1mA 470 V (423-517), clamp 775 V at 10 A 8/20 us, 1200 A 8/20 us once, 29 J 10/1000 us, 0.25 W, -40 to +105 degC (electrical table p.2, operating temperature p.1); body D 9.0 mm max, T 5.0 mm max, lead pitch F 5 +-1 mm, lead d 0.6 mm (p.6)); non-polar
   - reference: RV921
@@ -147,7 +151,7 @@ positions:
     lcsc: C49072860
     class: varistor
     fitted_by: assembler
-  # J921: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  # J921: maker TE Connectivity; MPN 63849-1; catalogue class extended; fitted by the assembler
   - reference: J921
     value: "TAB_OUT_S"
     package: Tab_TE_63849-1
@@ -174,7 +178,7 @@ positions:
     class: none
     fitted_by: none
   # ---- sheet: Return landing
-  # J941: maker TE Connectivity; MPN 63849-1; catalogue class extended; hand-fitted
+  # J941: maker TE Connectivity; MPN 63849-1; catalogue class extended; fitted by the assembler
   - reference: J941
     value: "TAB_RET"
     package: Tab_TE_63849-1

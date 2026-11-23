@@ -1,5 +1,6 @@
 # The board rules record of the Sunbeam EM7000 heater wall board: the figures the pre-order check reads
-# for sensing clearance, connector ground returns and the finished outer copper weight.
+# for sensing clearance, connector ground returns and the finished outer copper weight, and the owner's
+# signed statement that the assembler supplies the fiducial marks (assembler_fiducials, below).
 #
 # This board has no sensing net class and no ground net: its three-way header J931 carries the LED
 # supply and two LED returns (heater-wall-board/pin-allocation.yaml), all low-voltage supply or return
@@ -43,3 +44,16 @@ ground_returns:
 fabrication:
   outer_copper_oz: 1
   source: "1 oz finished outer copper, the weight JLCPCB's standard two-layer order carries without a surcharge (docs/board-manufacturer-jlcpcb.md, Layers, thickness, copper and board size: finished outer copper 1, 2, 2.5, 3.5 or 4.5 oz on 2-layer boards, 1 oz the default; the copper-weight cost constraint keeps the board on the introductory price). The heater return carries 5.38 A steam plus 4.80 A coffee at most together, through the blade J941 and its pour, so the copper width at layout is sized for that current at 1 oz; the layout leaf holds that figure"
+# assembler_fiducials: the signed exception to MFG-10 (`side_fiducials`). The owner decided on 2026-11-23
+# that JLCPCB fits all fourteen numbered parts of the board, the six surface-mount parts U911, U921, R911,
+# R912, R921 and R922 among them, in its Economic assembly mode; those six are in the position file, so the
+# front side carries assembled surface-mount parts and no fiducial. The board is not changed to add any:
+# JLCPCB states that it adds the fiducials itself (see source). The statement is signed on the owner's
+# behalf under his standing instruction of 2026-11-07 (owner-sign-off.md W-18); assembler-fitting-record.md
+# holds the quoted sources. It covers the Economic order only: a Standard assembly order, which JLCPCB's
+# table lists with fiducials Necessary, would need the board changed.
+assembler_fiducials:
+  reason: "the owner's order is JLCPCB Economic assembly, for which JLCPCB lists fiducials as not necessary and states that it adds the fiducial marks for SMT assembly itself; the board's assembled surface-mount parts (U911, U921, R911, R912, R921, R922) are all on the front, the one side Economic places"
+  source: "JLCPCB PCB Assembly Capabilities, rows Fiducials (Economic PCBA: Not necessary; Standard PCBA: Necessary) and Assembly Types (Economic PCBA: Single sided placement), https://jlcpcb.com/capabilities/pcb-assembly-capabilities; JLCPCB PCB Assembly FAQs, item 12 ('Do I need to add fiducial marks myself? No, you don't have to. We'll add fiducial marks for SMT assembly.'), https://jlcpcb.com/help/article/pcb-assembly-faqs; both read 2026-11-23"
+  accepted_by: "Claude, on behalf of David Baker (owner), under his standing instruction of 2026-11-07"
+  accepted_on: "2026-11-23"

@@ -1,0 +1,17 @@
+# Per-part placement overrides for the heater wall board: each part's pads differ from the assembler's own footprint for
+# its catalogue number, so the pad-fit step cannot place it by itself. Each entry gives the row the placement file carries
+# for the part (the point the assembler's footprint origin lands on, in the position export's frame, and the
+# counter-clockwise rotation in degrees) and why. Matched by pad number; the largest residual is the farthest pad of the
+# assembler's footprint from the board's pad it is matched to. Written 2026-11-23, when the owner gave the board's six
+# surface-mount parts to the assembler (assembler-fitting-record.md); the other twelve numbered parts fit by themselves.
+overrides:
+- reference: U911
+  x: 60.64
+  y: -50.19
+  rotation: 0
+  reason: 'Pad numbers match (6 pads, C899868) but the rows stand apart: the assembler''s footprint has its two rows of pads 9.20 mm apart, centre to centre, and the board''s land (SMDIP-6_W9.53mm_MOC3083SR2M, the MOC3083SVM sheet''s 9.53 mm row pitch) 9.53 mm. The tool''s own best fit by pad number (rotation 0, origin on the board footprint''s origin) leaves every pad 0.165 mm off, each pad of the assembler''s footprint 0.165 mm inward of the board''s pad centre across the rows, along the pad''s 2.00 mm length, and none off along a row; past the 0.1 mm default. The assembler''s own footprint is used at that rotation and origin. Pin 1 agrees with the assembler''s preview: the row puts the assembler''s pad 1 on the board''s pad 1 at board (58.10, 54.96) mm.'
+- reference: U921
+  x: 60.64
+  y: -66.21
+  rotation: 180
+  reason: 'Pad numbers match (6 pads, C899868) but the rows stand apart: the assembler''s footprint has its two rows of pads 9.20 mm apart, centre to centre, and the board''s land (SMDIP-6_W9.53mm_MOC3083SR2M, the MOC3083SVM sheet''s 9.53 mm row pitch) 9.53 mm. The tool''s own best fit by pad number (rotation 180, origin on the board footprint''s origin) leaves every pad 0.165 mm off, each pad of the assembler''s footprint 0.165 mm inward of the board''s pad centre across the rows, along the pad''s 2.00 mm length, and none off along a row; past the 0.1 mm default. The assembler''s own footprint is used at that rotation and origin. Pin 1 agrees with the assembler''s preview: the row puts the assembler''s pad 1 on the board''s pad 1 at board (63.18, 61.45) mm.'

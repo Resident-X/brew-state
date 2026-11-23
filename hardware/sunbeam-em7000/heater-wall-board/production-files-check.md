@@ -7,6 +7,19 @@
 **Commands:** step 1: pcb export pos (csv, mm, both, exclude-dnp), production_files.py placement, sch export bom (group-by LCSC, exclude-dnp), pcb export gerbers (F.Cu,B.Cu,F.Mask,B.Mask,F.SilkS,B.SilkS,Edge.Cuts), pcb export drill. Step 2: production_files.py render. Run 2026-11-20 from a detached worktree at 478d3b05, twice; the earlier set (bd942f31) was extracted first and is the comparison set.
 **Preview:** not obtained. Bare-PCB order, no assembly: JLCPCB's assembled-board preview and placement preview do not exist for this order. Stand-in: the design's own assembly views and the footprint drawings at rotation 0, judged in the earlier draft; neither the placements nor the parts changed since (the placement file and the parts list are byte-identical to the bd942f31 set's). The placement file is not uploaded.
 
+**Amended 2026-11-23, the assembler fits every part (owner decision of 2026-11-23; `assembler-fitting-record.md`).** The board file changed after the commit judged above, by attributes only: U911, U921, R911, R912, R921 and R922 lost `exclude_from_pos_files` and are `fitted_by: assembler`, so the placement file has 14 rows (H1 alone stays out, `fitted_by: none`) and the order is no longer bare-PCB. No copper, mask, drill, silk or outline changed (the layout rule check and the mains-copper compare are identical before and after, `assembler-fitting-record.md`), so the layer table below stands for the new commit. What this record said that no longer holds: the *Preview* line's "Bare-PCB order, no assembly" and "The placement file is not uploaded", and the note under *Parts* that the six surface-mount parts have no placement row. The six rows the change adds, as the placement step writes them from the committed design (U911 and U921 through the recorded overrides of `placement-overrides.yaml`, because the assembler's footprint for C899868 has its rows 9.20 mm apart against the board's 9.53 mm and every pad lands 0.165 mm off, past the 0.1 mm default; the four resistors fit by themselves):
+
+| Part | Position (file) | Rotation (file) | Polarity or first pin | Catalogue part (record / parts list) | Note |
+|---|---|---|---|---|---|
+| R911 | 62, -38.5025 | 90 | none | C18002 / C18002 | fits the assembler's footprint by pad number within 0.1 mm |
+| R912 | 62, -28.5025 | 90 | none | C18002 / C18002 | same |
+| R921 | 51.5025, -72.5 | 180 | none | C18002 / C18002 | same |
+| R922 | 38.6, -28.5025 | 90 | none | C18002 / C18002 | same |
+| U911 | 60.64, -50.19 | 0 | pad 1 at board (58.10, 54.96) mm, the pin-1 dot's corner | C899868 / C899868 | override; 0.165 mm residual on every pad, across the rows |
+| U921 | 60.64, -66.21 | 180 | pad 1 at board (63.18, 61.45) mm, the pin-1 dot's corner | C899868 / C899868 | override; 0.165 mm residual on every pad, across the rows |
+
+The same 14 rows were uploaded to JLCPCB for the owner's test quote of 2026-11-23 (from a scratch copy of the board with the attribute removed); the operator read pin 1 of U911 and U921 in that preview at the board's pin 1. A full re-judgement of the per-part table against the assembler's preview of the order's own upload is owed at the order (`ordering-record.md`), as the method's step 3 asks.
+
 ### Parts
 (8 rows = 8 placement rows. U911, U921, R911, R912, R921, R922 and H1 carry exclude_from_pos_files and are hand-fitted or a hole, so they have no placement row; they are checked under Catalogue part in the parts list only.)
 

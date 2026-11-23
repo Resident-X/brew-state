@@ -16,7 +16,7 @@ drawing:
     properties.'
   - 'Flow left to right on each sheet: inputs and supply at the left, outputs at the right; positive supply toward the top, ground toward the bottom. Mains-referenced circuits stand at the left of a sheet and are drawn apart
     from low-voltage circuits (the barrier part between them); text clear of text and symbols; connector symbols show pin numbers and the net name beside every pin.'
-  - 'Place every part named in a sheet; parts with hand: true are parts the owner fits by hand (through-hole, and the surface-mount opto-triacs and 1206 resistors) and are placed like any other.'
+  - Place every part named in a sheet; every numbered part is fitted by the assembler (owner decision of 2026-11-23), and who fits each part is stated in parts-specification.yaml, not here.
   - 'Project text variables: MAINS = present. Net class Mains: the nets listed in mains_class_nets.'
   - 'ERC: a net with only power_in pins needs a PWR_FLAG (the sheet''s power_flags list names them); no warning may be waived or excluded.'
 project_settings:
@@ -52,18 +52,6 @@ totals:
   parts_by_catalogue_class:
     extended: 14
     none: 1
-  hand_fitted_refs:
-  - J911
-  - J921
-  - J941
-  - R911
-  - R912
-  - R921
-  - R922
-  - T911
-  - T921
-  - U911
-  - U921
 header_to_main_board:
   ref: J931
   part: WB_LV3, 1x3 2.54 mm pin header (XFCN PZ254V-11-03P, C2937625), cable on positions 1 to 3 of the main board J761
@@ -102,7 +90,6 @@ sheets:
     maker: STMicroelectronics
     lcsc: C10065
     class: extended
-    hand: true
     function: 'Coffee heater triac: MT2 on the element lead OUT_C, MT1 on the return RET (neutral side)'
     mains: true
     sim_exclude: false
@@ -125,7 +112,6 @@ sheets:
     maker: onsemi
     lcsc: C899868
     class: extended
-    hand: true
     function: 'Coffee heater zero-cross opto-triac: LED pins 1-2 low voltage, output pins 4 and 6 mains, pin 6 on OUT_C and pin 4 on the gate chain'
     mains: true
     sim_exclude: false
@@ -139,8 +125,8 @@ sheets:
       '6': main terminal
     pinmap_source: 'onsemi MOC3083M/D Rev. 2 p.1 schematic and pin diagram: 1 Anode, 2 Cathode, 3 N/C, 4 Main term., 5 NC (triac substrate, DO NOT CONNECT), 6 Main term.; SMDIP-6 gull-wing option, CASE 646BY: 6 pads 2.54 mm
       pitch, rows 9.53 mm apart centre to centre; the project footprint heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M draws pads 2.00 x 1.50 mm (the maker''s recommended land is 1.78 x 1.52 mm with 7.49 mm between inner pad
-      edges, pad gap 0.76 mm; ours leaves 1.04 mm along the row) and is hand-fitted, excluded from the position file; pins 4 and 6 are the two main terminals and are interchangeable electrically, the board puts pin 6 on %s
-      and pin 4 on the gate chain'
+      edges, pad gap 0.76 mm; ours leaves 1.04 mm along the row) and is fitted by the assembler, in the position file (owner decision of 2026-11-23); pins 4 and 6 are the two main terminals and are interchangeable electrically,
+      the board puts pin 6 on %s and pin 4 on the gate chain'
   - ref: R911
     lib_id: Device:R
     value: '200'
@@ -150,7 +136,6 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: true
     function: first half of the 400 ohm gate resistor of the coffee triac (opto-triac side)
     mains: true
     sim_exclude: false
@@ -163,7 +148,6 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: true
     function: second half of the 400 ohm gate resistor (triac gate side)
     mains: true
     sim_exclude: false
@@ -177,7 +161,6 @@ sheets:
     maker: Zhuhai Hongjiacheng (R+O)
     lcsc: C49072860
     class: extended
-    hand: false
     function: surge clamp across the coffee triac, OUT_C to RET
     mains: true
     sim_exclude: true
@@ -194,7 +177,6 @@ sheets:
     maker: TE Connectivity
     lcsc: C86469
     class: extended
-    hand: true
     function: 'Coffee element lead landing: OUT_C, the new wire to the element''s in-line joiner'
     mains: true
     sim_exclude: true
@@ -254,19 +236,19 @@ sheets:
   - name: heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M
     from: onsemi MOC3083M/D Rev. 2, CASE 646BY surface-mount gull-wing lead bend, as drawn in heater-wall-board.pretty/SMDIP-6_W9.53mm_MOC3083SR2M.kicad_mod
     detail: Six smd pads numbered 1 to 6, 2.00 x 1.50 mm, 2.54 mm pitch down each row, rows 9.53 mm apart centre to centre (pins 1-3 left, 4-6 right, pin 4 opposite pin 3), pad gap along the row 1.04 mm (the maker's recommended
-      land is 1.78 x 1.52 mm with 0.76 mm gap; the wider pad is carried as an open item), hand-fitted, excluded from the position file. Used by U911 and U921.
+      land is 1.78 x 1.52 mm with 0.76 mm gap; the wider pad is carried as an open item), fitted by the assembler, in the position file (owner decision of 2026-11-23). Used by U911 and U921.
   - name: heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads
     from: ST DS2114 Rev 11 (BTA16-800BWRG, TO-220AB insulated), as drawn in heater-wall-board.pretty/TO-220-3_Vertical_Insulated_OvalPads.kicad_mod; the stock Package_TO_SOT_THT:TO-220-3_Vertical it replaces is not used
     detail: Three plated oval pads numbered 1, 2, 3 at 2.54 mm pitch along X, each 1.5 x 2.5 mm with a 1.1 mm drill (pin 1 A1/MT1, pin 2 A2/MT2, pin 3 G); the insulated tab face stands 2.86 mm behind the pad row and the tab
       is not a pin. Used by T911 and T921.
   power_flags: []
   drawing_notes: 'Left to right: the opto-triac U911, the triac T911, the varistor RV911 across OUT_C and RET, and the element lead landing J911 (OUT_C, mains) at the right. Low voltage at the left edge, mains from the opto-triac''s
-    output pins to the right; the opto-triac (surface-mount MOC3083SVM, hand-fitted) is the barrier part and straddles the line: its LED pins 1-2 (+5V_WB, HEAT_C_LED_K) are drawn on its left as low voltage, its output pins
-    4 and 6 on its right with the mains. Separation basis barrier: heater-switch (reinforced, mains to low voltage), formed by the opto-triac and the board spacing around it. Chain: OUT_C -> U911.6; U911.4 -> R911 -> R912
-    -> T911 gate; T911 MT2 on OUT_C, MT1 on RET. No gate-to-MT1 resistor, no snubber (division record: snubbers dropped, varistors kept). U911.3 and U911.5 carry no-connect flags. The LED series resistor and the low-side sink
-    are on the main board (HEAT_C_DRV stage), none here; the LED is lit only through HEAT_C_LED_K. Triac switches the neutral side; there is no live feed on this board. The triac stands with its insulated tab bolted to the
-    flat spreader plate, which carries it on its inner face (tab hole 17.25 mm above the board face, leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of the
-    varistor stands under its 800 V and the opto-triac''s 800 V (open-items.md, D7). Net RET is shared with the other switch sheet and the return landing sheet.'
+    output pins to the right; the opto-triac (surface-mount MOC3083SVM, fitted by the assembler) is the barrier part and straddles the line: its LED pins 1-2 (+5V_WB, HEAT_C_LED_K) are drawn on its left as low voltage, its
+    output pins 4 and 6 on its right with the mains. Separation basis barrier: heater-switch (reinforced, mains to low voltage), formed by the opto-triac and the board spacing around it. Chain: OUT_C -> U911.6; U911.4 -> R911
+    -> R912 -> T911 gate; T911 MT2 on OUT_C, MT1 on RET. No gate-to-MT1 resistor, no snubber (division record: snubbers dropped, varistors kept). U911.3 and U911.5 carry no-connect flags. The LED series resistor and the low-side
+    sink are on the main board (HEAT_C_DRV stage), none here; the LED is lit only through HEAT_C_LED_K. Triac switches the neutral side; there is no live feed on this board. The triac stands with its insulated tab bolted to
+    the flat spreader plate, which carries it on its inner face (tab hole 17.25 mm above the board face, leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of
+    the varistor stands under its 800 V and the opto-triac''s 800 V (open-items.md, D7). Net RET is shared with the other switch sheet and the return landing sheet.'
 - order: 2
   sheet: Steam heater switch
   source_file: 200-steam-heater-switch.yaml
@@ -284,7 +266,6 @@ sheets:
     maker: STMicroelectronics
     lcsc: C10065
     class: extended
-    hand: true
     function: 'Steam heater triac: MT2 on the element lead OUT_S, MT1 on the return RET (neutral side)'
     mains: true
     sim_exclude: false
@@ -307,7 +288,6 @@ sheets:
     maker: onsemi
     lcsc: C899868
     class: extended
-    hand: true
     function: 'Steam heater zero-cross opto-triac: LED pins 1-2 low voltage, output pins 4 and 6 mains, pin 6 on OUT_S and pin 4 on the gate chain'
     mains: true
     sim_exclude: false
@@ -321,8 +301,8 @@ sheets:
       '6': main terminal
     pinmap_source: 'onsemi MOC3083M/D Rev. 2 p.1 schematic and pin diagram: 1 Anode, 2 Cathode, 3 N/C, 4 Main term., 5 NC (triac substrate, DO NOT CONNECT), 6 Main term.; SMDIP-6 gull-wing option, CASE 646BY: 6 pads 2.54 mm
       pitch, rows 9.53 mm apart centre to centre; the project footprint heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M draws pads 2.00 x 1.50 mm (the maker''s recommended land is 1.78 x 1.52 mm with 7.49 mm between inner pad
-      edges, pad gap 0.76 mm; ours leaves 1.04 mm along the row) and is hand-fitted, excluded from the position file; pins 4 and 6 are the two main terminals and are interchangeable electrically, the board puts pin 6 on %s
-      and pin 4 on the gate chain'
+      edges, pad gap 0.76 mm; ours leaves 1.04 mm along the row) and is fitted by the assembler, in the position file (owner decision of 2026-11-23); pins 4 and 6 are the two main terminals and are interchangeable electrically,
+      the board puts pin 6 on %s and pin 4 on the gate chain'
   - ref: R921
     lib_id: Device:R
     value: '200'
@@ -332,7 +312,6 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: true
     function: first half of the 400 ohm gate resistor of the steam triac (opto-triac side)
     mains: true
     sim_exclude: false
@@ -345,7 +324,6 @@ sheets:
     maker: UNI-ROYAL
     lcsc: C18002
     class: extended
-    hand: true
     function: second half of the 400 ohm gate resistor (triac gate side)
     mains: true
     sim_exclude: false
@@ -359,7 +337,6 @@ sheets:
     maker: Zhuhai Hongjiacheng (R+O)
     lcsc: C49072860
     class: extended
-    hand: false
     function: surge clamp across the steam triac, OUT_S to RET
     mains: true
     sim_exclude: true
@@ -376,7 +353,6 @@ sheets:
     maker: TE Connectivity
     lcsc: C86469
     class: extended
-    hand: true
     function: 'Steam element lead landing: OUT_S, the new wire to the element''s in-line joiner'
     mains: true
     sim_exclude: true
@@ -435,12 +411,12 @@ sheets:
   custom_footprints: []
   power_flags: []
   drawing_notes: 'Left to right: the opto-triac U921, the triac T921, the varistor RV921 across OUT_S and RET, and the element lead landing J921 (OUT_S, mains) at the right. Low voltage at the left edge, mains from the opto-triac''s
-    output pins to the right; the opto-triac (surface-mount MOC3083SR2M, hand-fitted) is the barrier part and straddles the line: its LED pins 1-2 (+5V_WB, HEAT_S_LED_K) are drawn on its left as low voltage, its output pins
-    4 and 6 on its right with the mains. Separation basis barrier: heater-switch (reinforced, mains to low voltage), formed by the opto-triac and the board spacing around it. Chain: OUT_S -> U921.6; U921.4 -> R921 -> R922
-    -> T921 gate; T921 MT2 on OUT_S, MT1 on RET. No gate-to-MT1 resistor, no snubber (division record: snubbers dropped, varistors kept). U921.3 and U921.5 carry no-connect flags. The LED series resistor and the low-side sink
-    are on the main board (HEAT_S_DRV stage), none here; the LED is lit only through HEAT_S_LED_K. Triac switches the neutral side; there is no live feed on this board. The triac stands with its insulated tab bolted to the
-    flat spreader plate, which carries it on its inner face (tab hole 17.25 mm above the board face, leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of the
-    varistor stands under its 800 V and the opto-triac''s 800 V (open-items.md, D7). Net RET is shared with the other switch sheet and the return landing sheet.'
+    output pins to the right; the opto-triac (surface-mount MOC3083SVM, fitted by the assembler) is the barrier part and straddles the line: its LED pins 1-2 (+5V_WB, HEAT_S_LED_K) are drawn on its left as low voltage, its
+    output pins 4 and 6 on its right with the mains. Separation basis barrier: heater-switch (reinforced, mains to low voltage), formed by the opto-triac and the board spacing around it. Chain: OUT_S -> U921.6; U921.4 -> R921
+    -> R922 -> T921 gate; T921 MT2 on OUT_S, MT1 on RET. No gate-to-MT1 resistor, no snubber (division record: snubbers dropped, varistors kept). U921.3 and U921.5 carry no-connect flags. The LED series resistor and the low-side
+    sink are on the main board (HEAT_S_DRV stage), none here; the LED is lit only through HEAT_S_LED_K. Triac switches the neutral side; there is no live feed on this board. The triac stands with its insulated tab bolted to
+    the flat spreader plate, which carries it on its inner face (tab hole 17.25 mm above the board face, leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of
+    the varistor stands under its 800 V and the opto-triac''s 800 V (open-items.md, D7). Net RET is shared with the other switch sheet and the return landing sheet.'
 - order: 3
   sheet: Low-voltage header
   source_file: 300-low-voltage-header.yaml
@@ -455,7 +431,6 @@ sheets:
     maker: XFCN
     lcsc: C2937625
     class: extended
-    hand: false
     function: three-way low-voltage cable header to the main board's J761, positions 1 to 3
     mains: false
     sim_exclude: true
@@ -474,7 +449,6 @@ sheets:
     maker: ''
     lcsc: none
     class: none
-    hand: false
     function: 'The board''s single mounting hole (M3 screw, 3.2 mm non-plated): the 3D-printed case retains the board with a printed ledge and hold-down fingers or lid ribs, and the hole keeps the mounting_hole distance from
       Mains copper whatever the screw is made of; not in the bill of materials, not in the position file'
     mains: false
@@ -501,9 +475,10 @@ sheets:
     has no ground net: the LED current returns through the main board. The mains-presence confirms stay off this board (owner decision D2), so the main board''s J761 pins 4 to 10 are not on this cable. H1 (the board''s single
     mounting hole) is a mechanical symbol on no net, drawn on this sheet with the LCSC field none: it takes an M3 screw, the board is a plain 45 x 75 mm rectangle with no ears, and the 3D-printed case retains it with a printed
     ledge and hold-down fingers or lid ribs (the layout''s decision of 2026-11-19, delegated by the owner). The hole is held to the pre-order check''s mounting_hole distance from Mains copper whatever the screw is made of,
-    and H1 is not in the bill of materials or the position file. The board carries no fiducials: nothing is assembled by a service (a bare-PCB order with every part hand-fitted: through-hole T911, T921, J911, J921, J941, RV911,
-    RV921, J931; surface-mount R911, R912, R921, R922, U911, U921; H1 a hole, 14 fitted parts), so a fiducial-free board is ordered. The symbol is drawn with in_bom yes; the exclusion is set on the placed footprint at layout
-    (open-items.md). Low voltage only: the nearest mains net on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'
+    and H1 is not in the bill of materials or the position file. The board carries no fiducials: JLCPCB fits all 14 numbered parts in its Economic assembly mode (owner decision of 2026-11-23: through-hole T911, T921, J911,
+    J921, J941, RV911, RV921, J931; surface-mount R911, R912, R921, R922, U911, U921; H1 a hole, not a part), and JLCPCB adds the fiducial marks for that mode itself, so the board is ordered without them under the signed exception
+    of board-rules.yaml assembler_fiducials (assembler-fitting-record.md). The symbol is drawn with in_bom yes; the exclusion is set on the placed footprint at layout (open-items.md). Low voltage only: the nearest mains net
+    on the board is at least 10.0 mm by surface path from this header (separation basis, heater-switch barrier).'
 - order: 4
   sheet: Return landing
   source_file: 400-return-landing.yaml
@@ -518,7 +493,6 @@ sheets:
     maker: TE Connectivity
     lcsc: C86469
     class: extended
-    hand: true
     function: 'return landing: RET, the wire back to the main board''s WB_RET blade J110 (owner decision D8 drawn at the blade)'
     mains: true
     sim_exclude: true
@@ -576,7 +550,7 @@ custom_footprints:
 - name: heater-wall-board:SMDIP-6_W9.53mm_MOC3083SR2M
   from: onsemi MOC3083M/D Rev. 2, CASE 646BY surface-mount gull-wing lead bend, as drawn in heater-wall-board.pretty/SMDIP-6_W9.53mm_MOC3083SR2M.kicad_mod
   detail: Six smd pads numbered 1 to 6, 2.00 x 1.50 mm, 2.54 mm pitch down each row, rows 9.53 mm apart centre to centre (pins 1-3 left, 4-6 right, pin 4 opposite pin 3), pad gap along the row 1.04 mm (the maker's recommended
-    land is 1.78 x 1.52 mm with 0.76 mm gap; the wider pad is carried as an open item), hand-fitted, excluded from the position file. Used by U911 and U921.
+    land is 1.78 x 1.52 mm with 0.76 mm gap; the wider pad is carried as an open item), fitted by the assembler, in the position file (owner decision of 2026-11-23). Used by U911 and U921.
   sheet: Coffee heater switch
 - name: heater-wall-board:TO-220-3_Vertical_Insulated_OvalPads
   from: ST DS2114 Rev 11 (BTA16-800BWRG, TO-220AB insulated), as drawn in heater-wall-board.pretty/TO-220-3_Vertical_Insulated_OvalPads.kicad_mod; the stock Package_TO_SOT_THT:TO-220-3_Vertical it replaces is not used
