@@ -1,0 +1,12 @@
+id: SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK.C2
+type: criterion
+title: The records of both boards state that the placeholder text is gone and both boards still pass their checks
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The silkscreen inventory, the fabrication notes, the layout plan and the production-files check of each board that listed the text state that it is removed and why, and the pre-order check and the board tests pass on both designs. The layout review rounds, which record what was reviewed at the time, are out of scope.
+links:
+  - target: SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK
+    type: criterion-of

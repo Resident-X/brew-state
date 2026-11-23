@@ -102738,18 +102738,6 @@
 		(layer "F.SilkS")
 		(uuid "3c9acced-778f-49ff-8017-a808c043cab4")
 	)
-	(gr_text "JLCJLCJLCJLC"
-		(at 100 8 0)
-		(layer "B.SilkS")
-		(uuid "8b1887a5-8806-55b2-8f6e-d65896eb2d8d")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.15)
-			)
-			(justify mirror)
-		)
-	)
 	(gr_text "230 V~ 50 Hz"
 		(at 24.0449 96.9199 0)
 		(layer "F.SilkS")

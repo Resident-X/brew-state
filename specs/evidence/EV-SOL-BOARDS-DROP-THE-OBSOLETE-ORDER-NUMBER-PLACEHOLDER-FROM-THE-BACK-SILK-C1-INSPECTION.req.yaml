@@ -1,0 +1,16 @@
+id: EV-SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-23T07:21:08.654006Z"
+artifact:
+  kind: external
+  reference: 'inspection: kicad-cli Gerber export of the back silkscreen of both boards; main board diff is pure deletion (176 stroke lines within x 95-105 mm), wall board back-silk layer 193 lines to 15 (header only)'
+  artifact_version: 2c3c8c746e097cf80940e8332763ccaeba26892d
+attested_by: crun-c2e226785e25b6ef
+links:
+  - target: SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK.C1
+    type: satisfies

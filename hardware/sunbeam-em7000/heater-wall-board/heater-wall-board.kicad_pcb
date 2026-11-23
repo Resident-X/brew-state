@@ -4687,16 +4687,4 @@
 			(justify right)
 		)
 	)
-	(gr_text "JLCJLCJLCJLC"
-		(at 56.5 80 0)
-		(layer "B.SilkS")
-		(uuid "84609717-721d-5790-9829-62ab7af49b75")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.15)
-			)
-			(justify mirror)
-		)
-	)
 )

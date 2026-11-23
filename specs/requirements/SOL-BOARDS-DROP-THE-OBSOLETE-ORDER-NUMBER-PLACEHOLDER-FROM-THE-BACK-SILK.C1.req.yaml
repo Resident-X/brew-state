@@ -1,0 +1,12 @@
+id: SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK.C1
+type: criterion
+title: Neither board carries the order-number placeholder text on its back silkscreen
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The back silkscreen of the main board and of the heater wall board holds no text reading `JLCJLCJLCJLC`, and the Gerber file of each board's back silkscreen exported from the committed design holds no such text. The front silkscreen, the copper, the mask and the drill file of both boards are out of scope and stay as they were.
+links:
+  - target: SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK
+    type: criterion-of
