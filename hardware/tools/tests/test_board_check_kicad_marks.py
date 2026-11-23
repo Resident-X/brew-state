@@ -223,6 +223,48 @@ class TheTrackedDesignsPassTheFiducialAndPolarityMarkRules(unittest.TestCase):
 
 
 
+STATEMENT = (
+    "assembler_fiducials:\n"
+    "  reason: \"the assembler adds the marks for its economic process\"\n"
+    "  source: \"none -- a synthetic source\"\n"
+    "  accepted_by: \"Test Owner\"\n"
+    "  accepted_on: \"2026-01-02\"\n"
+    "synthetic: true")
+
+
+class TheCheckReadsTheOwnersAssemblerFiducialsStatement(unittest.TestCase):
+    """The whole check, run on a throwaway copy of the proof design, takes a signed statement's word for a side short of fiducials and calls a stale one stale."""
+
+    NAME = "gate-proof"
+
+    def run_check(self, seeded):
+        with tempfile.TemporaryDirectory(prefix="board-test-") as scratch:
+            seed = board_prove.prepare(scratch, f"hardware/proof/{self.NAME}", self.NAME)
+            if seeded:
+                board_prove.fiducials_short(seed)
+            seed.replace("board-rules.yaml", "synthetic: true", STATEMENT)
+            status, lines, stderr = board_prove.check(seed, KICAD_CLI)
+        self.assertNotEqual(status, 2, stderr)
+        return status, lines
+
+    def test_a_signed_statement_turns_the_violation_into_a_reported_acceptance(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception (the whole check, as the report prints it)
+        status, lines = self.run_check(seeded=True)
+        self.assertEqual([line for line in lines if line.startswith("VIOLATION") and "| side_fiducials |" in line], [], lines)
+        accepted = [line for line in lines if line.startswith("ACCEPTED") and "| side_fiducials |" in line]
+        self.assertEqual(len(accepted), 1, lines)
+        self.assertIn("the front side has 1 surface-mount parts and 2 fiducials", accepted[0])
+        self.assertIn("Test Owner on 2026-01-02", accepted[0])
+
+    def test_a_statement_on_a_board_that_needs_none_fails_as_stale(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception (a statement excusing nothing fails the board)
+        status, lines = self.run_check(seeded=False)
+        stale = [line for line in lines if line.startswith("VIOLATION") and "| side_fiducials |" in line]
+        self.assertEqual(len(stale), 1, lines)
+        self.assertIn("is stale; remove it", stale[0])
+        self.assertEqual(status, 1)
+
+
 class TheCleanDesignStatesTheFiguresOfTheDecouplingAndSilkscreenRules(SharedCopy):
     # SOL-BOARD-METHOD-FOLLOWABLE-AND-MACHINE-FREE.C3: Each rule the method proof design's review adds fails on a fault seeded for it and passes the clean design
     """The report states the two inherent zeros, and how much of the layout the decoupling rule measured."""

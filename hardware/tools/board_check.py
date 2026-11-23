@@ -48,8 +48,8 @@ import secrets
 import shutil
 import subprocess
 import sys
-import unicodedata
 import tempfile
+import unicodedata
 from fractions import Fraction
 from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
 
@@ -2931,8 +2931,6 @@ def placed_positions(root: str, design: Design, repository: Repository
                 seen[reference] = (identity, {unit})
                 placed[reference] = stated
     return placed, repeated, disagreements
-
-
 
 
 def check_parts(yaml, root: str, design: Design, repository: Repository, today: datetime.date,

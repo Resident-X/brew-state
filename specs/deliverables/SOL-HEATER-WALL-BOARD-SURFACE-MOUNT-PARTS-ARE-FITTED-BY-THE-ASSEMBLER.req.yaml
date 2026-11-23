@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The heater wall board's surface-mount parts are fitted by the assembler under a signed exception to the fiducial rule
 status: active
-version: 2
+version: 3
 text: |
   Brings the heater wall board to the owner's decision of 2026-11-23 that the assembler fits every numbered part of the board, in place of the decision of 2026-11-19 that the board is a bare-PCB order with every part fitted by hand. The board's two opto-triacs and four gate resistors are surface-mount parts that the layout excluded from the position file because they were to be hand-fitted; the assembler can place them only once they are in it.
 

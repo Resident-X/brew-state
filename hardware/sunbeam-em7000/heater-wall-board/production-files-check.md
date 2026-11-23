@@ -21,7 +21,7 @@
 The same 14 rows were uploaded to JLCPCB for the owner's test quote of 2026-11-23 (from a scratch copy of the board with the attribute removed); the operator read pin 1 of U911 and U921 in that preview at the board's pin 1. A full re-judgement of the per-part table against the assembler's preview of the order's own upload is owed at the order (`ordering-record.md`), as the method's step 3 asks.
 
 ### Parts
-(8 rows = 8 placement rows. U911, U921, R911, R912, R921, R922 and H1 carry exclude_from_pos_files and are hand-fitted or a hole, so they have no placement row; they are checked under Catalogue part in the parts list only.)
+(Earlier state of 2026-11-22, kept as read then: 8 rows = 8 placement rows. U911, U921, R911, R912, R921, R922 and H1 carried exclude_from_pos_files and were hand-fitted or a hole, so they had no placement row. Since 2026-11-23 the six surface-mount parts are in the position file and the section above is the current record: 14 rows, H1 alone excluded.)
 
 | Part | Position (file / preview) | Rotation (file / preview) | Polarity or first pin (file / preview) | Catalogue part (record / parts list) | Verdict | Why |
 |---|---|---|---|---|---|---|
