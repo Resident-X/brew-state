@@ -1,0 +1,15 @@
+id: EV-SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER-C1
+type: evidence
+title: test evidence for SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-23T23:11:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_marks.py
+links:
+  - target: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1
+    type: satisfies
