@@ -15,3 +15,7 @@ links:
     type: derives-from
   - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
     type: targets
+brief_confirmation:
+  confirmer: executor (claude-sonnet-5-5)
+  fingerprint: 388421c27b582df06a845f3f11ba80f3cc1853b1c46aa8862937e6ae2b0c9789
+  gating_profile: ""
