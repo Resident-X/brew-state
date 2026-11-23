@@ -1,0 +1,16 @@
+id: EV-SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-23T07:21:08.730333Z"
+artifact:
+  kind: external
+  reference: 'inspection: board records (fabrication-notes, design-rules, layout-plan, production-files-check) state the placeholder is gone; task hw:verify PASS (7 designs); task hw:test:round PASS (125 modules, 3728 tests)'
+  artifact_version: 2c3c8c746e097cf80940e8332763ccaeba26892d
+attested_by: crun-c2e226785e25b6ef
+links:
+  - target: SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK.C2
+    type: satisfies
