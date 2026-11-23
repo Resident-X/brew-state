@@ -51,8 +51,7 @@ NS = uuid.UUID("5d1c0f7e-3a52-4b0a-9a6e-77c0b4a3e003")
 def text(key, s, layer, x, y, just):
     return ('\t(gr_text "%s"\n\t\t(at %s %s 0)\n\t\t(layer "%s")\n\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n\t\t\t\t(size 1 1)\n\t\t\t\t(thickness 0.15)\n\t\t\t)\n\t\t\t(justify %s)\n\t\t)\n\t)'
             % (s, n(x), n(y), layer, uuid.uuid5(NS, key), just))
-new = [text("j931_dest", "TO MAIN BOARD J761", "F.SilkS", 56.2, 68.25, "right"),
-       text("jlc_order", "JLCJLCJLCJLC", "B.SilkS", 56.5, 80.0, "mirror")]
+new = [text("j931_dest", "TO MAIN BOARD J761", "F.SilkS", 56.2, 68.25, "right")]
 assert L[-1] == "" and L[-2] == ")"
 L = L[:-2] + new + [")", ""]
 open(dst, "w", encoding="utf-8").write("\n".join(L))
