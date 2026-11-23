@@ -2264,7 +2264,8 @@ NEVER_WARNING_POLICY = {
 }
 #: The rules the record never accepts though they read like workmanship, each with why.
 NEVER_ACCEPTED_WORKMANSHIP = {
-    "side_fiducials": "the missing back-side fiducials are not accepted, the parts that cause them move to the front",
+    "side_fiducials": "missing fiducials are not accepted by place: the parts that cause them move to the front, or the "
+                      "board rules record carries the owner's signed assembler_fiducials statement",
     "hole_to_hole": "its shortfall is accepted only by a same_connector_pins entry of the separation basis record, since "
                     "the owner can vouch for a connector's use but not for an arbitrary pair of holes",
     "workmanship_rule": "it reports a rules file the check cannot read, so there is no measured line to accept",
@@ -3442,7 +3443,12 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
 
 BOARD_RULES_NAME = "board-rules.yaml"
 #: The keys of the board rules record, of the sensing mapping, of the ground-return mapping and of each signal class in it.
-BOARD_RULES_KEYS = ("sensing", "ground_returns", "fabrication", "synthetic")
+BOARD_RULES_KEYS = ("sensing", "ground_returns", "fabrication", "assembler_fiducials", "synthetic")
+#: The keys the board rules record may leave out.
+BOARD_RULES_OPTIONAL = ("synthetic", "assembler_fiducials")
+#: The keys of the assembler_fiducials mapping, every one required: the owner's signed statement that the assembler's
+#: own process supplies the fiducial marks the board's assembled sides lack, why, on what published source, by whom and when.
+ASSEMBLER_FIDUCIAL_KEYS = ("reason", "source", "accepted_by", "accepted_on")
 #: The keys of the fabrication mapping: the finished outer copper weight the order must select, and why that weight was chosen.
 FABRICATION_KEYS = ("outer_copper_oz", "source")
 SENSING_KEYS = ("classes", "noisy_classes", "clearance_mm", "source")
@@ -3477,9 +3483,11 @@ def load_board_rules(yaml, root: str, repository: Repository, design: Design, no
                                 f"add the record, stating each of sensing and ground_returns, or {NOTHING} where the design has "
                                 "none, and the fabrication mapping with the finished outer copper weight the order selects")]
     data, reading = read_optional(yaml, root, repository, design, BOARD_RULES_NAME, "board_rules_record",
-                                  "board rules record", BOARD_RULES_KEYS, not_for_manufacture)
+                                  "board rules record", BOARD_RULES_KEYS, not_for_manufacture, BOARD_RULES_OPTIONAL)
     if data is None:
         return None, reading.found
+    if "assembler_fiducials" in data:
+        read_assembler_fiducials(reading, data["assembler_fiducials"])
     for key, read in (("sensing", read_sensing), ("ground_returns", read_ground_returns)):
         if key not in data or data[key] == NOTHING:
             continue
@@ -3509,6 +3517,23 @@ def read_fabrication(reading: Reading, fabrication) -> None:
         reading.positive("fabrication.outer_copper_oz", fabrication["outer_copper_oz"], " of ounces")
     if "source" in fabrication:
         reading.text("fabrication.source", fabrication["source"])
+
+
+def read_assembler_fiducials(reading: Reading, statement) -> None:
+    """The assembler_fiducials mapping's form: a reason, the published source it rests on, and the owner's signature.
+
+    It is the one way a board's side with assembled surface-mount parts may carry fewer than FIDUCIALS_PER_SIDE
+    fiducials: the owner states, on the manufacturer's own published word, that the assembler adds the marks itself.
+    Whether the signature is a signature, and whether the statement excuses anything, is judged with the layout.
+    """
+    if not reading.mapping("assembler_fiducials", statement, ASSEMBLER_FIDUCIAL_KEYS, ASSEMBLER_FIDUCIAL_KEYS,
+                           "an assembler fiducials statement"):
+        return
+    for key in ("reason", "source", "accepted_by"):
+        if key in statement:
+            reading.text(f"assembler_fiducials.{key}", statement[key])
+    if "accepted_on" in statement:
+        reading.date("assembler_fiducials.accepted_on", statement["accepted_on"])
 
 
 def class_names(reading: Reading, path: str, names, empty: bool = False) -> List[str]:
@@ -7908,6 +7933,39 @@ def missing_fiducials(design: Design, tree: list) -> List[Violation]:
     return violations
 
 
+def judge_fiducials(design: Design, tree: list, record: str, statement: Optional[dict], today: datetime.date,
+                    accepted: Optional[List[str]] = None) -> List[Violation]:
+    """The side_fiducials lines of the layout, less those the board rules record's signed assembler_fiducials statement covers.
+
+    With no statement every line stands. A statement that is not signed (accepted_by a placeholder or blank,
+    accepted_on not a date or later than today) excuses nothing, and each line stands with that said. A signed
+    statement takes every side's line and gives `accepted` a report line for each; a signed statement on a board
+    whose sides lack no fiducial excuses nothing and fails as stale.
+    """
+    lines = missing_fiducials(design, tree)
+    if statement is None:
+        return lines
+    where = f"{record} assembler_fiducials"
+    unsigned = entry_unsigned(statement, None, today)
+    if unsigned is not None:
+        return [Violation(line.design, line.rule, line.location,
+                          f"{line.message}; {where} excuses nothing, {unsigned}; the owner signs the statement")
+                for line in lines]
+    if not lines:
+        return [Violation(design.project, "side_fiducials", where,
+                          f"{where} states that the assembler supplies the fiducials, but no side of the board that "
+                          "carries assembled surface-mount parts lacks them, so the statement excuses nothing and is "
+                          "stale; remove it")]
+    if accepted is not None:
+        for line in lines:
+            accepted.append("ACCEPTED | " + " | ".join(clean(field) for field in (
+                design.project, "side_fiducials", where,
+                f"{line.location}: {line.message}; the owner accepts that the assembler supplies the fiducials: "
+                f"{statement['reason'].strip()} (source {statement['source'].strip()}; accepted by "
+                f"{statement['accepted_by'].strip()} on {iso_date(statement['accepted_on']).isoformat()})")))
+    return []
+
+
 def schematic_parts(netlist: list) -> Dict[str, Tuple[str, List[str]]]:
     """Each part of KiCad's netlist by reference: the library item name of its symbol, and the name of each pin it has."""
     symbols: Dict[str, str] = {}
@@ -9044,7 +9102,8 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
         read.append(("MFG-9 designator beside its part", "none, inherent zero", "0 designators inside a part's courtyard or "
                      "nearer another part than their own"))
         read.append(("MFG-10 fiducials on a side", "none, the item's own count", f"{FIDUCIALS_PER_SIDE} fiducials at least on each side "
-                     "that carries assembled surface-mount parts"))
+                     "that carries assembled surface-mount parts, unless the board rules record's signed assembler_fiducials "
+                     "statement says the assembler supplies them"))
 
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
@@ -9382,7 +9441,8 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
                          f"{len(paths)} paths of {circuits} circuits with a supply pin"))
         found += references_off_silkscreen(design, tree)
         found += designators_astray(design, tree)
-        found += missing_fiducials(design, tree)
+        found += judge_fiducials(design, tree, rules_record,
+                                 board_rules.get("assembler_fiducials") if board_rules is not None else None, today, accepted)
         found += unmarked_pins(design, tree, parts)
         if board_rules is not None and board_rules["ground_returns"] != NOTHING:
             found += ground_returns(design, tree, rules_record, board_rules["ground_returns"], members)

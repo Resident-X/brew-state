@@ -692,5 +692,47 @@ class TheFabricationMappingIsRead(Tree):
         self.assertFails(changed(fabrication=["outer_copper_oz", 1]), "board-rules.yaml fabrication", "not a mapping of the keys outer_copper_oz, source")
 
 
+STATEMENT = {"reason": "the assembler adds the marks for its economic process", "source": "none -- a synthetic source",
+             "accepted_by": "Test Owner", "accepted_on": "2026-01-02"}
+
+
+def with_statement(**edits) -> dict:
+    statement = copy.deepcopy(STATEMENT)
+    for key, value in edits.items():
+        if value is Ellipsis:
+            del statement[key]
+        else:
+            statement[key] = value
+    return changed(assembler_fiducials=statement)
+
+
+class TheAssemblerFiducialsStatementIsRead(Tree):
+    def test_a_record_may_leave_the_statement_out_and_one_with_every_key_is_accepted_and_returned(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception whose ground is the manufacturer's published statement that it supplies the fiducials for Economic assembly
+        self.assertEqual(self.problems(COMPLETE), [])
+        data, problems = self.load(changed(assembler_fiducials=STATEMENT))
+        self.assertEqual(problems, [])
+        self.assertEqual(data["assembler_fiducials"], STATEMENT)
+
+    def test_a_statement_lacking_a_key_or_holding_a_misspelt_one_fails_naming_it(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception whose ground is the manufacturer's published statement
+        for key in ("reason", "source", "accepted_by", "accepted_on"):
+            with self.subTest(missing=key):
+                self.assertFails(with_statement(**{key: ...}), f"assembler_fiducials.{key}", f"lacks {key}")
+        self.assertFails(with_statement(acepted_by="Test Owner"), "assembler_fiducials.acepted_by", "holds the key 'acepted_by'")
+
+    def test_a_blank_text_an_undated_signature_or_a_statement_that_is_not_a_mapping_fails(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: a signed exception whose ground is the manufacturer's published statement
+        for key in ("reason", "source", "accepted_by"):
+            with self.subTest(blank=key):
+                self.assertFails(with_statement(**{key: " "}), f"assembler_fiducials.{key}", "non-empty string")
+        for day in ("2026-13-01", "yesterday", 20260102):
+            with self.subTest(day=day):
+                self.assertFails(with_statement(accepted_on=day), "assembler_fiducials.accepted_on", "not a valid calendar date")
+        for value in ("none", ["assembler"], True):
+            with self.subTest(value=value):
+                self.assertFails(changed(assembler_fiducials=value), "board-rules.yaml assembler_fiducials", "not a mapping")
+
+
 if __name__ == "__main__":
     unittest.main()
