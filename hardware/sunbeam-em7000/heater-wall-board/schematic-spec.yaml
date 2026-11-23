@@ -247,7 +247,7 @@ sheets:
     output pins 4 and 6 on its right with the mains. Separation basis barrier: heater-switch (reinforced, mains to low voltage), formed by the opto-triac and the board spacing around it. Chain: OUT_C -> U911.6; U911.4 -> R911
     -> R912 -> T911 gate; T911 MT2 on OUT_C, MT1 on RET. No gate-to-MT1 resistor, no snubber (division record: snubbers dropped, varistors kept). U911.3 and U911.5 carry no-connect flags. The LED series resistor and the low-side
     sink are on the main board (HEAT_C_DRV stage), none here; the LED is lit only through HEAT_C_LED_K. Triac switches the neutral side; there is no live feed on this board. The triac stands with its insulated tab bolted to
-    the flat spreader plate, which carries it on its inner face (tab hole 17.25 mm above the board face, leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of
+    the flat spreader plate, which carries it on its inner face (tab hole about 13.6 mm above the board face as the assembler seats it, the plate drilled from the delivered board; leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of
     the varistor stands under its 800 V and the opto-triac''s 800 V (open-items.md, D7). Net RET is shared with the other switch sheet and the return landing sheet.'
 - order: 2
   sheet: Steam heater switch
@@ -415,7 +415,7 @@ sheets:
     output pins 4 and 6 on its right with the mains. Separation basis barrier: heater-switch (reinforced, mains to low voltage), formed by the opto-triac and the board spacing around it. Chain: OUT_S -> U921.6; U921.4 -> R921
     -> R922 -> T921 gate; T921 MT2 on OUT_S, MT1 on RET. No gate-to-MT1 resistor, no snubber (division record: snubbers dropped, varistors kept). U921.3 and U921.5 carry no-connect flags. The LED series resistor and the low-side
     sink are on the main board (HEAT_S_DRV stage), none here; the LED is lit only through HEAT_S_LED_K. Triac switches the neutral side; there is no live feed on this board. The triac stands with its insulated tab bolted to
-    the flat spreader plate, which carries it on its inner face (tab hole 17.25 mm above the board face, leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of
+    the flat spreader plate, which carries it on its inner face (tab hole about 13.6 mm above the board face as the assembler seats it, the plate drilled from the delivered board; leads straight); the insulated tab is not a pin. The triac is the 800 V BW grade (BTA16-800BWRG): the 775 V clamp of
     the varistor stands under its 800 V and the opto-triac''s 800 V (open-items.md, D7). Net RET is shared with the other switch sheet and the return landing sheet.'
 - order: 3
   sheet: Low-voltage header
