@@ -47,7 +47,9 @@ The residual is (9.53 - 9.20) / 2 = 0.165 mm. These rows are the ones the owner'
 
 ## Results of the gates
 
-Recorded at the end of the change, below.
+- **`task hw:verify`** (the whole repository, KiCad 10.0.7), run at `8950b412` and again at `8186fe40`: `RESULT | PASS | all 7 designs passed`, exit 0, both times. The wall board's `DESIGN` line is PASS with no `VIOLATION` and no `WARNING` line under it; its one new line is `ACCEPTED | ... | side_fiducials | hardware/sunbeam-em7000/heater-wall-board/board-rules.yaml assembler_fiducials | the front side (F.Cu): ... 6 surface-mount parts and 0 fiducials ...`. Whole report: 0 `VIOLATION`, 320 `ACCEPTED` (Round 10's 319 and this one).
+- **`task hw:test:round`** at `21395f47`, 3 workers: `run_tool_tests: PASSED: 128 modules, 3812 tests, 0 failed`, exit 0.
+- **Layout review.** Round 11 (full, a fresh reviewer, views rendered at `8950b412`) judged the changed board: MFG-10 moved from not applicable to pass under the signed exception, the assembly items were re-judged, and the board's Gerber, drill and SVG exports at `026c8053` and `8950b412` were found identical apart from timestamps. It raised one record finding, 11.1 (an amendment written inside the frozen critical-routing Pass 1 of `layout-plan.md`, which failed `board_history.py --routed`), closed by `0f1459fb`. Round 12 (full, another fresh reviewer, views rendered again at `8186fe40`) re-tested it (22 of 22 routing-history checks pass) and raised 12.1 (three own-item rows added at placement name no review in their Source), closed by a `does not apply:` reason. `board_review_history.py` passes `closing round`, `round kind`, `round completeness` and `rounds kept` at Round 12 and fails only the four checks disclosed before (`round structure`, `round 1 as first recorded`, `round 3 order`, `round 5 as first recorded`; `owner-sign-off.md` W-13).
 
 ## What the owner acts on
 
