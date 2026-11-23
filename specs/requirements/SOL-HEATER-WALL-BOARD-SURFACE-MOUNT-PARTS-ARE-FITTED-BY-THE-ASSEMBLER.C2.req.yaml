@@ -1,0 +1,12 @@
+id: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C2
+type: criterion
+title: The records and the order files give all fourteen numbered parts to the assembler
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The wall board's parts specification marks every numbered part as fitted by the assembler, its records state the owner's decision of 2026-11-23 and replace the bare-board decision, and the placement file and parts list generated from the committed design hold all fourteen parts, the opto-triacs placed with a recorded override that states its reason. The pre-order check and the board tests pass. The main board and the layout review rounds, which record what was reviewed at the time, are out of scope.
+links:
+  - target: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER
+    type: criterion-of

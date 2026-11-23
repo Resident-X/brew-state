@@ -1,0 +1,15 @@
+id: EV-SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER-C3
+type: evidence
+title: inspection evidence for SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C3
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-23T23:11:56Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/assembler-fitting-record.md
+links:
+  - target: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C3
+    type: satisfies

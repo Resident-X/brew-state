@@ -1,0 +1,12 @@
+id: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C3
+type: criterion
+title: The records state the triacs are assembler-seated and the plate is drilled from the delivered board
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The wall board's records state that the assembler seats the two triacs as its line does, down on the lead shoulders with the tab hole about 13.6 mm above the board face (the lead shoulder height plus the hole's height above the body underside, both from the maker's datasheet), that no order remark asks for another height, and that the plate's tab holes are drilled from the delivered board as a short slot or a hole oversize enough to put no load on the soldered leads. They state that the insulated tab and the plate's lower edge clearance are unchanged by the lower seat. The earlier statements of a 17.25 mm tab-hole height and of the triacs bolted before soldering are amended where they stand as current. The layout review rounds, which record what was reviewed at the time, are out of scope.
+links:
+  - target: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER
+    type: criterion-of

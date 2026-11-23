@@ -262,7 +262,7 @@ class TheUnits(Folder):
         shutil.copytree(self.folder, other)
         names = [f"Z{n}" for n in range(1, 24)]
         pf.fx.write(os.path.join(other, "production", "placement.csv"), pf.placement_text(names))
-        pf.fx.write(os.path.join(other, "production", "parts-list.csv"), "Comment,Designator,Footprint,LCSC\nz,\"" + ", ".join(names) + "\",Lib:Odd_9,C1\n")
+        pf.fx.write(os.path.join(other, "production", "parts-list.csv"), "Comment,Designator,Footprint,JLCPCB Part #（optional）\nz,\"" + ", ".join(names) + "\",Lib:Odd_9,C1\n")
         counts = [len(held.items) for unit, held in prepared(other).declaration.units.items() if unit.startswith("nodrawing")]
         self.assertEqual(counts, [10, 10, 3])
 

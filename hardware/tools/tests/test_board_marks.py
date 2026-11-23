@@ -107,6 +107,72 @@ class EachSideWithAssembledPartsCarriesThreeFiducials(unittest.TestCase):
         self.assertEqual(self.found(resistor("R1"), *left_out), [])
 
 
+TODAY = __import__("datetime").date(2026, 6, 1)
+SIGNED = {"reason": "the assembler adds the marks for its economic process", "source": "none -- a synthetic source",
+          "accepted_by": "Test Owner", "accepted_on": "2026-01-02"}
+
+
+class TheOwnersAssemblerFiducialsStatement(unittest.TestCase):
+    """The one acceptance of a side short of fiducials: the board rules record's signed assembler_fiducials statement."""
+
+    def judged(self, statement, *items):
+        accepted = []
+        lines = board_check.judge_fiducials(DESIGN, tree_of(*items), "a/board-rules.yaml", statement, TODAY, accepted)
+        return lines, accepted
+
+    def test_without_the_statement_a_side_short_of_fiducials_still_fails(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception (without it the rule still fails the board)
+        lines, accepted = self.judged(None, resistor("R1"), resistor("U1", at=(20, 10)))
+        self.assertEqual([(v.rule, v.location) for v in lines], [("side_fiducials", "the front side (F.Cu)")])
+        self.assertIn("the front side has 2 surface-mount parts and 0 fiducials", lines[0].message)
+        self.assertEqual(accepted, [])
+
+    def test_a_signed_statement_takes_the_line_and_reports_it_accepted_with_its_ground_and_signature(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception whose ground is the manufacturer's published statement that it supplies the fiducials
+        lines, accepted = self.judged(SIGNED, resistor("R1"), resistor("U1", at=(20, 10)))
+        self.assertEqual(lines, [])
+        self.assertEqual(len(accepted), 1)
+        for words in ("ACCEPTED | a/a.kicad_pro | side_fiducials | a/board-rules.yaml assembler_fiducials",
+                      "the front side (F.Cu)", "2 surface-mount parts and 0 fiducials", SIGNED["reason"], SIGNED["source"],
+                      "accepted by Test Owner on 2026-01-02"):
+            self.assertIn(words, accepted[0])
+
+    def test_a_signed_statement_takes_each_short_side_and_leaves_no_other_rule_touched(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception
+        lines, accepted = self.judged(SIGNED, resistor("R1"), resistor("R2", side="B.Cu"))
+        self.assertEqual(lines, [])
+        self.assertEqual([line.split(" | ")[4].split(":")[0] for line in accepted], ["the front side (F.Cu)", "the back side (B.Cu)"])
+
+    def test_an_unsigned_statement_excuses_nothing_and_says_why(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: a signed exception (an unsigned one is no exception)
+        cases = {"placeholder": (dict(SIGNED, accepted_by="TBD"), "placeholder"),
+                 "blank": (dict(SIGNED, accepted_by=" "), "accepted_by is ' '"),
+                 "later than today": (dict(SIGNED, accepted_on="2026-06-02"), "later than today (2026-06-01)"),
+                 "no date": (dict(SIGNED, accepted_on="soon"), "not a valid calendar date")}
+        for name, (statement, words) in cases.items():
+            with self.subTest(case=name):
+                lines, accepted = self.judged(statement, resistor("R1"))
+                self.assertEqual([(v.rule, v.location) for v in lines], [("side_fiducials", "the front side (F.Cu)")])
+                self.assertIn("a/board-rules.yaml assembler_fiducials excuses nothing", lines[0].message)
+                self.assertIn(words, lines[0].message)
+                self.assertEqual(accepted, [])
+
+    def test_a_signed_statement_on_a_board_that_lacks_no_fiducial_is_stale_and_fails(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception (one that excuses nothing is stale)
+        for items in ((resistor("R1"), *three_fiducials()), (part("J1", [pad(1, 0, 0, "A", kind="thru_hole")], attr="through_hole"),),
+                      (resistor("R1", attr="smd exclude_from_pos_files"),)):
+            with self.subTest(items=len(items)):
+                lines, accepted = self.judged(SIGNED, *items)
+                self.assertEqual([(v.rule, v.location) for v in lines], [("side_fiducials", "a/board-rules.yaml assembler_fiducials")])
+                self.assertIn("excuses nothing and is stale; remove it", lines[0].message)
+                self.assertEqual(accepted, [])
+
+    def test_the_workmanship_record_still_never_accepts_side_fiducials_and_names_the_statement_instead(self):
+        # SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C1: the board's fiducial rule carries a signed exception (in the board rules record, not by place)
+        self.assertNotIn("side_fiducials", board_check.ACCEPTABLE_WORKMANSHIP)
+        self.assertIn("assembler_fiducials", board_check.NEVER_ACCEPTED_WORKMANSHIP["side_fiducials"])
+
+
 def diode(reference="D1", silk="", pads=None, side="F.Cu", angle=0):
     pads = pads or [pad(1, -1.5, 0, "K"), pad(2, 1.5, 0, "A")]
     return part(reference, pads, silk, side=side, angle=angle)

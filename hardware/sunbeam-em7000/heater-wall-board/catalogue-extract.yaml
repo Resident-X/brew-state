@@ -14,12 +14,16 @@
 # package case 646BY: the family sheet onsemi MOC3081M / MOC3082M / MOC3083M covers all of them. No position uses
 # C111561 or C23552 any more, so their entries are removed, as the main board's extract removes an entry no position uses.
 #
+# comment: one line of plain text for each number, describing the part as the assembler's parts list shows it (maker,
+# maker part number, what the part is); the only source of the parts list's comment column, as in the main board's extract.
+#
 # The extract allows itself 14 days (max_age_days), so it is stale after 2026-12-03 and is read again before the order.
 read_on: 2026-11-19
 max_age_days: 14
 source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), read on 2026-11-19 for the six catalogue numbers of this board
 entries:
 - lcsc: C18002
+  comment: "UNI-ROYAL 1206W4F2000T5E - resistor 200 ohm 1206"
   library_class: extended
   stock: 117518
   unit_price: 0.005
@@ -28,6 +32,7 @@ entries:
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
 - lcsc: C86469
+  comment: "TE Connectivity 63849-1 - 6.3 mm blade PC tab (board-mounted quick-connect tab)"
   library_class: extended
   stock: 192121
   unit_price: 0.0678
@@ -36,6 +41,7 @@ entries:
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
 - lcsc: C2937625
+  comment: "XFCN PZ254V-11-03P - 2.54 mm pitch 1x3 pin header"
   library_class: extended
   stock: 1020022
   unit_price: 0.02
@@ -44,6 +50,7 @@ entries:
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
 - lcsc: C10065
+  comment: "STMicroelectronics BTA16-800BWRG - triac BTA16-800BWRG 800 V 16 A insulated TO-220"
   library_class: extended
   stock: 2180
   unit_price: 1.0281
@@ -52,6 +59,7 @@ entries:
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
 - lcsc: C899868
+  comment: "onsemi MOC3083SVM - opto-triac driver MOC3083SVM SMD 6-pin (V option)"
   library_class: extended
   category: Triac, SCR Output Optoisolators
   stock: 386
@@ -61,6 +69,7 @@ entries:
     source: JLCPCB parts-library search record, which carries no lifecycle field; no maker lifecycle page read
     read_on: 2026-11-19
 - lcsc: C49072860
+  comment: "Zhuhai Hongjiacheng (R+O) 07D471K - varistor 07D471K disc"
   library_class: extended
   stock: 348361
   unit_price: 0.031

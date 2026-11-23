@@ -1,0 +1,19 @@
+id: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER
+type: deliverable
+category: solution
+title: The heater wall board's surface-mount parts are fitted by the assembler under a signed exception to the fiducial rule
+status: active
+version: 3
+text: |
+  Brings the heater wall board to the owner's decision of 2026-11-23 that the assembler fits every numbered part of the board, in place of the decision of 2026-11-19 that the board is a bare-PCB order with every part fitted by hand. The board's two opto-triacs and four gate resistors are surface-mount parts that the layout excluded from the position file because they were to be hand-fitted; the assembler can place them only once they are in it.
+
+  The manufacturer's published pages state that fiducial marks are not necessary for its Economic assembly and that it adds the fiducial marks for surface-mount assembly itself (its assembly capabilities table and its assembly FAQ, read 2026-11-23). The project's own layout rule asks for fiducials on a side that carries assembled surface-mount parts; the board therefore carries a signed exception to it, with that ground, and gains no fiducial and no copper.
+
+  The change takes the exclusion off the six parts, places the opto-triacs with a recorded override (the assembler's footprint for them does not match the board's pads within the default tolerance), and amends the board's records and parts specification to the new decision. The varistors keep their footprint; the stagger of their leads is out of scope.
+rationale: |
+  The owner wants one assembled order for the wall board to see its cost and to have the assembler's preview check the fitment of every part. Honours REQ-BOARD-LAYOUT-PRACTICE-001: a board is laid out for the way it will be made, and a board assembled by the maker carries the marks the maker's process asks for. Mains copper stays locked and the separation basis is not changed.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets

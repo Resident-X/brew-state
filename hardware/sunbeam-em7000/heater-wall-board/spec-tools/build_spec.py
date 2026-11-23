@@ -40,7 +40,6 @@ for s in out_sheets:
 
 parts_total = sum(len(s['parts']) for s in out_sheets)
 by_class = collections.Counter(p.get('class') for s in out_sheets for p in s['parts'])
-hand = sorted(p['ref'] for s in out_sheets for p in s['parts'] if p.get('hand'))
 custom_sym = [dict(c, sheet=s['sheet']) for s in out_sheets for c in s['custom_symbols']]
 custom_fp = [dict(c, sheet=s['sheet']) for s in out_sheets for c in s['custom_footprints']]
 
@@ -54,7 +53,7 @@ spec = {
     'Every net carries the designer name given here; no tool-named net may remain. A pin in no_connect gets a no-connect flag.',
     'Symbol fields on every part: Reference, Value (value), Footprint (footprint), LCSC (lcsc), Rating (rating), plus Manufacturer and MPN (maker, mpn). A part with sim_exclude: true is excluded from simulation in its symbol properties.',
     'Flow left to right on each sheet: inputs and supply at the left, outputs at the right; positive supply toward the top, ground toward the bottom. Mains-referenced circuits stand at the left of a sheet and are drawn apart from low-voltage circuits (the barrier part between them); text clear of text and symbols; connector symbols show pin numbers and the net name beside every pin.',
-    'Place every part named in a sheet; parts with hand: true are parts the owner fits by hand (through-hole, and the surface-mount opto-triacs and 1206 resistors) and are placed like any other.',
+    'Place every part named in a sheet; every numbered part is fitted by the assembler (owner decision of 2026-11-23), and who fits each part is stated in parts-specification.yaml, not here.',
     'Project text variables: MAINS = present. Net class Mains: the nets listed in mains_class_nets.',
     'ERC: a net with only power_in pins needs a PWR_FLAG (the sheet\'s power_flags list names them); no warning may be waived or excluded.']},
  'project_settings': {'MAINS': 'present'},
@@ -62,7 +61,7 @@ spec = {
  'mains_class_nets': MAINS_CLASS,
  'separation_basis': {'record': '../separation-basis.yaml', 'barrier': 'heater-switch', 'barrier_parts': ['U911', 'U921'], 'insulation': 'reinforced, mains to low voltage', 'not_applicable': 'mains-presence-confirm (the confirms stay off this board, owner decision D2)'},
  'sheets_order': ORDER,
- 'totals': {'sheets': len(out_sheets), 'parts': parts_total, 'nets': len(net_index), 'parts_by_catalogue_class': dict(by_class), 'hand_fitted_refs': hand},
+ 'totals': {'sheets': len(out_sheets), 'parts': parts_total, 'nets': len(net_index), 'parts_by_catalogue_class': dict(by_class)},
  'header_to_main_board': {
    'ref': 'J931', 'part': 'WB_LV3, 1x3 2.54 mm pin header (XFCN PZ254V-11-03P, C2937625), cable on positions 1 to 3 of the main board J761',
    'pins': [

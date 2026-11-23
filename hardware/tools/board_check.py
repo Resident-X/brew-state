@@ -49,6 +49,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import unicodedata
 from fractions import Fraction
 from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
 
@@ -2158,16 +2159,57 @@ CATALOGUE_NAME = "catalogue-extract.yaml"
 
 #: The keys a position of the specification record holds; reference and lcsc are required, and class is
 #: required of every position by the derated-voltage rule, which reports a position without it.
-POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class", "fitted")
+POSITION_KEYS = ("reference", "value", "package", "rating", "lcsc", "class", "fitted", "fitted_by")
 #: The one value of a position's optional `fitted` key: the position is not fitted (do not populate). A position with
 #: no `fitted` key is fitted.
 NOT_FITTED = "no"
+#: The two values of a position's optional `fitted_by` key: who fits the part, the assembler or the owner (by hand after
+#: delivery). The production-files step requires it of every position it writes into either file set.
+FITTERS = ("assembler", "owner")
+#: The third value of `fitted_by`: the position is not a part to be fitted by anyone (a mounting hole, a fiducial, a net
+#: tie: copper or drilling only, no bill-of-materials line). It is in neither file set of the production-files step.
+NOT_A_PART = "none"
+FITTED_BY_VALUES = FITTERS + (NOT_A_PART,)
+#: A position's `lcsc` where it has no catalogue number.
+NO_CATALOGUE_NUMBER = "none"
+
+
+def comment_problem(comment: object) -> Optional[str]:
+    """Why `comment` is not an entry's parts-list comment (one line of plain text, not blank, no comma), or None."""
+    if (not isinstance(comment, str) or not comment.strip() or "," in comment
+            or any(unicodedata.category(c)[0] == "C" or unicodedata.category(c) in ("Zl", "Zp") for c in comment)):
+        return (f"{comment!r}, where it is one line of plain text, not blank, with no comma (a comma joins several "
+                "values, and the parts list is comma-separated) and no control or separator character")
+    return None
+
+
+def is_numbered(number: object) -> bool:
+    """Whether `number` is a real catalogue number: text, not blank once trimmed, and not `none` in any case. The one
+    answer every check and tool uses to tell a numbered position from an unnumbered one."""
+    return isinstance(number, str) and bool(number.strip()) and number.strip().lower() != NO_CATALOGUE_NUMBER
+
+
+def fitter_problem(fitter: object, number: object) -> Optional[str]:
+    """Why a position's `fitted_by` does not agree with its catalogue number, or None. A numbered part is fitted by the
+    assembler or the owner, never `none`; a position with no number is not fitted by the assembler, which places only
+    catalogue parts."""
+    if not isinstance(fitter, str):
+        return None
+    numbered = is_numbered(number)
+    if fitter == NOT_A_PART and numbered:
+        return (f"fitted_by is {NOT_A_PART} but its catalogue number is {number.strip()}, so it is a part: write {' or '.join(FITTERS)}; "
+                f"{NOT_A_PART} is for a position that is not a part (a hole, a fiducial, a net tie, a test point)")
+    if fitter == "assembler" and not numbered:
+        return ("fitted_by is assembler but it has no catalogue number, which the assembler needs to place a part: write owner "
+                f"for a real part the owner supplies and fits, or {NOT_A_PART} for a position that is not a part")
+    return None
 #: The keys an entry of the catalogue extract holds, every one required.
 ENTRY_KEYS = ("lcsc", "library_class", "stock", "unit_price")
 #: The keys an entry may hold beside them: a lifecycle mapping, which holds all three of LIFECYCLE_KEYS when present and
 #: which the lifecycle rule requires on the entry of every part the design places, and a category, the first category
-#: name of the part's parts-library record, a non-empty string when present.
-OPTIONAL_ENTRY_KEYS = ("lifecycle", "category")
+#: name of the part's parts-library record, a non-empty string when present, and a comment, the one line of plain text the
+#: assembler's parts list carries for the number (not blank, no comma).
+OPTIONAL_ENTRY_KEYS = ("lifecycle", "category", "comment")
 #: The parts-library first category names of parts that have no supply pin, read on 2026-10-30 from the records of
 #: C108051 (LITEON LTV-814S-TA1-A) and C899826 (onsemi MOC3052SVM). Optocouplers with a gate-driver or logic output and
 #: digital isolators have supply pins and are not listed.
@@ -2222,7 +2264,8 @@ NEVER_WARNING_POLICY = {
 }
 #: The rules the record never accepts though they read like workmanship, each with why.
 NEVER_ACCEPTED_WORKMANSHIP = {
-    "side_fiducials": "the missing back-side fiducials are not accepted, the parts that cause them move to the front",
+    "side_fiducials": "missing fiducials are not accepted by place: the parts that cause them move to the front, or the "
+                      "board rules record carries the owner's signed assembler_fiducials statement",
     "hole_to_hole": "its shortfall is accepted only by a same_connector_pins entry of the separation basis record, since "
                     "the owner can vouch for a connector's use but not for an arbitrary pair of holes",
     "workmanship_rule": "it reports a rules file the check cannot read, so there is no measured line to accept",
@@ -2346,6 +2389,13 @@ def read_specification(yaml, root: str, repository: Repository, design: Design, 
             if isinstance(entry.get("fitted"), str) and entry["fitted"].strip() and entry["fitted"] != NOT_FITTED:
                 bad(f"{where}.fitted", f"{where}.fitted is {entry['fitted']!r}, where its one value is '{NOT_FITTED}', "
                                        "a position not fitted (do not populate); leave the key out of a fitted position")
+            if isinstance(entry.get("fitted_by"), str) and entry["fitted_by"].strip() and entry["fitted_by"] not in FITTED_BY_VALUES:
+                bad(f"{where}.fitted_by", f"{where}.fitted_by is {entry['fitted_by']!r}, where it is one of "
+                                          f"{', '.join(FITTED_BY_VALUES)}: who fits the part, or {NOT_A_PART} for a position "
+                                          "that is not a part (a hole, a fiducial, a net tie)")
+            mismatch = fitter_problem(entry.get("fitted_by"), entry.get("lcsc"))
+            if mismatch:
+                bad(f"{where}.fitted_by", f"{where} ({entry.get('reference')}): {mismatch}")
             reference = entry.get("reference")
             if isinstance(reference, str) and reference.strip():
                 if reference in stated:
@@ -2451,6 +2501,9 @@ def read_extract(yaml, root: str, repository: Repository, design: Design, today:
                 if "category" in entry and (not isinstance(category, str) or not category.strip()):
                     bad(f"{where}.category", f"{where}.category is {category!r}, where it is a non-empty string")
                     category = None
+                comment = entry.get("comment")
+                if "comment" in entry and comment_problem(comment):
+                    bad(f"{where}.comment", f"{where}.comment is {comment_problem(comment)}")
                 klass = entry.get("library_class")
                 if "library_class" in entry and (not isinstance(klass, str) or not klass.strip()):
                     bad(f"{where}.library_class", f"{where}.library_class is {klass!r}, where it is a non-empty string")
@@ -2880,10 +2933,6 @@ def placed_positions(root: str, design: Design, repository: Repository
     return placed, repeated, disagreements
 
 
-#: What a position the manufacturer does not place states in place of a catalogue number; the catalogue is not read for it.
-NO_CATALOGUE_NUMBER = "none"
-
-
 def check_parts(yaml, root: str, design: Design, repository: Repository, today: datetime.date,
                 not_for_manufacture: bool) -> List[Violation]:
     """The design's placed parts held to its specification record and to the catalogue extract. Reads files only."""
@@ -2915,9 +2964,9 @@ def check_parts(yaml, root: str, design: Design, repository: Repository, today: 
                             f"the position {reference} {key} differs: the record states '{record[key]}' and the design "
                             f"has '{part[key] if part[key] is not None else ABSENT}'"))
         number = part["lcsc"]
-        if number is not None and number.strip() == NO_CATALOGUE_NUMBER:
+        if not is_numbered(number):
             continue
-        if catalogue is not None and number is not None and number.strip():
+        if catalogue is not None:
             if number.strip() not in catalogue.stock:
                 found.append(Violation(design.project, "parts_catalogue", f"{reference} lcsc",
                                        f"the position {reference} has the catalogue number {number}, which the "
@@ -3392,7 +3441,12 @@ def voltage_rules(design: Design, yaml, root: str, repository: Repository, not_f
 
 BOARD_RULES_NAME = "board-rules.yaml"
 #: The keys of the board rules record, of the sensing mapping, of the ground-return mapping and of each signal class in it.
-BOARD_RULES_KEYS = ("sensing", "ground_returns", "fabrication", "synthetic")
+BOARD_RULES_KEYS = ("sensing", "ground_returns", "fabrication", "assembler_fiducials", "synthetic")
+#: The keys the board rules record may leave out.
+BOARD_RULES_OPTIONAL = ("synthetic", "assembler_fiducials")
+#: The keys of the assembler_fiducials mapping, every one required: the owner's signed statement that the assembler's
+#: own process supplies the fiducial marks the board's assembled sides lack, why, on what published source, by whom and when.
+ASSEMBLER_FIDUCIAL_KEYS = ("reason", "source", "accepted_by", "accepted_on")
 #: The keys of the fabrication mapping: the finished outer copper weight the order must select, and why that weight was chosen.
 FABRICATION_KEYS = ("outer_copper_oz", "source")
 SENSING_KEYS = ("classes", "noisy_classes", "clearance_mm", "source")
@@ -3427,9 +3481,11 @@ def load_board_rules(yaml, root: str, repository: Repository, design: Design, no
                                 f"add the record, stating each of sensing and ground_returns, or {NOTHING} where the design has "
                                 "none, and the fabrication mapping with the finished outer copper weight the order selects")]
     data, reading = read_optional(yaml, root, repository, design, BOARD_RULES_NAME, "board_rules_record",
-                                  "board rules record", BOARD_RULES_KEYS, not_for_manufacture)
+                                  "board rules record", BOARD_RULES_KEYS, not_for_manufacture, BOARD_RULES_OPTIONAL)
     if data is None:
         return None, reading.found
+    if "assembler_fiducials" in data:
+        read_assembler_fiducials(reading, data["assembler_fiducials"])
     for key, read in (("sensing", read_sensing), ("ground_returns", read_ground_returns)):
         if key not in data or data[key] == NOTHING:
             continue
@@ -3459,6 +3515,23 @@ def read_fabrication(reading: Reading, fabrication) -> None:
         reading.positive("fabrication.outer_copper_oz", fabrication["outer_copper_oz"], " of ounces")
     if "source" in fabrication:
         reading.text("fabrication.source", fabrication["source"])
+
+
+def read_assembler_fiducials(reading: Reading, statement) -> None:
+    """The assembler_fiducials mapping's form: a reason, the published source it rests on, and the owner's signature.
+
+    It is the one way a board's side with assembled surface-mount parts may carry fewer than FIDUCIALS_PER_SIDE
+    fiducials: the owner states, on the manufacturer's own published word, that the assembler adds the marks itself.
+    Whether the signature is a signature, and whether the statement excuses anything, is judged with the layout.
+    """
+    if not reading.mapping("assembler_fiducials", statement, ASSEMBLER_FIDUCIAL_KEYS, ASSEMBLER_FIDUCIAL_KEYS,
+                           "an assembler fiducials statement"):
+        return
+    for key in ("reason", "source", "accepted_by"):
+        if key in statement:
+            reading.text(f"assembler_fiducials.{key}", statement[key])
+    if "accepted_on" in statement:
+        reading.date("assembler_fiducials.accepted_on", statement["accepted_on"])
 
 
 def class_names(reading: Reading, path: str, names, empty: bool = False) -> List[str]:
@@ -7858,6 +7931,39 @@ def missing_fiducials(design: Design, tree: list) -> List[Violation]:
     return violations
 
 
+def judge_fiducials(design: Design, tree: list, record: str, statement: Optional[dict], today: datetime.date,
+                    accepted: Optional[List[str]] = None) -> List[Violation]:
+    """The side_fiducials lines of the layout, less those the board rules record's signed assembler_fiducials statement covers.
+
+    With no statement every line stands. A statement that is not signed (accepted_by a placeholder or blank,
+    accepted_on not a date or later than today) excuses nothing, and each line stands with that said. A signed
+    statement takes every side's line and gives `accepted` a report line for each; a signed statement on a board
+    whose sides lack no fiducial excuses nothing and fails as stale.
+    """
+    lines = missing_fiducials(design, tree)
+    if statement is None:
+        return lines
+    where = f"{record} assembler_fiducials"
+    unsigned = entry_unsigned(statement, None, today)
+    if unsigned is not None:
+        return [Violation(line.design, line.rule, line.location,
+                          f"{line.message}; {where} excuses nothing, {unsigned}; the owner signs the statement")
+                for line in lines]
+    if not lines:
+        return [Violation(design.project, "side_fiducials", where,
+                          f"{where} states that the assembler supplies the fiducials, but no side of the board that "
+                          "carries assembled surface-mount parts lacks them, so the statement excuses nothing and is "
+                          "stale; remove it")]
+    if accepted is not None:
+        for line in lines:
+            accepted.append("ACCEPTED | " + " | ".join(clean(field) for field in (
+                design.project, "side_fiducials", where,
+                f"{line.location}: {line.message}; the owner accepts that the assembler supplies the fiducials: "
+                f"{statement['reason'].strip()} (source {statement['source'].strip()}; accepted by "
+                f"{statement['accepted_by'].strip()} on {iso_date(statement['accepted_on']).isoformat()})")))
+    return []
+
+
 def schematic_parts(netlist: list) -> Dict[str, Tuple[str, List[str]]]:
     """Each part of KiCad's netlist by reference: the library item name of its symbol, and the name of each pin it has."""
     symbols: Dict[str, str] = {}
@@ -8994,7 +9100,8 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
         read.append(("MFG-9 designator beside its part", "none, inherent zero", "0 designators inside a part's courtyard or "
                      "nearer another part than their own"))
         read.append(("MFG-10 fiducials on a side", "none, the item's own count", f"{FIDUCIALS_PER_SIDE} fiducials at least on each side "
-                     "that carries assembled surface-mount parts"))
+                     "that carries assembled surface-mount parts, unless the board rules record's signed assembler_fiducials "
+                     "statement says the assembler supplies them"))
 
     found += exclusions(design, project)
     rules, hidden = read_rules(root, design, repository)
@@ -9332,7 +9439,8 @@ def check_design_lines(design: Design, repository: Repository, kicad_cli: str, y
                          f"{len(paths)} paths of {circuits} circuits with a supply pin"))
         found += references_off_silkscreen(design, tree)
         found += designators_astray(design, tree)
-        found += missing_fiducials(design, tree)
+        found += judge_fiducials(design, tree, rules_record,
+                                 board_rules.get("assembler_fiducials") if board_rules is not None else None, today, accepted)
         found += unmarked_pins(design, tree, parts)
         if board_rules is not None and board_rules["ground_returns"] != NOTHING:
             found += ground_returns(design, tree, rules_record, board_rules["ground_returns"], members)
