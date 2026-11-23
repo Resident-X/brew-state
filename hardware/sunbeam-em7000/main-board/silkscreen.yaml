@@ -49,12 +49,13 @@ legends:
     prefer: [30.35, 15.15]
     lines: [{text: DANGER, size: 2.0}, {text: MAINS VOLTAGE, size: 2.0}]
 
+# The back carries no fixed text. The maker prints no order number on the board and its page on marking a board
+# (https://jlcpcb.com/help/article/How-to-mark-on-PCB) says the text must not be drawn on a silkscreen layer for that purpose.
 fixed_texts:
   - {id: title, text: "BREW STATE", side: F, size: 2.0, at: [86.0, 4.5]}
   - {id: product, text: "SUNBEAM EM7000", side: F, size: 1.0, at: [86.0, 7.0]}
   - {id: revision, text: "v1  2026-11", side: F, size: 1.5, at: [86.0, 9.2]}
   - {id: maker, text: "MADE WITH STAIRCASE", side: F, size: 1.0, at: [86.0, 11.4]}
-  - {id: jlc-order-number, text: "JLCJLCJLCJLC", side: B, size: 1.0, at: [100.0, 8.0]}
   - {id: supply-line, text: "230 V~ 50 Hz", side: F, size: 1.5, at: [24.0449, 96.9199]}
   - {id: barrier-1-mains, text: "MAINS", side: F, size: 1.5, at: [53.4202, 18.0359], angle: 90}
   - {id: barrier-2-low-voltage, text: "LOW VOLTAGE", side: F, size: 1.5, at: [70.9203, 24.0357], angle: 90}

@@ -31,7 +31,7 @@ Preview columns read n/a, not matches-against-preview, because no preview exists
 | F.Mask | heater-wall-board-F_Mask.gts | render, looked at; identical to the bd942f31 file apart from the date lines | matches | openings at every pad, blade holes, M3 hole; the moved via has no opening on either mask (tented), as before |
 | B.Mask | heater-wall-board-B_Mask.gbs | render, looked at; identical to the bd942f31 file apart from the date lines | matches | likewise |
 | F.SilkS | heater-wall-board-F_Silkscreen.gto | render, looked at; differs from the bd942f31 file (reference labels now vertical, blade legends OUT_C, OUT_S, RET and COFFEE, STEAM, RETURN rotated, maker block moved) | matches | text reads correctly and in place (warning triangle and mains notice, J931 pin list, part references, BREW STATE title and maker block, STAIRCASE mark, outlines of the blades, varistors, opto-triacs and header; vertical labels read upward); no stroke under 0.15 mm (aperture table below); no paste layer |
-| B.SilkS | heater-wall-board-B_Silkscreen.gbo | render, looked at; byte-identical to the bd942f31 file apart from the date lines | matches | only JLCJLCJLCJLC, reads backward in the top-down frame, correct for a back-side mark; one aperture, 0.150 mm |
+| B.SilkS | heater-wall-board-B_Silkscreen.gbo | render, looked at; byte-identical to the bd942f31 file apart from the date lines | matches | as judged at 478d3b05: only `JLCJLCJLCJLC`, the maker's order-number placeholder, one aperture, 0.150 mm. That text is since removed (the maker states the order number has not been available since May 2026 and the text must not be added): the committed board's back silkscreen is empty and its Gerber holds no stroke, so this row is re-exported and re-judged at the next production-files check |
 | Edge.Cuts | heater-wall-board-Edge_Cuts.gm1 | render, outline numbers; byte-identical to the bd942f31 file apart from the date lines | matches | gerber bounding box 19.95..65.05 by -96.05..-20.95 mm, the 0.1 mm outline line included, so 45.0 by 75.0 on the line centres (x 20..65, y 21..96); two notches 1.5 mm wide with 0.75 mm round ends, open to the right edge |
 | drill | heater-wall-board.drl | render; board's own pads and vias; differs from the bd942f31 file in one hole coordinate (the via) | matches | 21 holes: 0.3 x1, 0.6 x4, 1.0 x3, 1.1 x6, 1.4 x6 (plated), 3.2 x1 (non-plated); the board holds 20 drilled pads and 1 via, 21; the via is at (58.1, -56.65) in the file, in the Gerber frame, 0.15 mm from its place at bd942f31 |
 
@@ -45,7 +45,7 @@ Aperture table, read from the exported files (every aperture is a circle; every 
 | | D12 | 0.250 mm | 3 strokes |
 | | D13 | 0.300 mm | 8 strokes |
 | | D14 | 0.200001 mm | 6 strokes |
-| B_Silkscreen.gbo | D10 | 0.150 mm | 88 strokes |
+| B_Silkscreen.gbo | D10 | 0.150 mm | 88 strokes (the placeholder text, since removed from the board; the layer is then empty) |
 
 The aperture tables and stroke counts equal those of the bd942f31 set: the label and legend changes moved and turned strokes without adding a size. The smallest aperture in either file is 0.150 mm, the maker's minimum. The board's text is 1.0 mm high at 0.15 mm stroke and 1.5 mm high at 0.2 mm stroke (read from the board with pcbnew); its drawn silk lines are 0.15 and 0.25 mm.
 
