@@ -1,0 +1,17 @@
+id: SOL-BOARDS-DROP-THE-OBSOLETE-ORDER-NUMBER-PLACEHOLDER-FROM-THE-BACK-SILK
+type: deliverable
+category: solution
+title: Both boards drop the obsolete order-number placeholder text from the back silkscreen
+status: active
+version: 1
+text: |
+  Removes the text `JLCJLCJLCJLC` from the back silkscreen of the main board and the heater wall board. The text was drawn as the placeholder where the manufacturer would print the order number. The manufacturer's published page on marking a board states that the order number has not been available since May 2026 and that the text must not be added to a silkscreen layer for that purpose, so on the next order it prints as those letters and marks nothing. The text is silkscreen only: it touches no copper, no mask opening and no drill, so no clearance, creepage or connectivity result changes.
+
+  Every record that lists the text (the silkscreen inventories, the fabrication notes, the layout plan and the production-files check of each board) is corrected to say it is gone. The layout review rounds are history and stay as written.
+rationale: |
+  Workmanship of the board, which REQ-BOARD-LAYOUT-PRACTICE-001 names in its scope: a meaningless string of letters on the back of a mains board is a defect once the reason for it has gone. It is removed before the order is paid for, since the pre-order check ties the committed board to the files that are uploaded.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
