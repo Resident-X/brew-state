@@ -1,0 +1,21 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-FITTED-AND-DEMONSTRATED-ON-THE-DELIVERED-BOARD
+type: deliverable
+category: solution
+title: The delivered board fits and comes apart in its printed case as the design records, shown on the delivered board
+status: active
+version: 1
+text: |
+  Demonstrates, on the delivered board and a printed case, the two fits the case design records only on the model: the lid fitting and coming off with the plate, case and board installed, and a terminal pushed onto each blade without moving the board against the triac leads. It also records the owner's measurements of the triacs' delivered seating that the design leaf graded as unconfirmed. It begins when the boards are received and the owner has printed the case, and ends on the owner's report. Printing the case and bring-up of the board are out of scope.
+
+  Settled for the build: the demonstrations are the ones the case design leaf's C4 and C9 describe, moved here because they need a delivered board; a difference found is named in the record, and a change to the case it calls for is a change to the design leaf's model.
+
+  Locus: the case record in the heater wall board's design folder (hardware/sunbeam-em7000/heater-wall-board/).
+rationale: |
+  Added because the case design leaf's lid-removal and terminal push-on criteria were demonstrations needing a delivered board, a printed case and the owner, which that leaf cannot close before the boards arrive. Splitting them keeps the design closable now and leaves the physical proof with a requirement in the graph. It depends on the boards-received leaf for the board and on the design leaf for the model it proves.
+links:
+  - target: DEL-HW-HEATER-WALL-BOARD-DESIGNED.C16
+    type: derives-from
+  - target: SOL-HW-CONTROLLER-BOARDS-RECEIVED
+    type: depends-on
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: depends-on

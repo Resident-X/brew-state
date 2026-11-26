@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON-C14-TEST-4
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C14
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-26T15:02:11.226976Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/case/tests/test_case.py::test_c14_negative_control_sloped_critical_facets_under_the_noise_area_are_tolerated_and_a_roof_above_it_is_not
+  artifact_version: 8977d7294ce6253d5b6286549991b29ba0d7807d
+attested_by: crun-0981d085abc3392a
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C14
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C19
+type: criterion
+title: The case is judged in its installed orientation, component side down with the lid underneath
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record states the installed orientation as the owner gave it: the plate is vertical on the machine's wall, the board projects from it horizontally with its component side facing down, the tray holds the board's bare back above the parts, and the lid closes the underside and comes off downward. The case is judged in that orientation: the lid removal sweep, the reach of every fixing and of each receptacle, the test finger and drip paths of every opening (falling onto the bare back, not onto parts), and the heat release through the vents given that warm air rises past the board, are each stated for it. Each printed part's print orientation is stated separately from its installed orientation.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

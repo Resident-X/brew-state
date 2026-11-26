@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C17
+type: criterion
+title: The printed material is graded against the temperature the case reaches and the owner items on it are recorded
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record derives the temperature the case reaches at the plate and the barrier from the thermal records, states the printed material's heat-deflection temperature from its maker's document, and grades the material as holding or not holding; where it does not hold the record names the owner acceptance needed. It states the material's flame rating against the mains pads' 10 A and records that no rating is asked of the case, as an item for the owner.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

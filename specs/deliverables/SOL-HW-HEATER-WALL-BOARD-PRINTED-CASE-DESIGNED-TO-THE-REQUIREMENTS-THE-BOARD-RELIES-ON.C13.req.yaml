@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C13
+type: criterion
+title: The case looks good on visual inspection in its single-colour and two-colour forms and carries the Staircase logo
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record states an appearance rubric, chosen by the judge of the look for what suits this project and this machine, and carries the Staircase logo, the project's own logo asset (owner-held, used with the owner's permission) traced to a printable vector kept with the case source and recognisable as that logo in both colour forms, on a face seen when the machine is open. The case is designed in two forms that share every dimension a safety criterion of this leaf fixes: a single-colour form, which prints in one filament, and a two-colour form, whose colour change is by part, by layer or by filament swap and needs no more than two filaments. Each form is judged against the rubric from rendered views taken from at least three angles, and each rubric line is recorded as met or not met per form with the view that shows it. The judge of the look did not design the case, and judges the case as installed with its board in it. The owner may choose between rough options where offered but is not a gate. Out of scope: any appearance feature that reduces a creepage, clearance or slot dimension another criterion of this leaf fixes.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

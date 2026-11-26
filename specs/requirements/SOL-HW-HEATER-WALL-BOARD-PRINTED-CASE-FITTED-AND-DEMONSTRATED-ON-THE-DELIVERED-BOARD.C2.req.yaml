@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-FITTED-AND-DEMONSTRATED-ON-THE-DELIVERED-BOARD.C2
+type: criterion
+title: A terminal pushed onto each blade of the board fitted in a printed tray does not move the board against the triac leads
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  With the delivered board fitted in a printed tray, pushing a terminal onto each of the three blades does not move the board against the triac leads, which the demonstration records. The owner's measured triac seating at delivery is recorded beside it against the range the design leaf stated. Out of scope, the terminals' own retention force.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-FITTED-AND-DEMONSTRATED-ON-THE-DELIVERED-BOARD
+    type: criterion-of

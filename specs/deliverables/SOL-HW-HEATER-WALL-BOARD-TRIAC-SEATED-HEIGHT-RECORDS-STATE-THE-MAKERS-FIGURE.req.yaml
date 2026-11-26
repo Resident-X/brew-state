@@ -1,0 +1,23 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRIAC-SEATED-HEIGHT-RECORDS-STATE-THE-MAKERS-FIGURE
+type: deliverable
+category: solution
+title: The wall board's records state the shoulder-seated triac height from the maker's drawing, not the 0.85 mm and 13.6 mm they carried
+status: active
+version: 2
+text: |
+  Corrects the shoulder-seated triac height that the wall board's records and the assembler-fitting solution's third criterion state. The records give the body underside 0.85 mm above the board and the tab hole about 13.6 mm; the maker's drawing (ST DS2114 Rev 11, Figure 13 and Table 6) gives the body underside 3.75 mm above the board (a1) and the tab hole about 16.4 mm (I4, 15.8 to 16.8 mm), with the 12.75 mm from body underside to hole centre unchanged. The 0.85 mm has no source in the drawing; it left a1 out of the sum. The figures that follow from the height are restated with it: the nearest point of an M3 washer is 12.9 mm above the board, and the lead-to-plate distance at the 6.0 mm lower edge is 3.64 mm from the leads' metal reaching the body underside, replacing the 3.4 mm whose derivation was never written down.
+
+  Settled for the build: the owner's fixed 17.25 mm height and the ruling that the plate is drilled from the delivered board stand; the corrected delivered seat is close to the old fixed height, not 3.65 mm under it. The case model's own parameters already carry 3.75 mm and its 2.55 to 4.55 mm seating range.
+
+  Locus: the heater wall board's fitting record, fabrication notes and open-items record under hardware/sunbeam-em7000/heater-wall-board/, and the retention paragraph of docs/sunbeam-em7000/controller-board-division.md. Dated review rounds are history and are out of scope.
+rationale: |
+  Restores the behaviour REQ-BOARD-LAYOUT-PRACTICE-001.C1 asks of a board's judgement: every figure the judgement rests on is the one the maker's drawing gives. The assembler-fitting solution's third criterion said the wrong thing, a 13.6 mm hole height from a 0.85 mm shoulder height the drawing does not hold, so it is superseded rather than corrected in place; the records that restated it are corrected here with the drawing's labels named.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C1
+    type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 60e5a9cc89255cac89d1bb3268e8ef2bf463b6568ad11101d22a544ccc992212
+  gating_profile: ""
