@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C16
+type: criterion
+title: The board-to-plate fit takes the delivered triacs' seating scatter without loading the soldered leads
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The board-to-plate fit takes the scatter of the delivered triacs' seating, stated as a range of tab-hole height and lean, without loading the soldered leads: the tray's board seat and the barrier are shown by the model to meet at the range's extremes. The plate's tab holes are either a short slot or an oversize hole, or tapped holes drilled at the measured height of the delivered triacs with the tray printed to the measured values, and the case record states which the case takes; for tapped holes it states that the owner's acceptance of that departure from his ruling of 2026-11-24 (slot or oversize hole) is outstanding. The range with its source is recorded as unconfirmed for the owner to check at assembly.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

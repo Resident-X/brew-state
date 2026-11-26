@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C14
+type: criterion
+title: The case prints without supports on critical faces on a common low-cost FDM printer
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record states the printer it is designed to print on as a common low-cost open-frame FDM machine with a 220 by 220 mm bed, a 0.4 mm nozzle and 0.2 mm layers, the owner's printer being one instance, and every printed part fits that bed in the stated print orientation. The record names ASA as the baseline material and states what printing it open-frame needs (a draft shield, a brim, a cardboard box as the cheapest enclosure) and why PC, PETG and PLA are not the baseline. Each part prints with no support material on the creepage barrier, the screw seats, the slot mouths and the lid-fit faces, the orientation and any support that remains are stated per part, and a slicer's sliced result for each part is recorded as the check. The case is assembled with ordinary screws and no part needs post-print machining. Out of scope: printing the case.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

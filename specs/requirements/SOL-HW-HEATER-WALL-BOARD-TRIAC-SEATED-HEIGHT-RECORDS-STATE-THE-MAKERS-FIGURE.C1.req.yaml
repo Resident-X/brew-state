@@ -1,0 +1,14 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRIAC-SEATED-HEIGHT-RECORDS-STATE-THE-MAKERS-FIGURE.C1
+type: criterion
+title: The wall board's records state the shoulder-seated triac's body underside at 3.75 mm and its tab hole at about 16.4 mm above the board face from the maker's drawing
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  Every current statement in the wall board's records and in the controller board division document of a triac seated on its lead shoulders gives its body underside 3.75 mm above the board face and its tab hole about 16.4 mm above it (range 15.8 to 16.8 mm), each stated with the drawing dimension labels it comes from (a1 and I4 of ST DS2114 Rev 11, Figure 13 and Table 6) or pointing to the statement that does. The records are the fitting record, the fabrication notes, the open-items record, the schematic specification, the layout plan and the layout hedges; in the division document each place that states the seated tab-hole height or the least height that clears the lead shoulders is corrected wherever it stands, and none is left with the earlier figures as a current statement. The nearest point of an M3 washer at that height and the lead-to-plate distance at the 6.0 mm lower edge are restated with their arithmetic, and the superseded 13.6 mm and 0.85 mm figures appear only in a dated correction note. The delivered height remains the owner's measurement at delivery. The dated layout review rounds are out of scope.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRIAC-SEATED-HEIGHT-RECORDS-STATE-THE-MAKERS-FIGURE
+    type: criterion-of
+  - target: SOL-HEATER-WALL-BOARD-SURFACE-MOUNT-PARTS-ARE-FITTED-BY-THE-ASSEMBLER.C3
+    type: supersedes

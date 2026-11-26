@@ -1,0 +1,47 @@
+$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load printer-220-asa.ini --center 110,110 --output slice/lid_two.supports-off.gcode out/lid_two.print.stl
+10 => Processing triangulated mesh
+20 => Generating perimeters
+30 => Preparing infill
+45 => Making infill
+65 => Searching support spots
+69 => Alert if supports needed
+print warning: Detected print stability issues:
+
+lid_two.print.stl
+Long bridging extrusions
+
+Consider enabling supports.
+89 => Calculating overhanging perimeters
+88 => Generating skirt and brim
+90 => Exporting G-code to slice/lid_two.supports-off.gcode
+Slicing result exported to slice/lid_two.supports-off.gcode
+exit status 0
+
+$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load printer-220-asa.ini --load support-auto.ini --center 110,110 --output slice/lid_two.supports-auto.gcode out/lid_two.print.stl
+10 => Processing triangulated mesh
+20 => Generating perimeters
+30 => Preparing infill
+45 => Making infill
+65 => Searching support spots
+69 => Alert if supports needed
+70 => Generating support material
+89 => Calculating overhanging perimeters
+88 => Generating skirt and brim
+90 => Exporting G-code to slice/lid_two.supports-auto.gcode
+Slicing result exported to slice/lid_two.supports-auto.gcode
+exit status 0
+
+$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load printer-220-asa.ini --load support-auto.ini --support-material-threshold 0 --center 110,110 --output slice/lid_two.supports-auto-threshold-0.gcode out/lid_two.print.stl
+10 => Processing triangulated mesh
+20 => Generating perimeters
+30 => Preparing infill
+45 => Making infill
+65 => Searching support spots
+69 => Alert if supports needed
+70 => Generating support material
+89 => Calculating overhanging perimeters
+88 => Generating skirt and brim
+90 => Exporting G-code to slice/lid_two.supports-auto-threshold-0.gcode
+Slicing result exported to slice/lid_two.supports-auto-threshold-0.gcode
+exit status 0
+

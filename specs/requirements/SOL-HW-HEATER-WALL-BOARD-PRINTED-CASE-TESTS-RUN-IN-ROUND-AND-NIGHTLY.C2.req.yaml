@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY.C2
+type: criterion
+title: The nightly full verification runs the printed case's tests against main
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The complete verification's single declaration lists the printed case's tests and the nightly run of main runs them unconditionally, on a hosted runner with the CAD environment and the slicer at the versions the case tooling pins, each to completion even after another gate fails. Out of scope: the build round's selection of the tests, and the physical demonstrations on the delivered board.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY
+    type: criterion-of

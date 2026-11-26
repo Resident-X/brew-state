@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON-C21-TEST-18
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-26T15:02:15.658417Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/case/tests/test_case_fit.py::test_slice_placement_carries_a_print_point_back_to_the_model_frame_through_the_reflection
+  artifact_version: 8977d7294ce6253d5b6286549991b29ba0d7807d
+attested_by: crun-0981d085abc3392a
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21
+    type: satisfies

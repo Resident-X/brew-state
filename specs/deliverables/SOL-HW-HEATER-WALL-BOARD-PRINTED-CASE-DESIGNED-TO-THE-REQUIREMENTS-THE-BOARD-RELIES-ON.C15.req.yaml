@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C15
+type: criterion
+title: No opening in the assembled case lets a test finger or a drip reach mains copper
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The lid's heat-release slots and every other opening in the assembled case, with the three receptacles fitted to their blades, keep a standard test finger off the board's mains copper and off every bare mains metal, and no opening lets a drip fall onto mains copper, by the model's geometry with the finger's and the drip's path stated for each opening. One residual is stated and accepted by the owner: the boots of the receptacles at J941 and J921 need a shared bay, so with a receptacle removed a test finger can touch the bare blade. That state is a service state inside the machine's own enclosure, and the case record states the rule that the machine is never energised with a receptacle off a blade, and records the finger figures for the receptacle-off state (blade, bay width, the gap a finger enters, the lean at which it fails) as a stated finding, not a pass. The case record states that the case is the enclosure the separation basis's pollution-degree credit relies on, and what the openings leave of it.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

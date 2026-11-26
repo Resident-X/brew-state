@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY.C3
+type: criterion
+title: The project instructions and the hardware notes say when the printed case's tests run
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The project instructions and the hardware notes state that the printed case's tests run in the build round for a change to the case and nightly on main, and name the paths that select them. Out of scope: the account of the board check's own cadence, which its own solution states.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY
+    type: criterion-of

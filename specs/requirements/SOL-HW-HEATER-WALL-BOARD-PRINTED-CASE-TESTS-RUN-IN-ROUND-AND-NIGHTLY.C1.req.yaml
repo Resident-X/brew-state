@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY.C1
+type: criterion
+title: The build round runs the printed case's tests when the branch changes the case, anything its tests read, or the gate
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The build round's gate runs the printed case's tests when the branch changes any path under the case folder, any file its tests read, the case tooling's task definitions or the round gate's own code, measured from the merge-base with main, and runs them when the changed paths cannot be told. A branch changing none of those paths runs no case test and needs neither the CAD environment nor the slicer. A selected tier that needs a tool the machine lacks stops the round naming it. The closing lines say whether the tier ran and why it was skipped when it did not. Out of scope: the content of the case tests, the board check's tier, and the nightly workflow (the next criterion).
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY
+    type: criterion-of

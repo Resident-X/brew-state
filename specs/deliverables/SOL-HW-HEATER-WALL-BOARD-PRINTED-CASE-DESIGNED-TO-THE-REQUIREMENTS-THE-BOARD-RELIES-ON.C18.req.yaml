@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C18
+type: criterion
+title: Each blade has room for a boot-fitted receptacle to be pushed on and pulled off with the lid on or off
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case leaves room around each of the three 6.3 mm blades for a receptacle with its insulating boot fitted, with the boot's outer size and the figure's source stated in the case record, so that a receptacle is pushed on and pulled off along the stated direction, with the lid on and with it off, without the receptacle or its boot touching the case, the lid or the film, and the wire leaving the boot has a stated bend room. The model shows the boot's swept envelope clear of the case at its stated size and at the largest size of a common insulated receptacle the record names, and no case dimension that another criterion of this leaf fixes is reduced to make it.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

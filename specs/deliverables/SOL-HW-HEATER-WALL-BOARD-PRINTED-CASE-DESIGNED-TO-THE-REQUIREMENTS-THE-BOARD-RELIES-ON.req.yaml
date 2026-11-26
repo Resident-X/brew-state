@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The printed case that retains the heater wall board and mounts to the spreader plate is designed to the requirements the board and the signed separation basis rely on
 status: active
-version: 1
+version: 6
 text: |
   Designs the printed case that retains the heater wall board and mounts to the spreader plate, to the requirements the board's layout and the signed separation basis rely on and that the earlier decision deferred to a case-design step. The board is a plain 45.0 by 75.0 mm rectangle with one mounting hole and two slots open at its right edge, hung on the triac leads and that hole, with its triacs on the plate's inner face; the case holds it, covers its mains copper with slots that let heat out, and mounts to the plate so that the plate, case and board leave the wall as one unit.
 
@@ -11,12 +11,15 @@ text: |
 
   Settled for the build:
   - The case is 3D printed at home in ASA, ABS or PC and fixed with ordinary screws, as the owner stated; its design, material and fixings are this leaf's within the criteria.
-  - The barrier is a creepage barrier of the tray, never of the lid; the layout agent's feasibility reading (a 0.8 mm wall rising 3.0 mm above the board face, 2.0 mm at the least and 3.5 mm at the most under the triac bodies, the plate plane set back 1.0 mm from the board's top edge, 4.8 mm creepage path against 2.6 mm needed) is the starting figure and not the owner's words.
+  - The barrier is a creepage barrier of the tray, never of the lid. A triac seated on its lead shoulders stands with its body underside 3.75 mm above the board (2.55 to 4.55 mm over the seating range) and its tab hole about 16.4 mm up, from the maker's drawing (ST DS2114 Rev 11, Figure 13, dimensions a1 and I4); the earlier 0.85 mm and 13.6 mm were a slip and are corrected in the records. The board-to-plate gap is 1.0 mm nominal and 0.785 to 1.21 mm over the triac's package tolerance, so a printed 0.8 mm wall cannot be guaranteed to fit it. The barrier is therefore a thin bought insulating film held by the tray (0.25 mm, rated at least 105 degC, flame-rated, flat on the plate and not behind the tab), notched under the bodies, and the 6.0 mm plate lift is not used; the case drawing states the creepage it gives against the 2.6 mm the basis signs, at the worst seating.
+  - The case is designed in a single-colour and a two-colour form sharing every safety-fixed dimension, printed on a 220 by 220 mm bed with a 0.4 mm nozzle in ASA, and drawn as a parametric model from the board's layout file, never from figures in prose.
+  - The case carries the Staircase logo itself: the project's logo asset (owner-held, David Baker; the owner expects it on the case) traced to a printable vector. Its publication in the public repository is the owner's to confirm on the end list.
+  - Lid removal and terminal push-on are proved on the model here; their physical demonstrations are the delivered-board leaf's.
   - The plate's size is provisional; the case adapts to the figure the owner records after cutting and measuring.
   - The earth strap is the owner's decision; the case design records it and carries it.
   - This leaf takes over, from SOL-HW-BOARD-FOUR-POINT-FIXING-RESTORED.C5 and SOL-HW-HEATER-WALL-BOARD-ASSEMBLY-JUDGED.C3, the mounting content those criteria record in the earlier ear-and-bracket form.
 
-  Locus: a case record in the heater wall board's design folder (hardware/sunbeam-em7000/heater-wall-board/), the printed case's model and drawing, and the plate drawing's length figure. It changes no board copper or outline.
+  Locus: a case record in the heater wall board's design folder (hardware/sunbeam-em7000/heater-wall-board/), the printed case's model and drawing, and the plate drawing's length figure. The locus also holds the Taskfile tasks and the hardware README section that reproduce the case build and its checks and slice (the toolchain is recorded in the project so another person can rebuild it), and the pointer in the board design lessons that the earlier bracket form is superseded by the case record. It changes no board copper or outline.
 rationale: |
   Added because the decision that the board is a plain rectangle screwed to a printed case on a flat spreader defers the case design to a later step, and that step has no requirement in the graph: the owner's case-step requirements of 2026-11-19 (the barrier in the tray, the case within the plate, the lid removable in place, the earth-strap question) and the board's own carried items (slot mouths, blade backing, one-hole retention) are recorded only in the board's open-items record, which is not durable. The signed basis relies on the barrier for the plate's creepage, so a case that omits it would leave the heater switch's basis unmet; stating each requirement as a criterion makes the case verifiable when it is designed. Sized as one leaf because every criterion is one case drawing or model judged against the same board and basis, with two fitting demonstrations.
 links:
@@ -40,3 +43,7 @@ links:
     type: targets
   - target: REQ-ELECTRICAL-INSTALL-001.C6
     type: targets
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: daed3ee39fb50cc527b5ea1a0dbf0565a8480f24d0943d47aaf8eeeb25e1c626
+  gating_profile: ""

@@ -4,9 +4,9 @@ title: The lid fits and comes off with the plate, case and board already install
 status: active
 version: 1
 measurement_type: binary
-verification: demonstration
-text: |-
-  With the plate, case and board fitted to the machine's wall, or to a stand-in of the wall opening at the recorded plate outline plus clearance, the lid is fitted and then removed by sliding or angling it away, with no wall opening larger than the plate outline plus clearance and without removing the case or the plate; the owner prints the case and the demonstration records the fit. Designing the machine's wall opening is out of scope.
+verification: inspection
+text: |
+  The case drawing or model shows the lid fitted and then removed by sliding or angling it away with the plate, case and board already placed at the machine's wall opening of the recorded plate outline plus clearance, with the lid's swept path clear of the opening, the plate and the case, and without removing the case or the plate. The check is made on the model against the board's layout geometry and the recorded opening, and the model's lid clearances are stated. The physical demonstration on a printed case is a separate leaf's. Designing the machine's wall opening is out of scope.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
     type: criterion-of

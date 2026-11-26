@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C20
+type: criterion
+title: The low-voltage cable leaves the closed case and the lid comes off with the cable in place
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case lets the low-voltage cable that mates with the board's header leave the closed case, and the lid is fitted and removed with that cable in place. The case drawing or model shows the cable's exit through the case with the lid on, the cable's own swept path as the lid slides along its removal path, and the clearance between the cable and every case edge along that path, and no part of the lid or tray traps or bends the cable beyond the bend room the record states. The record states the largest outside diameter of wire the bend room supports, at three times the wire's diameter, computed from the lid's clearance above the header's wire exit and recomputed by the case model, and lists the owner's confirmation that his cable fits as an owner item. No case dimension that another criterion of this leaf fixes is reduced to make room for it.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

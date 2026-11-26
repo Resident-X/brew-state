@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21
+type: criterion
+title: The exported case meshes are right-handed and fit the board's own exported model, with the logo reading correctly
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The exported case meshes are right-handed physical shapes that fit the board as built. Placed against the board's own three-dimensional model exported from its KiCad file, each case feature that depends on a board feature (the blade bays, the triac tab faces and lead pad holes, the mounting-hole pilot, the slot mouths) lies on that feature within a stated tolerance, and the Staircase logo reads the right way round when the lid is viewed from below in the installed orientation. The check runs on the exported files and the board's exported model, not on the case model's own coordinate frame, and a control that mirrors one exported axis makes it fail. The renders and the record's views are drawn from the same physical frame.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: criterion-of

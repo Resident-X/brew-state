@@ -1,0 +1,15 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-TRIAC-SEATED-HEIGHT-RECORDS-STATE-THE-MAKERS-FIGURE.C1-INSPECTION
+type: evidence
+title: Wall board records and division document state the triac seat at 3.75 mm body underside and 16.4 mm tab hole
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-26T20:21:49Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/ records and docs/sunbeam-em7000/controller-board-division.md at the branch head
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRIAC-SEATED-HEIGHT-RECORDS-STATE-THE-MAKERS-FIGURE.C1
+    type: satisfies
