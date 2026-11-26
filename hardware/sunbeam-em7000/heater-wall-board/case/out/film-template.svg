@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="87.50mm" height="42.60mm" viewBox="0 0 87.500 42.600">
+<title>Barrier film cutting template, 1:1, seen from the case side, thickness 0.25 mm</title>
+<g font-family="monospace" font-size="1.7" fill="#000">
+<polygon points="14.000,28.600 73.500,28.600 73.500,14.000 63.400,14.000 63.400,19.800 51.000,19.800 51.000,14.000 38.800,14.000 38.800,19.800 26.400,19.800 26.400,14.000 14.000,14.000" fill="#fdf1d2" stroke="#000" stroke-width="0.15"/>
+<circle cx="16.750" cy="25.000" r="1.700" fill="#fff" stroke="#000" stroke-width="0.15"/>
+<text x="16.75" y="21.80" text-anchor="middle">hole 3.4 at u -3.25 z -3.00</text>
+<circle cx="70.750" cy="25.000" r="1.700" fill="#fff" stroke="#000" stroke-width="0.15"/>
+<text x="70.75" y="21.80" text-anchor="middle">hole 3.4 at u 50.75 z -3.00</text>
+<text x="14.0" y="6.00">Film 59.50 wide x 14.60 tall, 0.25 thick, 1:1</text>
+<text x="14.0" y="10.00">Top edge z 8.0, notch top z 2.2 (z 0 is the board face, bottom z -6.60)</text>
+<text x="14.0" y="13.50">Insulating sheet rated 105 degC, UL 94 V-0 or VTM-0</text>
+<line x1="14.000" y1="33.600" x2="73.500" y2="33.600" stroke="#c00" stroke-width="0.12"/>
+<text x="35.75" y="32.80" fill="#c00">overall 59.50</text>
+<line x1="26.400" y1="15.800" x2="38.800" y2="15.800" stroke="#c00" stroke-width="0.12"/>
+<text x="24.60" y="15.00" fill="#c00">notch 12.4</text>
+<line x1="51.000" y1="15.800" x2="63.400" y2="15.800" stroke="#c00" stroke-width="0.12"/>
+<text x="49.20" y="15.00" fill="#c00">notch 12.4</text>
+<line x1="11.0" y1="14.000" x2="11.0" y2="28.600" stroke="#c00" stroke-width="0.12"/>
+<text x="2" y="21.30" fill="#c00">14.60</text>
+</g>
+</svg>

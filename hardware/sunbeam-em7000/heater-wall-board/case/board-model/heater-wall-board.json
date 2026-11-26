@@ -1,0 +1,20 @@
+{
+ "kicad_pcb": "heater-wall-board.kicad_pcb",
+ "kicad_pcb_sha256": "eaa97a923541316a8c52efe0794d9d4b45073db59cab9ed6e9283c95a858e8a4",
+ "board_model": "case/board-model/heater-wall-board.step",
+ "command": [
+  "kicad-cli",
+  "pcb",
+  "export",
+  "step",
+  "--user-origin",
+  "0x0mm",
+  "--include-pads",
+  "-f",
+  "-o",
+  "case/board-model/heater-wall-board.step",
+  "heater-wall-board.kicad_pcb"
+ ],
+ "working_folder": "the board's own folder",
+ "kicad_cli_version": "10.0.7"
+}

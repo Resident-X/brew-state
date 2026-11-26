@@ -63,6 +63,20 @@ vars:
   SILKSCREEN_PYTHON:
     sh: 'if [ -n "${SILKSCREEN_PYTHON:-}" ]; then echo "$SILKSCREEN_PYTHON"; elif [ -x "{{.SILKSCREEN_VENV}}/bin/python" ]; then echo "{{.SILKSCREEN_VENV}}/bin/python"; else echo python3; fi'
 
+  # The virtual environment the CAD and slicer tools are installed in (build123d, trimesh,
+  # manifold3d, shapely, lib3mf, pyvista, PyYAML and the rest pinned by `task hw:cad`), which
+  # models, checks, renders and slices the printed case of the heater wall board. `task hw:cad`
+  # creates it here, and CAD_VENV=... puts it elsewhere (hardware/README.md says more).
+  CAD_VENV:
+    sh: 'echo "${CAD_VENV:-${XDG_CACHE_HOME:-$HOME/.cache}/brew-state/cad}"'
+  # The Python of that environment: CAD_PYTHON=... when set, else the environment's own Python.
+  CAD_PYTHON:
+    sh: 'if [ -n "${CAD_PYTHON:-}" ]; then echo "$CAD_PYTHON"; else echo "{{.CAD_VENV}}/bin/python"; fi'
+  # The PrusaSlicer command line that slices the case. The macOS app installs it there
+  # (`brew install --cask prusaslicer`); on Linux, PRUSASLICER=... names the AppImage or flatpak wrapper.
+  PRUSASLICER:
+    sh: 'echo "${PRUSASLICER:-/Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer}"'
+
   # The Freerouting 2.5.0 jar the board design method routes with: `task hw:freerouting`
   # fetches it here, and FREEROUTING_JAR=... points at one placed by hand.
   FREEROUTING_JAR:
@@ -664,6 +678,83 @@ tasks:
       - python3 -m venv "{{.SILKSCREEN_VENV}}"
       - '"{{.SILKSCREEN_VENV}}/bin/python" -m pip install --quiet numpy==2.5.0 shapely==2.2.0 Pillow==12.3.0 pyyaml==6.0.3'
       - '"{{.SILKSCREEN_VENV}}/bin/python" -c "import numpy, shapely, PIL, yaml; print(\"numpy\", numpy.__version__, \"shapely\", shapely.__version__, \"Pillow\", PIL.__version__, \"PyYAML\", yaml.__version__, \"in {{.SILKSCREEN_VENV}}\")"'
+
+  hw:cad:
+    desc: Create the virtual environment the CAD and slicer tools are installed in, at CAD_VENV (by default a folder in your user cache, outside the repository) with Python 3.13, install build123d 0.13.0, trimesh 5.2.2, manifold3d 3.5.5, shapely 2.2.0, lib3mf 2.5.0, pyvista 0.49.3, vtk 9.7.2, PyYAML 6.0.3, numpy 2.5.5, scipy 1.18.1, Pillow 13.0.0 and pytest 9.2.0 into it, and read the versions back, failing when one differs from its pin. Safe to run again. Needs uv (it makes the environment and installs into it) and network access to the Python package index the first time. PRUSASLICER names the slicer command line, which this task reports but does not install
+    dir: "{{.ROOT_DIR}}"
+    cmds:
+      - if [ ! -x "{{.CAD_VENV}}/bin/python" ]; then uv venv --python 3.13 "{{.CAD_VENV}}"; fi
+      - uv pip install --quiet --python "{{.CAD_VENV}}/bin/python" build123d==0.13.0 trimesh==5.2.2 manifold3d==3.5.5 shapely==2.2.0 lib3mf==2.5.0 pyvista==0.49.3 vtk==9.7.2 pyyaml==6.0.3 numpy==2.5.5 scipy==1.18.1 pillow==13.0.0 pytest==9.2.0
+      - |
+        "{{.CAD_VENV}}/bin/python" - <<'PY'
+        import sys
+        from importlib.metadata import version
+        pins = {"build123d": "0.13.0", "trimesh": "5.2.2", "manifold3d": "3.5.5", "shapely": "2.2.0",
+                "lib3mf": "2.5.0", "pyvista": "0.49.3", "vtk": "9.7.2", "pyyaml": "6.0.3",
+                "numpy": "2.5.5", "scipy": "1.18.1", "pillow": "13.0.0", "pytest": "9.2.0"}
+        bad = {k: version(k) for k, want in pins.items() if version(k) != want}
+        assert not bad, "installed versions differ from the pins: %r" % bad
+        print("python", sys.version.split()[0], "in {{.CAD_VENV}}")
+        print(" ".join("%s %s" % (k, version(k)) for k in pins))
+        PY
+      - |
+        if [ -x "{{.PRUSASLICER}}" ]; then "{{.PRUSASLICER}}" --help | head -1; else echo "PrusaSlicer not found at {{.PRUSASLICER}}: install it, or set PRUSASLICER"; fi
+
+  hw:case:
+    desc: Build the printed case of the heater wall board from its layout file and params.yaml and export it to hardware/sunbeam-em7000/heater-wall-board/case/out in the right-handed physical frame (X = u, Y = -v; STEP and STL per part, the print-orientation STL, a 3MF per colour form, the film cutting template, the plate drawing and the case drawings). CLI_ARGS pass through, for example `-- --set seating.body_underside_mm=2.55`. Needs the environment `task hw:cad` creates
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" case.py {{.CLI_ARGS}}'
+
+  hw:case:check:
+    desc: Run the geometric check of the printed case (one named check per decidable clause of its criteria) and print the figures, text by default; `-- --format json`, `-- --json-out out/check.json` and `-- --only c1.,c15.` (named checks only) and `-- --range` (every extreme of the seating range, about a minute) pass through. The receptacle-off bare-blade reach is printed as a finding, in neither the pass count nor the exit status. Exits non-zero when any check fails
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" check.py {{.CLI_ARGS}}'
+
+  hw:case:views:
+    desc: Render the printed case offscreen, six 1600 x 1200 views of each of the three colour forms (single colour in bone, single colour in stone, two colour; far end, top, plate end, underside, exploded, lid off), board and parts inside, assumed receptacle boots, wires and cable drawn in the four lid-on views (not exploded or lid off) and the two-colour form cut at its filament-change layers, to hardware/sunbeam-em7000/heater-wall-board/case/renders
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" render.py {{.CLI_ARGS}}'
+
+  hw:case:directions:
+    desc: Render the printed case (the one skin, flow) as installed, in the three colour forms (single colour in bone, single colour in stone, two colour), on its plate with the lid on, board and parts inside and the two-colour form cut at its filament-change layers, to hardware/sunbeam-em7000/heater-wall-board/case/renders/directions, 1600 x 1200, flow-<form>-<view>.png - above, below, below-lit (below, lit from the front and below), side, lid (orthographic, straight at the lid face, wall at the bottom of the picture) and top (orthographic, straight at the tray's top face), with assumed receptacle boots, wires and cable drawn on them, and the logo close-ups logo-lid-30, logo-lid-60, logo-top-30 and logo-top-60 - and two sheets, contact-sheet.png (a row a form, bone then stone then two colour, a column a view) and logo-sheet.png (a row a form, a column a close-up). `-- --direction-view lid --direction-form two` draws one image and no sheet (the options split a long run; `-- --sheet-only` makes the sheets from the images drawn). Needs the environment `task hw:cad` creates
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" render.py --directions {{.CLI_ARGS}}'
+
+  hw:case:board-model:
+    desc: Export the heater wall board's own three-dimensional model from its KiCad file (kicad-cli pcb export step, origin left at KiCad's, pads included) into hardware/sunbeam-em7000/heater-wall-board/case/board-model/heater-wall-board.step, with a sidecar holding the sha256 of the layout file, the command and the kicad-cli version. The fit check and its tests read that cache and fail, naming this task, when the layout file has changed since. Needs KiCad 10.0 or newer (set KICAD_CLI=/path/to/kicad-cli when kicad-cli is not on PATH) and the environment `task hw:cad` creates
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" board_model.py --kicad-cli "{{.KICAD_CLI}}"'
+
+  hw:case:fit:
+    desc: Check that the exported case fits the board as built, reading only the files in out/ (as a printer or viewer reads them, right-handed) and the cached board model, never the case model's frame - the mounting-hole pilot, the blade bays, the triac tapped holes, film notches and faces, the slot mouths, the board body clear of the case and on its seats, the logo reading the right way round, and the print STLs and 3MFs as the same shapes. `-- --controls` also runs the negative controls (exports mirrored in X and in Y, mirrored artwork); `-- --format json` passes through. Needs `task hw:case` run first
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" fit.py {{.CLI_ARGS}}'
+
+  hw:case:logo:
+    desc: Retrace the owner-held Staircase logo raster into the case's staircase-logo.svg (the faces, in the groups silhouette, light, dark and sheets) and write renders/directions/logo-preview.png, the source, the vector and the engraving at the lid's and the tray top's sizes in both colour forms, drawn with the rule the model engraves by. `-- --source <png>` names the raster (or set STAIRCASE_LOGO_RASTER); it is not held in the repository. Rewrites the vector, so run it only when the raster or the vertex table changes. Needs the environment `task hw:cad` creates
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" trace_logo.py {{.CLI_ARGS}}'
+
+  hw:case:slice:
+    desc: Slice every printed part of the case with PrusaSlicer in its print orientation, supports off and then supports auto, and write slice/<part>.json and slice/<part>.log (G-code stays in slice/ and is not committed). Needs `task hw:case` run first and PRUSASLICER
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    env:
+      PRUSASLICER: "{{.PRUSASLICER}}"
+    cmds:
+      - '"{{.CAD_PYTHON}}" slice.py {{.CLI_ARGS}}'
+
+  hw:case:test:
+    desc: Run the tests of the printed case (pytest, in the CAD environment). They build the model, check it, and run the negative controls (each rebuilds the model with one dimension broken, four at a time in worker processes); the default run takes about five minutes, uses up to four processes and leaves out the tests marked heavy. `-- --heavy` adds them, the rebuild of every one of the eight extremes of the seating range, about ten minutes more. The tests that read the renders draw their own into a temporary folder; the tests that read the slicer summaries fail when `task hw:case:slice` has not run, or when a summary is older than the sources it pins
+    dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
+    cmds:
+      - '"{{.CAD_PYTHON}}" -m pytest -p no:cacheprovider -q tests {{.CLI_ARGS}}'
 
   hw:freerouting:
     desc: Fetch the Freerouting 2.5.0 release jar the board design method routes with to FREEROUTING_JAR (by default a file in your user cache, outside the repository), keeping it only when its sha256 matches the release's, and leave a matching file alone. Safe to run again. Needs Python 3.9 or newer and network access the first time; running the jar needs a Java runtime 25 or newer

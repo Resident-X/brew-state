@@ -1,0 +1,330 @@
+# Parameters of the printed case of the heater wall board. Every entry holds a value and the source of that value; a
+# range carries min and max beside the value; `unconfirmed: true` marks a figure the owner measures on the delivered board.
+# Lengths are millimetres, angles degrees. The separation figures (2.6, 1.5, 10.0, 3.0 and the 2.0 terminal clearance)
+# are not held here: the model and the check read them from ../separation-basis.yaml.
+#
+# Case frame: u = x_pcb - ox (0 to 45 across the board), v = y_pcb - oy (0 at the board's plate-side edge, 75 at the blade
+# end), z up from the board's component face (the board occupies z -1.6 to 0). ox and oy are read from Edge.Cuts.
+
+seating:
+  body_underside_mm:
+    value: 3.75
+    min: 2.55
+    max: 4.55
+    unconfirmed: true
+    source: "nominal = a1 of ST DS2114 Rev 11 Table 6 p.9 (body underside to the lead shoulder, 3.75 typ); min = I4 min 15.80 - (A - L) max 13.25 = 2.55; max = nominal + 0.8 allowance for a part not pushed home (a design allowance; no maker or assembler figure exists). The owner measures it on the delivered board"
+  lean_deg:
+    value: 0.0
+    min: -1.0
+    max: 1.0
+    unconfirmed: true
+    source: "common lean of both triacs about the u axis; with the tabs bolted flat the board plane tilts by this, far end up positive. A design allowance: three collinear leads do not square the part about the lead row; no maker or assembler figure exists. The owner measures it on the delivered board"
+  differential_lean_deg:
+    value: 0.0
+    min: 0.0
+    max: 0.3
+    unconfirmed: true
+    source: "lean between the two triacs; a stated limit that cannot be designed out; the owner checks it and has the joint reflowed beyond it. Held at 0 in the model: the seat plane is one plane, so a difference between the two triacs is carried by the lead flexure and not by the tray"
+  tab_face_to_lead_centre_mm:
+    value: 2.86
+    min: 2.645
+    max: 3.07
+    unconfirmed: true
+    source: "DS2114 Rev 11 Table 6: c2 2.40 to 2.72 (tab face to the lead's rear face) plus half of c1 0.49 to 0.70, as hardware/sunbeam-em7000/heater-wall-board/layout-plan.md:164 states it (2.86 nominal)"
+  lead_protrusion_below_board_mm:
+    value: 2.0
+    min: 0.0
+    max: 2.0
+    unconfirmed: true
+    source: "the owner trims the leads to 2.0 mm at most below the board before fitting (a2 13.00 to 14.00 would leave up to 8.7 mm); a cut figure, not a datasheet one"
+  pad_row_v_mm:
+    value: 1.86
+    source: "the triac pad row line in the case frame (y 22.86 - 21.0), read from the board file by the model and checked equal to this figure"
+
+triac:
+  A_mm: {value: 15.55, min: 15.20, max: 15.90, source: "DS2114 Rev 11 Table 6 p.9, body height tab top to body underside"}
+  L_mm: {value: 2.80, min: 2.65, max: 2.95, source: "DS2114 Rev 11 Table 6 p.9, tab top to tab hole centre"}
+  F_mm: {value: 6.40, min: 6.20, max: 6.60, source: "DS2114 Rev 11 Table 6 p.9, tab (flange) height above the moulded body"}
+  B_mm: {value: 10.40, min: 10.00, max: 10.40, source: "DS2114 Rev 11 Table 6 p.9, body width; the model uses the maximum"}
+  C_mm: {value: 4.60, min: 4.40, max: 4.60, source: "DS2114 Rev 11 Table 6 p.9, body thickness; the model uses the maximum"}
+  b2_mm: {value: 1.32, source: "DS2114 Rev 11 Table 6 p.9, tab thickness (maximum)"}
+  hole_dia_mm: {value: 3.88, source: "DS2114 Rev 11 Table 6 p.9, tab hole diameter I (maximum 3.88)"}
+  c1_mm: {value: 0.49, source: "DS2114 Rev 11 Table 6 p.9, lead thickness; the minimum, so the lead's rear face distance to the plate is the smallest the package allows"}
+  lead_width_mm: {value: 0.88, source: "DS2114 Rev 11 Table 6 p.9, b1 maximum"}
+  I4_mm: {value: 16.40, min: 15.80, max: 16.80, source: "DS2114 Rev 11 Table 6 p.9, hole centre to the lead shoulder"}
+  lead_centre_to_tab_face_mm: {value: 2.86, source: "c2 + c1/2 with c2 2.40 to 2.72 and c1 0.49 to 0.70 (layout-plan.md:164)"}
+  tab_screw_dia_mm: {value: 3.0, source: "M3 pan-head machine screw through the tab hole into the plate, the torque of fabrication-notes.md:70 (0.55 to 0.70 N m)"}
+  tab_screw_head_dia_mm: {value: 5.6, source: "ISO 14583 M3 pan head, head diameter 5.6 maximum"}
+  tab_screw_head_height_mm: {value: 2.4, source: "ISO 14583 M3 pan head, head height 2.4 maximum"}
+  plate_tap_drill_mm: {value: 2.5, source: "M3 tapping drill diameter"}
+  plate_tap_depth_mm: {value: 4.0, source: "blind tapped depth in the 5.0 mm plate, which leaves 1.0 mm unbroken behind"}
+
+film:
+  kind: {value: film, source: "the barrier is a thin bought insulating film held by the tray: a printed wall would have to be 0.8 mm thick in a gap the package tolerance alone takes from 1.21 down to 0.79 mm"}
+  thickness_mm: {value: 0.25, min: 0.18, max: 0.30, source: "design thickness; electrical insulating sheet 0.18 to 0.30 mm, rated at least 105 degC, UL 94 V-0 or VTM-0 (polypropylene barrier sheet, polyester or polyimide sheet, vulcanised fibre)"}
+  height_beside_mm: {value: 8.0, source: "design figure: film top above the board face beside and between the triac bodies"}
+  height_under_body_mm: {value: 2.2, source: "design figure: film top in the notch under a triac body, 0.35 mm under the lowest body of the seating range (2.55)"}
+  notch_margin_mm: {value: 1.0, source: "design figure: notch width = B max + 2 x this"}
+  screw_hole_dia_mm: {value: 3.4, source: "M3 clearance hole of the film for the tray-to-plate screws"}
+
+case:
+  wall_mm: {value: 2.0, source: "design figure"}
+  floor_mm: {value: 1.6, source: "design figure"}
+  floor_far_mm: {value: 1.2, source: "design figure: floor under the blade end, where the legs and the lean take the height"}
+  floor_far_from_v_mm: {value: 55.0, source: "design figure: the floor steps from 1.6 to 1.2 at this v"}
+  interior_left_mm: {value: 0.5, source: "design figure: board edge to the left wall"}
+  interior_far_mm: {value: 2.0, source: "design figure: board edge to the far-end wall: the largest receptacle boot's far face (blade centre v 69.04 plus half of 13.0 = 75.54, plus 0.36 of lean at the wall top) keeps boots.clearance_mm to it, and the bay's far edge keeps a land of the lid's flat face"}
+  interior_right_mm: {value: 3.0, source: "design figure: board edge to the right wall, which keeps every solid 3.0 mm off the slot mouths"}
+  z_floor_bottom_mm: {value: -6.6, source: "height budget: 1.6 board + 2.2 blade legs + 1.3 lean allowance + 0.3 clearance + 1.2 floor"}
+  z_wall_top_mm: {value: 20.5, source: "design figure: tray wall tops, 0.45 below the lid's underside: the fine shadow line the skins show between lid and tray"}
+  z_lid_under_mm: {value: 20.95, source: "height budget: 4.55 + 15.90 + 0.5 clearance"}
+  z_lid_top_mm: {value: 22.55, source: "height budget: lid underside + 1.6"}
+  seam_mm: {value: 0.2, source: "print clearance between tray and lid faces that meet"}
+  lid_end_gap_mm: {value: 0.4, source: "design figure: the lid's plate-end face stands this far past the tray's end face, which leaves the lid room to tilt about its toes without touching the plate"}
+  pilaster_out_mm: {value: 3.5, source: "design figure: each pilaster stands this far outside the main body at the plate end"}
+  pilaster_len_mm: {value: 9.0, source: "design figure: pilaster length along v from the plate end face (nominal)"}
+  pilot_dia_mm: {value: 2.6, source: "pilot hole for an M3 thread-forming screw in ASA"}
+  v_far_wall_inner_mm: {value: 77.0, source: "board far edge (v 75) + interior_far"}
+
+plate:
+  length_mm: {value: 80.0, source: "provisional until the owner cuts and measures the machine wall"}
+  height_mm: {value: 30.0, source: "provisional until the owner cuts and measures the machine wall"}
+  thickness_mm: {value: 5.0, source: "provisional until the owner cuts and measures the machine wall"}
+  min_margin_mm: {value: 0.25, source: "design figure: the case lies inside the plate outline by at least this on every side"}
+  wall_opening_clearance_mm: {value: 1.5, source: "design figure: the opening in the machine's plastic wall is the plate outline plus this per side"}
+  bolt_zone_mm: {value: 10.0, source: "M4 wall bolt with a 9 mm washer, 0.5 mm either side of the washer"}
+  bolt_washer_dia_mm: {value: 9.0, source: "M4 form A washer, 9 mm outer diameter (ISO 7089 M4 is 9.0)"}
+  bolt_dia_mm: {value: 4.0, source: "M4 wall bolt"}
+  wall_frame_depth_mm: {value: 10.0, source: "the opening modelled as a plate-outline-plus-clearance aperture this far in front of the wall plane"}
+  wall_frame_rim_mm: {value: 6.0, source: "width of the modelled wall frame around the aperture"}
+
+screws:
+  tray_plate_count_per_pilaster: {value: 2, source: "two heights per pilaster for the push-on moment"}
+  tray_plate_z_mm: {value: [12.0, -3.0], source: "wide stance in z, 15 mm apart"}
+  tray_plate_dia_mm: {value: 3.0, source: "M3 x 12 countersunk machine screw entered from the plate's back face"}
+  tray_plate_length_mm: {value: 12.0, source: "M3 x 12"}
+  tray_plate_head_dia_mm: {value: 6.0, source: "ISO 7046 M3 countersunk head, 6.0 maximum"}
+  tray_plate_head_height_mm: {value: 1.7, source: "ISO 7046 M3 countersunk head height, 1.65 typ"}
+  h1_dia_mm: {value: 3.0, source: "M3 pan-head thread-forming screw through the board's hole H1 into a 2.6 mm pilot"}
+  h1_length_mm: {value: 5.0, source: "M3 x 5: the board face stands only 6.6 mm above the tray's underside, so a screw longer than 5.8 mm at the far-end lean of -1 degree would leave the tray; the pilot ends 0.6 mm above the floor's underside"}
+  h1_pilot_bottom_z_mm: {value: -6.0, source: "design figure: the pilot ends here, 0.6 mm above the tray floor's underside (-6.6)"}
+  h1_head_dia_mm: {value: 5.6, source: "ISO 14583 M3 pan head"}
+  h1_head_height_mm: {value: 2.4, source: "ISO 14583 M3 pan head"}
+  h1_boss_dia_mm: {value: 7.0, source: "design figure"}
+  lid_dia_mm: {value: 3.0, source: "M3 x 10 countersunk machine screw driven from +z into the far-end boss"}
+  lid_length_mm: {value: 10.0, source: "M3 x 10"}
+  lid_head_dia_mm: {value: 6.0, source: "ISO 7046 M3 countersunk head"}
+  lid_head_height_mm: {value: 1.7, source: "ISO 7046 M3 countersunk head height"}
+  lid_u_mm: {value: 23.75, source: "centre of the case outline in u"}
+  lid_v_mm: {value: 80.5, source: "centre of the far-end lug: 1.5 beyond the far-end wall's outer face"}
+  lug_u_width_mm: {value: 8.0, source: "far-end lug width"}
+  lug_v_depth_mm: {value: 5.0, source: "far-end lug depth beyond the far-end wall"}
+  driver_dia_mm: {value: 5.5, source: "a bit holder or screwdriver shaft"}
+  driver_max_tilt_deg: {value: 12.0, source: "the steepest approach a hand driver holds on a pan-head screw without cam-out"}
+
+seat:
+  support_size_mm: {value: 4.0, source: "design figure: square support pillars"}
+  lead_keepout_mm: {value: 2.0, source: "design figure: a support stays this far from every through-hole lead end"}
+  slot_keepout_mm: {value: 2.0, source: "the slot rule: no solid within this of a slot's open area"}
+  rib_width_mm: {value: 1.6, source: "design figure: blade backing rib width, centred between each blade's two legs"}
+  buttress_width_mm: {value: 1.2, source: "design figure: backing rib cross buttress width"}
+  finger_overhang_mm: {value: 1.0, source: "design figure: hold-down hook reach over the board edge"}
+  finger: {value: true, source: "the hold-down finger is built; false builds the tray without it"}
+  finger_v_mm: {value: 58.0, source: "design figure: hold-down finger near v 58 on the left wall"}
+  finger_thickness_mm: {value: 1.2, source: "design figure: finger thickness in u"}
+  finger_width_mm: {value: 2.0, source: "design figure: finger width along v"}
+  finger_slit_mm: {value: 0.8, source: "design figure: slit either side of the finger"}
+  locating_gap_mm: {value: 0.1, source: "design figure: lateral locating ribs stand this far from the board edge"}
+
+lid:
+  lip_height_mm: {value: 1.5, source: "design figure: the lid's fit lip, inside the tray walls"}
+  lip_thickness_mm: {value: 0.8, source: "design figure"}
+  lip_relief_mm: {value: 1.0, source: "design figure: the fit lip stops this far short of a blade bay, so no sliver of lip stands in the bay's clearance"}
+  top_louvre_mm: {value: 2.4, source: "design figure: lid top thickness at the louvre field (lid 1.6 plus a 0.8 pad on the underside)"}
+  pad_u_mm: {value: [1.0, 46.0], source: "design figure: extent of the underside pad in u"}
+  pad_v_mm: {value: [6.0, 58.2], source: "design figure: extent of the underside pad in v, clear of the triac tops"}
+  aperture_clearance_mm: {value: 0.55, source: "the bay is the receptacle boot's larger envelope (boots block) + this all round, widened by the lean allowance along v: boots.clearance_mm (0.5) plus 0.05 so a rounding never leaves it under"}
+  collar_wall_mm: {value: 0.6, source: "design figure: wall of the chimney collar"}
+  collar_below_mm: {value: 2.0, source: "design figure: chimney collar depth below the lid underside"}
+  rim_above_mm: {value: 0.0, source: "a rim raised above the lid surface cannot print with the top face on the bed without supports on that face; the chimney collar hangs inside instead"}
+  toe_from_outer_mm: {value: 1.7, source: "design figure: the pocket and toe centre line stands this far in from the pilaster's outer face, which keeps the toe clear of the side wall as the lid slides out"}
+  toe_barb: {value: true, source: "design figure: each toe carries a 45 degree barb that tucks under the pilaster hook; without it nothing holds the lid's plate end"}
+  toe_width_mm: {value: 2.2, source: "design figure: toe width in u"}
+  pocket_width_mm: {value: 2.6, source: "design figure: pilaster pocket width in u"}
+  cable_notch_v_mm: {value: [33.2, 41.2], source: "design figure: 8 wide notch centred on J931"}
+  cable_notch_height_mm: {value: 2.5, source: "design figure: notch below the lid"}
+  sweep_tilt_deg: {value: 3.0, source: "design figure: far-end lift about the plate-end line before the lid is drawn out along the pilaster grooves"}
+  sweep_pivot_v_mm: {value: 0.0, source: "design figure: tilt axis along u at the lid's plate-end face, on the lid underside; nothing of the lid then dips toward the tray"}
+
+louvre:
+  width_mm: {value: 1.6, source: "design figure: slot width perpendicular to the slot"}
+  angle_deg: {value: 45.0, source: "design figure: the slot plane's angle from the lid's normal; straight (0) would let a drop and a probe pass"}
+
+blade:
+  width_mm: {value: 6.35, source: "TE 63849-1, drawing C-63849 rev F3: tab width 6.35 +/- 0.08"}
+  thickness_mm: {value: 0.84, source: "C-63849 rev F3: tab thickness 0.84 / 0.76"}
+  above_shoulder_mm: {value: 7.92, source: "C-63849 rev F3: upper body height"}
+  standoff_mm: {value: 1.14, source: "C-63849 rev F3: shoulder standoff 1.14 maximum"}
+  leg_length_below_board_mm: {value: 2.2, source: "C-63849 rev F3: 3.81 leg height less the 1.6 board"}
+  insertion_force_N: {value: 75.6, source: "TE Product Specification 108-2043 Rev D page 4: 17 lbf maximum for a .250 tab"}
+
+parts:
+  varistor_D_mm: {value: 9.0, source: "footprint name RV_Disc_D9mm_W5.2mm_P5mm (disc diameter 9, thickness 5.2)"}
+  varistor_W_mm: {value: 5.2, source: "footprint name RV_Disc_D9mm_W5.2mm_P5mm"}
+  varistor_height_mm: {value: 12.0, source: "about 12 mm standing height of the disc with its stand-off, from the owner's specification of the model; no maker figure fetched"}
+  opto_height_mm: {value: 4.0, source: "onsemi MOC3083SVM surface-mount package about 3.9 mm high"}
+  opto_inset_mm: {value: 0.75, source: "body inside the courtyard by this per side"}
+  header_housing_top_z_mm: {value: 16.5, source: "a mated Dupont housing on a 1x3 header stands to about z 16.5"}
+  resistor_height_mm: {value: 0.6, source: "1206 chip resistor height"}
+  board_thickness_mm: {value: 1.6, source: "read from the board file (general thickness); checked equal"}
+
+finger:
+  probe_dia_mm: {value: 12.0, source: "IEC 61032 probe B finger diameter, Lisun data sheet (secondary source)"}
+  probe_length_mm: {value: 80.0, source: "IEC 61032 probe B finger length, Lisun data sheet (secondary source)"}
+  tip_dia_mm: {value: 4.0, source: "conservative stand-in tip: a hemisphere of this diameter; the real tip radii were not obtainable from a free source"}
+  cone_length_mm: {value: 15.0, source: "conservative stand-in: a cone of this length joins the 4.0 mm tip to the 12 mm cylinder, more penetrating than the real tip"}
+  admits_nothing_below_mm: {value: 4.0, source: "an opening whose smaller dimension is under the tip diameter admits nothing"}
+
+printer:
+  bed_x_mm: {value: 220.0, source: "common low-cost open-frame FDM machine"}
+  bed_y_mm: {value: 220.0, source: "common low-cost open-frame FDM machine"}
+  bed_z_mm: {value: 250.0, source: "common low-cost open-frame FDM machine"}
+  nozzle_mm: {value: 0.4, source: "baseline"}
+  layer_mm: {value: 0.2, source: "baseline"}
+  overhang_limit_deg: {value: 45.0, source: "design figure: no face flatter than 45 degrees from the horizontal is left unsupported"}
+  bridge_limit_mm: {value: 3.5, source: "design figure: a roof whose widest inscribed circle is no larger than this is bridged without support on a 0.4 mm nozzle with part cooling; the slice with supports set to auto is the check that no support is asked for"}
+  roof_slope: {value: 1.25, source: "design figure: rise over run of every deliberate sloped roof (hook, lobe, barb): 51 degrees from the horizontal, steeper than the 45 degree limit so a slicer sees no overhang"}
+  noise_area_mm2: {value: 1.0, source: "faces under this area facing down are tessellation ripple on a curved face, not an overhang"}
+
+material:
+  name: {value: ASA, source: "baseline"}
+  modulus_MPa: {value: 2000.0, source: "ASA tensile modulus, the ASTM D638 2010 MPa of the Ricoh Rapid Fab TDS rounded down (sources/asa in the lookup)"}
+  allowed_board_motion_mm: {value: 0.05, source: "design criterion: displacement of the triac end of the board against the plate under the maximum insertion force"}
+
+# The safety core and the skin. Everything above is the core: the separation figures, the barrier, the pilasters, the
+# seat, the screws, the blade bays, the louvre and outlet safety rules and the envelope below. `skin` selects the skin;
+# each skin under `skins` supplies only the plan outline of the tray walls and the lid beyond the core, the corner and
+# edge treatment, the vent pattern (through-slot centre lines the core cuts as 45 degree gills, the outlet slits the core
+# cuts in the tray's long walls, and shallow relief grooves that are not through-openings), the logo's placement, and the
+# colours of the single-colour and two-colour forms.
+
+skin: {value: flow, source: "the skin the case is built in: flow, the one the owner chose; case.py, check.py and render.py take --skin to name it"}
+
+# The installed orientation, the single source for everything that depends on gravity: the drip check, the lid removal
+# figures, the reach of the fixings and the render cameras.
+installed:
+  gravity: {value: [0.0, 0.0, 1.0], source: "owner: the plate is vertical on the machine wall and the board projects from it horizontally with its component side down, so the case frame's +z (up from the component face) points down; u runs horizontally along the plate and v horizontally out from the wall"}
+  plate_vertical: {value: true, source: "owner: the plate stands vertical on the machine wall; the wall plane is the case frame's v = plate face, its normal is v"}
+  drip_cone_deg: {value: 15.0, source: "owner: a drip is judged within 15 degrees of vertical, falling onto the tray's outer top face"}
+  tray_up: {value: true, source: "owner: the tray is on top, holding the board's bare back above the parts; the lid closes the underside and comes off downward"}
+
+# Receptacle boots on the three blades. The envelopes are across the blade's width (along v), across its thickness (along u)
+# and along the blade (along z). The blades point down, the boots push on from below.
+boots:
+  typical: {value: [10.5, 7.8, 22.0], unconfirmed: true, source: "assumed, owner to measure his boots: Vogt 3906 PVC fully insulated 6.3x0.8, A 10.5, L 21 (Vogt catalogue p.376, drawing) and JST LVDDF2-250A W 7.4, E 7.8, L 22.0 (JST catalogue, text); larger of each, column meanings unconfirmed"}
+  largest_common: {value: [13.0, 7.8, 25.0], unconfirmed: true, source: "assumed, owner to measure his boots: Vogt 3933 PVC 4-6 mm2, A 13, L 25 (Vogt catalogue p.375, drawing) and JST LVDDF5.5-250A E 7.8, L 25.0 (JST catalogue, text); larger of each, column meanings unconfirmed"}
+  clearance_mm: {value: 0.5, source: "design figure: the least clearance a boot keeps to the lid, the tray and the film along its whole travel"}
+  withdraw_extra_mm: {value: 10.0, source: "design figure: the boot is swept from fully seated to fully withdrawn off the blade tip plus this"}
+  wire_od_mm: {value: 3.4, source: "assumed, owner to measure his wire: the wire leaving the boot's end on the blade axis"}
+  bend_od_multiple: {value: 5.0, source: "design allowance; distributor guidance 3 to 5 x OD; no maker figure"}
+  pitch_pass_envelope: {value: typical, source: "the envelope at which neighbouring boots must not collide; at largest_common a collision is a fact of the board's blade pitch and is reported"}
+
+# The convection outlets: vertical slits through the tray's long walls, high in the installed frame (just under the tray's
+# outer top face), as the lid's slots are the inlets. The core states where one may stand and how wide it may be; a skin
+# chooses count, height and rhythm inside that.
+outlets:
+  start_gap_mm: {value: 3.0, source: "design figure: the first slit stands this far beyond the pilasters' end faces"}
+  end_gap_mm: {value: 3.6, source: "design figure: the last slit stands this far inside the far wall's inner face"}
+  top_land_mm: {value: 0.2, source: "design figure: a slit starts this far above the cavity floor's upper face (the tray's outer top face is the print bed face and carries no opening)"}
+  bottom_limit_z_mm: {value: -0.3, source: "design figure: a slit ends this far above the board's component-face plane, so no slit stands level with the board's front copper"}
+  max_width_mm: {value: 3.5, source: "design figure: the stand-in finger's 4.0 mm tip (finger block) enters no opening whose smaller dimension is under it; this keeps 0.5 mm of that"}
+  min_height_mm: {value: 1.0, source: "design figure: the shortest slit"}
+  web_mm: {value: 1.0, source: "design figure: the least wall left between two slits"}
+  feature_clear_mm: {value: 1.5, source: "design figure: a slit keeps this far from the hold-down finger's window and from a locating rib standing against the wall"}
+
+# The Staircase logo, engraved: grooves with the same depth in the tray's outer top face and in the lid face, read from
+# staircase-logo.svg (viewBox 0 0 W 100, y down; groups silhouette, light, dark with data-hatch-angle, sheets). One rule, in
+# logo.py, draws it in the model and in the preview trace_logo.py writes: the silhouette is one groove, light faces stay plain
+# (a groove between two wide light faces only), dark faces are shown as hatch grooves and carry no outline, sheet lines stay
+# where they keep clear of every other groove.
+logo:
+  groove_width_mm: {value: 1.0, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; the silhouette is one groove this wide"}
+  face_groove_width_mm: {value: 0.9, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; the groove between two light faces"}
+  light_face_min_mm: {value: 2.5, source: "owner: a boundary between two light faces is grooved only when both faces are at least about this wide at the placed size, otherwise it has no line"}
+  groove_depth_mm: {value: 0.4, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; every logo groove is 0.4 mm deep, two layers, equal to forms.two.swap_start_mm, so in the two-colour form the groove floor is the first layer of the second colour after the filament change"}
+  hatch_width_mm: {value: 0.9, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; the hatch grooves in a dark face"}
+  hatch_pitch_mm: {value: 1.8, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; hatch groove pitch, centre to centre, keeping a land of 0.9 mm"}
+  sheet_width_mm: {value: 0.8, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; the stacked-sheet lines"}
+  sheet_clear_mm: {value: 1.0, source: "owner: a sheet line is kept only where it stays this far from every other groove at the placed size"}
+  min_feature_mm: {value: 0.6, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; the least land between two grooves (nearer ones merge) and the least groove (narrower ones are dropped)"}
+  lid_min_height_mm: {value: 28.0, source: "owner: the logo on the lid face is at least this tall when that costs no vent its permitted field"}
+  tray_height_mm: {value: 48.0, source: "owner: the logo on the tray's outer top face is this tall, centred on that face; it stands 4.9 mm nearer the plate than centred because the floor is thickened under its grooves (to keep the minimum wall under them) and that thickened pad may not reach the bay block, where the blade legs leave only 0.3 mm at the -1 degree lean"}
+  tray_edge_clear_mm: {value: 4.0, source: "owner: the logo keeps this far from where the tray top's chamfer begins; it is shifted off centre only when it would come nearer"}
+  face_margin_mm: {value: 1.0, source: "design figure: a logo keeps this far from the edge of a flat face"}
+  pad_margin_mm: {value: 1.0, source: "design figure: the tray floor is thickened inside the cavity this far beyond the logo's grooves so the floor under them keeps the core's minimum wall"}
+
+envelope:
+  min_wall_mm: {value: 1.6, source: "design figure: the least wall anywhere round the cavity, four 0.4 mm perimeters; also the least floor left under an engraved groove"}
+  toe_path_margin_mm: {value: 0.5, source: "design figure: a solid that stands beside the lid's toe path keeps its top this far under the lowest point of a toe"}
+  toe_path_side_margin_mm: {value: 0.2, source: "design figure: a full-height wall keeps this far from the side of a toe as the lid is drawn out"}
+  pilaster_corner_relief_mm: {value: 1.5, source: "design figure: the 45 degree cut a skin may take from a pilaster's outer corner where the pilaster meets the wall; the pocket and the toe lie farther in"}
+  vent_land_mm: {value: 0.1, source: "design figure: the footprint of a through-slot keeps this far inside the thickened field of the lid"}
+  vent_web_mm: {value: 0.8, source: "design figure: the least lid left between two slots at the middle of the thickened field, so no vertical line threads two neighbouring gills"}
+  vent_clear_mm: {value: 1.0, source: "design figure: the footprint of a through-slot keeps this far from a blade bay, its collar and the lid screw's countersink"}
+
+skins:
+  flow:
+    title: {value: "flow", source: "organic: one soft pebble in plan and section, lid and tray split by a single fine shadow line, streamlines on the lid that part round the blade bays and the logo's stone and rejoin, the streamlines' stretches over the thickened field cut as vents of the grooves' own width, equal outlet slits on one even grid, the left wall's row half a pitch behind the right's"}
+    chamfer_mm: {value: 1.6, source: "design figure: 45 degree chamfer round the lid's face perimeter, equal to the tray's top chamfer"}
+    bottom_chamfer_mm: {value: 1.6, source: "design figure: 45 degree chamfer round the tray's top (bed-side) perimeter, equal to the lid's face chamfer"}
+    tab_half_width_mm: {value: 4.0, source: "design figure: half the width of the far-end tab of the full-height wall, square cornered; its outer face follows the pebble exactly, flush with the lid rim's face, so the pebble sets how far it stands beyond the far wall; 4.0 keeps the screw boss (3.6 each side of the lid screw) inside it with 0.4 mm to spare"}
+    lip_gap_mm: {value: 0.3, source: "design figure: the lid's perimeter drop-lip stands this far from the full-height walls and their tab"}
+    cable_gate_lead_mm: {value: 8.0, source: "design figure: the drop-lip stands 0.3 mm outside the right wall, so a gate is cut through the right-hand lip over the cable notch; the lid is drawn out 7.8 mm to free its toes while the cable still lies in the notch, so the gate leads the notch toward the plate by this much and the cable has a way out at every pose of the slide"}
+    lip_front_gap_mm: {value: 0.4, source: "design figure: the lid's drop-lip begins this far beyond the pilasters' end faces"}
+    outline:
+      corner_radius_mm: {value: 11.5, source: "design figure: radius of the far corners in plan; at 13.0 the gap between the tray's wall corner and the pebble fell under the 0.8 mm the drop-lip keeps and the lip vanished at both far corners, at 11.5 it runs unbroken round each"}
+      far_sagitta_mm: {value: 1.2, source: "design figure: how far the far end's broad arc stands beyond the line between the corners' starts"}
+      side_bow_mm: {value: 0.2, source: "design figure: how far the sides bow outward between the pilasters and the far corners; the keep-out leaves 0.25"}
+    louvre_width_mm: {value: 1.1, source: "design figure: the vents' slot width, narrower than the core's louvre.width_mm limit, so a vent's opening at the face (this over the cosine of the gill angle, 1.56 mm) equals the grooves' width and a streamline keeps its weight from groove to vent"}
+    lines:
+      count: {value: 10, source: "design figure: levels of the stream function, evenly spaced; an even count puts none on the stone's own level, five a side; the two inner levels run along the stone's offset and are trimmed away, and a stretch the stone's hug cut off from the plate end is dropped, so eight streamlines are drawn"}
+      groove_width_mm: {value: 1.55, source: "design figure: groove width, equal to the vents' opening at the face"}
+      groove_depth_mm: {value: 0.6, source: "design figure: a roof of this width bridges when the lid prints face down"}
+      edge_land_mm: {value: 1.0, source: "design figure: flat land between a groove's edge and the lid's chamfer"}
+      obstacle_clear_mm: {value: 2.0, source: "design figure: a streamline's centre keeps this far from a bay's collar and from the logo's stone"}
+      screw_clear_mm: {value: 2.0, source: "design figure: a groove's edge keeps this far from the lid screw's countersink"}
+      hug_mm: {value: 1.5, source: "design figure: a streamline that runs closer than this to the logo stone's offset is the stone's own level and is trimmed away, so no line hugs the stone"}
+      grid_mm: {value: 0.5, source: "design figure: grid of the stream function"}
+      min_line_mm: {value: 10.0, source: "design figure: the shortest stretch of a streamline drawn"}
+      min_land_mm: {value: 0.6, source: "design figure: the least lid left between two grooves, so no two merge into a pocket past the printer's bridge"}
+      bridge_mm: {value: 0.9, source: "design figure: the structural bridge between two vent runs on one streamline: lid left standing between them"}
+      bridge_pitch_mm: {value: 14.0, source: "design figure: pitch of the bridges along a vent run, centre to centre"}
+      min_run_mm: {value: 8.0, source: "design figure: the shortest stretch of a streamline that becomes a vent"}
+    block:
+      bars: {value: 8, source: "design figure: the most bars in the far-end block, side by side across u, each running the length of the blade bays along v; the block has the wide bay's width, the bays' v extent and stands the gap between the two bay openings beyond the narrow bay, so the far end reads as one row: wide bay, narrow bay, block; a narrower bay takes fewer bars, and the block is omitted when fewer than two fit"}
+      clear_mm: {value: 1.0, source: "design figure: the block keeps this far from a bay's collar and from the lid screw's clear zone, and the lines' edge land from the lid's chamfer; where it would come nearer the block is omitted and the reason is recorded. A bar has square ends and the lines' groove width and depth, so a face-down print bridges across its width"}
+    outlets:
+      first_v_mm: {value: 12.3, source: "design figure: centre of the first slit of the right wall; the row runs on the pitch from here to the end of the core's zone"}
+      pitch_mm: {value: 4.2, source: "design figure: slit pitch, centre to centre; the web between two slits is this less the slit width, 2.2 mm, over the core's least web"}
+      width_mm: {value: 2.0, source: "design figure: slit width, under the core's 3.5 mm limit; narrower than the 2.2 mm web, so the left wall's row, shifted half a pitch, stands each slit behind a right web (2.2 mm of web against a 2.0 mm slit) and no sight line runs square through both walls"}
+      height_mm: {value: 4.5, source: "design figure: slit height, every slit alike; from the zone's top land it ends exactly on the core's bottom limit; the outlets are sized against the lid inlets, as warm air leaves only as fast as the smaller of the two lets it (outlet free area 225 mm2 against the lid inlet's 205)"}
+    mark:
+      lid_height_mm: {value: 29.0, source: "design figure: height of the logo inside its stone on the lid, at least the 28 the logo block asks; the lid's inlet free area, measured with the even, mirrored vents, is 205 to 206 mm2 for a logo from 28 to 30.5 mm tall, so the height costs the inlet nothing in that range"}
+      centre_uv_mm: {value: [23.75, 30.0], source: "design figure: centre of the stone, on the lid's long axis (the pebble's and the thickened field's centre) so the streamlines part evenly each side; v puts the stone as far from the bay block as from the field's plate end, so the lines between it and the block are not squeezed"}
+      margin_mm: {value: 1.8, source: "design figure, 2026-11-26 tidy-up: the stone stands this far outside the logo groove's edge; 1.8 plus half of the 1.0 mm groove gives the stone the 2.3 mm offset from the silhouette centre line it had with 2.0 and a 0.6 mm groove, so the logo's stone and the streamlines are unchanged; with the stone on the long axis a smaller margin keeps the vents beside it (lid inlet 205 mm2 against 105 at 3.0, measured with the even, mirrored vents)"}
+      corner_radius_mm: {value: 4.5, source: "design figure: corner radius of the stone"}
+    forms:
+      single:
+        tray_colour: {value: "#e6e1d6", source: "warm off-white, bone"}
+        lid_colour: {value: "#e6e1d6", source: "bone"}
+        alternate_name: {value: "stone", source: "design choice, 2026-11-26: the second colour the single-colour form is offered in, by filament alone; the geometry and the print files are the single-colour form's own"}
+        alternate_colour: {value: "#928e86", source: "stone, a mid warm grey: grey is the ASA colour most widely stocked after black and white; it is darker than the aluminium plate, so the case reads as a body on the plate and not as a pale box beside it; a mid tone carries both the shadow in a groove and the light on its edge, so the relief logo and streamlines read without a second colour, where graphite alone would hide them; and it shows dust, coffee and heat yellowing less than bone"}
+      two:
+        tray_colour: {value: "#2f3237", source: "graphite"}
+        lid_colour: {value: "#e6e1d6", source: "bone"}
+        lid_floor_colour: {value: "#2f3237", source: "graphite: the lid's swap layers, which are every groove floor on the lid face and a pinstripe round its chamfer and every opening wall they cross"}
+        tray_floor_colour: {value: "#e6e1d6", source: "bone: the tray's swap layers, which are the logo's groove floors on the tray's top and a pinstripe round its top chamfer"}
+        swap_start_mm: {value: 0.4, source: "design figure: each part prints face down in its own colour to this height above the bed, then the filament is changed; it is the depth of the shallowest groove (the logo's), so that groove's floor is the first layer of the second colour"}
+        swap_layers: {value: 3, source: "design figure: layers printed in the second colour before the change back, 0.4 to 1.0 mm above the bed: three layers of bone over graphite under the tray logo's floor, enough for a pale filament to print opaque, and two layers of graphite over the lid's 0.6 mm deep groove floors; a filament change colours the whole layer, so the same 0.6 mm shows as a pinstripe in the middle of each part's 1.6 mm chamfer"}
+      film_colour: {value: "#e0a030", source: "amber"}
+      plate_colour: {value: "#b4b8bd", source: "aluminium grey"}
