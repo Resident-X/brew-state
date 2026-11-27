@@ -1,0 +1,17 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-HOLDS-AT-THE-COMBINED-LEAN-ALLOWANCE
+type: deliverable
+category: solution
+title: The printed case's checks hold at the combined lean the tray budgets for
+status: active
+version: 1
+text: |
+  Corrects a gap in the printed case's seating range found while building the plate-clearance leaf. The case's height budget allows 1.3 degrees of lean at the tray floor, the common lean of 1.0 degree plus the 0.3 degree difference between the two triacs that the record states as a limit the owner has a joint reflowed beyond, but the seating-range check rebuilds only at the common lean's 1.0 degree and holds the difference at 0. Rebuilt at 1.3 degrees, 18 of the 32 extreme builds fail checks outside the plate-clearance leaf: the boot clearance at 0.41 to 0.45 mm against 0.5 mm, the backing contact at -1.3 degrees, the lead-to-tray clearance and a slot clearance of 1.995 mm against 2.0 mm. The case is changed, or the allowance is reduced with the owner's agreement, so that every check holds at the lean the case budgets for and the range checks it.
+
+  Locus: hardware/sunbeam-em7000/heater-wall-board/case/ (params, model, checks and record).
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: depends-on

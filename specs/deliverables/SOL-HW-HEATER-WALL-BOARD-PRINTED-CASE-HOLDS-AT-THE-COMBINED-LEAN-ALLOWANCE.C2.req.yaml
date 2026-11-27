@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-HOLDS-AT-THE-COMBINED-LEAN-ALLOWANCE.C2
+type: criterion
+title: Every case check holds at the combined lean
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Every check of the case holds at the combined lean, including the boot clearance, the backing contact, the lead-to-tray clearance and the slot clearance, or the case record states a smaller allowance that the owner has agreed and the height budget follows it. Out of scope: any change to the plate-clearance leaf's figures.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-HOLDS-AT-THE-COMBINED-LEAN-ALLOWANCE
+    type: criterion-of
