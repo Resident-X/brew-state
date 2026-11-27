@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C16
+type: criterion
+title: The record names the standard bar the case takes
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The case record and the plate drawing name the plate as a standard flat aluminium bar of the height the case takes, its thickness and its length, and state the stock's width tolerance from the supplier's standard or mark it as an assumption. Out of scope: the plate's thermal contact, which the thermal judgement covers.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of
