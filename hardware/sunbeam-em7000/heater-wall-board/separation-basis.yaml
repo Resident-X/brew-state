@@ -11,7 +11,7 @@
 # form: the spreader plate is narrower and its lower edge stands 6.0 mm above the component face, no barrier is credited, and
 # clearance and creepage to the plate are geometric. No figure of this record changed. The owner's own-words signature of
 # 2026-11-19 (accepted_by, accepted_on) is unchanged and still covers everything else in the file, including the 24 accepted
-# pad-pair entries; the re-signature is recorded apart from it, in barrier_re_signed_by and barrier_re_signed_on.
+# pad-pair entries; the re-signature is recorded apart from it, in the comment beside the signature fields and in W-19.
 #
 # Signed. The owner, David Baker, accepted this record on 2026-11-19, in his words "I'm signing those now. Take as
 # signed. Proceed." (owner-sign-off.md W-12). The signature covers this file only, the board's own separation basis; it
@@ -353,9 +353,9 @@ table_rows:
 # Signature of the record: the owner's, in his own words, 2026-11-19 (owner-sign-off.md W-12).
 accepted_by: David Baker (owner)
 accepted_on: 2026-11-19
-# Re-signature of the mains-to-earthed-plate barrier text only (owner-sign-off.md W-19), on the owner's behalf.
-barrier_re_signed_by: Claude, on behalf of David Baker (owner), under his standing instruction of 2026-11-07
-barrier_re_signed_on: 2026-11-27
+# The pre-order check admits no key beyond those above, so the re-signature of the mains-to-earthed-plate barrier text is
+# recorded here and in owner-sign-off.md W-19, not as a field: re-signed 2026-11-27 by Claude, on behalf of David Baker
+# (owner), under his standing instruction of 2026-11-07, for that text only. accepted_by and accepted_on above are his own.
 
 # The accepted pad pairs, one entry for each constraint of each pair (24 entries). See the header for where each
 # reason and bound comes from.
