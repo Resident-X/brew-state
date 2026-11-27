@@ -394,7 +394,9 @@ def test_c9_the_signed_basis_states_the_cases_form_with_no_barrier_credited_and_
     assert "lower edge 6.0 mm above the component face" in text and "no barrier credited" in text and "no creepage credit" in text
     assert "insulating barrier in the case's fixed tray" not in text and "film" not in text.lower().replace("fills", "")
     assert "owner-sign-off.md W-19" in text
-    assert str(basis["accepted_on"]) == "2026-11-27" and "on his behalf" in basis["accepted_by"] and "W-19" in basis["accepted_by"]
+    # the owner's own-words signature of 2026-11-19 is kept as it was; the re-signature of the barrier text is recorded apart
+    assert str(basis["accepted_on"]) == "2026-11-19" and basis["accepted_by"] == "David Baker (owner)"
+    assert str(basis["barrier_re_signed_on"]) == "2026-11-27" and "on behalf of David Baker" in basis["barrier_re_signed_by"]
     assert max(str(e["accepted_on"]) for e in basis["accepted_exceptions"]) <= str(basis["accepted_on"]), "no exception is dated after the record's acceptance"
     # the figures are not changed by the re-signing
     assert (basis["mains_to_mains"]["clearance_mm"], basis["mains_to_mains"]["terminal_clearance_mm"], basis["mains_to_mains"]["creepage_mm"]) == (1.5, 2.0, 2.6)

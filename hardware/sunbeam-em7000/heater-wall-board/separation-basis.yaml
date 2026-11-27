@@ -6,12 +6,12 @@
 # 42 exception entries, its entry fuse F101 and its held_at_reinforced nets fail this board, which has none of them.
 # The figures below are the machine's, copied unchanged.
 #
-# Re-signed 2026-11-27, on the owner's behalf (owner-sign-off.md W-19). The text of the mains-to-earthed-plate barrier below,
-# which the owner signed on 2026-11-19 as a barrier in the case's tray (W-10), now states the case's form: the spreader
-# plate is narrower and its lower edge stands 6.0 mm above the component face, no barrier is credited, and clearance and
-# creepage to the plate are geometric. No figure of this record changed; accepted_by and accepted_on and nothing else of the
-# signature fields read the re-signing. The 24 accepted pad-pair entries keep their own 2026-11-19 acceptance, which this
-# record's later day covers.
+# Re-signed 2026-11-27, on the owner's behalf (owner-sign-off.md W-19), for the text of the mains-to-earthed-plate barrier
+# below ONLY. That text, which the owner signed on 2026-11-19 as a barrier in the case's tray (W-10), now states the case's
+# form: the spreader plate is narrower and its lower edge stands 6.0 mm above the component face, no barrier is credited, and
+# clearance and creepage to the plate are geometric. No figure of this record changed. The owner's own-words signature of
+# 2026-11-19 (accepted_by, accepted_on) is unchanged and still covers everything else in the file, including the 24 accepted
+# pad-pair entries; the re-signature is recorded apart from it, in barrier_re_signed_by and barrier_re_signed_on.
 #
 # Signed. The owner, David Baker, accepted this record on 2026-11-19, in his words "I'm signing those now. Take as
 # signed. Proceed." (owner-sign-off.md W-12). The signature covers this file only, the board's own separation basis; it
@@ -350,9 +350,12 @@ table_rows:
   figure:
     creepage_mm: 3.2
     clearance_mm: 1.5
-# Signature of the record: the owner's, 2026-11-19 (owner-sign-off.md W-12), re-signed on his behalf 2026-11-27 (W-19).
-accepted_by: David Baker (owner), re-signed on his behalf by Claude under his standing instruction of 2026-11-07 (owner-sign-off.md W-19)
-accepted_on: 2026-11-27
+# Signature of the record: the owner's, in his own words, 2026-11-19 (owner-sign-off.md W-12).
+accepted_by: David Baker (owner)
+accepted_on: 2026-11-19
+# Re-signature of the mains-to-earthed-plate barrier text only (owner-sign-off.md W-19), on the owner's behalf.
+barrier_re_signed_by: Claude, on behalf of David Baker (owner), under his standing instruction of 2026-11-07
+barrier_re_signed_on: 2026-11-27
 
 # The accepted pad pairs, one entry for each constraint of each pair (24 entries). See the header for where each
 # reason and bound comes from.
