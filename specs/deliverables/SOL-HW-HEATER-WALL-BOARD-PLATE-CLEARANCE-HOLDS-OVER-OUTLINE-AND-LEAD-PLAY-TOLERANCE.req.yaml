@@ -21,3 +21,7 @@ links:
     type: targets
   - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: bad65b46af631e65df057b16889f84dc46c12de2e957198c6a70a22ecf912d6a
+  gating_profile: ""
