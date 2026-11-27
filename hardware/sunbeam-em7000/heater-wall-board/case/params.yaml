@@ -43,6 +43,12 @@ seating:
     max: 0.305
     unconfirmed: true
     source: "the play of a triac lead in its 1.1 mm drilled hole along v, which the assembler's soldering freezes: (1.1 - 0.49) / 2 = 0.305 mm to either side at the thinnest lead (c1 0.49) and (1.1 - 0.70) / 2 = 0.20 mm at the thickest (DS2114 Rev 11 Table 6 p.9, lead thickness c1 0.49 to 0.70; hole 1.1 mm, fit.py TRIAC_LEAD_HOLE_D_MM); the whole triac, its tab face and the plate it is bolted to move with the lead, the pads do not. The extreme is taken as the assumption that the lead can sit against either side of its hole. The owner measures it on the delivered board"
+  plate_edge_offset_mm:
+    value: 0.0
+    min: -0.36
+    max: 0.0
+    unconfirmed: true
+    source: "how far the plate's lower edge stands under its nominal 6.0 mm above the component face, the ledge's print allowance (plate.ledge_print_allowance_mm, 0.2) plus the board's thickness tolerance (1.6 mm plus or minus 10 percent, 0.16 mm, docs/board-manufacturer-jlcpcb.md; a thicker board lifts the component face off the tray, so the ledge stands that much lower against it) = 0.36; the two are one axis because each moves the edge the same distance in the same direction. Only the adverse direction is taken: a higher edge only moves the plate away from the pads and the leads, the tray screws stand on the tray like the ledge and move with it, and the one distance it narrows, the tab hole's to the lower edge, has 6.3 mm to spare. The owner measures it on the delivered board and the printed tray"
   lead_protrusion_below_board_mm:
     value: 2.0
     min: 0.0
@@ -96,19 +102,25 @@ case:
 
 plate:
   length_mm: {value: 80.0, source: "provisional until the owner cuts and measures the machine wall"}
-  former_height_mm: {value: 30.0, source: "the plate's former height, which fixes the outline the case lies within (C11) and the upper edge: the plate stays centred on the case's extent here, its top at 22.975 mm at nominal; provisional until the owner cuts and measures the machine wall"}
-  lower_edge_z_mm: {value: 6.0, source: "the plate's lower edge above the board's component face, fixed in the board frame: the owner's W-9 1c lift figure; the bare lead's rear face stands at least 2.40 mm off the plate plane (DS2114 c2 minimum) and its metal rises to the body underside at 4.55 mm at most, so 2.6 mm of straight air needs an edge at or above 4.55 + sqrt(2.6^2 - 2.40^2) = 5.55 mm"}
-  end_wall_top_gap_mm: {value: 0.2, source: "design figure: the tray's end wall tops out this far under the plate's lower edge, and its board-side face stands this far behind the plate plane (the seam of case.seam_mm)"}
+  height_mm: {value: 20.0, source: "the plate is a standard flat aluminium bar 20 mm wide (its height installed), 5 mm thick and cut to 80 mm: 20 mm is a common stock width; its upper edge stands at the lower edge plus this, 26.0 mm above the component face. The stock's width tolerance is not stated here: read it from the supplier's standard when the bar is sourced"}
+  height_min_mm: {value: 16.8, source: "derived, the least plate height that keeps the case inside the plate's footprint: the lid top (case.z_lid_top_mm 22.55) plus plate.min_margin_mm (0.25) less the lower edge (6.0) = 16.8"}
+  height_max_mm: {value: 27.5, source: "derived, the greatest plate height the unit's opening in the plastic wall admits: the opening's top (plate.unit_opening_top_z_mm 35.0) less the wall opening's clearance (1.5) less the lower edge (6.0) = 27.5"}
+  unit_opening_bottom_z_mm: {value: -10.0, source: "the opening in the plastic wall that admits the unit spans z -10.0 to 35.0 from the component face (docs/sunbeam-em7000/controller-board-division.md, owner decision D11, accepted as preliminary by the owner on 2026-10-28 and revisited when the owner cuts and measures); this is its lower limit"}
+  unit_opening_top_z_mm: {value: 35.0, source: "the upper limit of the unit's opening in the plastic wall (same source as plate.unit_opening_bottom_z_mm)"}
+  former_height_mm: {value: 30.0, source: "the former plate's height, which fixes the former outline the case lies within, 80 mm by this, centred on the case's extent in z (lower -7.025 mm, upper 22.975 mm at nominal); it no longer fixes the plate's own edges"}
+  lower_edge_z_mm: {value: 6.0, source: "the plate's lower edge above the board's component face, the height of the tray's end-wall ledge on which the bar rests: the owner's W-9 1c lift figure, 12.6 mm above the tray floor's underside in the tray's own frame, 63 layers of 0.2 mm; the bare lead's rear face stands at least 2.40 mm off the plate plane (DS2114 c2 minimum) and its metal rises to the body underside at 4.55 mm at most, so 2.6 mm of straight air needs an edge at or above 4.55 + sqrt(2.6^2 - 2.40^2) = 5.55 mm"}
+  ledge_print_allowance_mm: {value: 0.2, source: "design figure: one layer of the printer's 0.2 mm layer height (printer-220-asa.ini): the printed ledge may stand this far under its drawn height; the model takes it as the adverse direction only, because a lower ledge lowers the plate's edge toward the pads"}
+  end_wall_board_recess_mm: {value: 0.2, source: "design figure: the end wall's board-side face stands this far behind the plate plane (the seam of case.seam_mm), so the wall keeps the board's side of the plate plane clear; its top is the ledge itself, at the plate's lower edge"}
   end_wall_wall_clear_mm: {value: 0.5, source: "design figure: the end wall's back face stands this far in front of the machine wall's plane, so only the plate touches the wall"}
   screw_edge_distance_mm: {value: 0.5, source: "design figure: a tray screw's countersunk head keeps this far inside each edge of the plate"}
   min_pilot_to_pocket_mm: {value: 0.4, source: "design figure: a tray screw's pilot keeps this far from the lid toe's pocket in the pilaster"}
   thickness_mm: {value: 5.0, source: "provisional until the owner cuts and measures the machine wall"}
   min_margin_mm: {value: 0.25, source: "design figure: the case lies inside the plate outline by at least this on every side"}
-  wall_opening_clearance_mm: {value: 1.5, source: "design figure: the opening in the machine's plastic wall is the plate outline plus this per side"}
+  wall_opening_clearance_mm: {value: 1.5, source: "design figure: the opening in the machine's plastic wall covers the plate and the tray's end wall together plus this per side"}
   bolt_zone_mm: {value: 10.0, source: "one M4 wall bolt at the plate's mid-height at each end with a 9 mm washer, 0.5 mm either side of the washer: the narrower plate has no room for two"}
   bolt_washer_dia_mm: {value: 9.0, source: "M4 form A washer, 9 mm outer diameter (ISO 7089 M4 is 9.0)"}
   bolt_dia_mm: {value: 4.0, source: "M4 wall bolt"}
-  wall_frame_depth_mm: {value: 10.0, source: "the opening modelled as a plate-outline-plus-clearance aperture this far in front of the wall plane"}
+  wall_frame_depth_mm: {value: 10.0, source: "the opening modelled as an aperture over the plate and the end wall, plus the clearance, this far in front of the wall plane"}
   wall_frame_rim_mm: {value: 6.0, source: "width of the modelled wall frame around the aperture"}
 
 screws:

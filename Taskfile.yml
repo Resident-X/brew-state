@@ -707,7 +707,7 @@ tasks:
       - '"{{.CAD_PYTHON}}" case.py {{.CLI_ARGS}}'
 
   hw:case:check:
-    desc: Run the geometric check of the printed case (one named check per decidable clause of its criteria) and print the figures, text by default; `-- --format json`, `-- --json-out out/check.json` and `-- --only c1.,c15.` (named checks only) and `-- --range` (every extreme of the seating range, about a minute) pass through. The receptacle-off bare-blade reach is printed as a finding, in neither the pass count nor the exit status. Exits non-zero when any check fails
+    desc: Run the geometric check of the printed case (one named check per decidable clause of its criteria) and print the figures, text by default; `-- --format json`, `-- --json-out out/check.json`, `-- --only c1.,c15.` (named checks only), `-- --range` (every extreme of the seating range, 64 rebuilds) and `-- --height-range` (the least and the greatest plate height, each at the nominal gap and at its two extremes, six rebuilds) pass through. The receptacle-off bare-blade reach is printed as a finding, in neither the pass count nor the exit status. Exits non-zero when any check fails
     dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
     cmds:
       - '"{{.CAD_PYTHON}}" check.py {{.CLI_ARGS}}'
@@ -751,7 +751,7 @@ tasks:
       - '"{{.CAD_PYTHON}}" slice.py {{.CLI_ARGS}}'
 
   hw:case:test:
-    desc: Run the tests of the printed case (pytest, in the CAD environment). They build the model, check it, and run the negative controls (each rebuilds the model with one dimension broken, four at a time in worker processes); the default run takes about five minutes, uses up to four processes and leaves out the tests marked heavy. `-- --heavy` adds them, the rebuild of every one of the 32 extremes of the seating range's five tolerances, about forty minutes more. The tests that read the renders draw their own into a temporary folder; the tests that read the slicer summaries fail when `task hw:case:slice` has not run, or when a summary is older than the sources it pins
+    desc: Run the tests of the printed case (pytest, in the CAD environment). They build the model, check it, and run the negative controls (each rebuilds the model with one dimension broken, four at a time in worker processes); the default run takes about five minutes, uses up to four processes and leaves out the tests marked heavy. `-- --heavy` adds them, the rebuild of every one of the 64 extremes of the seating range's six tolerances (body height, lean, tab-face distance, outline routing tolerance, lead play and the plate's lower edge), about eighty minutes more. The tests that read the renders draw their own into a temporary folder; the tests that read the slicer summaries fail when `task hw:case:slice` has not run, or when a summary is older than the sources it pins
     dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
     cmds:
       - '"{{.CAD_PYTHON}}" -m pytest -p no:cacheprovider -q tests {{.CLI_ARGS}}'

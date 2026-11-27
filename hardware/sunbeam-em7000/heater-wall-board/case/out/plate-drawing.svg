@@ -1,56 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="100.00mm" height="120.78mm" viewBox="0 0 100.000 120.775">
+<svg xmlns="http://www.w3.org/2000/svg" width="100.00mm" height="147.60mm" viewBox="0 0 100.000 147.600">
 <title>Spreader plate drawing, 1:1, seen from the case side (the inner face)</title>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <g font-family="monospace" font-size="2.1" fill="#111">
-<text x="10.00" y="12.00" fill="#111" font-size="2.0" text-anchor="start">SPREADER PLATE, aluminium, flat, nothing cut from it, seen from</text>
-<text x="10.00" y="15.60" fill="#111" font-size="2.0" text-anchor="start">the case side (the inner face, looking toward the wall, the case's</text>
-<text x="10.00" y="19.20" fill="#111" font-size="2.0" text-anchor="start">far end behind the viewer), 1:1, millimetres. 80.0 long x 16.975</text>
-<text x="10.00" y="22.80" fill="#111" font-size="2.0" text-anchor="start">tall x 5.0 thick: the former 30.0 mm plate with its lower edge</text>
-<text x="10.00" y="26.40" fill="#111" font-size="2.0" text-anchor="start">raised to z 6.0 above the board face, its upper edge at the former</text>
-<text x="10.00" y="30.00" fill="#111" font-size="2.0" text-anchor="start">top z 22.975; provisional until the owner cuts and measures the</text>
-<text x="10.00" y="33.60" fill="#111" font-size="2.0" text-anchor="start">wall.</text>
-<polygon points="10.000,24.000 90.000,24.000 90.000,40.975 10.000,40.975" style="fill:#e9ebee;stroke:#000;stroke-width:0.25"/>
-<polygon points="20.250,24.425 79.750,24.425 79.750,53.575 20.250,53.575" style="fill:none;stroke:#06c;stroke-width:0.2;stroke-dasharray:1.5 1"/>
-<text x="21.25" y="27.43" fill="#06c" font-size="1.9" text-anchor="start">case outline 59.50 x 29.15</text>
-<polygon points="10.000,24.000 20.000,24.000 20.000,40.975 10.000,40.975" style="fill:#fbe7cf;fill-opacity:0.7;stroke:#c60;stroke-width:0.12;stroke-dasharray:1 1"/>
-<circle cx="15.000" cy="32.487" r="4.500" style="fill:none;stroke:#c60;stroke-width:0.12"/>
-<circle cx="15.000" cy="32.487" r="2.250" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<text x="15.00" y="44.98" fill="#c60" font-size="1.9" text-anchor="middle">bolt zone 10.0</text>
-<polygon points="80.000,24.000 90.000,24.000 90.000,40.975 80.000,40.975" style="fill:#fbe7cf;fill-opacity:0.7;stroke:#c60;stroke-width:0.12;stroke-dasharray:1 1"/>
-<circle cx="85.000" cy="32.487" r="4.500" style="fill:none;stroke:#c60;stroke-width:0.12"/>
-<circle cx="85.000" cy="32.487" r="2.250" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<text x="85.00" y="44.98" fill="#c60" font-size="1.9" text-anchor="middle">bolt zone 10.0</text>
-<circle cx="23.000" cy="37.475" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<circle cx="23.000" cy="37.475" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
-<circle cx="23.000" cy="32.975" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<circle cx="23.000" cy="32.975" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
-<circle cx="77.000" cy="37.475" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<circle cx="77.000" cy="37.475" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
-<circle cx="77.000" cy="32.975" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<circle cx="77.000" cy="32.975" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
-<line x1="38.850" y1="31.675" x2="38.850" y2="29.675" style="stroke:#c00;stroke-width:1.2;stroke-opacity:0.35"/>
-<circle cx="38.850" cy="30.475" r="1.550" style="fill:#fff;stroke:#c00;stroke-width:0.25"/>
-<text x="35.85" y="27.98" fill="#c00" font-size="1.8" text-anchor="end">T921 tab screw u 12.60 z 16.50</text>
-<line x1="63.450" y1="31.675" x2="63.450" y2="29.675" style="stroke:#c00;stroke-width:1.2;stroke-opacity:0.35"/>
-<circle cx="63.450" cy="30.475" r="1.550" style="fill:#fff;stroke:#c00;stroke-width:0.25"/>
-<text x="66.45" y="27.98" fill="#c00" font-size="1.8" text-anchor="start">T911 tab screw u 37.20 z 16.50</text>
-<text x="10.00" y="52.98" fill="#111" font-size="1.9" text-anchor="start">Red bar: the tab hole height range 15.30 to 17.30 (nominal 16.50); the</text>
-<text x="10.00" y="56.38" fill="#111" font-size="1.9" text-anchor="start">M3 holes (tapping drill 2.5) are drilled and tapped through the whole</text>
-<text x="10.00" y="59.77" fill="#111" font-size="1.9" text-anchor="start">plate from this face at the measured height; the screws are M3 x 5.</text>
-<text x="10.00" y="63.17" fill="#111" font-size="1.9" text-anchor="start">The range is unconfirmed: the owner measures the delivered board</text>
-<text x="10.00" y="66.58" fill="#111" font-size="1.9" text-anchor="start">before marking the plate.</text>
-<text x="10.00" y="69.97" fill="#111" font-size="1.9" text-anchor="start">Four M3 countersunk holes, countersunk on the back face (the wall</text>
-<text x="10.00" y="73.38" fill="#111" font-size="1.9" text-anchor="start">face, away from the viewer; head dia 6.0 shown by its circle), take</text>
-<text x="10.00" y="76.78" fill="#111" font-size="1.9" text-anchor="start">the tray screws at z 9.5, 14; the back face lies on the machine wall.</text>
-<text x="10.00" y="80.17" fill="#111" font-size="1.9" text-anchor="start">The two M3 tapped-through holes enter the inner face drawn here.</text>
-<text x="10.00" y="83.58" fill="#111" font-size="1.9" text-anchor="start">Wall bolts M4, one at the plate's mid-height (z 14.49) at each end,</text>
-<text x="10.00" y="86.97" fill="#111" font-size="1.9" text-anchor="start">washer dia 9.0, standing in the 10.0 mm end zones outside the case.</text>
-<text x="10.00" y="90.38" fill="#111" font-size="1.9" text-anchor="start">Length arithmetic: case outer width at the plate 59.50 + 2 x bolt zone</text>
-<text x="10.00" y="93.78" fill="#111" font-size="1.9" text-anchor="start">10.0 = 79.50, not more than the plate length 80.0 (margin 0.50).</text>
-<text x="10.00" y="97.17" fill="#111" font-size="1.9" text-anchor="start">Wall opening = the plate's former outline + 1.5 per side: 83.0 x 33.0.</text>
-<text x="10.00" y="100.58" fill="#111" font-size="1.9" text-anchor="start">Interface material between the triac faces and the plate, and between</text>
-<text x="10.00" y="103.97" fill="#111" font-size="1.9" text-anchor="start">the plate and the wall, is not in the catalogue and is stated in the</text>
-<text x="10.00" y="107.38" fill="#111" font-size="1.9" text-anchor="start">case record.</text>
+<text x="10.00" y="12.00" fill="#111" font-size="2.0" text-anchor="start">SPREADER PLATE, a standard flat aluminium bar, nothing cut from it</text>
+<text x="10.00" y="15.60" fill="#111" font-size="2.0" text-anchor="start">but its holes, seen from the case side (the inner face, looking</text>
+<text x="10.00" y="19.20" fill="#111" font-size="2.0" text-anchor="start">toward the wall, the case's far end behind the viewer), 1:1,</text>
+<text x="10.00" y="22.80" fill="#111" font-size="2.0" text-anchor="start">millimetres. 20 mm wide (its height installed) x 5 mm thick, cut</text>
+<text x="10.00" y="26.40" fill="#111" font-size="2.0" text-anchor="start">to 80 mm long. Its lower edge rests on the tray's end-wall ledge,</text>
+<text x="10.00" y="30.00" fill="#111" font-size="2.0" text-anchor="start">z 6.0 above the board face; its upper edge stands at z 26.0. The</text>
+<text x="10.00" y="33.60" fill="#111" font-size="2.0" text-anchor="start">case holds at any height from 16.8 to 27.5 mm; the standard widths</text>
+<text x="10.00" y="37.20" fill="#111" font-size="2.0" text-anchor="start">between are 20 and 25 mm. The stock's width tolerance is an</text>
+<text x="10.00" y="40.80" fill="#111" font-size="2.0" text-anchor="start">assumption, to be read from the supplier's standard when the bar</text>
+<text x="10.00" y="44.40" fill="#111" font-size="2.0" text-anchor="start">is sourced.</text>
+<polygon points="10.000,24.000 90.000,24.000 90.000,44.000 10.000,44.000" style="fill:#e9ebee;stroke:#000;stroke-width:0.25"/>
+<polygon points="20.250,27.450 79.750,27.450 79.750,56.600 20.250,56.600" style="fill:none;stroke:#06c;stroke-width:0.2;stroke-dasharray:1.5 1"/>
+<text x="21.25" y="30.45" fill="#06c" font-size="1.9" text-anchor="start">case outline 59.50 x 29.15</text>
+<polygon points="10.000,24.000 20.000,24.000 20.000,44.000 10.000,44.000" style="fill:#fbe7cf;fill-opacity:0.7;stroke:#c60;stroke-width:0.12;stroke-dasharray:1 1"/>
+<circle cx="15.000" cy="34.000" r="4.500" style="fill:none;stroke:#c60;stroke-width:0.12"/>
+<circle cx="15.000" cy="34.000" r="2.250" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<text x="15.00" y="48.00" fill="#c60" font-size="1.9" text-anchor="middle">bolt zone 10.0</text>
+<polygon points="80.000,24.000 90.000,24.000 90.000,44.000 80.000,44.000" style="fill:#fbe7cf;fill-opacity:0.7;stroke:#c60;stroke-width:0.12;stroke-dasharray:1 1"/>
+<circle cx="85.000" cy="34.000" r="4.500" style="fill:none;stroke:#c60;stroke-width:0.12"/>
+<circle cx="85.000" cy="34.000" r="2.250" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<text x="85.00" y="48.00" fill="#c60" font-size="1.9" text-anchor="middle">bolt zone 10.0</text>
+<circle cx="23.000" cy="40.500" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<circle cx="23.000" cy="40.500" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
+<circle cx="23.000" cy="36.000" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<circle cx="23.000" cy="36.000" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
+<circle cx="77.000" cy="40.500" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<circle cx="77.000" cy="40.500" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
+<circle cx="77.000" cy="36.000" r="3.000" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<circle cx="77.000" cy="36.000" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
+<line x1="38.850" y1="34.700" x2="38.850" y2="32.700" style="stroke:#c00;stroke-width:1.2;stroke-opacity:0.35"/>
+<circle cx="38.850" cy="33.500" r="1.550" style="fill:#fff;stroke:#c00;stroke-width:0.25"/>
+<text x="35.85" y="31.00" fill="#c00" font-size="1.8" text-anchor="end">T921 tab screw u 12.60 z 16.50</text>
+<line x1="63.450" y1="34.700" x2="63.450" y2="32.700" style="stroke:#c00;stroke-width:1.2;stroke-opacity:0.35"/>
+<circle cx="63.450" cy="33.500" r="1.550" style="fill:#fff;stroke:#c00;stroke-width:0.25"/>
+<text x="66.45" y="31.00" fill="#c00" font-size="1.8" text-anchor="start">T911 tab screw u 37.20 z 16.50</text>
+<text x="10.00" y="56.00" fill="#111" font-size="1.9" text-anchor="start">Red bar: the tab hole height range 15.30 to 17.30 above the board face</text>
+<text x="10.00" y="59.40" fill="#111" font-size="1.9" text-anchor="start">(nominal 16.50). The tab holes stand 9.30 to 11.30 mm (nominal 10.50)</text>
+<text x="10.00" y="62.80" fill="#111" font-size="1.9" text-anchor="start">above the bar's lower edge, the distance to mark and drill from the</text>
+<text x="10.00" y="66.20" fill="#111" font-size="1.9" text-anchor="start">lower edge: M3 holes (tapping drill 2.5) drilled and tapped through</text>
+<text x="10.00" y="69.60" fill="#111" font-size="1.9" text-anchor="start">the whole bar from this face; the screws are M3 x 5.</text>
+<text x="10.00" y="73.00" fill="#111" font-size="1.9" text-anchor="start">The range is unconfirmed: the owner measures the delivered board</text>
+<text x="10.00" y="76.40" fill="#111" font-size="1.9" text-anchor="start">before marking the bar.</text>
+<text x="10.00" y="79.80" fill="#111" font-size="1.9" text-anchor="start">Four M3 countersunk holes, countersunk on the back face (the wall</text>
+<text x="10.00" y="83.20" fill="#111" font-size="1.9" text-anchor="start">face, away from the viewer; head dia 6.0 shown by its circle), take</text>
+<text x="10.00" y="86.60" fill="#111" font-size="1.9" text-anchor="start">the tray screws at z 9.5, 14 above the board face (3.5, 8 above the</text>
+<text x="10.00" y="90.00" fill="#111" font-size="1.9" text-anchor="start">lower edge). They are marked from the printed tray with the bar seated</text>
+<text x="10.00" y="93.40" fill="#111" font-size="1.9" text-anchor="start">on its ledge, then drilled and countersunk until each head sits flush</text>
+<text x="10.00" y="96.80" fill="#111" font-size="1.9" text-anchor="start">with or below the back face; the back face lies on the machine wall.</text>
+<text x="10.00" y="100.20" fill="#111" font-size="1.9" text-anchor="start">The two M3 tapped-through holes enter the inner face drawn here.</text>
+<text x="10.00" y="103.60" fill="#111" font-size="1.9" text-anchor="start">Wall bolts M4, one at the plate's mid-height (z 16.00) at each end,</text>
+<text x="10.00" y="107.00" fill="#111" font-size="1.9" text-anchor="start">washer dia 9.0, standing in the 10.0 mm end zones outside the case.</text>
+<text x="10.00" y="110.40" fill="#111" font-size="1.9" text-anchor="start">Length arithmetic: case outer width at the plate 59.50 + 2 x bolt zone</text>
+<text x="10.00" y="113.80" fill="#111" font-size="1.9" text-anchor="start">10.0 = 79.50, not more than the plate length 80.0 (margin 0.50).</text>
+<text x="10.00" y="117.20" fill="#111" font-size="1.9" text-anchor="start">Wall opening = the plate and the tray's end wall together + 1.5 per</text>
+<text x="10.00" y="120.60" fill="#111" font-size="1.9" text-anchor="start">side: 83.0 x 35.6, within the unit's opening in the plastic wall (z</text>
+<text x="10.00" y="124.00" fill="#111" font-size="1.9" text-anchor="start">-10.0 to 35.0).</text>
+<text x="10.00" y="127.40" fill="#111" font-size="1.9" text-anchor="start">Interface material between the triac faces and the plate, and between</text>
+<text x="10.00" y="130.80" fill="#111" font-size="1.9" text-anchor="start">the plate and the wall, is not in the catalogue and is stated in the</text>
+<text x="10.00" y="134.20" fill="#111" font-size="1.9" text-anchor="start">case record.</text>
 </g>
 </svg>

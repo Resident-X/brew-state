@@ -4,9 +4,9 @@
  "printer": "generic open-frame 220 x 220 x 250, 0.4 mm nozzle, 0.2 mm layers, ASA 245/100, brim, draft shield",
  "slicer": "PrusaSlicer-2.9.7 based on Slic3r (with GUI support)",
  "inputs": {
-  "params.yaml": "c86dd12b8aa445c3e9dd0df6d80b45c3013ad91288e49c3aa663c046364e81c9",
-  "case.py": "a155c1a1e7f7cf64b37288ff8c49da49cd11fc2db378ef6c601dcca0f7d3ea38",
-  "check.py": "72e66bafbc114d03b29846aa16bfc64709bdc9fc1723f4b3975229ccade9b1a3",
+  "params.yaml": "31c6850dba31ba0595a22b2ca81426473a5e27306bf2ea445b35b92965c6053d",
+  "case.py": "d8c72018a552276a4df58f0d8806c8ffce7a56de98d4d027b366dc85d72ec1ad",
+  "check.py": "5b39560275bd6b91d920b386a6e9ea9b2d9b865e4d77b8799c53aae09c049d46",
   "core.py": "8e8c7e2f66186df1f979a442bc65df133484b8ab4e941e57b9f31bee1748af9c",
   "skins.py": "2528371038564f8b980d15ea12bc3a6bd8e78781bab21285d55272437f709231",
   "solids.py": "44e5546024c274dbe5c78c3902ea8e91ee9aa1719c146a8a57b7cb471ec335ac",
@@ -20,7 +20,7 @@
   "../separation-basis.yaml": "100f1baae70ddfef596e30faf732b21336ee373603f42d5a9dfe4904711f40bf",
   "../../../tools/board_geometry.py": "58a4d843a495fb85fa747ddf1935ed33ec549bce1d3befa2fce59e8b882e1c82",
   "../../../tools/sexpr.py": "f74f214bd330c46ffecc896c0879ca114e6d84db3788d7bf262ae127b33482a0",
-  "out/tray.print.stl": "a96de175d1527f55d54e910b3b6dfe0ff731fc0db8f097c0cfc07ed93497ecbf"
+  "out/tray.print.stl": "774ed82c47ed73903731607fdae5f3b9764b337ace31262c65b7726206685858"
  },
  "support_frame": "support_clusters are in print coordinates (the G-code's: x, y on the bed, z up); each carries model_frame, the same box in the case's own frame (u, v, z) that case.py's regions use",
  "limits": {
@@ -31,11 +31,11 @@
   "first_layer_mm": 0.2
  },
  "supports_off": {
-  "filament_mm": 14840.11,
-  "filament_cm3": 35.69,
-  "filament_g": 38.19,
-  "print_time_text": "4h 38m 18s",
-  "print_time_s": 16698.0,
+  "filament_mm": 14857.91,
+  "filament_cm3": 35.74,
+  "filament_g": 38.24,
+  "print_time_text": "4h 38m 45s",
+  "print_time_s": 16725.0,
   "layers": 136,
   "bounding_box_mm": {
    "min": [
@@ -54,7 +54,7 @@
     27.0
    ]
   },
-  "extruded_mm": 14840.1,
+  "extruded_mm": 14857.9,
   "support_generated": false,
   "support_filament_mm": 0.0,
   "support_volume_mm3": 0.0,
@@ -62,11 +62,11 @@
   "gcode": "tray.supports-off.gcode"
  },
  "supports_auto": {
-  "filament_mm": 15644.46,
-  "filament_cm3": 37.63,
-  "filament_g": 40.26,
-  "print_time_text": "4h 50m 40s",
-  "print_time_s": 17440.0,
+  "filament_mm": 15662.26,
+  "filament_cm3": 37.67,
+  "filament_g": 40.31,
+  "print_time_text": "4h 51m 8s",
+  "print_time_s": 17468.0,
   "layers": 154,
   "bounding_box_mm": {
    "min": [
@@ -85,7 +85,7 @@
     27.0
    ]
   },
-  "extruded_mm": 15644.5,
+  "extruded_mm": 15662.3,
   "support_generated": true,
   "support_filament_mm": 713.2,
   "support_volume_mm3": 1715.5,
@@ -104,7 +104,7 @@
      6.6
     ],
     "filament_mm": 713.2,
-    "segments": 10356,
+    "segments": 10355,
     "model_frame": {
      "u_mm": [
       -10.66,
@@ -1604,11 +1604,11 @@
   ]
  },
  "supports_auto_threshold_0": {
-  "filament_mm": 15544.57,
-  "filament_cm3": 37.39,
-  "filament_g": 40.01,
-  "print_time_text": "4h 49m 21s",
-  "print_time_s": 17361.0,
+  "filament_mm": 15562.36,
+  "filament_cm3": 37.43,
+  "filament_g": 40.05,
+  "print_time_text": "4h 49m 49s",
+  "print_time_s": 17389.0,
   "layers": 157,
   "bounding_box_mm": {
    "min": [
@@ -1627,7 +1627,7 @@
     27.0
    ]
   },
-  "extruded_mm": 15544.6,
+  "extruded_mm": 15562.4,
   "support_generated": true,
   "support_filament_mm": 667.6,
   "support_volume_mm3": 1605.7,

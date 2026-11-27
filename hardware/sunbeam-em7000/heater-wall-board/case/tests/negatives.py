@@ -42,7 +42,8 @@ def refused(overrides, forms=("single",)):
 def short_plate():
     from build123d import Pos  # noqa: F401
     m = case.build(forms=("single",))
-    m.parts["plate"] = case.box(-6.25 + 4.0, 53.75 - 4.0, m.v_plate - 5.0, m.v_plate, 6.0, 22.975)          # a 70 mm plate under the same case
+    pl = m.info["plate"]
+    m.parts["plate"] = case.box(-6.25 + 4.0, 53.75 - 4.0, m.v_plate - 5.0, m.v_plate, pl["z0"], pl["z1"])          # a 70 mm plate under the same case
     m._meshes.pop("plate", None)
     check._SCENES.clear()
     return {"results": check.check_c2_c3(m), "refused": refused({"plate.length_mm": 70.0})}
@@ -56,6 +57,34 @@ def full_height_plate():
     m._meshes.pop("plate", None)
     check._SCENES.clear()
     return check.check_c1(m)
+
+
+def plate_below_the_ledge():
+    """The nominal model with the plate lowered 0.05 mm, below the ledge the tray holds it on."""
+    from build123d import Pos
+    m = case.build(forms=("single",))
+    m.parts["plate"] = Pos(0, 0, -0.05) * m.parts["plate"]
+    m._meshes.pop("plate", None)
+    check._SCENES.clear()
+    return check.check_c1(m)
+
+
+def ledge_cut_away():
+    """The nominal model with the ledge cut off the tray's end wall: the top millimetre of the wall removed, so nothing stops a lower plate."""
+    m = case.build(forms=("single",))
+    ew = m.info["end_wall"].bounding_box()
+    m.parts["tray"] = m.parts["tray"] - case.box(float(ew.min.X), float(ew.max.X), float(ew.min.Y), float(ew.max.Y), float(ew.max.Z) - 1.0, float(ew.max.Z) + 0.5)
+    m._meshes.pop("tray", None)
+    check._SCENES.clear()
+    return check.check_c1(m)
+
+
+def height_range_end(end):
+    """Every check on the model at the least or the greatest plate height, the lower edge unchanged."""
+    P = case.Params.load()
+    m = case.build({"plate.height_mm": P("plate.height_min_mm") if end == "min" else P("plate.height_max_mm")}, ("single",))
+    check._SCENES.clear()
+    return check.run_all(m)
 
 
 def tray_against_the_wall():
@@ -196,7 +225,7 @@ def cli(arguments):
     return {"returncode": done.returncode, "stdout": done.stdout, "file": written}
 
 
-CORNERS = {"corner_low": ("min",) * 5, "corner_high": ("max",) * 5}
+CORNERS = {"corner_low": ("min",) * len(check.SEATING_AXES), "corner_high": ("max",) * len(check.SEATING_AXES)}
 
 def nominal():
     """Every check on the nominal model: the results the tests that read `results` share."""
@@ -207,13 +236,19 @@ def nominal():
 JOBS = {
     "nominal": (nominal, 120),
     "c4_short_gate": (lambda: broken({"skins.flow.cable_gate_lead_mm": 2.0}, "check_c4"), 65),
-    "c4_tight": (lambda: broken({"plate.wall_opening_clearance_mm": 0.0, "lid.sweep_tilt_deg": 8.0}, "check_c4"), 65),
+    "c4_tight": (lambda: broken({"plate.wall_opening_clearance_mm": -4.5}, "check_c4"), 65),
     "corner_low": (lambda: check._seating_combo(({}, None, CORNERS["corner_low"])), 80),
     "corner_high": (lambda: check._seating_combo(({}, None, CORNERS["corner_high"])), 80),
     "c13_no_engraving": (tray_without_its_engraving, 45),
     "c13_swap_too_early": (swap_before_the_logo_floor, 45),
     "c1_low_plate": (lambda: broken({"plate.lower_edge_z_mm": 1.0}, "check_c1"), 25),
     "c1_full_height_plate": (full_height_plate, 25),
+    "c5_plate_below_ledge": (plate_below_the_ledge, 25),
+    "c5_ledge_cut_away": (ledge_cut_away, 25),
+    "c15_height_min": (lambda: height_range_end("min"), 120),
+    "c15_height_max": (lambda: height_range_end("max"), 120),
+    "c15_plate_too_short": (lambda: broken({"plate.height_mm": case.Params.load()("plate.height_min_mm") - 0.5}, "check_c2_c3"), 22),
+    "c15_plate_too_tall": (lambda: broken({"plate.height_mm": case.Params.load()("plate.height_max_mm") + 0.5}, "check_c2_c3"), 22),
     "c2_tray_at_the_wall": (tray_against_the_wall, 25),
     "c2_short_former": (lambda: broken({"plate.former_height_mm": 25.0}, "check_c2_c3"), 22),
     "c3_screw_in_pocket": (tray_screw_into_the_pocket, 25),

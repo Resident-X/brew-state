@@ -9,6 +9,7 @@
   "tab_face_to_lead_centre_mm": 2.86,
   "outline_routing_mm": 0.0,
   "lead_play_mm": 0.0,
+  "plate_edge_offset_mm": 0.0,
   "tab_hole_height_mm": 16.5
  },
  "basis": {
@@ -49,7 +50,7 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the plate's lower edge stands at z 6.000 above the component face, at least the 6.0 mm figure and the 5.550 mm the bare leads need (4.55 + sqrt(2.6^2 - 2.400^2)): no plate metal faces the board edge, the pads or the lower leads",
+   "summary": "the plate's lower edge stands at z 6.000 above the component face, at least the 6.00 mm figure of this build (6.0 mm less the build's plate-edge offset) and the 5.550 mm the bare leads need (4.55 + sqrt(2.6^2 - 2.400^2)): no plate metal faces the board edge, the pads or the lower leads",
    "figures": {
     "plate_lower_edge_z_mm": 6.0,
     "figure_mm": 6.0,
@@ -190,17 +191,40 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the tray's printed end wall, z -6.60 to 5.80, stands 1.200 mm from the board and 2.210 mm from Mains copper, its top 0.20 mm under the plate's lower edge",
+   "summary": "the tray's printed end wall, z -6.60 to 6.00, stands 1.200 mm from the board and 2.210 mm from Mains copper, its board-side face 0.20 mm behind the plate plane; its top is the ledge at the plate's lower edge, z 6.000",
    "figures": {
     "to_board_mm": 1.2,
     "to_mains_copper_mm": 2.21,
     "front_face_v_mm": -1.2,
     "front_behind_plate_plane_mm": 0.2,
-    "top_z_mm": 5.8,
-    "gap_under_plate_edge_mm": 0.2,
+    "top_z_mm": 6.0,
+    "gap_under_plate_edge_mm": 0.0,
     "back_face_v_mm": -5.5,
     "back_in_front_of_wall_plane_mm": 0.5,
     "material": "unfilled printed plastic, no creepage credit: at the extremes it stands within the signed clearance of the pads"
+   },
+   "lines": []
+  },
+  {
+   "name": "c1.plate_seated_on_ledge",
+   "criterion": "C1",
+   "kind": "check",
+   "passed": true,
+   "summary": "the plate's lower edge z 6.000 is the ledge's top, 12.600 mm above the tray floor's underside (63.00 layers of 0.2 mm): at the ledge the plate shares 0.000 mm3 with the tray, 0.05 mm lower 12.903 mm3, and at its former position, z -7.025, 3045.6 mm3, so a lower plate cannot be seated",
+   "figures": {
+    "ledge_z_mm": 6.0,
+    "plate_lower_edge_z_mm": 6.0,
+    "ledge_above_floor_underside_mm": 12.6,
+    "layers_of_0.2_mm": 63.0,
+    "shared_volume_at_ledge_mm3": 0.0,
+    "step_below_mm": 0.05,
+    "shared_volume_below_ledge_mm3": 12.9025,
+    "former_lower_edge_z_mm": -7.025,
+    "shared_volume_at_former_position_mm3": 3045.6376,
+    "contact_v_mm": [
+     -5.5,
+     -1.2
+    ]
    },
    "lines": []
   },
@@ -209,7 +233,7 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the plate shares 0.000 mm3 with the tray: a plate whose lower edge stood lower, at the full height of the former drawing, would have to occupy the end wall's place",
+   "summary": "the plate shares 0.000 mm3 with the tray: a plate whose lower edge stood lower, at the former position, would have to occupy the end wall's place",
    "figures": {
     "intersection_volume_mm3": 0.0,
     "plate_lower_edge_z_mm": 6.0,
@@ -269,7 +293,7 @@
      "u0": -16.25,
      "u1": 63.75,
      "z0": 6.0,
-     "z1": 22.975
+     "z1": 26.0
     },
     "parts_inside_plate_outline": true
    },
@@ -280,18 +304,72 @@
    "criterion": "C2",
    "kind": "check",
    "passed": true,
-   "summary": "the opening in the plastic wall is the plate's former outline plus 1.5 mm per side: u -17.75 to 65.25, z -8.52 to 24.48; no larger opening is needed",
+   "summary": "the opening in the plastic wall covers the plate and the end wall together plus 1.5 mm each side: u -17.75 to 65.25, z -8.10 to 27.50; the nearest side stands 1.500 mm outside the plate or the end wall; no larger opening is needed",
    "figures": {
     "opening_mm": {
      "u0": -17.75,
      "u1": 65.25,
-     "z0": -8.525,
-     "z1": 24.475
+     "z0": -8.1,
+     "z1": 27.5
     },
     "plate_clearance_mm": 1.5,
     "opening_width_mm": 83.0,
-    "opening_height_mm": 33.0,
-    "cable_exit_u_mm": 50.0
+    "opening_height_mm": 35.6,
+    "cable_exit_u_mm": 50.0,
+    "outside_each_solid_mm": {
+     "plate": {
+      "left": 1.5,
+      "right": 1.5,
+      "bottom": 14.1,
+      "top": 1.5
+     },
+     "end wall": {
+      "left": 11.75,
+      "right": 11.75,
+      "bottom": 1.5,
+      "top": 21.5
+     }
+    }
+   },
+   "lines": []
+  },
+  {
+   "name": "c2.wall_opening_within_unit_opening",
+   "criterion": "C2",
+   "kind": "check",
+   "passed": true,
+   "summary": "the wall opening's height, z -8.10 to 27.50, lies within the unit's opening in the plastic wall, z -10.0 to 35.0 (margins 1.90 below and 7.50 above)",
+   "figures": {
+    "opening_z_mm": [
+     -8.1,
+     27.5
+    ],
+    "unit_opening_z_mm": [
+     -10.0,
+     35.0
+    ],
+    "margin_below_mm": 1.9,
+    "margin_above_mm": 7.5,
+    "plate_height_mm": 20.0,
+    "height_range_mm": [
+     16.8,
+     27.5
+    ]
+   },
+   "lines": []
+  },
+  {
+   "name": "c2.plate_covers_case_top",
+   "criterion": "C2",
+   "kind": "check",
+   "passed": true,
+   "summary": "the plate's upper edge, z 26.000, stands 3.450 mm above the lid's top, z 22.550 (needs 0.25): the case lies inside the plate's footprint at this plate height",
+   "figures": {
+    "plate_upper_edge_z_mm": 26.0,
+    "case_top_z_mm": 22.55,
+    "margin_mm": 3.45,
+    "required_mm": 0.25,
+    "plate_height_mm": 20.0
    },
    "lines": []
   },
@@ -338,15 +416,15 @@
     "bolts": [
      {
       "bolt_u_mm": -11.25,
-      "bolt_z_mm": 14.4875,
+      "bolt_z_mm": 16.0,
       "washer_clear_of_case_mm": 0.55,
-      "washer_inside_plate_in_z_mm": 3.9875
+      "washer_inside_plate_in_z_mm": 5.5
      },
      {
       "bolt_u_mm": 58.75,
-      "bolt_z_mm": 14.4875,
+      "bolt_z_mm": 16.0,
       "washer_clear_of_case_mm": 0.5505,
-      "washer_inside_plate_in_z_mm": 3.9875
+      "washer_inside_plate_in_z_mm": 5.5
      }
     ]
    },
@@ -364,7 +442,7 @@
       "screw": "u -3.25 z 9.5",
       "edge_distances_mm": {
        "lower": 0.5,
-       "upper": 10.475,
+       "upper": 13.5,
        "left": 10.0,
        "right": 64.0
       },
@@ -381,7 +459,7 @@
       "screw": "u -3.25 z 14",
       "edge_distances_mm": {
        "lower": 5.0,
-       "upper": 5.975,
+       "upper": 9.0,
        "left": 10.0,
        "right": 64.0
       },
@@ -398,7 +476,7 @@
       "screw": "u 50.75 z 9.5",
       "edge_distances_mm": {
        "lower": 0.5,
-       "upper": 10.475,
+       "upper": 13.5,
        "left": 64.0,
        "right": 10.0
       },
@@ -415,7 +493,7 @@
       "screw": "u 50.75 z 14",
       "edge_distances_mm": {
        "lower": 5.0,
-       "upper": 5.975,
+       "upper": 9.0,
        "left": 64.0,
        "right": 10.0
       },
@@ -433,7 +511,7 @@
     "pocket_distance_required_mm": 0.4,
     "plate_edges_mm": {
      "z0": 6.0,
-     "z1": 22.975,
+     "z1": 26.0,
      "u0": -16.25,
      "u1": 63.75
     }
@@ -455,7 +533,7 @@
     "fitted_clearances_mm": {
      "tray": 0.1874,
      "plate": 0.4,
-     "wall opening frame": 1.925,
+     "wall opening frame": 4.95,
      "board": 16.9331,
      "T921_body": 1.65,
      "T921_leads": 16.8562,
@@ -1310,7 +1388,7 @@
       ],
       "swap_volume_mm3": 3027.73,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 37677.9825
+      "part_volume_mm3": 37729.5925
      }
     },
     "inlay_part_present": false,
@@ -7191,7 +7269,7 @@
    "criterion": "C16",
    "kind": "check",
    "passed": true,
-   "summary": "at this seating the leads and blade legs stand at least 1.18 mm off the tray, the plate's holes are tapped through at the tab hole height (16.50) and each screw head stands 3.68 mm inside the plate's edges",
+   "summary": "at this seating the leads and blade legs stand at least 1.18 mm off the tray, the plate's holes are tapped through at the tab hole height (16.50) and each screw head stands 6.70 mm inside the plate's edges",
    "figures": {
     "lead_to_tray_mm": {
      "T911_leads": 1.4,
@@ -7210,7 +7288,7 @@
     "gap_board_edge_to_plate_mm": 1.0,
     "screw_head_margins_mm": {
      "lower_edge_margin_mm": 7.7,
-     "upper_edge_margin_mm": 3.675
+     "upper_edge_margin_mm": 6.7
     },
     "tapped_through": true
    },

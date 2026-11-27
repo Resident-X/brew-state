@@ -4,9 +4,9 @@
  "printer": "generic open-frame 220 x 220 x 250, 0.4 mm nozzle, 0.2 mm layers, ASA 245/100, brim, draft shield",
  "slicer": "PrusaSlicer-2.9.7 based on Slic3r (with GUI support)",
  "inputs": {
-  "params.yaml": "c86dd12b8aa445c3e9dd0df6d80b45c3013ad91288e49c3aa663c046364e81c9",
-  "case.py": "a155c1a1e7f7cf64b37288ff8c49da49cd11fc2db378ef6c601dcca0f7d3ea38",
-  "check.py": "72e66bafbc114d03b29846aa16bfc64709bdc9fc1723f4b3975229ccade9b1a3",
+  "params.yaml": "31c6850dba31ba0595a22b2ca81426473a5e27306bf2ea445b35b92965c6053d",
+  "case.py": "d8c72018a552276a4df58f0d8806c8ffce7a56de98d4d027b366dc85d72ec1ad",
+  "check.py": "5b39560275bd6b91d920b386a6e9ea9b2d9b865e4d77b8799c53aae09c049d46",
   "core.py": "8e8c7e2f66186df1f979a442bc65df133484b8ab4e941e57b9f31bee1748af9c",
   "skins.py": "2528371038564f8b980d15ea12bc3a6bd8e78781bab21285d55272437f709231",
   "solids.py": "44e5546024c274dbe5c78c3902ea8e91ee9aa1719c146a8a57b7cb471ec335ac",
@@ -65,8 +65,8 @@
   "filament_mm": 4986.44,
   "filament_cm3": 11.99,
   "filament_g": 12.83,
-  "print_time_text": "1h 47m 48s",
-  "print_time_s": 6468.0,
+  "print_time_text": "1h 47m 47s",
+  "print_time_s": 6467.0,
   "layers": 31,
   "bounding_box_mm": {
    "min": [

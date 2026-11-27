@@ -1104,7 +1104,7 @@ def test_c16_opposite_corners_of_the_seating_range(controls):
 def test_c16_seating_range_every_extreme():
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C16: The board-to-plate fit takes the scatter of the delivered triacs' seating, stated as a range of tab-hole height and lean, without loading the soldered leads: the tray's board seat and the barrier are shown by the model to meet at the range's extremes. The plate's tab holes are either a short slot or an oversize hole, or tapped holes drilled at the measured height of the delivered triacs with the tray printed to the measured values, and the case record states which the case takes; for tapped holes it states that the owner's acceptance of that departure from his ruling of 2026-11-24 (slot or oversize hole) is outstanding. The range with its source is recorded as unconfirmed for the owner to check at assembly.
     r = check.seating_range({})[0]
-    assert len(r["figures"]["combinations"]) == 32
+    assert len(r["figures"]["combinations"]) == 64
     assert r["figures"]["worst_creepage_mm"] >= case.basis()["creepage_mains_mm"]
     heights = {round(c["seating"]["tab_hole_height_mm"], 2) for c in r["figures"]["combinations"]}
     leans = {round(c["seating"]["lean_deg"], 3) for c in r["figures"]["combinations"]}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="194.00mm" height="173.80mm" viewBox="0 0 194.000 173.800">
+<svg xmlns="http://www.w3.org/2000/svg" width="194.00mm" height="179.00mm" viewBox="0 0 194.000 179.000">
 <title>Case drawings: plan, side elevation and end elevation, 1:1, millimetres</title>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <g font-family="monospace" font-size="2.1" fill="#111">
@@ -51,45 +51,45 @@
 <line x1="17.500" y1="92.000" x2="19.000" y2="92.000" style="stroke:#080;stroke-width:1.4"/>
 <text x="19.60" y="92.70" fill="#080" font-size="1.7" text-anchor="start">hold-down finger</text>
 <text x="90.00" y="23.00" fill="#111" font-size="2.0" text-anchor="start">SIDE ELEVATION (seen from the low-u side, the hold-down finger's wall; plate at left, v to the right)</text>
-<polygon points="92.499,45.175 96.999,45.174 97.000,30.474 97.999,30.474 97.999,30.026 97.399,30.025 99.000,28.424 180.381,28.424 182.000,30.015 182.000,31.025 181.927,31.026 181.927,31.225 182.000,31.225 182.000,55.975 180.399,57.576 92.500,57.576 92.499,45.175" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
-<polygon points="173.000,52.575 173.000,50.975 98.000,50.975 98.000,52.575 173.000,52.575" style="fill:#7fbf9a;stroke:#000;stroke-width:0.1"/>
-<polygon points="97.000,44.975 97.000,28.000 92.000,28.000 92.000,44.975 97.000,44.975" style="fill:#bfc7ca;stroke:#000;stroke-width:0.15"/>
-<polygon points="101.600,47.225 101.600,31.675 97.000,31.675 97.000,47.225 101.600,47.225" style="fill:#858a90;stroke:#000;stroke-width:0.1"/>
-<line x1="167.040" y1="16.425" x2="167.040" y2="25.925" style="stroke:#c00;stroke-width:0.6"/>
-<polygon points="165.640,23.925 168.440,23.925 167.040,26.625" style="fill:#c00"/>
-<text x="169.54" y="20.43" fill="#c00" font-size="1.8" text-anchor="start">push-on -z</text>
-<line x1="93.320" y1="34.475" x2="100.720" y2="34.475" style="stroke:#000;stroke-width:3.00"/>
-<line x1="93.320" y1="34.475" x2="100.720" y2="34.475" style="stroke:#000;stroke-width:3.00"/>
-<line x1="169.500" y1="55.975" x2="169.500" y2="48.575" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="41.475" x2="104.000" y2="41.475" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="36.975" x2="104.000" y2="36.975" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="41.475" x2="104.000" y2="41.475" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="36.975" x2="104.000" y2="36.975" style="stroke:#000;stroke-width:3.00"/>
-<line x1="178.500" y1="38.425" x2="178.500" y2="28.425" style="stroke:#000;stroke-width:3.00"/>
-<line x1="100.720" y1="34.475" x2="180.720" y2="26.772" style="stroke:#06c;stroke-width:0.4;stroke-dasharray:2 1"/>
-<line x1="100.720" y1="34.475" x2="180.720" y2="26.772" style="stroke:#06c;stroke-width:0.4;stroke-dasharray:2 1"/>
-<text x="128.00" y="28.59" fill="#06c" font-size="1.7" text-anchor="start">driver approach to the tab screws, lid off</text>
-<text x="90.00" y="62.58" fill="#111" font-size="1.7" text-anchor="start">backing rib (v 69.0) under J911, J921, J941 carries the push-on load to the floor</text>
-<text x="90.00" y="87.00" fill="#111" font-size="2.0" text-anchor="start">END ELEVATION (seen from the far end, looking toward the wall; u to the right)</text>
-<polygon points="177.000,127.000 177.000,90.000 90.000,90.000 90.000,127.000 177.000,127.000" style="fill:none"/>
-<polygon points="173.500,110.475 173.500,93.500 93.500,93.500 93.500,110.475 173.500,110.475" style="fill:#dfe3e6;stroke:#444;stroke-width:0.15"/>
-<polygon points="175.000,125.000 175.000,92.000 92.000,92.000 92.000,125.000 175.000,125.000" style="fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1"/>
-<polygon points="103.749,123.076 103.749,121.675 103.549,121.475 103.549,100.225 103.749,100.224 103.749,99.775 103.549,99.775 103.549,95.525 105.150,93.924 161.849,93.924 163.450,95.525 163.449,99.776 163.251,99.776 163.251,100.224 163.450,100.225 163.450,121.475 163.251,121.675 163.250,123.076 103.749,123.076" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
-<circle cx="106.500" cy="106.975" r="1.500" style="fill:#000"/>
-<circle cx="106.500" cy="102.475" r="1.500" style="fill:#000"/>
-<circle cx="160.500" cy="106.975" r="1.500" style="fill:#000"/>
-<circle cx="160.500" cy="102.475" r="1.500" style="fill:#000"/>
-<circle cx="122.350" cy="99.975" r="1.500" style="fill:#000"/>
-<circle cx="146.950" cy="99.975" r="1.500" style="fill:#000"/>
-<text x="93.00" y="90.80" fill="#c60" font-size="1.7" text-anchor="start">wall opening = the plate's former outline + 1.5 per side</text>
-<text x="10.00" y="135.00" fill="#111" font-size="1.8" text-anchor="start">Board is held by: 11 pillars and the H1 boss and screw (seat plane tilted with the board's lean), the backing rib, the hold-down finger on the left wall and the</text>
-<text x="10.00" y="138.20" fill="#111" font-size="1.8" text-anchor="start">locating ribs. The lid holds nothing.</text>
-<text x="10.00" y="141.40" fill="#111" font-size="1.8" text-anchor="start">Lid: two toes under hooks on the pilasters at the plate end, one M3 x 10 countersunk screw from +z at the far end. It comes off by lifting the far end and</text>
-<text x="10.00" y="144.60" fill="#111" font-size="1.8" text-anchor="start">drawing it out along the pilaster grooves.</text>
-<text x="10.00" y="147.80" fill="#111" font-size="1.8" text-anchor="start">Tray to plate: four M3 x 12 countersunk screws from the plate's back face into 2.6 pilot holes in the pilasters. Tab screws: M3 x 5 through the tab into the</text>
-<text x="10.00" y="151.00" fill="#111" font-size="1.8" text-anchor="start">plate's tapped-through holes, reached with the lid off along the blue lines.</text>
-<text x="10.00" y="154.20" fill="#111" font-size="1.8" text-anchor="start">No barrier: the plate's lower edge stands 6.0 mm above the board face, so no plate metal faces the board edge, the pads or the leads; the tray's printed end wall</text>
-<text x="10.00" y="157.40" fill="#111" font-size="1.8" text-anchor="start">fills the volume the plate leaves, unfilled plastic with no creepage credit.</text>
-<text x="10.00" y="160.60" fill="#111" font-size="1.8" text-anchor="start">Opening in the plastic wall: the plate's former outline plus 1.5 per side. Slot mouths keep 3.0 mm of clear air to the right wall.</text>
+<polygon points="92.499,48.000 96.999,47.999 97.000,33.499 97.999,33.499 97.999,33.051 97.399,33.050 99.000,31.449 180.381,31.449 182.000,33.040 182.000,34.050 181.927,34.051 181.927,34.250 182.000,34.250 182.000,59.000 180.399,60.601 92.500,60.601 92.499,48.000" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
+<polygon points="173.000,55.600 173.000,54.000 98.000,54.000 98.000,55.600 173.000,55.600" style="fill:#7fbf9a;stroke:#000;stroke-width:0.1"/>
+<polygon points="97.000,48.000 97.000,28.000 92.000,28.000 92.000,48.000 97.000,48.000" style="fill:#bfc7ca;stroke:#000;stroke-width:0.15"/>
+<polygon points="101.600,50.250 101.600,34.700 97.000,34.700 97.000,50.250 101.600,50.250" style="fill:#858a90;stroke:#000;stroke-width:0.1"/>
+<line x1="167.040" y1="19.450" x2="167.040" y2="28.950" style="stroke:#c00;stroke-width:0.6"/>
+<polygon points="165.640,26.950 168.440,26.950 167.040,29.650" style="fill:#c00"/>
+<text x="169.54" y="23.45" fill="#c00" font-size="1.8" text-anchor="start">push-on -z</text>
+<line x1="93.320" y1="37.500" x2="100.720" y2="37.500" style="stroke:#000;stroke-width:3.00"/>
+<line x1="93.320" y1="37.500" x2="100.720" y2="37.500" style="stroke:#000;stroke-width:3.00"/>
+<line x1="169.500" y1="59.000" x2="169.500" y2="51.600" style="stroke:#000;stroke-width:3.00"/>
+<line x1="92.000" y1="44.500" x2="104.000" y2="44.500" style="stroke:#000;stroke-width:3.00"/>
+<line x1="92.000" y1="40.000" x2="104.000" y2="40.000" style="stroke:#000;stroke-width:3.00"/>
+<line x1="92.000" y1="44.500" x2="104.000" y2="44.500" style="stroke:#000;stroke-width:3.00"/>
+<line x1="92.000" y1="40.000" x2="104.000" y2="40.000" style="stroke:#000;stroke-width:3.00"/>
+<line x1="178.500" y1="41.450" x2="178.500" y2="31.450" style="stroke:#000;stroke-width:3.00"/>
+<line x1="100.720" y1="37.500" x2="180.720" y2="29.797" style="stroke:#06c;stroke-width:0.4;stroke-dasharray:2 1"/>
+<line x1="100.720" y1="37.500" x2="180.720" y2="29.797" style="stroke:#06c;stroke-width:0.4;stroke-dasharray:2 1"/>
+<text x="128.00" y="31.61" fill="#06c" font-size="1.7" text-anchor="start">driver approach to the tab screws, lid off</text>
+<text x="90.00" y="65.60" fill="#111" font-size="1.7" text-anchor="start">backing rib (v 69.0) under J911, J921, J941 carries the push-on load to the floor</text>
+<text x="90.00" y="89.60" fill="#111" font-size="2.0" text-anchor="start">END ELEVATION (seen from the far end, looking toward the wall; u to the right)</text>
+<polygon points="177.000,132.200 177.000,92.600 90.000,92.600 90.000,132.200 177.000,132.200" style="fill:none"/>
+<polygon points="173.500,116.100 173.500,96.100 93.500,96.100 93.500,116.100 173.500,116.100" style="fill:#dfe3e6;stroke:#444;stroke-width:0.15"/>
+<polygon points="175.000,130.200 175.000,94.600 92.000,94.600 92.000,130.200 175.000,130.200" style="fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1"/>
+<polygon points="103.749,128.701 103.749,127.300 103.549,127.100 103.549,105.850 103.749,105.849 103.749,105.400 103.549,105.400 103.549,101.150 105.150,99.549 161.849,99.549 163.450,101.150 163.449,105.401 163.251,105.401 163.251,105.849 163.450,105.850 163.450,127.100 163.251,127.300 163.250,128.701 103.749,128.701" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
+<circle cx="106.500" cy="112.600" r="1.500" style="fill:#000"/>
+<circle cx="106.500" cy="108.100" r="1.500" style="fill:#000"/>
+<circle cx="160.500" cy="112.600" r="1.500" style="fill:#000"/>
+<circle cx="160.500" cy="108.100" r="1.500" style="fill:#000"/>
+<circle cx="122.350" cy="105.600" r="1.500" style="fill:#000"/>
+<circle cx="146.950" cy="105.600" r="1.500" style="fill:#000"/>
+<text x="93.00" y="93.40" fill="#c60" font-size="1.7" text-anchor="start">wall opening = the plate and the end wall + 1.5 per side</text>
+<text x="10.00" y="140.20" fill="#111" font-size="1.8" text-anchor="start">Board is held by: 11 pillars and the H1 boss and screw (seat plane tilted with the board's lean), the backing rib, the hold-down finger on the left wall and the</text>
+<text x="10.00" y="143.40" fill="#111" font-size="1.8" text-anchor="start">locating ribs. The lid holds nothing.</text>
+<text x="10.00" y="146.60" fill="#111" font-size="1.8" text-anchor="start">Lid: two toes under hooks on the pilasters at the plate end, one M3 x 10 countersunk screw from +z at the far end. It comes off by lifting the far end and</text>
+<text x="10.00" y="149.80" fill="#111" font-size="1.8" text-anchor="start">drawing it out along the pilaster grooves.</text>
+<text x="10.00" y="153.00" fill="#111" font-size="1.8" text-anchor="start">Tray to plate: four M3 x 12 countersunk screws from the plate's back face into 2.6 pilot holes in the pilasters. Tab screws: M3 x 5 through the tab into the</text>
+<text x="10.00" y="156.20" fill="#111" font-size="1.8" text-anchor="start">plate's tapped-through holes, reached with the lid off along the blue lines.</text>
+<text x="10.00" y="159.40" fill="#111" font-size="1.8" text-anchor="start">No barrier: the plate's lower edge stands 6.0 mm above the board face, resting on the tray's end-wall ledge, so no plate metal faces the board edge, the pads or</text>
+<text x="10.00" y="162.60" fill="#111" font-size="1.8" text-anchor="start">the leads; the tray's printed end wall fills the volume the plate leaves, unfilled plastic with no creepage credit.</text>
+<text x="10.00" y="165.80" fill="#111" font-size="1.8" text-anchor="start">Opening in the plastic wall: the plate and the end wall together plus 1.5 per side. Slot mouths keep 3.0 mm of clear air to the right wall.</text>
 </g>
 </svg>

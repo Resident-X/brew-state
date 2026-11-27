@@ -279,16 +279,18 @@ for w_air in (25.0, 40.0):
     check("current share holds on the aluminium wall at Rc 3 K/W, air %.0f degC" % w_air, w_cur > 5.38, "%.2f A against 5.38 A" % w_cur)
 
 # 2026-11-27 amendment: the narrower plate. The printed case's plate-clearance leaf (the case holds the spreader plate's lower edge 6.0 mm above the
-# board's component face so that no plate metal faces the pads, the leads or the board edge) takes the plate from the former 80 x 30 mm to 80 x 16.975 mm:
-# its upper edge stays at the former top, 22.975 mm above the face, and its lower edge is 6.0 mm. The window the wall model takes becomes the plate's
-# height, and the plate's own conduction is recomputed for it at the same 15 W/(m.K) floor the division record states "under any metal":
-# 0.005 / (15 x 0.080 x 0.016975) K/W. The 2026-11-21 section above is the judgement at the former plate and is unchanged; this section repeats it
-# for the narrower plate with the same wall, the same air temperatures, the same joint resistances and the same loads. Lateral spreading of the heat
-# along the narrower bar is not modelled (the wall's own sheet spreading is, by the fin term of r_wall); the bring-up case-temperature measurement
-# (DEL-HW-BRING-UP.C11) closes it.
-print("\n== (e) amendment 2026-11-27: the plate is narrower (80 x 16.975 mm, lower edge 6.0 mm above the board face); the case temperature at the external air (25 and 40 degC), the maker's 125 degC and the 100 degC policy share")
-N_PLATE_Z_LOW, N_PLATE_Z_TOP = 6.0, 22.975           # case/params.yaml plate.lower_edge_z_mm and the former top (plate.former_height_mm 30.0 centred on the case's extent), mm above the board face
-N_H = (N_PLATE_Z_TOP - N_PLATE_Z_LOW) / 1000.0         # the window the wall model takes: the plate's height, 0.016975 m
+# board's component face so that no plate metal faces the pads, the leads or the board edge) takes the plate from the former 80 x 30 mm to a standard
+# 80 x 20 mm flat aluminium bar: its lower edge is 6.0 mm and its upper edge 26.0 mm above the face. The window the wall model takes becomes the plate's
+# height, an input of this section (N_PLATE_HEIGHT_MM, the figure of case/params.yaml plate.height_mm), and the plate's own conduction is recomputed for it
+# at the same 15 W/(m.K) floor the division record states "under any metal": 0.005 / (15 x 0.080 x H). The 2026-11-21 section above is the judgement at
+# the former plate and is unchanged; this section repeats it for the narrower plate with the same wall, the same air temperatures, the same joint
+# resistances and the same loads. Lateral spreading of the heat along the narrower bar is not modelled (the wall's own sheet spreading is, by the fin
+# term of r_wall); the bring-up case-temperature measurement (DEL-HW-BRING-UP.C11) closes it.
+N_PLATE_HEIGHT_MM = 20.0                              # case/params.yaml plate.height_mm: the standard flat bar the case takes, mm; the case holds from 16.8 to 27.5 mm (plate.height_min_mm, plate.height_max_mm)
+N_PLATE_Z_LOW = 6.0                                   # case/params.yaml plate.lower_edge_z_mm, mm above the board face
+N_PLATE_Z_TOP = N_PLATE_Z_LOW + N_PLATE_HEIGHT_MM     # the upper edge, 26.0 mm above the board face at 20 mm
+print("\n== (e) amendment 2026-11-27: the plate is a standard %.0f x 5 mm flat bar, 80 mm long, lower edge %.1f mm above the board face; the case temperature at the external air (25 and 40 degC), the maker's 125 degC and the 100 degC policy share" % (N_PLATE_HEIGHT_MM, N_PLATE_Z_LOW))
+N_H = N_PLATE_HEIGHT_MM / 1000.0                       # the window the wall model takes: the plate's height, 0.020 m
 N_PLATE_T, N_PLATE_K = 0.005, 15.0                    # case/params.yaml plate.thickness_mm; the division record's conductivity floor 'under any metal', W/(m.K)
 N_R_PLATE = N_PLATE_T / (N_PLATE_K * W_L * N_H)       # the plate's conduction recomputed for the plate's height, K/W
 N_R_LEG = N_R_PLATE + 0.027                           # plus the division record's paste film
@@ -299,7 +301,7 @@ def n_r_wall(k, h):
     return 1.0 / (h * N_H * W_L + N_PERIM * math.sqrt(h * k * W_T))
 
 
-check("narrower-plate wall model is the 2026-11-21 model at the plate's height", abs(n_r_wall(K_STAINLESS, 10) - 1.0 / (10 * N_H * W_L + 2.0 * (N_H + W_L) * math.sqrt(10 * K_STAINLESS * W_T))) < 1e-12 and abs(N_H - 0.016975) < 1e-12,
+check("narrower-plate wall model is the 2026-11-21 model at the plate's height", abs(n_r_wall(K_STAINLESS, 10) - 1.0 / (10 * N_H * W_L + 2.0 * (N_H + W_L) * math.sqrt(10 * K_STAINLESS * W_T))) < 1e-12 and abs(N_H - (N_PLATE_Z_TOP - N_PLATE_Z_LOW) / 1000.0) < 1e-12,
       "window %.6f m x %.3f m (the former %.3f m); plate term %.4f K/W (the former plate's %.4f K/W) plus the paste's 0.027 K/W is %.4f K/W" % (N_H, W_L, W_H, N_R_PLATE, 0.139, N_R_LEG))
 n_cases = []
 for n_name, n_k in (("aluminium, k %.0f W/(m.K) (recorded wall, lowest plausible sheet)" % K_ALU_LOW, K_ALU_LOW), ("304 stainless, k %.0f W/(m.K) (stated bounding case)" % K_STAINLESS, K_STAINLESS)):

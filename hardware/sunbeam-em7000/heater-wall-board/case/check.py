@@ -304,6 +304,35 @@ def plate_distances(m: case.Model) -> Dict[str, Any]:
             "lead_wall_plane_least_mm": min(v["to_wall_plane_mm"] for v in leads.values())}
 
 
+def shared_volume(a: Any, b: Any) -> float:
+    inter = a & b
+    return float(inter.volume) if inter is not None and hasattr(inter, "volume") else 0.0
+
+
+def ledge_result(m: case.Model, plate_z0: float) -> Dict[str, Any]:
+    """The plate's lower edge is set by the ledge on the tray's end wall: the plate at the ledge's height shares no volume with the tray, the same plate 0.05 mm lower
+    shares a positive volume, and so does the plate at its former position. The edge is read in the tray's own frame, above the floor's underside."""
+    from build123d import Pos
+    P = m.P
+    pl = m.info["plate"]
+    ew = m.info["end_wall"].bounding_box()
+    ledge = float(ew.max.Z)
+    step = 0.05
+    at_ledge = shared_volume(m.parts["plate"], m.parts["tray"])
+    below = shared_volume(Pos(0, 0, -step) * m.parts["plate"], m.parts["tray"])
+    former = shared_volume(Pos(0, 0, pl["former_z0"] - pl["z0"]) * m.parts["plate"], m.parts["tray"])
+    in_tray_frame = ledge - float(m.z_floor_bottom)
+    layer = 0.2
+    ok = abs(plate_z0 - ledge) < 1e-6 and at_ledge < 1e-6 and below > 0.0 and former > 0.0
+    return result("c1.plate_seated_on_ledge", "C1", ok,
+                  f"the plate's lower edge z {plate_z0:.3f} is the ledge's top, {in_tray_frame:.3f} mm above the tray floor's underside ({in_tray_frame / layer:.2f} layers of {layer} mm): at the ledge the plate shares {at_ledge:.3f} mm3 with the tray, "
+                  f"{step} mm lower {below:.3f} mm3, and at its former position, z {pl['former_z0']:.3f}, {former:.1f} mm3, so a lower plate cannot be seated",
+                  {"ledge_z_mm": ledge, "plate_lower_edge_z_mm": plate_z0, "ledge_above_floor_underside_mm": in_tray_frame, "layers_of_0.2_mm": in_tray_frame / layer,
+                   "shared_volume_at_ledge_mm3": at_ledge, "step_below_mm": step, "shared_volume_below_ledge_mm3": below,
+                   "former_lower_edge_z_mm": pl["former_z0"], "shared_volume_at_former_position_mm3": former,
+                   "contact_v_mm": [float(ew.min.Y), float(m.v_plate - P("plate.end_wall_board_recess_mm"))]})
+
+
 def check_c1(m: case.Model) -> List[Dict[str, Any]]:
     P, sep = m.P, m.basis
     out: List[Dict[str, Any]] = []
@@ -327,9 +356,9 @@ def check_c1(m: case.Model) -> List[Dict[str, Any]]:
     bu_max = P.entry("seating.body_underside_mm")["max"]
     rear = P.entry("seating.tab_face_to_lead_centre_mm")["min"] - P("triac.c1_mm") / 2
     derived = bu_max + math.sqrt(max(creep_need ** 2 - rear ** 2, 0.0))
-    lift = P("plate.lower_edge_z_mm")
+    lift = P("plate.lower_edge_z_mm") + P("seating.plate_edge_offset_mm")
     out.append(result("c1.plate_lower_edge_raised", "C1", plate_z0 >= lift - 1e-9 and plate_z0 >= derived - 1e-9,
-                      f"the plate's lower edge stands at z {plate_z0:.3f} above the component face, at least the {lift:.1f} mm figure and the {derived:.3f} mm the bare leads need "
+                      f"the plate's lower edge stands at z {plate_z0:.3f} above the component face, at least the {lift:.2f} mm figure of this build (6.0 mm less the build's plate-edge offset) and the {derived:.3f} mm the bare leads need "
                       f"({bu_max:.2f} + sqrt({creep_need:.1f}^2 - {rear:.3f}^2)): no plate metal faces the board edge, the pads or the lower leads",
                       {"plate_lower_edge_z_mm": plate_z0, "figure_mm": lift, "derived_least_mm": derived, "lead_rear_face_to_plate_least_mm": rear,
                        "lead_metal_top_mm": bu_max, "margin_to_derived_mm": plate_z0 - derived}))
@@ -356,24 +385,25 @@ def check_c1(m: case.Model) -> List[Dict[str, Any]]:
                       {"copper_mm": d["all_copper_to_wall_plane_mm"], "leads_mm": d["lead_wall_plane_least_mm"], "required_mm": creep_need,
                        "wall_plane_v_mm": m.v_plate - P("plate.thickness_mm")}))
 
-    # the end wall stands clear of the board edge, and the plate cannot be seated where the wall is
+    # the end wall stands clear of the board edge, its top is the ledge the bar rests on, and the plate cannot be seated below it
     left_in, right_in = -P("case.interior_left_mm"), 45.0 + P("case.interior_right_mm")
     ew = m.info["end_wall"].bounding_box()
-    front_v = m.v_plate - P("plate.end_wall_top_gap_mm")
+    recess = P("plate.end_wall_board_recess_mm")
+    front_v = m.v_plate - recess
     front = case.box(left_in, right_in, ew.min.Y, front_v, ew.min.Z, ew.max.Z)
     to_board = float(front.distance_to(m.bodies["board"]["shape"]))
     pts, _, _ = mains_points(m)
     to_pads = float(distance_to_box(pts, left_in, right_in, ew.min.Y, front_v, ew.min.Z, ew.max.Z).min())
-    out.append(result("c1.end_wall_stands_off", "C1", to_board >= P("plate.end_wall_top_gap_mm") - 1e-9 and ew.max.Z <= plate_z0 - P("plate.end_wall_top_gap_mm") + 1e-9,
-                      f"the tray's printed end wall, z {ew.min.Z:.2f} to {ew.max.Z:.2f}, stands {to_board:.3f} mm from the board and {to_pads:.3f} mm from Mains copper, its top {plate_z0 - ew.max.Z:.2f} mm under the plate's lower edge",
+    out.append(result("c1.end_wall_stands_off", "C1", to_board >= recess - 1e-9 and abs(ew.max.Z - plate_z0) < 1e-6,
+                      f"the tray's printed end wall, z {ew.min.Z:.2f} to {ew.max.Z:.2f}, stands {to_board:.3f} mm from the board and {to_pads:.3f} mm from Mains copper, its board-side face {recess:.2f} mm behind the plate plane; its top is the ledge at the plate's lower edge, z {plate_z0:.3f}",
                       {"to_board_mm": to_board, "to_mains_copper_mm": to_pads, "front_face_v_mm": front_v, "front_behind_plate_plane_mm": m.v_plate - front_v,
                        "top_z_mm": ew.max.Z, "gap_under_plate_edge_mm": plate_z0 - ew.max.Z,
                        "back_face_v_mm": ew.min.Y, "back_in_front_of_wall_plane_mm": ew.min.Y - (m.v_plate - P("plate.thickness_mm")),
                        "material": "unfilled printed plastic, no creepage credit: at the extremes it stands within the signed clearance of the pads"}))
-    plate_vs_tray = m.parts["plate"] & m.parts["tray"]
-    overlap = float(plate_vs_tray.volume) if plate_vs_tray is not None and hasattr(plate_vs_tray, "volume") else 0.0
+    out.append(ledge_result(m, plate_z0))
+    overlap = shared_volume(m.parts["plate"], m.parts["tray"])
     out.append(result("c1.plate_clear_of_end_wall", "C1", overlap < 1e-6,
-                      f"the plate shares {overlap:.3f} mm3 with the tray: a plate whose lower edge stood lower, at the full height of the former drawing, would have to occupy the end wall's place",
+                      f"the plate shares {overlap:.3f} mm3 with the tray: a plate whose lower edge stood lower, at the former position, would have to occupy the end wall's place",
                       {"intersection_volume_mm3": overlap, "plate_lower_edge_z_mm": plate_z0, "former_lower_edge_z_mm": m.info["plate"]["former_z0"]}))
     names = sorted(m.parts)
     loose = [n for n in names if n not in ("tray", "plate", "lid_single", "lid_two", "lid_swap", "tray_swap")]
@@ -401,7 +431,7 @@ def check_c2_c3(m: case.Model) -> List[Dict[str, Any]]:
     e = case_extent(m)
     pb = m.mesh("plate").bounds
     pl = m.info["plate"]
-    # the former outline: the plate's length and its former height, centred on the case's extent; the plate itself now stands higher
+    # the former outline: the plate's length and its former height, centred on the case's extent; it is its own figure and does not follow the bar's height
     fz0, fz1 = pl["former_z0"], pl["former_z1"]
     margins = {"left": e["u0"] - pb[0][0], "right": pb[1][0] - e["u1"], "bottom": e["z0"] - fz0, "top": fz1 - e["z1"]}
     need = P("plate.min_margin_mm")
@@ -414,13 +444,29 @@ def check_c2_c3(m: case.Model) -> List[Dict[str, Any]]:
                        "plate_extent_mm": {"u0": float(pb[0][0]), "u1": float(pb[1][0]), "z0": float(pb[0][2]), "z1": float(pb[1][2])},
                        "parts_inside_plate_outline": cav_inside}))
     c = P("plate.wall_opening_clearance_mm")
-    opening = {"u0": float(pb[0][0] - c), "u1": float(pb[1][0] + c), "z0": float(fz0 - c), "z1": float(fz1 + c)}
+    wo = case.wall_opening(m)
+    opening = {k: float(wo[k]) for k in ("u0", "u1", "z0", "z1")}
+    ewb = m.info["end_wall"].bounding_box()
+    bottom, top = P("plate.unit_opening_bottom_z_mm"), P("plate.unit_opening_top_z_mm")
+    # the opening is judged against the built solids, not against its own definition: each side stands at least the clearance outside the plate and the end wall
+    around = {"plate": {"left": float(pb[0][0] - opening["u0"]), "right": float(opening["u1"] - pb[1][0]), "bottom": float(pb[0][2] - opening["z0"]), "top": float(opening["z1"] - pb[1][2])},
+              "end wall": {"left": float(ewb.min.X - opening["u0"]), "right": float(opening["u1"] - ewb.max.X), "bottom": float(ewb.min.Z - opening["z0"]), "top": float(opening["z1"] - ewb.max.Z)}}
+    least_around = min(min(v.values()) for v in around.values())
     harness_exit_u = 45.0 + P("case.interior_right_mm") + P("case.wall_mm")
     out.append(result("c2.wall_opening_stated", "C2",
-                      opening["u0"] < e["u0"] and opening["u1"] > e["u1"] and opening["z0"] < e["z0"] and opening["z1"] > e["z1"] and pb[1][0] > harness_exit_u,
-                      f"the opening in the plastic wall is the plate's former outline plus {c:.1f} mm per side: u {opening['u0']:.2f} to {opening['u1']:.2f}, z {opening['z0']:.2f} to {opening['z1']:.2f}; no larger opening is needed",
+                      least_around >= c - 1e-6 and opening["u0"] < e["u0"] and opening["u1"] > e["u1"] and opening["z0"] < e["z0"] and opening["z1"] > e["z1"] and pb[1][0] > harness_exit_u,
+                      f"the opening in the plastic wall covers the plate and the end wall together plus {c:.1f} mm each side: u {opening['u0']:.2f} to {opening['u1']:.2f}, z {opening['z0']:.2f} to {opening['z1']:.2f}; the nearest side stands {least_around:.3f} mm outside the plate or the end wall; no larger opening is needed",
                       {"opening_mm": opening, "plate_clearance_mm": c, "opening_width_mm": opening["u1"] - opening["u0"],
-                       "opening_height_mm": opening["z1"] - opening["z0"], "cable_exit_u_mm": harness_exit_u}))
+                       "opening_height_mm": opening["z1"] - opening["z0"], "cable_exit_u_mm": harness_exit_u, "outside_each_solid_mm": around}))
+    out.append(result("c2.wall_opening_within_unit_opening", "C2", opening["z0"] >= bottom - 1e-6 and opening["z1"] <= top + 1e-6,
+                      f"the wall opening's height, z {opening['z0']:.2f} to {opening['z1']:.2f}, lies within the unit's opening in the plastic wall, z {bottom:.1f} to {top:.1f} (margins {opening['z0'] - bottom:.2f} below and {top - opening['z1']:.2f} above)",
+                      {"opening_z_mm": [opening["z0"], opening["z1"]], "unit_opening_z_mm": [bottom, top], "margin_below_mm": opening["z0"] - bottom, "margin_above_mm": top - opening["z1"],
+                       "plate_height_mm": float(pb[1][2] - pb[0][2]), "height_range_mm": [P("plate.height_min_mm"), P("plate.height_max_mm")]}))
+    cover_need = P("plate.min_margin_mm")
+    out.append(result("c2.plate_covers_case_top", "C2", float(pb[1][2]) - e["z1"] >= cover_need - 1e-6,
+                      f"the plate's upper edge, z {pb[1][2]:.3f}, stands {pb[1][2] - e['z1']:.3f} mm above the lid's top, z {e['z1']:.3f} (needs {cover_need:.2f}): the case lies inside the plate's footprint at this plate height",
+                      {"plate_upper_edge_z_mm": float(pb[1][2]), "case_top_z_mm": e["z1"], "margin_mm": float(pb[1][2]) - e["z1"], "required_mm": cover_need,
+                       "plate_height_mm": float(pb[1][2] - pb[0][2])}))
     # only the plate touches the wall: no printed part comes within the stated distance of the wall's plane
     v_wall = m.v_plate - P("plate.thickness_mm")
     stand = P("plate.end_wall_wall_clear_mm")
@@ -496,13 +542,12 @@ def wall_frame(m: case.Model):
     """The machine wall around the opening, modelled as a frame the opening's depth in front of the wall plane."""
     from build123d import Pos
     P = m.P
-    pl = m.info["plate"]
-    c = P("plate.wall_opening_clearance_mm")
+    wo = case.wall_opening(m)
     rim = P("plate.wall_frame_rim_mm")
     depth = P("plate.wall_frame_depth_mm")
     v0, v1 = m.v_plate, m.v_plate + depth
-    outer = case.box(pl["u0"] - c - rim, pl["u1"] + c + rim, v0, v1, pl["z0"] - c - rim, pl["z1"] + c + rim)
-    inner = case.box(pl["u0"] - c, pl["u1"] + c, v0 - 1, v1 + 1, pl["z0"] - c, pl["z1"] + c)
+    outer = case.box(wo["u0"] - rim, wo["u1"] + rim, v0, v1, wo["z0"] - rim, wo["z1"] + rim)
+    inner = case.box(wo["u0"], wo["u1"], v0 - 1, v1 + 1, wo["z0"], wo["z1"])
     return outer - inner
 
 
@@ -2007,8 +2052,8 @@ def check_c16_geometry(m: case.Model) -> List[Dict[str, Any]]:
 
 
 def combo_overrides(overrides: Dict[str, Any], skin: Optional[str], combo: Tuple[str, ...]) -> Dict[str, Any]:
-    """The parameter overrides of one extreme combination: `combo` names min or max for each of the five axes of SEATING_AXES."""
-    bu, lean, tfc, routing, play = combo
+    """The parameter overrides of one extreme combination: `combo` names min or max for each of the six axes of SEATING_AXES."""
+    bu, lean, tfc, routing, play, edge = combo
     base = case.Params.load(overrides, skin)
     o = dict(overrides)
     o["seating.body_underside_mm"] = base.entry("seating.body_underside_mm")[bu]
@@ -2016,6 +2061,7 @@ def combo_overrides(overrides: Dict[str, Any], skin: Optional[str], combo: Tuple
     o["seating.tab_face_to_lead_centre_mm"] = base.entry("seating.tab_face_to_lead_centre_mm")[tfc]
     o["seating.outline_routing_mm"] = base.entry("seating.outline_routing_mm")[routing]
     o["seating.lead_play_mm"] = base.entry("seating.lead_play_mm")[play]
+    o["seating.plate_edge_offset_mm"] = base.entry("seating.plate_edge_offset_mm")[edge]
     return o
 
 
@@ -2031,7 +2077,7 @@ def _seating_combo(args: Tuple[Dict[str, Any], Optional[str], Tuple[str, ...]]) 
     boots = next(r for r in results if r["name"] == "c18.boot_clearance")
     return {"seating": {"body_underside_mm": o["seating.body_underside_mm"], "lean_deg": o["seating.lean_deg"],
                         "tab_face_to_lead_centre_mm": o["seating.tab_face_to_lead_centre_mm"], "outline_routing_mm": o["seating.outline_routing_mm"],
-                        "lead_play_mm": o["seating.lead_play_mm"], "tab_hole_height_mm": m.tab_hole_z},
+                        "lead_play_mm": o["seating.lead_play_mm"], "plate_edge_offset_mm": o["seating.plate_edge_offset_mm"], "tab_hole_height_mm": m.tab_hole_z},
             "all_pass": all(r["passed"] for r in counted), "failed": [r["name"] for r in counted if not r["passed"]], "checks_run": len(counted),
             "findings": {r["name"]: r["figures"]["blades"] for r in results if r.get("kind") == "finding"},
             "least_creepage_mm": clearance["figures"]["least_mm"],
@@ -2042,17 +2088,17 @@ def _seating_combo(args: Tuple[Dict[str, Any], Optional[str], Tuple[str, ...]]) 
             "driver_tilt_deg": dict(m.info.get("driver_tilt_deg", {})), "creepage_required_mm": m.basis["creepage_mains_mm"]}
 
 
-SEATING_AXES = ("body height", "lean", "tab-face distance", "outline routing tolerance", "lead play")
+SEATING_AXES = ("body height", "lean", "tab-face distance", "outline routing tolerance", "lead play", "plate edge (ledge print allowance and board thickness)")
 
 
 def seating_combinations() -> List[Tuple[str, ...]]:
-    """Every extreme of the five tolerance axes: 32 combinations."""
+    """Every extreme of the six tolerance axes: 64 combinations."""
     return [c for c in itertools.product(("min", "max"), repeat=len(SEATING_AXES))]
 
 
 def seating_range(overrides: Dict[str, Any], skin: Optional[str] = None, workers: int = 4,
                   combos: Optional[Sequence[Tuple[str, ...]]] = None) -> List[Dict[str, Any]]:
-    """Every extreme combination of body height, lean, tab-face distance, outline routing tolerance and lead play, each rebuilt and checked, up to four at a time."""
+    """Every extreme combination of body height, lean, tab-face distance, outline routing tolerance, lead play and plate edge, each rebuilt and checked, up to four at a time."""
     import multiprocessing
     combos = list(combos) if combos is not None else seating_combinations()
     jobs = [(overrides, skin, c) for c in combos]
@@ -2064,14 +2110,69 @@ def seating_range(overrides: Dict[str, Any], skin: Optional[str] = None, workers
     least = min(r["least_creepage_mm"] for r in rows)
     need = rows[0]["creepage_required_mm"]
     return [result("c16.seating_range", "C16", all(r["all_pass"] for r in rows) and least >= need,
-                   f"all {len(rows)} extreme combinations of body height, lean, tab-face distance, outline routing tolerance and lead play rebuild and pass every check; the least straight line from Mains copper to the plate is {least:.3f} mm against {need:.1f} mm",
+                   f"all {len(rows)} extreme combinations of body height, lean, tab-face distance, outline routing tolerance, lead play and plate edge rebuild and pass every check; the least straight line from Mains copper to the plate is {least:.3f} mm against {need:.1f} mm",
                    {"combinations": rows, "worst_creepage_mm": least, "required_mm": need, "axes": list(SEATING_AXES),
                     "range_source": "params.yaml seating block, each entry unconfirmed: the owner measures it on the delivered board"},
                    [f"body {r['seating']['body_underside_mm']:.2f} lean {r['seating']['lean_deg']:+.1f} tab face {r['seating']['tab_face_to_lead_centre_mm']:.3f} "
-                    f"routing {r['seating']['outline_routing_mm']:+.1f} play {r['seating']['lead_play_mm']:+.3f} "
+                    f"routing {r['seating']['outline_routing_mm']:+.1f} play {r['seating']['lead_play_mm']:+.3f} edge {r['seating']['plate_edge_offset_mm']:+.2f} "
                     f"(hole {r['seating']['tab_hole_height_mm']:.2f}, gap {r['gap_mm']:.3f}): pass {r['all_pass']} ({r['checks_run']} checks), nearest copper {r['least_creepage_mm']:.3f}, lead {r['least_lead_mm']:.3f}, sweep {r['lid_sweep_min_mm']:.3f}, boots {r['boot_least_clearance_mm']:.2f}"
                     + ("" if r["all_pass"] else " FAILED " + ", ".join(r["failed"])) for r in rows]),
             seating_range_finding(rows)]
+
+
+HEIGHT_RANGE_STATES = ("nominal gap", "narrowest gap", "widest gap")
+
+
+def height_range_overrides(overrides: Dict[str, Any], skin: Optional[str], end: str, state: str) -> Dict[str, Any]:
+    """One build of the plate-height range: the plate at the least (`min`) or the greatest (`max`) height the case takes, the lower edge unchanged, and the board-edge-to-plate gap
+    nominal or at its narrowest or widest (the tab-face distance, the outline routing tolerance and the lead play all at the one extreme, as the gap's own range states them)."""
+    base = case.Params.load(overrides, skin)
+    o = dict(overrides)
+    o["plate.height_mm"] = base("plate.height_min_mm") if end == "min" else base("plate.height_max_mm")
+    if state != "nominal gap":
+        narrow = state == "narrowest gap"
+        o["seating.tab_face_to_lead_centre_mm"] = base.entry("seating.tab_face_to_lead_centre_mm")["min" if narrow else "max"]
+        o["seating.outline_routing_mm"] = base.entry("seating.outline_routing_mm")["min" if narrow else "max"]
+        o["seating.lead_play_mm"] = base.entry("seating.lead_play_mm")["max" if narrow else "min"]
+    return o
+
+
+def _height_case(args: Tuple[Dict[str, Any], Optional[str], str, str]) -> Dict[str, Any]:
+    """One end of the plate-height range at one gap state, rebuilt and checked in full by the same path the seating range uses."""
+    overrides, skin, end, state = args
+    os.nice(5)
+    o = height_range_overrides(overrides, skin, end, state)
+    m = case.build(o, forms=("single",), skin=skin)
+    results = run_all(m, include_sweep=True)
+    counted = verdicts(results)
+    return {"end": end, "state": state, "plate_height_mm": o["plate.height_mm"], "plate_upper_edge_z_mm": m.info["plate"]["z1"],
+            "all_pass": all(r["passed"] for r in counted), "failed": [r["name"] for r in counted if not r["passed"]], "checks_run": len(counted),
+            "least_creepage_mm": next(r for r in results if r["name"] == "c1.creepage_all_mains_copper")["figures"]["least_mm"],
+            "opening_z_mm": next(r for r in results if r["name"] == "c2.wall_opening_within_unit_opening")["figures"]["opening_z_mm"],
+            "case_top_margin_mm": next(r for r in results if r["name"] == "c2.plate_covers_case_top")["figures"]["margin_mm"],
+            "gap_mm": next(r for r in results if r["name"] == "c1.gap_over_tolerances")["figures"]["gap_of_this_build_mm"]}
+
+
+def plate_height_range(overrides: Dict[str, Any], skin: Optional[str] = None, workers: int = 4) -> List[Dict[str, Any]]:
+    """The case's checks at the least and the greatest plate height, each at the nominal gap and at the gap's two extremes, each rebuilt and checked, up to four at a time."""
+    import multiprocessing
+    jobs = [(overrides, skin, end, state) for end in ("min", "max") for state in HEIGHT_RANGE_STATES]
+    if workers > 1:
+        with multiprocessing.get_context("spawn").Pool(min(workers, 4)) as pool:
+            rows = pool.map(_height_case, jobs, chunksize=1)
+    else:
+        rows = [_height_case(j) for j in jobs]
+    base = case.Params.load(overrides, skin)
+    lo, hi = base("plate.height_min_mm"), base("plate.height_max_mm")
+    need = case.basis()["creepage_mains_mm"]
+    least = min(r["least_creepage_mm"] for r in rows)
+    return [result("c16.plate_height_range", "C16", all(r["all_pass"] for r in rows) and least >= need,
+                   f"the case's checks hold at the least plate height, {lo:.1f} mm, and the greatest, {hi:.1f} mm, with the lower edge unchanged, each at the nominal gap and at the narrowest and widest: {len(rows)} rebuilds, "
+                   f"{sum(1 for r in rows if r['all_pass'])} pass every check; the least straight line from Mains copper to the plate is {least:.3f} mm against {need:.1f} mm",
+                   {"heights_mm": [lo, hi], "rows": rows, "worst_creepage_mm": least, "required_mm": need, "states": list(HEIGHT_RANGE_STATES)},
+                   [f"plate {r['plate_height_mm']:.1f} mm (upper edge z {r['plate_upper_edge_z_mm']:.2f}), {r['state']} (gap {r['gap_mm']:.3f}): pass {r['all_pass']} ({r['checks_run']} checks), "
+                    f"nearest copper {r['least_creepage_mm']:.3f}, case-top margin {r['case_top_margin_mm']:.3f}, opening z {r['opening_z_mm'][0]:.2f} to {r['opening_z_mm'][1]:.2f}"
+                    + ("" if r["all_pass"] else " FAILED " + ", ".join(r["failed"])) for r in rows])]
 
 
 def seating_range_finding(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -2082,7 +2183,7 @@ def seating_range_finding(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     for r in rows:
         blades = r["findings"][name]
         label = (f"body {r['seating']['body_underside_mm']:.2f} lean {r['seating']['lean_deg']:+.1f} tab face {r['seating']['tab_face_to_lead_centre_mm']:.3f} "
-                 f"routing {r['seating']['outline_routing_mm']:+.1f} play {r['seating']['lead_play_mm']:+.3f}")
+                 f"routing {r['seating']['outline_routing_mm']:+.1f} play {r['seating']['lead_play_mm']:+.3f} edge {r['seating']['plate_edge_offset_mm']:+.2f}")
         reached = sorted(ref for ref, b in blades.items() if b["tip_to_blade_mm"] <= 0.0)
         touched[label] = reached
         lines.append(f"{label}: " + ", ".join(f"{ref} {b['tip_to_blade_mm']:.2f} mm" for ref, b in blades.items()) + (f"; tip reaches {', '.join(reached)}" if reached else "; no blade reached"))
@@ -2116,6 +2217,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--json-out", help="also write the JSON result to this path")
     parser.add_argument("--set", action="append", default=[], metavar="KEY=VALUE", help="override a params.yaml value")
     parser.add_argument("--range", action="store_true", help="rebuild and check at every extreme of the seating range")
+    parser.add_argument("--height-range", action="store_true", help="rebuild and check at the least and the greatest plate height, each at the nominal gap and at its two extremes")
     parser.add_argument("--form", choices=("single", "two"), default="single", help="the lid form the checks run on")
     parser.add_argument("--skin", help="the skin to check (flow, or another skin the file holds); the params.yaml default when omitted")
     parser.add_argument("--only", help="comma-separated prefixes of the checks to run, for example c1.,c15.; every check when omitted")
@@ -2126,10 +2228,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     results = run_all(model, args.form, only=only)
     if args.range:
         results += seating_range(overrides, model.P.skin_name)
+    if args.height_range:
+        results += plate_height_range(overrides, model.P.skin_name)
     payload = {"criterion": TRACE, "board_sha256": model.board.sha256, "overrides": overrides, "skin": model.P.skin_name,
                "seating": {"body_underside_mm": model.body_underside, "lean_deg": model.P("seating.lean_deg"),
                            "tab_face_to_lead_centre_mm": model.P("seating.tab_face_to_lead_centre_mm"), "outline_routing_mm": model.P("seating.outline_routing_mm"),
-                           "lead_play_mm": model.P("seating.lead_play_mm"), "tab_hole_height_mm": model.tab_hole_z},
+                           "lead_play_mm": model.P("seating.lead_play_mm"), "plate_edge_offset_mm": model.P("seating.plate_edge_offset_mm"), "tab_hole_height_mm": model.tab_hole_z},
                "basis": model.basis, "passed": all(r["passed"] for r in verdicts(results)), "findings": [r["name"] for r in results if r.get("kind") == "finding"],
                "checks": results}
     payload = jsonable(payload)

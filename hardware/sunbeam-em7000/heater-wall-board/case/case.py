@@ -623,7 +623,7 @@ def build_tray(m: Model) -> None:
     # back to its board-side face, which stands the seam behind the plate plane, so only the floor and the pilasters reach the plane
     end_wall = end_wall_box(m)
     tray = tray + end_wall
-    tray = tray - box(left_in, right_in, m.v_plate - P("plate.end_wall_top_gap_mm"), split, m.floor_top(0), zt + 1)
+    tray = tray - box(left_in, right_in, m.v_plate - P("plate.end_wall_board_recess_mm"), split, m.floor_top(0), zt + 1)
     tray = tray - box(left_in, right_in, split, far_in, m.floor_top(split + 1), zt + 1)
     m.info["end_wall"] = end_wall
 
@@ -756,24 +756,31 @@ def build_tray(m: Model) -> None:
 # -- the plate --------------------------------------------------------------------------------------------------------
 
 def plate_geometry(m: Model) -> Dict[str, float]:
-    """The plate's edges in the case frame: its length and former height centre it on the case's extent, its lower edge is raised to the
-    figure of `plate.lower_edge_z_mm` in the board frame, and its upper edge stays at the former top."""
+    """The plate's edges in the case frame: its length centres it on the case's extent, its lower edge is the ledge's height (the figure of
+    `plate.lower_edge_z_mm` less the seating range's plate-edge offset) and its upper edge is that plus the bar's height. The former
+    outline, the 80 mm by `plate.former_height_mm` window centred on the case's extent, is kept apart as its own figure."""
     P = m.P
     e = case_extent(m)
     cu, cz = (e["u0"] + e["u1"]) / 2, (e["z0"] + e["z1"]) / 2
     L, H = P("plate.length_mm"), P("plate.former_height_mm")
-    return {"u0": cu - L / 2, "u1": cu + L / 2, "z0": P("plate.lower_edge_z_mm"), "z1": cz + H / 2, "cu": cu,
-            "former_z0": cz - H / 2, "former_z1": cz + H / 2}
+    z0 = plate_lower_edge(m)
+    return {"u0": cu - L / 2, "u1": cu + L / 2, "z0": z0, "z1": z0 + P("plate.height_mm"), "cu": cu,
+            "former_z0": cz - H / 2, "former_z1": cz + H / 2, "former_u0": cu - L / 2, "former_u1": cu + L / 2}
 
 
-def end_wall_box(m: Model, plate_lower_edge: Optional[float] = None) -> Any:
-    """The tray's printed end wall: the tray's full outer width at the plate end, from the floor's underside to the plate's lower edge
-    less the seam, in the volume the narrower plate leaves, its back face 0.5 mm in front of the machine wall's plane. Its board-side
-    face is recessed by the seam behind the plate plane across the cavity's width, so it stands further from the board than the plate does."""
+def plate_lower_edge(m: Model) -> float:
+    """The height of the tray's ledge, where the bar's lower edge rests, above the board's component face in this build."""
+    return m.P("plate.lower_edge_z_mm") + m.P("seating.plate_edge_offset_mm")
+
+
+def end_wall_box(m: Model, edge: Optional[float] = None) -> Any:
+    """The tray's printed end wall: the tray's full outer width at the plate end, from the floor's underside up to a ledge at the plate's
+    lower edge, in the volume the narrower plate leaves, its back face 0.5 mm in front of the machine wall's plane. The bar's lower edge
+    rests on the ledge. Its board-side face is recessed behind the plate plane across the cavity's width, so it stands further from the
+    board than the plate does."""
     P = m.P
     e = case_extent(m)
-    edge = P("plate.lower_edge_z_mm") if plate_lower_edge is None else plate_lower_edge
-    top = edge - P("plate.end_wall_top_gap_mm")
+    top = plate_lower_edge(m) if edge is None else edge
     back = m.v_plate - P("plate.thickness_mm") + P("plate.end_wall_wall_clear_mm")
     return box(e["u0"], e["u1"], back, m.v_plate, m.z_floor_bottom, top)
 
@@ -803,6 +810,16 @@ def build_plate(m: Model) -> None:
     m.parts["plate"] = plate
     m.info["plate"] = {"u0": u0, "u1": u1, "z0": z0, "z1": z1, "cu": cu, "cz": cz, "bolt_zs": [cz],
                        "former_z0": g["former_z0"], "former_z1": g["former_z1"]}
+
+
+def wall_opening(m: Model) -> Dict[str, float]:
+    """The opening in the machine's plastic wall: the plate and the tray's end wall together plus the clearance each side, in the case frame."""
+    P = m.P
+    pl = m.info["plate"]
+    ew = m.info["end_wall"].bounding_box()
+    c = P("plate.wall_opening_clearance_mm")
+    return {"u0": min(pl["u0"], float(ew.min.X)) - c, "u1": max(pl["u1"], float(ew.max.X)) + c,
+            "z0": min(pl["z0"], float(ew.min.Z)) - c, "z1": max(pl["z1"], float(ew.max.Z)) + c, "clearance": c}
 
 
 # -- the lid ----------------------------------------------------------------------------------------------------------
@@ -1230,8 +1247,9 @@ def plate_drawing_svg(m: Model, path: str) -> str:
     sheet = Sheet(L + 2 * margin, H + 2 * margin + 52, "Spreader plate drawing, 1:1, seen from the case side (the inner face)")
     fx = lambda u: margin + (u - pl["u0"])  # noqa: E731
     fy = lambda z: margin + 14 + (pl["z1"] - z)  # noqa: E731
-    for i, t in enumerate(wrap_lines(["SPREADER PLATE, aluminium, flat, nothing cut from it, seen from the case side (the inner face, looking toward the wall, the case's far end behind the viewer), 1:1, millimetres. "
-                                      f"{L:.1f} long x {H:.3f} tall x {P('plate.thickness_mm'):.1f} thick: the former {P('plate.former_height_mm'):.1f} mm plate with its lower edge raised to z {pl['z0']:.1f} above the board face, its upper edge at the former top z {pl['z1']:.3f}; provisional until the owner cuts and measures the wall."], L, 2.0)):
+    for i, t in enumerate(wrap_lines(["SPREADER PLATE, a standard flat aluminium bar, nothing cut from it but its holes, seen from the case side (the inner face, looking toward the wall, the case's far end behind the viewer), 1:1, millimetres. "
+                                      f"{H:.0f} mm wide (its height installed) x {P('plate.thickness_mm'):.0f} mm thick, cut to {L:.0f} mm long. Its lower edge rests on the tray's end-wall ledge, z {pl['z0']:.1f} above the board face; its upper edge stands at z {pl['z1']:.1f}. "
+                                      f"The case holds at any height from {P('plate.height_min_mm'):.1f} to {P('plate.height_max_mm'):.1f} mm; the standard widths between are 20 and 25 mm. The stock's width tolerance is an assumption, to be read from the supplier's standard when the bar is sourced."], L, 2.0)):
         sheet.text(margin, margin + 2 + 3.6 * i, t, size=2.0)
     sheet.poly([(fx(pl["u0"]), fy(pl["z1"])), (fx(pl["u1"]), fy(pl["z1"])), (fx(pl["u1"]), fy(pl["z0"])), (fx(pl["u0"]), fy(pl["z0"]))],
                "fill:#e9ebee;stroke:#000;stroke-width:0.25")
@@ -1262,16 +1280,19 @@ def plate_drawing_svg(m: Model, path: str) -> str:
         sheet.circle((fx(u), fy(nominal)), P("triac.plate_tap_drill_mm") / 2 + 0.3, "fill:#fff;stroke:#c00;stroke-width:0.25")
         sheet.text(fx(u) + (-3 if i == 0 else 3), fy(nominal) - 2.5, f"{ref} tab screw u {u:.2f} z {nominal:.2f}", fill="#c00", size=1.8, anchor="end" if i == 0 else "start")
     ty = fy(pl["z0"]) + 12
+    edge = P("plate.lower_edge_z_mm")
     lines = [
-        "Red bar: the tab hole height range %.2f to %.2f (nominal %.2f); the M3 holes (tapping drill %.1f) are drilled and tapped through the whole plate from this face at the measured height; the screws are M3 x %.0f." % (
-            lo, hi, nominal, P("triac.plate_tap_drill_mm"), P("triac.tab_screw_length_mm")),
-        "The range is unconfirmed: the owner measures the delivered board before marking the plate.",
-        "Four M3 countersunk holes, countersunk on the back face (the wall face, away from the viewer; head dia %.1f shown by its circle), take the tray screws at z %s; the back face lies on the machine wall. The two M3 tapped-through holes enter the inner face drawn here." % (P("screws.tray_plate_head_dia_mm"), ", ".join(f"{z:g}" for z in P("screws.tray_plate_z_mm"))),
+        "Red bar: the tab hole height range %.2f to %.2f above the board face (nominal %.2f). The tab holes stand %.2f to %.2f mm (nominal %.2f) above the bar's lower edge, the distance to mark and drill from the lower edge: M3 holes (tapping drill %.1f) drilled and tapped through the whole bar from this face; the screws are M3 x %.0f." % (
+            lo, hi, nominal, lo - edge, hi - edge, nominal - edge, P("triac.plate_tap_drill_mm"), P("triac.tab_screw_length_mm")),
+        "The range is unconfirmed: the owner measures the delivered board before marking the bar.",
+        "Four M3 countersunk holes, countersunk on the back face (the wall face, away from the viewer; head dia %.1f shown by its circle), take the tray screws at z %s above the board face (%s above the lower edge). They are marked from the printed tray with the bar seated on its ledge, then drilled and countersunk until each head sits flush with or below the back face; the back face lies on the machine wall. The two M3 tapped-through holes enter the inner face drawn here." % (
+            P("screws.tray_plate_head_dia_mm"), ", ".join(f"{z:g}" for z in P("screws.tray_plate_z_mm")), ", ".join(f"{z - edge:g}" for z in P("screws.tray_plate_z_mm"))),
         "Wall bolts M4, one at the plate's mid-height (z %.2f) at each end, washer dia %.1f, standing in the %.1f mm end zones outside the case." % (pl["cz"], P("plate.bolt_washer_dia_mm"), bz),
         "Length arithmetic: case outer width at the plate %.2f + 2 x bolt zone %.1f = %.2f, not more than the plate length %.1f (margin %.2f)." % (
             e["u1"] - e["u0"], bz, e["u1"] - e["u0"] + 2 * bz, L, L - (e["u1"] - e["u0"] + 2 * bz)),
-        "Wall opening = the plate's former outline + %.1f per side: %.1f x %.1f." % (P("plate.wall_opening_clearance_mm"), L + 2 * P("plate.wall_opening_clearance_mm"),
-                                                                       P("plate.former_height_mm") + 2 * P("plate.wall_opening_clearance_mm")),
+        "Wall opening = the plate and the tray's end wall together + %.1f per side: %.1f x %.1f, within the unit's opening in the plastic wall (z %.1f to %.1f)." % (
+            wall_opening(m)["clearance"], wall_opening(m)["u1"] - wall_opening(m)["u0"], wall_opening(m)["z1"] - wall_opening(m)["z0"],
+            P("plate.unit_opening_bottom_z_mm"), P("plate.unit_opening_top_z_mm")),
         "Interface material between the triac faces and the plate, and between the plate and the wall, is not in the catalogue and is stated in the case record.",
     ]
     lines = wrap_lines(lines, L, 1.9)
@@ -1298,8 +1319,9 @@ def case_drawings_svg(m: Model, path: str) -> str:
     op = P("plate.wall_opening_clearance_mm")
     margin, gap = 10.0, 16.0
     plan_box = (-8.0, -8.0, 56.0, 86.0)             # u0, v0, u1, v1
-    side_box = (-8.0, pl["former_z0"] - 2, 86.0, pl["z1"] + 2)   # v0, z0, v1, z1
-    end_box = (pl["u0"] - op - 2, pl["former_z0"] - op - 2, pl["u1"] + op + 2, pl["z1"] + op + 2)
+    side_box = (-8.0, min(pl["z0"], m.z_floor_bottom) - 2, 86.0, pl["z1"] + 2)   # v0, z0, v1, z1
+    wo = wall_opening(m)
+    end_box = (wo["u0"] - 2, wo["z0"] - 2, wo["u1"] + 2, wo["z1"] + 2)
     pw, ph = plan_box[2] - plan_box[0], plan_box[3] - plan_box[1]
     sw, sh = side_box[2] - side_box[0], side_box[3] - side_box[1]
     ew, eh = end_box[2] - end_box[0], end_box[3] - end_box[1]
@@ -1389,22 +1411,22 @@ def case_drawings_svg(m: Model, path: str) -> str:
     sheet.text(end_o[0], end_o[1] - 3, "END ELEVATION (seen from the far end, looking toward the wall; u to the right)", size=2.0)
     sheet.shape(sh_box(end_box[0], end_box[1], end_box[2], end_box[3]), efx, efy, "fill:none")
     sheet.shape(sh_box(pl["u0"], pl["z0"], pl["u1"], pl["z1"]), efx, efy, "fill:#dfe3e6;stroke:#444;stroke-width:0.15")
-    sheet.shape(sh_box(pl["u0"] - op, pl["former_z0"] - op, pl["u1"] + op, pl["z1"] + op), efx, efy, "fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1")
+    sheet.shape(sh_box(wo["u0"], wo["z0"], wo["u1"], wo["z1"]), efx, efy, "fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1")
     sheet.shape(sil["end"], efx, efy, "fill:#eef0f2;stroke:#000;stroke-width:0.2")
     for u in m.info["tray_pilaster_u"]:
         for z in P("screws.tray_plate_z_mm"):
             sheet.circle((efx(u), efy(z)), P("screws.tray_plate_dia_mm") / 2, "fill:#000")
     for ref in TRIAC_REFS:
         sheet.circle((efx(m.triac_u[ref]), efy(m.tab_hole_z)), P("triac.tab_screw_dia_mm") / 2, "fill:#000")
-    sheet.text(efx(pl["u0"] - op) + 1, efy(pl["z1"] + op) - 1.2, f"wall opening = the plate's former outline + {op:.1f} per side", fill="#c60", size=1.7)
+    sheet.text(efx(wo["u0"]) + 1, efy(wo["z1"]) - 1.2, f"wall opening = the plate and the end wall + {op:.1f} per side", fill="#c60", size=1.7)
     # ---- legend
     ly = margin + 16 + max(ph, sh + gap + 14 + eh) + 8
     legend = [
         "Board is held by: 11 pillars and the H1 boss and screw (seat plane tilted with the board's lean), the backing rib, the hold-down finger on the left wall and the locating ribs. The lid holds nothing.",
         "Lid: two toes under hooks on the pilasters at the plate end, one M3 x 10 countersunk screw from +z at the far end. It comes off by lifting the far end and drawing it out along the pilaster grooves.",
         "Tray to plate: four M3 x 12 countersunk screws from the plate's back face into 2.6 pilot holes in the pilasters. Tab screws: M3 x 5 through the tab into the plate's tapped-through holes, reached with the lid off along the blue lines.",
-        "No barrier: the plate's lower edge stands %.1f mm above the board face, so no plate metal faces the board edge, the pads or the leads; the tray's printed end wall fills the volume the plate leaves, unfilled plastic with no creepage credit." % P("plate.lower_edge_z_mm"),
-        "Opening in the plastic wall: the plate's former outline plus %.1f per side. Slot mouths keep %.1f mm of clear air to the right wall." % (op, 3.0),
+        "No barrier: the plate's lower edge stands %.1f mm above the board face, resting on the tray's end-wall ledge, so no plate metal faces the board edge, the pads or the leads; the tray's printed end wall fills the volume the plate leaves, unfilled plastic with no creepage credit." % P("plate.lower_edge_z_mm"),
+        "Opening in the plastic wall: the plate and the end wall together plus %.1f per side. Slot mouths keep %.1f mm of clear air to the right wall." % (op, 3.0),
     ]
     legend = wrap_lines(legend, width - 2 * margin, 1.8)
     for i, line in enumerate(legend):
