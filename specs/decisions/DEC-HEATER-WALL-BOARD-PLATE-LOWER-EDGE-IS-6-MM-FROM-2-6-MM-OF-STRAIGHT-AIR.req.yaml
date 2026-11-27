@@ -1,0 +1,33 @@
+id: DEC-HEATER-WALL-BOARD-PLATE-LOWER-EDGE-IS-6-MM-FROM-2-6-MM-OF-STRAIGHT-AIR
+type: decision
+category: tactical
+title: The plate's lower edge is 6.0 mm above the board's component face, where 2.6 mm of straight air holds to the bare leads
+status: active
+version: 1
+rationale: |
+  Context: the signed separation basis holds 2.6 mm of basic creepage and 1.5 mm of clearance to the earthed plate. The case proves both as the straight-line distance from every mains pad edge and bare lead to the plate, since no surface path is shorter than the straight line. A bare lead's rear face stands at least 2.40 mm off the plate plane (the maker's figure, ST DS2114 Rev 11 Table 6), and its metal rises to the body underside, 4.55 mm above the board at the part's maximum.
+
+  Decision: the plate's lower edge is 6.0 mm above the board's component face. The least edge that keeps 2.6 mm of straight air to the highest bare lead is 4.55 + sqrt(2.6 squared less 2.4 squared) = 5.55 mm. 6.0 mm is the figure the owner signed as the lift in the 2026-11-19 sign-off (W-9 1c; the barrier of W-10 replaced it the same day and is not built), and it leaves 0.45 mm for the tolerances that move the edge in the case: the ledge's print allowance, 0.2 mm, and the board's thickness tolerance, 0.16 mm, so the lowest edge is 5.64 mm and the bare lead then stands 2.636 mm from the plate.
+
+  Rejected: an edge of about 3.0 mm treats the bare lead as a clearance-only distance, and the straight-line proof the case uses applies the signed 2.6 mm to it, which a 3.0 mm edge would breach at the body maximum; an edge at the derived minimum, 5.55 mm, leaves no margin for the tolerances above.
+
+  Trade-offs: a higher edge shortens the plate that carries heat, so the case's thermal judgement is re-run at the plate height the case takes and holds the maker's junction limit; a lower edge would gain heat area and breach the straight-line proof.
+
+  Reversibility: moderate. The edge is a case parameter and the ledge a printed feature, so it can change by reprinting, but the owner makes the plate to it and the separation basis's barrier text states it.
+
+  Consequences: the ledge sits at the plate's lower edge in the tray's own frame and sets it; the tolerance range carries the print allowance and the board's thickness; the plate height above the edge is free within the unit's opening.
+options_considered:
+  - option: The plate's lower edge at 6.0 mm, the owner's signed lift
+    reason_rejected: ""
+  - option: A lower edge of about 3.0 mm
+    reason_rejected: treats the bare lead as a clearance-only distance, but the straight-line proof applies the signed 2.6 mm to it, which a 3.0 mm edge breaches at the 4.55 mm body maximum
+  - option: The derived minimum edge of 5.55 mm
+    reason_rejected: leaves no margin for the ledge's print allowance and the board's thickness tolerance
+chosen: The plate's lower edge at 6.0 mm, the owner's signed lift
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C3
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C5
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C1
+    type: addresses

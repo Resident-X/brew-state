@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C6
+type: criterion
+title: The triacs' thermal judgement is re-run at the plate height the case takes with the plate's conduction recomputed
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |-
+  The wall-assembly thermal judgement is re-run from its margin script at the plate height the case takes, with the plate's own conduction recomputed for that height, and every case holds the maker's junction limit. Out of scope: the bolted joint's measured resistance, which the bring-up measurement closes.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

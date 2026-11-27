@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C11
+type: criterion
+title: The case lies within the plate's former outline and only the plate touches the wall
+status: active
+version: 3
+measurement_type: binary
+verification: test
+text: |
+  The case model lies within the plate's former 80 by 30 mm outline, the plastic-wall opening covers the plate and the end wall together plus the case record's clearance each side and lies within the unit's opening in the plastic wall, and no printed part comes within 0.5 mm of the machine wall's plane, so only the plate touches the wall. Out of scope: the owner's wall cut and the plastic wall's own tolerance.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

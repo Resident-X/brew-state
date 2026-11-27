@@ -200,6 +200,45 @@ The ratings cover none of the stress columns (the firing exceeds the RCWV, and b
 **Provisional, and what is recorded against what.** The judgement is provisional on the joint resistance only: it is stated for each of 0, 1 and 3 K/W, with 3 K/W the bounding figure, until the bring-up measurement closes it. The wall's grade and thickness are the owner's statement and no longer carry an owner's-measurement mark; the conductivity is a stated lower bound for an alloy that is not identified. The shortfall that remains (the three cases over the 100 degC share, all at the 3 K/W limit, and the stainless bounding case's failures) is recorded against the owner's existing acceptance of finding 2.7, `owner-sign-off.md` W-5c, and its carry to `DEL-HW-BRING-UP.C11`; the plate's leg, the cut and the board's copper are not changed and the triacs are not re-selected.
 
 
+## The narrower plate and the triacs' thermal judgement on it (added 2026-11-27)
+
+The printed case's plate-clearance leaf (`SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE`) takes the spreader plate from the 80 x 30 mm of the section above to a standard flat aluminium bar 80 mm long, 20 mm wide (its height installed) and 5 mm thick: its lower edge stands 6.0 mm above the board's component face and its upper edge 26.0 mm (`hardware/sunbeam-em7000/heater-wall-board/case-record.md`, *The plate's clearance and creepage over the board's tolerances*). The section above is the judgement at the former plate and is unchanged; this section re-runs it from the margin script (`circuit-proof/W_margins.py`, `W_margins.log`, section (e) amendment 2026-11-27) at the plate height the case takes.
+
+**Model, unchanged except for the plate's height.** The window the wall model takes is the plate's height, H = 20 mm (an input of the margin script, `N_PLATE_HEIGHT_MM`, the figure of the case's `plate.height_mm`), and the plate's own conduction is recomputed for it at the record's conductivity floor of 15 W/(m.K): T / (15 x L x H) = 0.005 / (15 x 0.080 x 0.020) = 0.2083 K/W (the former plate's 0.139 K/W), so plate and paste are 0.2083 + 0.027 = 0.2353 K/W. R_wall = 1 / (h x H x L + P x sqrt(h x k x t)) with H = 20 mm, L = 80.0 mm, P = 2 x (H + L) = 0.200 m, t = 2.5 mm, one exposed face. Aluminium, k = 110: R_wall = 2.876 K/W at h = 10 and 4.123 K/W at h = 5. Stainless, k = 15: 7.222 and 10.571 K/W. Junction, both triacs on: T_j = T_air + 9.09 x (R_wall + 0.2353 + Rc) + 9.09 x 0.5325 x (0.50 + 2.1); steam alone: T_j = T_air + 4.84 x (R_wall + 0.2353 + Rc + 0.50 + 2.1). The case holds at any plate height from 16.8 to 27.5 mm; the judgement is made at the 20 mm bar the case takes, and the script's input moves it to another height: with the input at 16.8 mm the hottest aluminium case is 121.25 degC and at 27.5 mm it is 116.03 degC (both on, 40 degC air, h = 5, Rc = 3 K/W), so all 24 aluminium cases hold the maker's 125 degC at both ends of the range too. Lateral spreading of the heat along the narrower bar is not modelled (the wall sheet's own spreading is, by the fin term of R_wall); the bring-up case-temperature measurement (`DEL-HW-BRING-UP.C11`) closes it.
+
+**Verdict, each case, on both walls** (`circuit-proof/W_margins.log`, section (e) amendment 2026-11-27, which prints the same figures; "holds" is at or under the limit):
+
+| Air (degC) | h | Rc (K/W) | Load | Aluminium (k 110) junction (degC) | 125 degC | 100 degC share | Stainless (k 15) junction (degC) | 125 degC | 100 degC share |
+|---|---|---|---|---|---|---|---|---|---|
+| 25 | 10 | 0 | both on | 65.87 | holds | holds | 105.37 | holds | fails |
+| 25 | 10 | 0 | steam alone | 52.64 | holds | holds | 73.68 | holds | holds |
+| 25 | 10 | 1 | both on | 74.96 | holds | holds | 114.46 | holds | fails |
+| 25 | 10 | 1 | steam alone | 57.48 | holds | holds | 78.52 | holds | holds |
+| 25 | 10 | 3 | both on | 93.14 | holds | holds | 132.64 | fails | fails |
+| 25 | 10 | 3 | steam alone | 67.16 | holds | holds | 88.20 | holds | holds |
+| 25 | 5 | 0 | both on | 77.21 | holds | holds | 135.81 | fails | fails |
+| 25 | 5 | 0 | steam alone | 58.68 | holds | holds | 89.88 | holds | holds |
+| 25 | 5 | 1 | both on | 86.30 | holds | holds | 144.90 | fails | fails |
+| 25 | 5 | 1 | steam alone | 63.52 | holds | holds | 94.72 | holds | holds |
+| 25 | 5 | 3 | both on | 104.48 | holds | fails | 163.08 | fails | fails |
+| 25 | 5 | 3 | steam alone | 73.20 | holds | holds | 104.40 | holds | fails |
+| 40 | 10 | 0 | both on | 80.87 | holds | holds | 120.37 | holds | fails |
+| 40 | 10 | 0 | steam alone | 67.64 | holds | holds | 88.68 | holds | holds |
+| 40 | 10 | 1 | both on | 89.96 | holds | holds | 129.46 | fails | fails |
+| 40 | 10 | 1 | steam alone | 72.48 | holds | holds | 93.52 | holds | holds |
+| 40 | 10 | 3 | both on | 108.14 | holds | fails | 147.64 | fails | fails |
+| 40 | 10 | 3 | steam alone | 82.16 | holds | holds | 103.20 | holds | fails |
+| 40 | 5 | 0 | both on | 92.21 | holds | holds | 150.81 | fails | fails |
+| 40 | 5 | 0 | steam alone | 73.68 | holds | holds | 104.88 | holds | fails |
+| 40 | 5 | 1 | both on | 101.30 | holds | fails | 159.90 | fails | fails |
+| 40 | 5 | 1 | steam alone | 78.52 | holds | holds | 109.72 | holds | fails |
+| 40 | 5 | 3 | both on | 119.48 | holds | fails | 178.08 | fails | fails |
+| 40 | 5 | 3 | steam alone | 88.20 | holds | holds | 119.40 | holds | fails |
+
+**Reading.** On the recorded aluminium wall every one of the 24 cases holds the maker's 125 degC (the hottest is 119.48 degC, both on, 40 degC air, h = 5, Rc = 3 K/W, 5.5 K to spare). 20 of 24 hold the 100 degC share; the 4 that do not, with the load, the air temperature, the air film coefficient and the joint resistance of each, are: both triacs on at 25 degC air, air film coefficient h = 5 W/(m2.K), joint resistance Rc = 3 K/W, 104.48 degC; both triacs on at 40 degC air, air film coefficient h = 10 W/(m2.K), joint resistance Rc = 3 K/W, 108.14 degC; both triacs on at 40 degC air, air film coefficient h = 5 W/(m2.K), joint resistance Rc = 1 K/W, 101.30 degC; both triacs on at 40 degC air, air film coefficient h = 5 W/(m2.K), joint resistance Rc = 3 K/W, 119.48 degC. At the former plate 21 of 24 held. Steam alone holds both limits in every case. The joint resistance that both triacs on can carry and still hold the 100 degC share is 3.75 K/W (25 degC, h = 10), 2.51 K/W (25 degC, h = 5), 2.10 K/W (40 degC, h = 10) and 0.86 K/W (40 degC, h = 5). The 0.5 current share on the case at Rc = 3 K/W, h = 10 is 8.43 A (25 degC) and 6.03 A (40 degC) against the steam element's 5.38 A, so the current margin holds there. The stainless bounding case is hotter still and fails more cases, as the table shows.
+
+**Recorded against.** The shortfall is the one `owner-sign-off.md` W-5c carries to the bring-up case-temperature measurement (`DEL-HW-BRING-UP.C11`), larger by one case at the narrower plate (four cases over the 100 degC share where there were three); the owner's attention is drawn to it in W-19 and at item 11 of the end-of-work list. The plate's leg, the cut and the board's copper are not changed and the triacs are not re-selected.
+
 ## Result
 
 Rows (a), (b2), (c) and (d) are met on the records' figures. Row (b) is met on the surge limit, the firing and the latching; it is not met on the resistor's rated voltage or a rated pulse (UNI-ROYAL V.3: RCWV 7.07 V, overload voltage 17.7 V, no pulse rating): carried as unsourced on the stated basis, with a hedge in `open-items.md` (amended 2026-11-18, finding 4.2). Row (d) rests on estimates marked unsourced (the surge source impedance, the entry clamp above 50 A, the wall varistor's clamp at currents other than 10 A) and carries one residual risk, a partly failed varistor, accepted by the owner on 2026-11-18 (`owner-sign-off.md` W-3) with the firmware stuck-on threshold of 2.0 A or less (`open-items.md`, D7). Row (c) holds hot by x4 to x13 on VGD, estimated from typical curves (amended 2026-11-18). Row (e) and the triac line of the grading table carry the assembly judgements' verdict that the provisional wall cut does not hold continuous full power at 70 degC or at the 100 degC share; the owner's decision on that verdict is his acceptance of finding 2.7 on 2026-11-19, carried to the bring-up case-temperature measurement and the cut-time checks (`owner-sign-off.md` W-5c). **Amended 2026-11-21:** on the recorded aluminium wall (W-17) the window holds 125 degC in all 24 cases and the 100 degC share in 21; the shortfall left is both triacs at the 3 K/W joint limit, recorded against W-5c and carried to `DEL-HW-BRING-UP.C11`. The opto-triac's temperature (row f of `W_margins.py`, the grading table) holds at 45 to 50 degC air unless the neighbour rise exceeds 35 to 40 K and is not shown at 70 degC; it is measured at bring-up. Placement may not begin while a row is NO (method, step 4) without the owner's decision recorded; `open-items.md` lists what closes each.

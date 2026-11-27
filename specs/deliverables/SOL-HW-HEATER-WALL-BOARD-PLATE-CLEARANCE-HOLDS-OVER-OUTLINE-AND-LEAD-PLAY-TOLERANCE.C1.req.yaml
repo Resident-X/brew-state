@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C1
+type: criterion
+title: The case record states the board-to-plate gap over the board outline's routing tolerance and the leads' play
+status: active
+version: 2
+measurement_type: binary
+verification: inspection
+text: |
+  The case record and its parameters state the gap between the board edge and the plate over the maker's tab-face-to-lead-centre range, the board outline's routing tolerance at the fabricator's regular tier, the board's thickness tolerance, the print allowance of the ledge's height and the play of a lead in its drilled hole, each with its source or marked as an assumption. Out of scope: measuring the delivered boards' real lead play, and changing the board outline.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

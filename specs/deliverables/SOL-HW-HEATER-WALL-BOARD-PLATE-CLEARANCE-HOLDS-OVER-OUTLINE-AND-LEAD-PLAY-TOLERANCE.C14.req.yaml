@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C14
+type: criterion
+title: The tray screws and wall bolts fit the narrower plate
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The case model's checks require each tray screw's pilot and head to stand clear of the lid-toe pocket and to keep the record's edge distance from the plate's edges, and each wall bolt's washer to fit within the plate. Out of scope: the owner's wall cut and the toothed-washer hedge.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

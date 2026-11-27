@@ -1,0 +1,35 @@
+id: DEC-HEATER-WALL-BOARD-GAP-RANGES-INCLUDE-OUTLINE-THICKNESS-AND-LEAD-PLAY
+type: decision
+category: tactical
+title: The board-to-plate gap ranges are held over the outline routing tolerance, the board's thickness and the leads' play
+status: active
+version: 1
+rationale: |
+  Context: the case's first range for the board-edge-to-plate gap used the maker's tab-face-to-lead-centre tolerance alone, 0.785 to 1.21 mm. Three more tolerances move the same distance: the board outline's routing tolerance, 0.2 mm at the fabricator's regular tier and 0.1 mm at its precision tier (the manufacturer record marks the figures published and unverified; the case uses the regular tier), the board's thickness, 1.6 mm plus or minus 0.16 mm, and the leads' play in their 1.1 mm holes, 0.20 to 0.305 mm to either side, which soldering freezes.
+
+  Decision: every range the case is checked over for the board-to-plate geometry includes the outline routing tolerance, the board's thickness and the leads' play, each with its source or marked as an assumption, and the ledge's print allowance where the plate's edge is in question. With them the gap is 0.28 to 1.715 mm.
+
+  Rejected: the maker's tolerance alone, which understated the spread and let a clearance claim stand that fails below a gap of 0.49 mm; the outline tolerance without the leads' play, which leaves out a term the assembler's soldering fixes at assembly.
+
+  Trade-offs: the seating-range check rebuilds the case at every extreme, 64 builds, in the on-demand heavy tests, which is slow; the lead-play figure is an assumption with no assembler figure and the outline tolerance is unverified until the board's fabricator confirms it.
+
+  Reversibility: low cost; a tighter measured figure narrows the range.
+
+  Consequences: the case record states each tolerance with its source or marks it as an assumption; a later change to the board's outline, the fabricator or the assembler reopens these figures.
+options_considered:
+  - option: Include all of them, each with its source or marked as an assumption
+    reason_rejected: ""
+  - option: The maker's tab-face-to-lead-centre tolerance alone
+    reason_rejected: the range the record used, 0.785 to 1.21 mm, understated the real spread, 0.28 to 1.715 mm, and let a clearance claim stand that fails below a gap of 0.49 mm
+  - option: The outline routing tolerance without the leads' play
+    reason_rejected: leaves out a term that the assembler's soldering fixes at assembly
+chosen: Include all of them, each with its source or marked as an assumption
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C1
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C2
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C3
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C5
+    type: addresses

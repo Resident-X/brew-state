@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C13
+type: criterion
+title: The triac screw's tip stays short of the plate's back face and engages enough thread over its tolerances
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The case model's check computes, over the screw's length tolerance and the triac tab's thickness range, how far a triac screw's tip stands inside the plate and how much thread it engages, and requires the tip to stop short of the plate's back face and the engagement to be at least the figure the record states for the torque it specifies. Out of scope: the triac's thermal contact and the tab hole's own tolerance.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

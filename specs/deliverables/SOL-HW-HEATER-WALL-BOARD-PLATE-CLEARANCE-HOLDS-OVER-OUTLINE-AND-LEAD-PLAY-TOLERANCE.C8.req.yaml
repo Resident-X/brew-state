@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C8
+type: criterion
+title: The owner's sign-off record carries the plate's raised lower edge and the tapped triac holes
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The owner's sign-off record carries a dated entry for the narrower plate with its lower edge raised and for the plate's triac holes tapped through, the second being the acceptance the printed case's seating-scatter criterion leaves outstanding. Out of scope: the owner's reasons, which the entry records as said.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

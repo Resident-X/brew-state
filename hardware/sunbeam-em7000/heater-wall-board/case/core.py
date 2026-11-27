@@ -1,6 +1,6 @@
 """The safety core of the printed case: what no skin may change.
 
-The core owns the barrier film, the pilasters and their end faces, the board seat and everything that follows the seating
+The core owns the pilasters and their end faces, the board seat and everything that follows the seating
 scatter, the slot stand-off and the slot mouths, every screw position and boss, the blade and cable apertures and their
 minimum sizes, the louvre safety rules (the gill angle, the slot width, the field of the lid in which a through-slot may
 stand and its distance from the apertures and the lid screw) and the envelope limits. The envelope is two plan polygons:

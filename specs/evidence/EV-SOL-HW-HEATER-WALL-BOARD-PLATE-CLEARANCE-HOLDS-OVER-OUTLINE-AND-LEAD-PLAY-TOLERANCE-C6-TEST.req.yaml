@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE-C6-TEST
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-27T17:19:05.609621Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/case/tests/test_case_plate.py::test_c6_the_margin_script_is_re_run_at_the_plate_height_the_case_takes_with_the_plate_conduction_recomputed
+  artifact_version: 939ab8e8ff2c42a57faf463425f968cdee7b727c
+attested_by: crun-c6f8b2ab8d7e9bb8
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C6
+    type: satisfies

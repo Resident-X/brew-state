@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C12
+type: criterion
+title: The tray root and triac-end motion are re-judged at the narrower plate's screw stance
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The case record re-judges the tray root's tension under the push-on load and the triac end's motion at the tray screws' stance after the plate narrows, states the pull-out allowance it uses for the printed pilots, and the re-judged figures hold the limits the record already states for them. Out of scope: the printed plastic's measured strength.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

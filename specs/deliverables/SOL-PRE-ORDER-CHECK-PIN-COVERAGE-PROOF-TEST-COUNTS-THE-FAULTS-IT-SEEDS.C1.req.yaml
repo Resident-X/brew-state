@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-PIN-COVERAGE-PROOF-TEST-COUNTS-THE-FAULTS-IT-SEEDS.C1
+type: criterion
+title: The pin-coverage proof's test holds the faults the proof seeds
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The pin-coverage proof's test names each pin-coverage fault the proof seeds, requires the proof to hold exactly those, and requires each to be caught by the rule it names, so a fault added or removed without the test fails the test. Out of scope: the other seeded faults and the rule's own behaviour.
+links:
+  - target: SOL-PRE-ORDER-CHECK-PIN-COVERAGE-PROOF-TEST-COUNTS-THE-FAULTS-IT-SEEDS
+    type: criterion-of

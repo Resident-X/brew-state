@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-HOLDS-AT-THE-COMBINED-LEAN-ALLOWANCE.C1
+type: criterion
+title: The seating range includes the combined lean
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The case's seating-range check rebuilds the case at the combined lean of the common allowance and the triacs' difference, 1.3 degrees at each end, as well as at the common lean's own extremes, and runs every check at each. Out of scope: the lean figures themselves and the owner's reflow limit.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-HOLDS-AT-THE-COMBINED-LEAN-ALLOWANCE
+    type: criterion-of

@@ -1,0 +1,15 @@
+id: SOL-PRE-ORDER-CHECK-PIN-COVERAGE-PROOF-TEST-COUNTS-THE-FAULTS-IT-SEEDS
+type: deliverable
+category: solution
+title: The pin-coverage proof's test counts the faults the proof seeds as they stand
+status: active
+version: 1
+text: |
+  Corrects the on-demand seeded-fault proof's pin-coverage test, which fails on main. The proof in hardware/tools/board_prove.py seeds two pin-coverage faults (a connected pin of a listed integrated circuit left out of its entry, and the same beside pins on no net), and the test in hardware/tools/tests/test_board_check_kicad_records.py that checks them asserts there is exactly one, so the on-demand proof's test run fails with 2 != 1 while the rule itself still catches both faults. The test is brought to the faults the proof holds. The proof runs in neither gate, which is why the failure has stood on main unnoticed; it appeared here when the board tooling's tests were run for a change to a signed record.
+
+  Locus: hardware/tools/tests/test_board_check_kicad_records.py and hardware/tools/board_prove.py.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C9
+    type: targets

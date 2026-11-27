@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C4
+type: criterion
+title: The case needs no loose part, coating or installer step for clearance and creepage to hold
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The case record's parts list and assembly steps contain no insulating film, coating, shim or other loose part, and no step whose omission leaves clearance or creepage short of the signed figures. Out of scope: the lid, screws and fixings that hold the case together.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

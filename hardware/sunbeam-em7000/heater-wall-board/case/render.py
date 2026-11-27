@@ -34,7 +34,7 @@ lighting, screen-space ambient occlusion where the machine's graphics stack allo
 behind the part and a perspective camera (the lid and tray-top views are orthographic). The directions are drawn with installed up
 on the page: the case frame's +z points down, so the cameras take (0, 0, -1) as up, read from params.yaml `installed`. The board and
 its parts are drawn in every view, inside the case. The tray and lid carry the form's colours from params.yaml and are matte
-plastic; the plate is brushed aluminium, the film amber, the board and its parts muted.
+plastic; the plate is brushed aluminium, the board and its parts muted.
 
 The two-colour form is drawn as it prints. Each part prints outer face down, in its own colour, then `forms.two.swap_layers` whole
 layers in the second colour from `forms.two.swap_start_mm` above the bed, then in its own colour again; a filament change colours the
@@ -98,7 +98,6 @@ CENTRE = np.array([23.75, 40.0, 8.0])
 MATERIALS = {
     "plastic": {"specular": 0.15, "specular_power": 12.0, "ambient": 0.16, "diffuse": 0.92},
     "wiring": {"specular": 0.1, "specular_power": 10.0, "ambient": 0.34, "diffuse": 0.9},
-    "film": {"specular": 0.2, "specular_power": 14.0, "ambient": 0.2, "diffuse": 0.9},
     "aluminium": {"specular": 0.55, "specular_power": 28.0, "ambient": 0.2, "diffuse": 0.85},
 }
 _MESHES: Dict[Tuple[int, str], pv.PolyData] = {}
@@ -209,7 +208,6 @@ def scene_parts(m: case.Model, form: str, view: str) -> List[Dict[str, Any]]:
     lid_off = view == "lid-off"
     lift_lid = (0, 0, 46) if ex else (0, 0, 0)
     board_lift = (0, 0, 20) if ex else (0, 0, 0)
-    film_move = (0, -22, 0) if ex else (0, 0, 0)
     plate_move = (0, -44, 0) if ex else (0, 0, 0)
     bands = case.swap_bands(m) if form == "two" else {}
     geo = geometry_form(form)
@@ -222,7 +220,6 @@ def scene_parts(m: case.Model, form: str, view: str) -> List[Dict[str, Any]]:
         if "lid" in bands:
             lid["band"] = (*bands["lid"], P("forms.two.lid_floor_colour"))
         items.append(lid)
-    items.append({"name": "film", "colour": P("forms.film_colour"), "offset": film_move, "material": "film"})
     items.append({"name": "plate", "colour": P("forms.plate_colour"), "offset": plate_move, "material": "aluminium"})
     items.append({"name": "board", "colour": BOARD_COLOUR, "offset": board_lift, "material": "plastic"})
     for name in m.bodies:
@@ -234,9 +231,9 @@ def scene_parts(m: case.Model, form: str, view: str) -> List[Dict[str, Any]]:
 
 
 def scene_meshes(m: case.Model) -> Dict[str, trimesh.Trimesh]:
-    """The case parts the renderer draws (tray, the lid of each built form, film, plate), unmoved, as meshes in the physical frame: the same
+    """The case parts the renderer draws (tray, the lid of each built form, plate), unmoved, as meshes in the physical frame: the same
     surfaces, in the same frame, as the exported STL files."""
-    names = [n for n in ("tray", "lid_single", "lid_two", "film", "plate") if n in m.parts]
+    names = [n for n in ("tray", "lid_single", "lid_two", "plate") if n in m.parts]
     out: Dict[str, trimesh.Trimesh] = {}
     for name in names:
         poly = base_mesh(m, name)
@@ -435,8 +432,7 @@ def render_scene(m: case.Model, form: str, view: str, path: str, size: Tuple[int
             for piece, colour in ((below, item["colour"]), (band, band_colour), (above, item["colour"])):
                 add_item(plotter, piece.translate(offset, inplace=False), colour, item["material"])
         else:
-            extra = {"opacity": 0.95} if item["material"] == "film" else {}
-            add_item(plotter, poly.translate(offset, inplace=False), item["colour"], item["material"], **extra)
+            add_item(plotter, poly.translate(offset, inplace=False), item["colour"], item["material"])
     wired = (installed and not view.startswith("logo-lid")) or view in WIRED_OLDER_VIEWS   # the hanging wires would stand between the camera and the lid logo
     wiring = wiring_items(m) if wired else []
     pos, focal, up, scale = camera_for(view, CENTRE, installed_up(m) if installed else None, m)

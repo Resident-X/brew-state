@@ -278,6 +278,66 @@ for w_air in (25.0, 40.0):
     print("   current share, aluminium k %.0f, h = 10, Rc = 3 K/W, air %.0f degC: steam triac case %.1f degC; 0.5 current share %.2f A (model) against the steam element's 5.38 A" % (K_ALU_LOW, w_air, w_tc, w_cur))
     check("current share holds on the aluminium wall at Rc 3 K/W, air %.0f degC" % w_air, w_cur > 5.38, "%.2f A against 5.38 A" % w_cur)
 
+# 2026-11-27 amendment: the narrower plate. The printed case's plate-clearance leaf (the case holds the spreader plate's lower edge 6.0 mm above the
+# board's component face so that no plate metal faces the pads, the leads or the board edge) takes the plate from the former 80 x 30 mm to a standard
+# 80 x 20 mm flat aluminium bar: its lower edge is 6.0 mm and its upper edge 26.0 mm above the face. The window the wall model takes becomes the plate's
+# height, an input of this section (N_PLATE_HEIGHT_MM, the figure of case/params.yaml plate.height_mm), and the plate's own conduction is recomputed for it
+# at the same 15 W/(m.K) floor the division record states "under any metal": 0.005 / (15 x 0.080 x H). The 2026-11-21 section above is the judgement at
+# the former plate and is unchanged; this section repeats it for the narrower plate with the same wall, the same air temperatures, the same joint
+# resistances and the same loads. Lateral spreading of the heat along the narrower bar is not modelled (the wall's own sheet spreading is, by the fin
+# term of r_wall); the bring-up case-temperature measurement (DEL-HW-BRING-UP.C11) closes it.
+N_PLATE_HEIGHT_MM = 20.0                              # case/params.yaml plate.height_mm: the standard flat bar the case takes, mm; the case holds from 16.8 to 27.5 mm (plate.height_min_mm, plate.height_max_mm)
+N_PLATE_Z_LOW = 6.0                                   # case/params.yaml plate.lower_edge_z_mm, mm above the board face
+N_PLATE_Z_TOP = N_PLATE_Z_LOW + N_PLATE_HEIGHT_MM     # the upper edge, 26.0 mm above the board face at 20 mm
+print("\n== (e) amendment 2026-11-27: the plate is a standard %.0f x 5 mm flat bar, 80 mm long, lower edge %.1f mm above the board face; the case temperature at the external air (25 and 40 degC), the maker's 125 degC and the 100 degC policy share" % (N_PLATE_HEIGHT_MM, N_PLATE_Z_LOW))
+N_H = N_PLATE_HEIGHT_MM / 1000.0                       # the window the wall model takes: the plate's height, 0.020 m
+N_PLATE_T, N_PLATE_K = 0.005, 15.0                    # case/params.yaml plate.thickness_mm; the division record's conductivity floor 'under any metal', W/(m.K)
+N_R_PLATE = N_PLATE_T / (N_PLATE_K * W_L * N_H)       # the plate's conduction recomputed for the plate's height, K/W
+N_R_LEG = N_R_PLATE + 0.027                           # plus the division record's paste film
+N_PERIM = 2.0 * (N_H + W_L)
+
+
+def n_r_wall(k, h):
+    return 1.0 / (h * N_H * W_L + N_PERIM * math.sqrt(h * k * W_T))
+
+
+check("narrower-plate wall model is the 2026-11-21 model at the plate's height", abs(n_r_wall(K_STAINLESS, 10) - 1.0 / (10 * N_H * W_L + 2.0 * (N_H + W_L) * math.sqrt(10 * K_STAINLESS * W_T))) < 1e-12 and abs(N_H - (N_PLATE_Z_TOP - N_PLATE_Z_LOW) / 1000.0) < 1e-12,
+      "window %.6f m x %.3f m (the former %.3f m); plate term %.4f K/W (the former plate's %.4f K/W) plus the paste's 0.027 K/W is %.4f K/W" % (N_H, W_L, W_H, N_R_PLATE, 0.139, N_R_LEG))
+n_cases = []
+for n_name, n_k in (("aluminium, k %.0f W/(m.K) (recorded wall, lowest plausible sheet)" % K_ALU_LOW, K_ALU_LOW), ("304 stainless, k %.0f W/(m.K) (stated bounding case)" % K_STAINLESS, K_STAINLESS)):
+    print("   -- wall: " + n_name)
+    for n_h in (10, 5):
+        print("      h = %d W/(m2.K): R_wall = 1 / (%d x %.6f + %.3f x sqrt(%d x %.0f x %.4f)) = %.3f K/W; plate and paste %.3f K/W" % (n_h, n_h, N_H * W_L, N_PERIM, n_h, n_k, W_T, n_r_wall(n_k, n_h), N_R_LEG))
+    for n_air in (25.0, 40.0):
+        for n_h in (10, 5):
+            for n_rc in (0.0, 1.0, 3.0):
+                n_path = n_r_wall(n_k, n_h) + N_R_LEG + n_rc
+                n_both = n_air + W_P_BOTH * n_path + W_P_BOTH * W_SHARE_STEAM * (0.50 + E_RTH_JC)
+                n_steam = n_air + W_P_STEAM_ALONE * (n_path + 0.50 + E_RTH_JC)
+                for n_load, n_tj in (("both heaters on", n_both), ("steam heater alone", n_steam)):
+                    n_v125 = "HOLDS" if n_tj <= W_TJ_LIMIT else "FAILS"
+                    n_v100 = "HOLDS" if n_tj <= W_TJ_SHARE else "FAILS"
+                    print("      air %.0f degC, h = %2d, Rc = %.0f K/W, %-18s: junction %6.2f degC; 125 degC %s (%+.1f K), 100 degC share %s (%+.1f K)" % (n_air, n_h, n_rc, n_load, n_tj, n_v125, W_TJ_LIMIT - n_tj, n_v100, W_TJ_SHARE - n_tj))
+                    n_cases.append((n_k, n_air, n_h, n_rc, n_load, n_tj))
+n_alu = [c for c in n_cases if c[0] == K_ALU_LOW]
+n_alu_125 = [c for c in n_alu if c[5] > W_TJ_LIMIT]
+n_alu_100 = [c for c in n_alu if c[5] > W_TJ_SHARE]
+check("narrower plate holds the maker's 125 degC in every case", not n_alu_125, "%d of %d cases over 125 degC; the hottest is %.1f degC (both on, 40 degC air, h = 5, Rc = 3 K/W)" % (len(n_alu_125), len(n_alu), max(c[5] for c in n_alu)))
+print("NOTE  narrower plate, aluminium wall, the 100 degC policy share: %d of %d cases hold; the cases over it, with the load, the air temperature, the air film coefficient h and the joint resistance Rc of each: %s" % (
+    len(n_alu) - len(n_alu_100), len(n_alu), "; ".join("%.0f degC air h %d Rc %.0f %s %.1f degC" % (c[1], c[2], c[3], c[4], c[5]) for c in n_alu_100) or "none"))
+n_rc_max = {}
+for n_air in (25.0, 40.0):
+    for n_h in (10, 5):
+        n_rc_max[(n_air, n_h)] = (W_TJ_SHARE - n_air - W_P_BOTH * (n_r_wall(K_ALU_LOW, n_h) + N_R_LEG) - W_P_BOTH * W_SHARE_STEAM * (0.50 + E_RTH_JC)) / W_P_BOTH
+print("NOTE  narrower plate, the joint resistance both-on that the 100 degC share leaves on the aluminium wall: %s" % "; ".join("%.0f degC air, h = %d: %.2f K/W" % (a, h, v) for (a, h), v in sorted(n_rc_max.items())))
+for n_air in (25.0, 40.0):
+    n_tj = n_air + W_P_BOTH * (n_r_wall(K_ALU_LOW, 10) + N_R_LEG + 3.0) + W_P_BOTH * W_SHARE_STEAM * (0.50 + E_RTH_JC)
+    n_tc = n_tj - E_P_STEAM * E_RTH_JC
+    n_pa = (E_TJ_MAX - n_tc) / E_RTH_JC
+    n_cur = (-E_VTO * 0.9 + math.sqrt((E_VTO * 0.9) ** 2 + 4 * E_RD * n_pa)) / (2 * E_RD) / 2
+    print("   current share, narrower plate, aluminium k %.0f, h = 10, Rc = 3 K/W, air %.0f degC: steam triac case %.1f degC; 0.5 current share %.2f A (model) against the steam element's 5.38 A" % (K_ALU_LOW, n_air, n_tc, n_cur))
+    check("current share holds on the aluminium wall at the narrower plate, Rc 3 K/W, air %.0f degC" % n_air, n_cur > 5.38, "%.2f A against 5.38 A" % n_cur)
+
 # ---- (f) opto-triac temperature (finding 1.9)
 print("\n== (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2")
 SLOPE_TOTAL = 2.94e-3  # onsemi p.3: total device power 250 mW at 25 degC, derate 2.94 mW/degC: implies a junction-to-ambient resistance of 1/2.94 mW/degC = 340 K/W (a derivation from the sheet, not a stated thermal resistance)
