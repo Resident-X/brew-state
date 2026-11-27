@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C3
+type: criterion
+title: Clearance and creepage from every mains pad and bare lead to the plate hold over the whole stated range
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  Over every extreme of the stated range, the straight-air clearance and the creepage from every mains pad edge and every bare lead to the nearest bare plate metal meet the separation basis's signed figures, with no barrier, film or coating credited. Out of scope: the separation basis's figures themselves, and solid-insulation credit for any material.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

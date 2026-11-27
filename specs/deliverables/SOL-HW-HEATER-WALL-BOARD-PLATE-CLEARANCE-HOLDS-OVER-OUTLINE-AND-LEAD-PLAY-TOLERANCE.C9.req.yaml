@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C9
+type: criterion
+title: The signed separation basis's barrier text is re-signed to the case's form
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The separation basis's barrier text states the case's form, with no film credited, and carries the owner's re-signature, since the text it replaces was signed. Out of scope: the basis's figures.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C7
+type: criterion
+title: The cases that miss the 100 degC policy share are listed at the plate height the case takes
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The records that quote the thermal judgement list, at the plate height the case takes, each case that misses the 100 degC policy share, with the load, air temperature, film coefficient and joint resistance of each. Out of scope: any change to the policy share.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

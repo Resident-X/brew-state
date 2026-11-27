@@ -1,0 +1,21 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+type: deliverable
+category: solution
+title: The wall board's plate clearance and creepage hold over the board outline's routing tolerance and the leads' play
+status: active
+version: 1
+text: |
+  Corrects the printed case's account of the gap between the board edge and the spreader plate, and the clearance that follows from it. The case record and its checks take the gap as the maker's tab-face-to-lead-centre range less the lead centre's fixed distance from the board edge, 0.785 to 1.21 mm. That range leaves out two tolerances that move the same distance: the board outline's routing tolerance, 0.2 mm at the fabricator's regular tier and 0.1 mm at its precision tier (the manufacturer record marks both as published and unverified), and the play of each lead in its 1.1 mm drilled hole, 0.20 to 0.305 mm to either side from the hole and the lead's 0.49 to 0.70 mm thickness, which the assembler's soldering freezes. With them the gap is wider and narrower than recorded, and the straight-air clearance from a pad edge to the plate, the pad-edge-to-board-edge distance of 1.010 mm plus the gap, falls below the signed 1.5 mm wherever the gap falls below 0.49 mm. The record's statement that clearance holds without the barrier is optimistic to that extent, and a barrier is not credited against clearance, which is an air distance.
+
+  The form the owner agreed in conversation on 2026-11-27, pending its entry in the sign-off record: the plate is a narrower flat bar whose lower edge stands above the board's pads, so that no plate metal faces the board edge, the pads or the lower leads, and the tray's printed end wall fills the volume the plate leaves, takes no creepage credit and stands clear of the board edge. The plate's triac screw holes are tapped through from the triac side, since a slot or an oversize hole would let the plate stand off the wall and a countersink would put a screw head in the heat path; that is the departure from the owner's ruling of 2026-11-24 that the printed case's seating-scatter criterion leaves outstanding, and it is recorded here for the owner to accept. The plate's height is not set here. It is the least that keeps the tab hole's screw clear of both edges over the tab-hole height range and holds the triacs' thermal judgement; a first re-run of the margin script with the wall window narrowed to 25 mm held every case against the maker's junction limit, and models the plate's own conduction at its present figure, so it is indicative and the judgement is re-run in the build.
+
+  This item corrects the premise of the printed case solution it depends on. The wall-steel solution's thermal judgement is a separate item: it records the wall and re-judges the triacs on it at the present plate, and this item re-judges them at the narrower plate.
+
+  Locus: hardware/sunbeam-em7000/heater-wall-board/case/ (params, model, checks, record and plate drawing), the separation basis's barrier text, the owner sign-off record, and the thermal judgement's margin script and the records that quote it.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: depends-on
