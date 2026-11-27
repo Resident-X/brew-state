@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C17
+type: criterion
+title: The record states the installation order and its silent failures
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record states the installation order, from the bought bar to the unit bolted to the wall and the receptacles pushed on, marking the owner's actions, and for each step that uses a tool states the tool and the access the model shows, and states the silent failures the design does not prevent: a wrong-length tab screw, a skipped tab screw and a countersunk head left proud. Out of scope: any step the owner performs on the machine's own wall.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

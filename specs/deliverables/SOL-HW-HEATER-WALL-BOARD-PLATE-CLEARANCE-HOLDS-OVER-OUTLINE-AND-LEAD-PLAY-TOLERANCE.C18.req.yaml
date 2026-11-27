@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C18
+type: criterion
+title: The bar's tray holes are marked from the printed tray on the ledge
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record and the plate drawing state that the bar's four tray-screw holes are marked from the printed tray with the bar seated on the ledge and that each countersunk head sits flush or below the bar's back face, and the drawing gives the tab holes' position as a distance from the bar's lower edge. Out of scope: the owner's drilling accuracy.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of

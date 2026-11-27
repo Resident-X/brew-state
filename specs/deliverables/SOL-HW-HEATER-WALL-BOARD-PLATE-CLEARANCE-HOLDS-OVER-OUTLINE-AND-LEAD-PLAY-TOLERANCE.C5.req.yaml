@@ -1,12 +1,12 @@
 id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C5
 type: criterion
-title: A plate at its former position cannot be seated in the case
+title: A plate below the ledge cannot be seated in the case
 status: active
-version: 2
+version: 3
 measurement_type: binary
 verification: test
-text: |-
-  The case model's check fails a plate whose lower edge stands at its former position, 7.025 mm below the component face, because the tray's printed end wall occupies its place. Out of scope: the plate's own drawing.
+text: |
+  The case model's check shows the plate's lower edge is set by the ledge in the tray's own frame: a plate at the ledge's height shares no volume with the tray, and a plate 0.05 mm below it shares a positive volume, so a lower plate cannot be seated; a plate at its former position, 7.025 mm below the component face, is refused likewise. Out of scope: the plate's own drawing.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
     type: criterion-of

@@ -2,11 +2,11 @@ id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TO
 type: criterion
 title: The seating-range check rebuilds and checks the case at the extremes of every stated tolerance
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  The case's seating-range check rebuilds the case at every extreme of body height, lean, tab-face distance, outline routing tolerance and lead play, and runs every check at each. Out of scope: the tolerance figures themselves.
+text: |
+  The case's seating-range check rebuilds the case at every extreme of body height, lean, tab-face distance, outline routing tolerance, board thickness, the ledge's print allowance and lead play, and runs every check at each. Out of scope: the tolerance figures themselves.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
     type: criterion-of
