@@ -776,8 +776,9 @@ def plate_lower_edge(m: Model) -> float:
 def end_wall_box(m: Model, edge: Optional[float] = None) -> Any:
     """The tray's printed end wall: the tray's full outer width at the plate end, from the floor's underside up to a ledge at the plate's
     lower edge, in the volume the narrower plate leaves, its back face 0.5 mm in front of the machine wall's plane. The bar's lower edge
-    rests on the ledge. Its two sides and its back face carry the tray's own bottom chamfer, continuing the body's round the end wall, and its bottom edge against the body stays square. Its board-side face is recessed behind the plate plane across the cavity's width, so it stands further from the
-    board than the plate does."""
+    rests on the ledge. Its board-side face is recessed behind the plate plane across the cavity's width, so it stands further from the
+    board than the plate does. Its sides and its back face carry the tray's own bottom chamfer, so the body's chamfer runs on round the wall;
+    the bottom edge on the board-side face, where the wall meets the tray body, stays square."""
     P = m.P
     e = case_extent(m)
     top = plate_lower_edge(m) if edge is None else edge
