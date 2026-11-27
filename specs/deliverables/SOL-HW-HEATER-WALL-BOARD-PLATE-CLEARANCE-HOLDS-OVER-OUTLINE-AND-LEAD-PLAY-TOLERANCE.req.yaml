@@ -32,6 +32,6 @@ links:
   - target: DEC-HEATER-WALL-BOARD-GAP-RANGES-INCLUDE-OUTLINE-THICKNESS-AND-LEAD-PLAY
     type: justified-by
 brief_confirmation:
-  confirmer: claude-sonnet-5-5 blind brief reviewer
-  fingerprint: 8205840255fd82459e17229080de45721c34ca7e8780765c1fd55e11e29f099c
+  confirmer: claude-sonnet-5-5 (independent brief reviewer)
+  fingerprint: d8a521a52c2365649b8a13966059f9c126b33445f4878c260cafa176c728ae55
   gating_profile: ""
