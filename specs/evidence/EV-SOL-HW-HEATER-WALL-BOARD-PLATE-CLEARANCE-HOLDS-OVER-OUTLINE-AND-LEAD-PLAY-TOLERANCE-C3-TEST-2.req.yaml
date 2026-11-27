@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE-C3-TEST-2
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-27T06:51:51.108445Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/case/tests/test_case_plate.py::test_c3_the_nominal_distances_are_straight_lines_to_the_plate_and_the_wall_plane
+  artifact_version: 88be4e1dc7fc296fbc27093b6b9e47eef814b320
+attested_by: crun-97ab589805df6244
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C3
+    type: satisfies
