@@ -4,11 +4,11 @@ category: tactical
 title: The triac screws are M3 x 5 tapped through the plate from the triac side
 status: active
 version: 1
-decided_by: David Baker (owner), accepted in conversation 2026-11-27
+decided_by: David Baker (owner) agreed the form in conversation on 2026-11-27; his words are not quoted and W-19 is signed on his behalf
 rationale: |
   Context: the owner ruled on 2026-11-24 that the plate's tab holes be a short vertical slot or a hole about 1 mm oversize, so that the bolted tab loads no solder joint. The plate is drilled from the delivered board, and the case's tray is screwed to it.
 
-  Decision: the plate's two triac holes are drilled and tapped M3 through the whole plate from the triac side, at the height measured on the delivered board, for M3 x 5 screws. Over the screw's length tolerance (4.76 to 5.24 mm) and the tab's thickness range (1.23 to 1.32 mm) the tip stands at most 4.01 mm inside the 5.0 mm plate and the thread engages at least 3.44 mm, so the tip stays short of the plate's back face. This departs from the owner's ruling of 2026-11-24, which the owner accepted in conversation on 2026-11-27, recorded as W-19.
+  Decision: the plate's two triac holes are drilled and tapped M3 through the whole plate from the triac side, at the height measured on the delivered board, for M3 x 5 screws. Over the screw's length tolerance (4.76 to 5.24 mm) and the tab's thickness range (1.23 to 1.32 mm) the tip stands at most 4.01 mm inside the 5.0 mm plate and the thread engages at least 3.44 mm, so the tip stays short of the plate's back face. The 1.23 mm minimum thickness is the figure read at the 2026-11-27 readiness pass and is to be confirmed against the maker's sheet; the tip depth rests on it. This departs from the owner's ruling of 2026-11-24: the owner agreed the form in conversation on 2026-11-27 without his words being quoted, W-19 records it signed on his behalf, and his own acceptance of the departure is still for him to confirm at the end of the work.
 
   Rejected: a slot or an oversize hole, which would have let the plate stand off the wall; a countersink in the plate's back face for the tab screws, which would put a screw head in the heat path; a blind tapped hole, which gives about 3 to 3.5 mm of full thread in a 5 mm plate and leaves no tip check.
 
@@ -16,7 +16,7 @@ rationale: |
 
   Reversibility: low cost; the plate is a simple bar and can be remade.
 
-  Consequences: the printed case's seating-scatter criterion's outstanding owner acceptance is closed by the owner's sign-off entry W-19; the plate drawing gives the tab holes' position from the bar's lower edge; the tray's own mounting screws are separate, countersunk from the plate's back face.
+  Consequences: the printed case's seating-scatter criterion's outstanding owner acceptance is carried by the owner's sign-off entry W-19, signed on his behalf, until he confirms it; the plate drawing gives the tab holes' position from the bar's lower edge; the tray's own mounting screws are separate, countersunk from the plate's back face.
 options_considered:
   - option: Tap the plate M3 through from the triac side for M3 x 5 screws
     reason_rejected: ""

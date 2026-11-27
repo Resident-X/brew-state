@@ -5,7 +5,7 @@ title: The board-to-plate gap ranges are held over the outline routing tolerance
 status: active
 version: 1
 rationale: |
-  Context: the case's first range for the board-edge-to-plate gap used the maker's tab-face-to-lead-centre tolerance alone, 0.785 to 1.21 mm. Three more tolerances move the same distance: the board outline's routing tolerance, 0.2 mm at the fabricator's regular tier (the manufacturer record marks it published and unverified), the board's thickness, 1.6 mm plus or minus 0.16 mm, and the leads' play in their 1.1 mm holes, 0.20 to 0.305 mm to either side, which soldering freezes.
+  Context: the case's first range for the board-edge-to-plate gap used the maker's tab-face-to-lead-centre tolerance alone, 0.785 to 1.21 mm. Three more tolerances move the same distance: the board outline's routing tolerance, 0.2 mm at the fabricator's regular tier and 0.1 mm at its precision tier (the manufacturer record marks the figures published and unverified; the case uses the regular tier), the board's thickness, 1.6 mm plus or minus 0.16 mm, and the leads' play in their 1.1 mm holes, 0.20 to 0.305 mm to either side, which soldering freezes.
 
   Decision: every range the case is checked over for the board-to-plate geometry includes the outline routing tolerance, the board's thickness and the leads' play, each with its source or marked as an assumption, and the ledge's print allowance where the plate's edge is in question. With them the gap is 0.28 to 1.715 mm.
 
@@ -30,4 +30,6 @@ links:
   - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C2
     type: addresses
   - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C3
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C5
     type: addresses

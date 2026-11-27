@@ -4,15 +4,15 @@ category: strategic
 title: Clearance and creepage from the mains copper to the earthed plate are held by geometry, not by a loose part, a coating or an installer step
 status: active
 version: 1
-decided_by: David Baker (owner), in conversation 2026-11-27
+decided_by: David Baker (owner) agreed the form in conversation on 2026-11-27; his words are not quoted and W-19 is signed on his behalf
 rationale: |
   Context: the case's record took the board-edge-to-plate gap as 0.785 to 1.21 mm, and a bought 0.25 mm film standing in it as the creepage barrier. Once the board outline's routing tolerance, the board's thickness and the leads' play in their holes are counted the gap is 0.28 to 1.715 mm, the straight-air clearance from a pad edge to the plate falls below the signed 1.5 mm where the gap is under 0.49 mm, and a film is not credited against an air distance. The owner's principle, stated 2026-11-27, is that the case is a simple print: print it, install the board, done, with no additional step that an installer could skip or do wrongly and so leave the system unsafe.
 
   Decision: clearance and creepage from the board's mains copper and bare leads to the earthed plate are held by geometry. The plate's lower edge stands 6.0 mm above the board's component face, so no plate metal faces the board edge, the pads or the lower leads, and a printed end wall fills the volume the plate leaves beneath it, with a ledge on which the plate's lower edge rests. The end wall is credited with no creepage and no clearance. No film, shim, coating or other loose part is used.
 
-  Why the others fail: each rejected form either needs a step the installer can omit or misplace, or depends on a dimension the tolerances do not guarantee, or earns no credit under the signed separation basis.
+  Why the others fail: a bought film is a loose part the installer can omit or misplace, it must fit a gap that can be 0.28 mm, and it is not credited against clearance; a printed wall in the gap needs 0.8 mm of a gap that can be 0.28 mm; trimming the board outline reopens a reviewed outline for a result the geometry gives without it; a shim or a milled step is an added step on the plate that the installer can skip; a conformal coat or a solder-mask credit earns no credit under the signed separation basis and a hobbyist cannot verify the coating; a rib or labyrinth in the tray adds nothing, because the shortest path is the straight line across the gap.
 
-  Trade-offs: the plate stands higher on the board than before, so it is a narrower flat bar and carries slightly less heat; the thermal judgement is re-run at the height the case takes. The end wall is a printed part that touches the hot plate and so needs a plastic that holds its shape there. Compared with a film, a coating or a shim, geometry costs plate height and printed volume and removes every step an installer could skip.
+  Trade-offs: the plate stands higher on the board than before, so it is a narrower flat bar, 20 mm tall against 30 mm, about a third less plate area to carry heat; the thermal judgement is re-run at the height the case takes. The end wall is a printed part that touches the hot plate and so needs a plastic that holds its shape there. Compared with a film, a coating or a shim, geometry costs plate height and printed volume and removes every step an installer could skip.
 
   Reversibility: low cost. A different form supersedes this decision and the case is reprinted; no board copper depends on it.
 
