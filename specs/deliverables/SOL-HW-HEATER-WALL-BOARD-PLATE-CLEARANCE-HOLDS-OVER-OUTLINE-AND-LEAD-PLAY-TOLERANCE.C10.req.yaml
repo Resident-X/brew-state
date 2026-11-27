@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C10
+type: criterion
+title: The printed case is not made of conductive filament
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The case record's material section states that the tray, its end wall and the lid are printed in unfilled plastic and that carbon-fibre, metal-filled and other conductive filament is not used, because the end wall stands within the signed clearance of the mains pads at the tolerance extremes. Out of scope: the print settings and the plastic's choice among unfilled materials.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: criterion-of
