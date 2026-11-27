@@ -1,0 +1,36 @@
+id: DEC-HEATER-WALL-BOARD-TRIAC-SCREWS-ARE-M3-X-5-TAPPED-THROUGH-THE-PLATE
+type: decision
+category: tactical
+title: The triac screws are M3 x 5 tapped through the plate from the triac side
+status: active
+version: 1
+decided_by: David Baker (owner), accepted in conversation 2026-11-27
+rationale: |
+  Context: the owner ruled on 2026-11-24 that the plate's tab holes be a short vertical slot or a hole about 1 mm oversize, so that the bolted tab loads no solder joint. The plate is drilled from the delivered board, and the case's tray is screwed to it.
+
+  Decision: the plate's two triac holes are drilled and tapped M3 through the whole plate from the triac side, at the height measured on the delivered board, for M3 x 5 screws. Over the screw's length tolerance (4.76 to 5.24 mm) and the tab's thickness range (1.23 to 1.32 mm) the tip stands at most 4.01 mm inside the 5.0 mm plate and the thread engages at least 3.44 mm, so the tip stays short of the plate's back face. This departs from the owner's ruling of 2026-11-24, which the owner accepted in conversation on 2026-11-27, recorded as W-19.
+
+  Rejected: a slot or an oversize hole, which would have let the plate stand off the wall; a countersink in the plate's back face for the tab screws, which would put a screw head in the heat path; a blind tapped hole, which gives about 3 to 3.5 mm of full thread in a 5 mm plate and leaves no tip check.
+
+  Trade-offs: a wrong-length screw that is too long lifts the plate off the wall and a skipped screw leaves the triac without a heat path; both are silent, the record states them, and the case's check proves only the nominal length against the tolerances. Tapping through gives the most thread and the owner drills and taps by hand.
+
+  Reversibility: low cost; the plate is a simple bar and can be remade.
+
+  Consequences: the printed case's seating-scatter criterion's outstanding owner acceptance is closed by the owner's sign-off entry W-19; the plate drawing gives the tab holes' position from the bar's lower edge; the tray's own mounting screws are separate, countersunk from the plate's back face.
+options_considered:
+  - option: Tap the plate M3 through from the triac side for M3 x 5 screws
+    reason_rejected: ""
+  - option: A slot or an oversize hole in the plate
+    reason_rejected: would have let the plate stand off the wall, the departure the tapped hole avoids
+  - option: A countersink in the plate's back face for the tab screws
+    reason_rejected: puts a screw head in the heat path
+  - option: A blind tapped hole
+    reason_rejected: gives about 3 to 3.5 mm of full thread in a 5 mm plate and leaves no check of the screw's tip
+chosen: Tap the plate M3 through from the triac side for M3 x 5 screws
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C13
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C8
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C16
+    type: addresses

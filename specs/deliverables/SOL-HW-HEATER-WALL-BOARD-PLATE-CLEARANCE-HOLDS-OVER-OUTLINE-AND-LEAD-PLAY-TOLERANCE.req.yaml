@@ -23,6 +23,14 @@ links:
     type: targets
   - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
     type: depends-on
+  - target: DEC-HEATER-WALL-BOARD-CASE-HOLDS-CLEARANCE-AND-CREEPAGE-BY-GEOMETRY
+    type: justified-by
+  - target: DEC-HEATER-WALL-BOARD-PLATE-LOWER-EDGE-IS-6-MM-FROM-2-6-MM-OF-STRAIGHT-AIR
+    type: justified-by
+  - target: DEC-HEATER-WALL-BOARD-TRIAC-SCREWS-ARE-M3-X-5-TAPPED-THROUGH-THE-PLATE
+    type: justified-by
+  - target: DEC-HEATER-WALL-BOARD-GAP-RANGES-INCLUDE-OUTLINE-THICKNESS-AND-LEAD-PLAY
+    type: justified-by
 brief_confirmation:
   confirmer: claude-sonnet-5-5 blind brief reviewer
   fingerprint: 8205840255fd82459e17229080de45721c34ca7e8780765c1fd55e11e29f099c

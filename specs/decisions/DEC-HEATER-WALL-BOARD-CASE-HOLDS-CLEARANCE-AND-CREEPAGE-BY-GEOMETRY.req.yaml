@@ -1,0 +1,42 @@
+id: DEC-HEATER-WALL-BOARD-CASE-HOLDS-CLEARANCE-AND-CREEPAGE-BY-GEOMETRY
+type: decision
+category: strategic
+title: Clearance and creepage from the mains copper to the earthed plate are held by geometry, not by a loose part, a coating or an installer step
+status: active
+version: 1
+decided_by: David Baker (owner), in conversation 2026-11-27
+rationale: |
+  Context: the case's record took the board-edge-to-plate gap as 0.785 to 1.21 mm, and a bought 0.25 mm film standing in it as the creepage barrier. Once the board outline's routing tolerance, the board's thickness and the leads' play in their holes are counted the gap is 0.28 to 1.715 mm, the straight-air clearance from a pad edge to the plate falls below the signed 1.5 mm where the gap is under 0.49 mm, and a film is not credited against an air distance. The owner's principle, stated 2026-11-27, is that the case is a simple print: print it, install the board, done, with no additional step that an installer could skip or do wrongly and so leave the system unsafe.
+
+  Decision: clearance and creepage from the board's mains copper and bare leads to the earthed plate are held by geometry. The plate's lower edge stands 6.0 mm above the board's component face, so no plate metal faces the board edge, the pads or the lower leads, and a printed end wall fills the volume the plate leaves beneath it, with a ledge on which the plate's lower edge rests. The end wall is credited with no creepage and no clearance. No film, shim, coating or other loose part is used.
+
+  Why the others fail: each rejected form either needs a step the installer can omit or misplace, or depends on a dimension the tolerances do not guarantee, or earns no credit under the signed separation basis.
+
+  Trade-offs: the plate stands higher on the board than before, so it is a narrower flat bar and carries slightly less heat; the thermal judgement is re-run at the height the case takes. The end wall is a printed part that touches the hot plate and so needs a plastic that holds its shape there. Compared with a film, a coating or a shim, geometry costs plate height and printed volume and removes every step an installer could skip.
+
+  Reversibility: low cost. A different form supersedes this decision and the case is reprinted; no board copper depends on it.
+
+  Consequences: the plate-clearance solution, the printed case's record and the separation basis's barrier text assume no loose part and no barrier credit; the plate height may change above the lower edge but the lower edge is fixed by the next decision; the installation order carries no safety-critical step that can be skipped except the silent failures the record states (a wrong-length or skipped tab screw, a proud countersunk head).
+options_considered:
+  - option: Raise the plate's lower edge so no plate metal faces the pads, with a printed end wall and a ledge beneath it
+    reason_rejected: ""
+  - option: A bought insulating film in the gap
+    reason_rejected: a loose part the installer can omit or misplace, and it must fit a gap that is 0.28 to 1.715 mm once the tolerances are counted; it is not credited against clearance
+  - option: A printed wall in the gap
+    reason_rejected: needs 0.8 mm of a gap that can be 0.28 mm, so it cannot be relied on to fit
+  - option: Trim the board outline back
+    reason_rejected: changes a reviewed board outline and reopens its review for a result the geometry gives without it
+  - option: A shim or a milled step on the plate
+    reason_rejected: an added step on the plate that the installer can skip
+  - option: A conformal coat or a solder-mask credit
+    reason_rejected: earns no credit under the signed separation basis and a hobbyist cannot verify the coating
+  - option: A rib or labyrinth in the tray
+    reason_rejected: the shortest path is the straight line across the gap, so a rib adds nothing
+chosen: Raise the plate's lower edge so no plate metal faces the pads, with a printed end wall and a ledge beneath it
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C3
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C4
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C1
+    type: addresses
