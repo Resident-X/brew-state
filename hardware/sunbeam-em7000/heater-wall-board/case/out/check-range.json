@@ -7,6 +7,8 @@
   "body_underside_mm": 3.75,
   "lean_deg": 0.0,
   "tab_face_to_lead_centre_mm": 2.86,
+  "outline_routing_mm": 0.0,
+  "lead_play_mm": 0.0,
   "tab_hole_height_mm": 16.5
  },
  "basis": {
@@ -23,389 +25,39 @@
  ],
  "checks": [
   {
-   "name": "c1.barrier_kind_and_thickness",
+   "name": "c1.gap_over_tolerances",
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the barrier is a bought insulating film of 0.250 mm held by the tray; a printed wall is not used",
+   "summary": "the board-edge-to-plate gap is 0.280 to 1.715 mm: the maker's 0.785 to 1.210 mm, less and plus the outline routing tolerance 0.2 mm and the leads' play 0.305 mm; this build's gap 1.000 mm",
    "figures": {
-    "kind": "film",
-    "film_thickness_mm": 0.25,
-    "allowed_thickness_mm": [
-     0.18,
-     0.3
-    ],
-    "printed_wall_minimum_mm": 0.8,
-    "film_holder": "tray end faces (pilasters and floor end) against the plate"
-   },
-   "lines": []
-  },
-  {
-   "name": "c1.printed_wall_does_not_fit",
-   "criterion": "C1",
-   "kind": "check",
-   "passed": true,
-   "summary": "a 0.8 mm printed wall cannot stand in the board-to-plate gap, which is 0.785 mm at its narrowest",
-   "figures": {
-    "gap_narrowest_mm": 0.785,
+    "gap_min_mm": 0.28,
+    "gap_max_mm": 1.715,
     "gap_nominal_mm": 1.0,
-    "gap_widest_mm": 1.21,
-    "printed_wall_mm": 0.8
-   },
-   "lines": []
-  },
-  {
-   "name": "c1.film_spans_board_width",
-   "criterion": "C1",
-   "kind": "check",
-   "passed": true,
-   "summary": "the film spans u -6.00 to 53.50, the tray's full outer width at the plate end, and so the board's 0 to 45",
-   "figures": {
-    "film_u_mm": [
-     -6.0,
-     53.5
+    "package_range_mm": [
+     0.785,
+     1.21
     ],
-    "tray_outer_u_at_plate_end_mm": [
-     -6.0,
-     53.5
-    ],
-    "board_u_mm": [
-     0.0,
-     45.0
-    ]
+    "outline_routing_mm": 0.2,
+    "lead_play_mm": 0.305,
+    "gap_of_this_build_mm": 1.0,
+    "arithmetic": "0.785 - 0.200 - 0.305 = 0.280; 1.210 + 0.200 + 0.305 = 1.715"
    },
    "lines": []
   },
   {
-   "name": "c1.film_heights_along_u",
+   "name": "c1.plate_lower_edge_raised",
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "film top 8.0 above the board face beside and between the bodies, 2.2 under each body",
+   "summary": "the plate's lower edge stands at z 6.000 above the component face, at least the 6.0 mm figure and the 5.550 mm the bare leads need (4.55 + sqrt(2.6^2 - 2.400^2)): no plate metal faces the board edge, the pads or the lower leads",
    "figures": {
-    "segments": [
-     {
-      "u0": -6.0,
-      "u1": 6.4,
-      "top_above_board_face_mm": 8.0
-     },
-     {
-      "u0": 6.45,
-      "u1": 18.75,
-      "top_above_board_face_mm": 2.2
-     },
-     {
-      "u0": 18.8,
-      "u1": 31.0,
-      "top_above_board_face_mm": 8.0
-     },
-     {
-      "u0": 31.05,
-      "u1": 43.35,
-      "top_above_board_face_mm": 2.2
-     },
-     {
-      "u0": 43.4,
-      "u1": 54.0,
-      "top_above_board_face_mm": 8.0
-     }
-    ]
-   },
-   "lines": [
-    "u  -6.00 to   6.40: film top  8.000 above the board face",
-    "u   6.45 to  18.75: film top  2.200 above the board face",
-    "u  18.80 to  31.00: film top  8.000 above the board face",
-    "u  31.05 to  43.35: film top  2.200 above the board face",
-    "u  43.40 to  54.00: film top  8.000 above the board face"
-   ]
-  },
-  {
-   "name": "c1.film_notch_under_lowest_body",
-   "criterion": "C1",
-   "kind": "check",
-   "passed": true,
-   "summary": "the notch top 2.20 stands 0.35 under the lowest body underside of the range (2.55)",
-   "figures": {
-    "notch_top_mm": 2.2,
-    "lowest_body_underside_mm": 2.55,
-    "margin_mm": 0.35
-   },
-   "lines": []
-  },
-  {
-   "name": "c1.film_clear_of_triac_bodies",
-   "criterion": "C1",
-   "kind": "check",
-   "passed": true,
-   "summary": "the film touches no triac body or tab, and goes nowhere behind the tab",
-   "figures": {
-    "film_to_triac_mm": {
-     "T921": 1.0,
-     "T911": 1.0
-    },
-    "film_front_v_mm": -1.0,
-    "tab_face_v_mm": -1.0
-   },
-   "lines": []
-  },
-  {
-   "name": "c1.creepage_per_triac_pad",
-   "criterion": "C1",
-   "kind": "check",
-   "passed": true,
-   "summary": "least creepage from a triac pad edge to the first bare plate 4.210 mm against the basis's 2.6 mm",
-   "figures": {
-    "required_mm": 2.6,
-    "least_mm": 4.21,
-    "pads": [
-     {
-      "pad": "T921 pad 1",
-      "layer": "F.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "film_face_to_top_edge": 2.2,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 4.21
-     },
-     {
-      "pad": "T921 pad 1",
-      "layer": "B.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "underside_down_the_film_face_to_its_bottom": 5.0,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 7.01
-     },
-     {
-      "pad": "T921 pad 1",
-      "layer": "lateral to the film side edge",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "air": 0.75,
-       "along_the_film": 16.06,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 18.07
-     },
-     {
-      "pad": "T921 pad 2",
-      "layer": "F.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "film_face_to_top_edge": 2.2,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 4.21
-     },
-     {
-      "pad": "T921 pad 2",
-      "layer": "B.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "underside_down_the_film_face_to_its_bottom": 5.0,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 7.01
-     },
-     {
-      "pad": "T921 pad 2",
-      "layer": "lateral to the film side edge",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "air": 0.75,
-       "along_the_film": 18.6,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 20.61
-     },
-     {
-      "pad": "T921 pad 3",
-      "layer": "F.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "film_face_to_top_edge": 2.2,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 4.21
-     },
-     {
-      "pad": "T921 pad 3",
-      "layer": "B.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "underside_down_the_film_face_to_its_bottom": 5.0,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 7.01
-     },
-     {
-      "pad": "T921 pad 3",
-      "layer": "lateral to the film side edge",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "air": 0.75,
-       "along_the_film": 21.14,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 23.15
-     },
-     {
-      "pad": "T911 pad 1",
-      "layer": "F.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "film_face_to_top_edge": 2.2,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 4.21
-     },
-     {
-      "pad": "T911 pad 1",
-      "layer": "B.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "underside_down_the_film_face_to_its_bottom": 5.0,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 7.01
-     },
-     {
-      "pad": "T911 pad 1",
-      "layer": "lateral to the film side edge",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "air": 0.75,
-       "along_the_film": 18.84,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 20.85
-     },
-     {
-      "pad": "T911 pad 2",
-      "layer": "F.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "film_face_to_top_edge": 2.2,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 4.21
-     },
-     {
-      "pad": "T911 pad 2",
-      "layer": "B.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "underside_down_the_film_face_to_its_bottom": 5.0,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 7.01
-     },
-     {
-      "pad": "T911 pad 2",
-      "layer": "lateral to the film side edge",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "air": 0.75,
-       "along_the_film": 16.3,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 18.31
-     },
-     {
-      "pad": "T911 pad 3",
-      "layer": "F.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "film_face_to_top_edge": 2.2,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 4.21
-     },
-     {
-      "pad": "T911 pad 3",
-      "layer": "B.Cu",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "board_edge_to_film_face_air": 0.75,
-       "underside_down_the_film_face_to_its_bottom": 5.0,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 7.01
-     },
-     {
-      "pad": "T911 pad 3",
-      "layer": "lateral to the film side edge",
-      "segments_mm": {
-       "pad_edge_to_board_edge": 1.01,
-       "air": 0.75,
-       "along_the_film": 13.76,
-       "film_thickness": 0.25
-      },
-      "creepage_mm": 15.77
-     }
-    ],
-    "film_thickness_mm": 0.25,
-    "gap_board_edge_to_plate_mm": 1.0,
-    "pad_edge_to_board_edge_mm": 1.01
-   },
-   "lines": [
-    "T921 pad 1   F.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + film_face_to_top_edge=2.200 + film_thickness=0.250 = 4.210",
-    "T921 pad 1   B.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + underside_down_the_film_face_to_its_bottom=5.000 + film_thickness=0.250 = 7.010",
-    "T921 pad 1   lateral to the film side edge  pad_edge_to_board_edge=1.010 + air=0.750 + along_the_film=16.060 + film_thickness=0.250 = 18.070",
-    "T921 pad 2   F.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + film_face_to_top_edge=2.200 + film_thickness=0.250 = 4.210",
-    "T921 pad 2   B.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + underside_down_the_film_face_to_its_bottom=5.000 + film_thickness=0.250 = 7.010",
-    "T921 pad 2   lateral to the film side edge  pad_edge_to_board_edge=1.010 + air=0.750 + along_the_film=18.600 + film_thickness=0.250 = 20.610",
-    "T921 pad 3   F.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + film_face_to_top_edge=2.200 + film_thickness=0.250 = 4.210",
-    "T921 pad 3   B.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + underside_down_the_film_face_to_its_bottom=5.000 + film_thickness=0.250 = 7.010",
-    "T921 pad 3   lateral to the film side edge  pad_edge_to_board_edge=1.010 + air=0.750 + along_the_film=21.140 + film_thickness=0.250 = 23.150",
-    "T911 pad 1   F.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + film_face_to_top_edge=2.200 + film_thickness=0.250 = 4.210",
-    "T911 pad 1   B.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + underside_down_the_film_face_to_its_bottom=5.000 + film_thickness=0.250 = 7.010",
-    "T911 pad 1   lateral to the film side edge  pad_edge_to_board_edge=1.010 + air=0.750 + along_the_film=18.840 + film_thickness=0.250 = 20.850",
-    "T911 pad 2   F.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + film_face_to_top_edge=2.200 + film_thickness=0.250 = 4.210",
-    "T911 pad 2   B.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + underside_down_the_film_face_to_its_bottom=5.000 + film_thickness=0.250 = 7.010",
-    "T911 pad 2   lateral to the film side edge  pad_edge_to_board_edge=1.010 + air=0.750 + along_the_film=16.300 + film_thickness=0.250 = 18.310",
-    "T911 pad 3   F.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + film_face_to_top_edge=2.200 + film_thickness=0.250 = 4.210",
-    "T911 pad 3   B.Cu                           pad_edge_to_board_edge=1.010 + board_edge_to_film_face_air=0.750 + underside_down_the_film_face_to_its_bottom=5.000 + film_thickness=0.250 = 7.010",
-    "T911 pad 3   lateral to the film side edge  pad_edge_to_board_edge=1.010 + air=0.750 + along_the_film=13.760 + film_thickness=0.250 = 15.770"
-   ]
-  },
-  {
-   "name": "c1.barrier_is_needed",
-   "criterion": "C1",
-   "kind": "check",
-   "passed": true,
-   "summary": "without the barrier the path is 1.01 + 1.00 = 2.01 mm, short of 2.6 mm",
-   "figures": {
-    "path_without_barrier_mm": 2.01,
-    "required_mm": 2.6,
-    "pad_edge_to_board_edge_mm": 1.01,
-    "gap_mm": 1.0
-   },
-   "lines": []
-  },
-  {
-   "name": "c1.creepage_all_mains_copper",
-   "criterion": "C1",
-   "kind": "check",
-   "passed": true,
-   "summary": "every other Mains-family copper item keeps at least 4.210 mm of creepage to the plate (nearest: pad 1 of T911 on F.Cu)",
-   "figures": {
-    "least_mm": 4.21,
-    "item": "pad 1 of T911 on F.Cu",
-    "required_mm": 2.6
+    "plate_lower_edge_z_mm": 6.0,
+    "figure_mm": 6.0,
+    "derived_least_mm": 5.55,
+    "lead_rear_face_to_plate_least_mm": 2.4,
+    "lead_metal_top_mm": 4.55,
+    "margin_to_derived_mm": 0.45
    },
    "lines": []
   },
@@ -414,10 +66,51 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "straight air from a pad edge to the plate plane 2.010 mm against the basis's 1.5 mm",
+   "summary": "straight air from every triac pad edge, both copper layers, to the plate solid 6.328 mm against the basis's 1.5 mm",
    "figures": {
-    "clearance_mm": 2.01,
-    "required_mm": 1.5
+    "clearance_mm": 6.3277,
+    "required_mm": 1.5,
+    "pads_mm": {
+     "T921 pad 1 F.Cu": 6.3277,
+     "T921 pad 1 B.Cu": 7.8613,
+     "T921 pad 2 F.Cu": 6.3277,
+     "T921 pad 2 B.Cu": 7.8613,
+     "T921 pad 3 F.Cu": 6.3277,
+     "T921 pad 3 B.Cu": 7.8613,
+     "T911 pad 1 F.Cu": 6.3277,
+     "T911 pad 1 B.Cu": 7.8613,
+     "T911 pad 2 F.Cu": 6.3277,
+     "T911 pad 2 B.Cu": 7.8613,
+     "T911 pad 3 F.Cu": 6.3277,
+     "T911 pad 3 B.Cu": 7.8613
+    }
+   },
+   "lines": []
+  },
+  {
+   "name": "c1.creepage_pad_to_plate",
+   "criterion": "C1",
+   "kind": "check",
+   "passed": true,
+   "summary": "creepage from every triac pad edge to the plate, taken as the straight line (no surface path is shorter) 6.328 mm against the basis's 2.6 mm, no barrier credited",
+   "figures": {
+    "creepage_mm": 6.3277,
+    "required_mm": 2.6,
+    "basis": "straight-line distance; a path over any surface is at least as long",
+    "pads_mm": {
+     "T921 pad 1 F.Cu": 6.3277,
+     "T921 pad 1 B.Cu": 7.8613,
+     "T921 pad 2 F.Cu": 6.3277,
+     "T921 pad 2 B.Cu": 7.8613,
+     "T921 pad 3 F.Cu": 6.3277,
+     "T921 pad 3 B.Cu": 7.8613,
+     "T911 pad 1 F.Cu": 6.3277,
+     "T911 pad 1 B.Cu": 7.8613,
+     "T911 pad 2 F.Cu": 6.3277,
+     "T911 pad 2 B.Cu": 7.8613,
+     "T911 pad 3 F.Cu": 6.3277,
+     "T911 pad 3 B.Cu": 7.8613
+    }
    },
    "lines": []
   },
@@ -426,38 +119,137 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "a bare lead stands 2.615 mm from the bare plate above the film notch, against 1.5 mm",
+   "summary": "a bare lead stands 3.450 mm from the plate solid, against 1.5 mm",
    "figures": {
-    "clearance_mm": 2.615,
+    "clearance_mm": 3.4497,
     "required_mm": 1.5,
-    "lead_rear_face_to_tab_face_mm": 2.615
+    "leads": {
+     "T921 leads": {
+      "to_plate_mm": 3.4497,
+      "to_wall_plane_mm": 7.615
+     },
+     "T911 leads": {
+      "to_plate_mm": 3.4497,
+      "to_wall_plane_mm": 7.615
+     }
+    }
    },
    "lines": []
   },
   {
-   "name": "c1.lift_fallback_not_used",
+   "name": "c1.creepage_bare_lead_to_plate",
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the plate's lower edge stands at z -7.02, not 6.0 mm above the component face: the case takes the film form",
+   "summary": "a bare lead's straight line to the plate, the shortest path over any surface, is 3.450 mm against 2.6 mm, no barrier credited",
    "figures": {
-    "plate_lower_edge_z_mm": -7.025,
-    "film_form": true
+    "creepage_mm": 3.4497,
+    "required_mm": 2.6,
+    "leads": {
+     "T921 leads": {
+      "to_plate_mm": 3.4497,
+      "to_wall_plane_mm": 7.615
+     },
+     "T911 leads": {
+      "to_plate_mm": 3.4497,
+      "to_wall_plane_mm": 7.615
+     }
+    }
    },
    "lines": []
   },
   {
-   "name": "c2.case_within_plate",
+   "name": "c1.creepage_all_mains_copper",
+   "criterion": "C1",
+   "kind": "check",
+   "passed": true,
+   "summary": "every Mains-family copper item (pad, track, via, pour) keeps at least 6.328 mm of straight line to the plate solid (nearest: pad 1 of T911 on F.Cu) against 2.6 mm",
+   "figures": {
+    "least_mm": 6.3277,
+    "item": "pad 1 of T911 on F.Cu",
+    "required_mm": 2.6,
+    "points_measured": 4046
+   },
+   "lines": []
+  },
+  {
+   "name": "c1.straight_to_wall_plane",
+   "criterion": "C1",
+   "kind": "check",
+   "passed": true,
+   "summary": "the least straight line from Mains copper or a bare lead to the machine wall's plane is 7.010 mm against 2.6 mm",
+   "figures": {
+    "copper_mm": 7.01,
+    "leads_mm": 7.615,
+    "required_mm": 2.6,
+    "wall_plane_v_mm": -6.0
+   },
+   "lines": []
+  },
+  {
+   "name": "c1.end_wall_stands_off",
+   "criterion": "C1",
+   "kind": "check",
+   "passed": true,
+   "summary": "the tray's printed end wall, z -6.60 to 5.80, stands 1.200 mm from the board and 2.210 mm from Mains copper, its top 0.20 mm under the plate's lower edge",
+   "figures": {
+    "to_board_mm": 1.2,
+    "to_mains_copper_mm": 2.21,
+    "front_face_v_mm": -1.2,
+    "front_behind_plate_plane_mm": 0.2,
+    "top_z_mm": 5.8,
+    "gap_under_plate_edge_mm": 0.2,
+    "back_face_v_mm": -5.5,
+    "back_in_front_of_wall_plane_mm": 0.5,
+    "material": "unfilled printed plastic, no creepage credit: at the extremes it stands within the signed clearance of the pads"
+   },
+   "lines": []
+  },
+  {
+   "name": "c1.plate_clear_of_end_wall",
+   "criterion": "C1",
+   "kind": "check",
+   "passed": true,
+   "summary": "the plate shares 0.000 mm3 with the tray: a plate whose lower edge stood lower, at the full height of the former drawing, would have to occupy the end wall's place",
+   "figures": {
+    "intersection_volume_mm3": 0.0,
+    "plate_lower_edge_z_mm": 6.0,
+    "former_lower_edge_z_mm": -7.025
+   },
+   "lines": []
+  },
+  {
+   "name": "c1.no_loose_part_or_coating",
+   "criterion": "C1",
+   "kind": "check",
+   "passed": true,
+   "summary": "the model's parts are lid_single, lid_swap, lid_two, plate, tray, tray_swap: no insulating film, coating, shim or other loose part, and params.yaml holds no figure for one",
+   "figures": {
+    "parts": [
+     "lid_single",
+     "lid_swap",
+     "lid_two",
+     "plate",
+     "tray",
+     "tray_swap"
+    ],
+    "loose_parts": [],
+    "params_sections_for_one": []
+   },
+   "lines": []
+  },
+  {
+   "name": "c2.case_within_former_outline",
    "criterion": "C2",
    "kind": "check",
    "passed": true,
-   "summary": "the case lies inside the plate outline with 0.425 mm least margin (needs 0.25); the board, blades and parts lie inside it too",
+   "summary": "the case lies inside the plate's former 80.0 x 30.0 mm outline with 0.425 mm least margin (needs 0.25); the board, blades and parts lie inside it too",
    "figures": {
     "margins_mm": {
-     "left": 10.050000578572273,
-     "right": 10.050500578572276,
-     "bottom": 0.42499999999999005,
-     "top": 0.42499999999998295
+     "left": 10.050000574011218,
+     "right": 10.050500574011217,
+     "bottom": 0.425,
+     "top": 0.425
     },
     "required_mm": 0.25,
     "case_extent_mm": {
@@ -465,13 +257,19 @@
      "u1": 53.6995,
      "z0": -6.6,
      "z1": 22.55,
-     "v0": -0.75,
+     "v0": -5.5,
      "v1": 83.9992
+    },
+    "former_outline_mm": {
+     "u0": -16.25,
+     "u1": 63.75,
+     "z0": -7.025,
+     "z1": 22.975
     },
     "plate_extent_mm": {
      "u0": -16.25,
      "u1": 63.75,
-     "z0": -7.025,
+     "z0": 6.0,
      "z1": 22.975
     },
     "parts_inside_plate_outline": true
@@ -483,7 +281,7 @@
    "criterion": "C2",
    "kind": "check",
    "passed": true,
-   "summary": "the opening in the plastic wall is the plate outline plus 1.5 mm per side: u -17.75 to 65.25, z -8.52 to 24.48; no larger opening is needed",
+   "summary": "the opening in the plastic wall is the plate's former outline plus 1.5 mm per side: u -17.75 to 65.25, z -8.52 to 24.48; no larger opening is needed",
    "figures": {
     "opening_mm": {
      "u0": -17.75,
@@ -495,6 +293,23 @@
     "opening_width_mm": 83.0,
     "opening_height_mm": 33.0,
     "cable_exit_u_mm": 50.0
+   },
+   "lines": []
+  },
+  {
+   "name": "c2.only_plate_touches_wall",
+   "criterion": "C2",
+   "kind": "check",
+   "passed": true,
+   "summary": "no printed part comes within 0.5 mm of the machine wall's plane (v -6.000): the nearest, the tray's end wall, stands 0.500 mm in front of it, so only the plate touches the wall",
+   "figures": {
+    "wall_plane_v_mm": -6.0,
+    "required_mm": 0.5,
+    "nearest_mm": {
+     "tray": 0.5,
+     "lid_single": 5.4,
+     "lid_two": 5.4
+    }
    },
    "lines": []
   },
@@ -519,18 +334,110 @@
    "criterion": "C3",
    "kind": "check",
    "passed": true,
-   "summary": "each wall bolt and its washer stands in the plate's end zone, outside the case, so the plate, case and board leave the wall as one unit",
+   "summary": "each of the 2 wall bolts and its 9 mm washer stands in the plate's end zone, outside the case and inside the plate's height, so the plate, case and board leave the wall as one unit",
    "figures": {
     "bolts": [
      {
       "bolt_u_mm": -11.25,
-      "washer_clear_of_case_mm": 0.55
+      "bolt_z_mm": 14.4875,
+      "washer_clear_of_case_mm": 0.55,
+      "washer_inside_plate_in_z_mm": 3.9875
      },
      {
       "bolt_u_mm": 58.75,
-      "washer_clear_of_case_mm": 0.5505
+      "bolt_z_mm": 14.4875,
+      "washer_clear_of_case_mm": 0.5505,
+      "washer_inside_plate_in_z_mm": 3.9875
      }
     ]
+   },
+   "lines": []
+  },
+  {
+   "name": "c3.tray_screws_fit_plate",
+   "criterion": "C3",
+   "kind": "check",
+   "passed": true,
+   "summary": "each of the 4 tray screws' countersunk heads stands at least 0.500 mm inside the plate's edges (needs 0.50) and its pilot and head at least 0.485 mm from the lid toe's pocket (needs 0.40), the pilot's top under the pilaster's top by the minimum wall",
+   "figures": {
+    "screws": [
+     {
+      "screw": "u -3.25 z 9.5",
+      "edge_distances_mm": {
+       "lower": 0.5,
+       "upper": 10.475,
+       "left": 10.0,
+       "right": 64.0
+      },
+      "least_edge_mm": 0.5,
+      "to_pocket_mm": {
+       "pilot": 4.985,
+       "head": 6.1994
+      },
+      "pilot_top_z_mm": 11.515,
+      "pilaster_top_z_mm": 20.5,
+      "pass": true
+     },
+     {
+      "screw": "u -3.25 z 14",
+      "edge_distances_mm": {
+       "lower": 5.0,
+       "upper": 5.975,
+       "left": 10.0,
+       "right": 64.0
+      },
+      "least_edge_mm": 5.0,
+      "to_pocket_mm": {
+       "pilot": 0.485,
+       "head": 4.1027
+      },
+      "pilot_top_z_mm": 16.015,
+      "pilaster_top_z_mm": 20.5,
+      "pass": true
+     },
+     {
+      "screw": "u 50.75 z 9.5",
+      "edge_distances_mm": {
+       "lower": 0.5,
+       "upper": 10.475,
+       "left": 64.0,
+       "right": 10.0
+      },
+      "least_edge_mm": 0.5,
+      "to_pocket_mm": {
+       "pilot": 4.985,
+       "head": 6.1994
+      },
+      "pilot_top_z_mm": 11.515,
+      "pilaster_top_z_mm": 20.5,
+      "pass": true
+     },
+     {
+      "screw": "u 50.75 z 14",
+      "edge_distances_mm": {
+       "lower": 5.0,
+       "upper": 5.975,
+       "left": 64.0,
+       "right": 10.0
+      },
+      "least_edge_mm": 5.0,
+      "to_pocket_mm": {
+       "pilot": 0.485,
+       "head": 4.1027
+      },
+      "pilot_top_z_mm": 16.015,
+      "pilaster_top_z_mm": 20.5,
+      "pass": true
+     }
+    ],
+    "edge_distance_required_mm": 0.5,
+    "pocket_distance_required_mm": 0.4,
+    "plate_edges_mm": {
+     "z0": 6.0,
+     "z1": 22.975,
+     "u0": -16.25,
+     "u1": 63.75
+    }
    },
    "lines": []
   },
@@ -539,7 +446,7 @@
    "criterion": "C4",
    "kind": "check",
    "passed": true,
-   "summary": "the lid, tilted 3 deg about its plate-end toe line and drawn out, clears the tray, film, plate, board, parts, blades and the wall opening by at least 0.178 mm (worst: tray); fitted clearance 0.187 mm; installed, the far end drops 4.33 mm and the toes are free after a 7.8 mm slide",
+   "summary": "the lid, tilted 3 deg about its plate-end toe line and drawn out, clears the tray, plate, board, parts, blades and the wall opening by at least 0.178 mm (worst: tray); fitted clearance 0.187 mm; installed, the far end drops 4.34 mm and the toes are free after a 7.8 mm slide",
    "figures": {
     "minimum_clearance_mm": 0.1781,
     "floor_mm": 0.05,
@@ -548,8 +455,7 @@
     "fitted_minimum_mm": 0.1874,
     "fitted_clearances_mm": {
      "tray": 0.1874,
-     "film": 9.1281,
-     "plate": 0.65,
+     "plate": 0.4,
      "wall opening frame": 1.925,
      "board": 16.9331,
      "T921_body": 1.65,
@@ -572,7 +478,7 @@
     "poses": 41,
     "tilt_deg": 3.0,
     "tilt_axis": {
-     "v_mm": -0.35,
+     "v_mm": -0.6,
      "z_mm": 20.95
     },
     "tolerance": "exact B-rep distance",
@@ -586,10 +492,10 @@
      ],
      "lid_comes_off": "downward: the lid is on the underside",
      "tilt_deg": 3.0,
-     "drop_at_far_end_during_tilt_mm": 4.3276,
+     "drop_at_far_end_during_tilt_mm": 4.3407,
      "slide_to_free_the_toes_mm": 7.8,
-     "lowest_point_drop_when_toes_free_mm": 4.7358,
-     "clear_space_needed_below_the_case_mm": 4.7358,
+     "lowest_point_drop_when_toes_free_mm": 4.7489,
+     "clear_space_needed_below_the_case_mm": 4.7489,
      "slide_checked_to_mm": 90.0,
      "sequence": "tilt the far end down 3 deg about the plate-end toe line, draw the lid out away from the wall 7.8 mm to free the toes, then lower it away"
     },
@@ -598,7 +504,7 @@
    "lines": [
     "tilt 0.0 deg, slide 0              least clearance 0.187",
     "tilt 0.6 deg, slide 0              least clearance 0.183",
-    "tilt 1.2 deg, slide 0              least clearance 0.187",
+    "tilt 1.2 deg, slide 0              least clearance 0.189",
     "tilt 1.8 deg, slide 0              least clearance 0.194",
     "tilt 2.4 deg, slide 0              least clearance 0.196",
     "tilt 3.0 deg, slide 0              least clearance 0.199",
@@ -614,10 +520,10 @@
     "slide 3.0 deg, slide 60            least clearance 0.300",
     "slide 3.0 deg, slide 66            least clearance 0.336",
     "slide 3.0 deg, slide 72            least clearance 0.714",
-    "slide 3.0 deg, slide 78            least clearance 2.280",
+    "slide 3.0 deg, slide 78            least clearance 2.107",
     "slide 3.0 deg, slide 84            least clearance 5.596",
-    "slide 3.0 deg, slide 90            least clearance 8.092",
-    "installed frame (gravity along +z): the lid is on the underside and comes off downward; its far end drops 4.33 mm during the 3 deg tilt, so 4.74 mm of clear space is needed below the case; the toes are free after a slide of 7.8 mm (the sweep is checked to 90 mm)"
+    "slide 3.0 deg, slide 90            least clearance 7.924",
+    "installed frame (gravity along +z): the lid is on the underside and comes off downward; its far end drops 4.34 mm during the 3 deg tilt, so 4.75 mm of clear space is needed below the case; the toes are free after a slide of 7.8 mm (the sweep is checked to 90 mm)"
    ]
   },
   {
@@ -718,7 +624,6 @@
       "nearest_gap_mm": 0.3878,
       "gaps_mm": {
        "tray": 0.3878,
-       "film": 8.6062,
        "plate": 3.4564,
        "board": 13.7627,
        "T911_body": 16.65,
@@ -744,7 +649,6 @@
       "nearest_gap_mm": 0.3878,
       "gaps_mm": {
        "tray": 0.3878,
-       "film": 8.6062,
        "plate": 3.4564,
        "board": 13.7627,
        "T921_body": 16.65,
@@ -1036,7 +940,7 @@
    "criterion": "C9",
    "kind": "check",
    "passed": true,
-   "summary": "the backing rib touches the board under each blade; under 75.6 N the tray section (I = 21305 mm^4, span 69.8 mm) deflects 0.201 mm at the blades and 0.0056 mm at the triac end, against 0.05 mm allowed",
+   "summary": "the backing rib touches the board under each blade; under 75.6 N the tray section (I = 21301 mm^4, span 70.0 mm) deflects 0.203 mm at the blades and 0.0059 mm at the triac end, against 0.05 mm allowed",
    "figures": {
     "contact": [
      {
@@ -1082,13 +986,13 @@
     "insertion_force_N": 75.6,
     "push_on_direction": "-z (into the board)",
     "section_at_v_mm": 56.0,
-    "section_area_mm2": 342.6094,
-    "second_moment_mm4": 21305.4946,
-    "centroid_z_mm": 3.4052,
+    "section_area_mm2": 342.543,
+    "second_moment_mm4": 21301.3491,
+    "centroid_z_mm": 3.4062,
     "modulus_MPa": 2000.0,
-    "span_mm": 69.79,
-    "deflection_at_blades_mm": 0.201,
-    "deflection_at_triac_end_mm": 0.0056,
+    "span_mm": 70.04,
+    "deflection_at_blades_mm": 0.2032,
+    "deflection_at_triac_end_mm": 0.0059,
     "allowed_mm": 0.05,
     "basis": "a cantilever from the plate end, uniform section as at v 56 (conservative: the pilasters stiffen the root), tip load",
     "rib_section_mm": [
@@ -1103,11 +1007,52 @@
    "lines": []
   },
   {
+   "name": "c9.tray_root_tension_and_triac_end_motion",
+   "criterion": "C9",
+   "kind": "check",
+   "passed": true,
+   "summary": "at the tray screws' stance (z 9.5, 14, pivot at the plate's lower edge z 6.0) the 75.6 N push-on load pulls the top screw with 278 N against 330 N of printed pull-out (5.0 MPa over 7.0 mm), and the triac end moves 0.0095 mm against 0.05 mm allowed",
+   "figures": {
+    "pivot_z_mm": 6.0,
+    "screw_z_mm": [
+     9.5,
+     14.0
+    ],
+    "levers_mm": [
+     3.5,
+     8.0
+    ],
+    "screws_per_pilaster": 2,
+    "pilasters": 2,
+    "moment_Nmm": 5295.0241,
+    "tension_per_screw_N": {
+     "z 9.5": 121.5251,
+     "z 14": 277.7718
+    },
+    "tension_max_N": 277.7718,
+    "engaged_length_mm": 7.0,
+    "pullout_allowance_MPa": 5.0,
+    "pullout_capacity_N": 329.8672,
+    "utilisation": 0.8421,
+    "pilot_shear_displacement_mm": 0.0028,
+    "root_rotation_rad": 0.0004,
+    "root_motion_at_triac_end_mm": 0.0036,
+    "tray_flexure_at_triac_end_mm": 0.0059,
+    "triac_end_motion_mm": 0.0095,
+    "span_mm": 70.04,
+    "x_mm": 10.0,
+    "insertion_force_N": 75.6,
+    "allowed_motion_mm": 0.05,
+    "basis": "moment of the push-on force about the plate's lower edge shared among the tray screws in proportion to their height over it; pull-out as shear on the major-diameter cylinder"
+   },
+   "lines": []
+  },
+  {
    "name": "c7.screws_clear_of_mains_copper",
    "criterion": "C7",
    "kind": "check",
    "passed": true,
-   "summary": "every screw keeps its figure from Mains copper on both layers; the least margin is 0.45 mm",
+   "summary": "every screw keeps its figure from Mains copper on both layers; the least margin is 3.07 mm",
    "figures": {
     "screws": [
      {
@@ -1115,7 +1060,7 @@
       "kind": "tab",
       "centre_uvz_mm": [
        12.6,
-       -1.14,
+       -0.98,
        16.5
       ],
       "distance_mm": 13.7,
@@ -1133,7 +1078,7 @@
       "kind": "tab",
       "centre_uvz_mm": [
        37.2,
-       -1.14,
+       -0.98,
        16.5
       ],
       "distance_mm": 13.7,
@@ -1165,73 +1110,73 @@
       "pass": true
      },
      {
-      "screw": "tray screw u-3.25 z12",
+      "screw": "tray screw u-3.25 z9.5",
       "kind": "tray_plate",
       "centre_uvz_mm": [
        -3.25,
        0.0,
-       12.0
+       9.5
       ],
-      "distance_mm": 11.4059,
+      "distance_mm": 9.1213,
       "layer": "F.Cu",
       "nearest_item": "zone RET_F0 fill",
       "per_layer_mm": {
-       "F.Cu": 11.4059,
-       "B.Cu": 12.9056
+       "F.Cu": 9.1213,
+       "B.Cu": 10.5736
       },
       "required_mm": 3.0,
       "pass": true
      },
      {
-      "screw": "tray screw u-3.25 z-3",
+      "screw": "tray screw u-3.25 z14",
       "kind": "tray_plate",
       "centre_uvz_mm": [
        -3.25,
        0.0,
-       -3.0
+       14.0
       ],
-      "distance_mm": 3.452,
-      "layer": "B.Cu",
-      "nearest_item": "zone RET_B0 fill",
+      "distance_mm": 13.2839,
+      "layer": "F.Cu",
+      "nearest_item": "zone RET_F0 fill",
       "per_layer_mm": {
-       "F.Cu": 4.1181,
-       "B.Cu": 3.452
+       "F.Cu": 13.2839,
+       "B.Cu": 14.8071
       },
       "required_mm": 3.0,
       "pass": true
      },
      {
-      "screw": "tray screw u50.75 z12",
+      "screw": "tray screw u50.75 z9.5",
       "kind": "tray_plate",
       "centre_uvz_mm": [
        50.75,
        0.0,
-       12.0
+       9.5
       ],
-      "distance_mm": 12.8532,
+      "distance_mm": 10.8396,
       "layer": "F.Cu",
       "nearest_item": "pad 2 of R912",
       "per_layer_mm": {
-       "F.Cu": 12.8532,
-       "B.Cu": 14.6839
+       "F.Cu": 10.8396,
+       "B.Cu": 12.6481
       },
       "required_mm": 3.0,
       "pass": true
      },
      {
-      "screw": "tray screw u50.75 z-3",
+      "screw": "tray screw u50.75 z14",
       "kind": "tray_plate",
       "centre_uvz_mm": [
        50.75,
        0.0,
-       -3.0
+       14.0
       ],
-      "distance_mm": 6.9271,
+      "distance_mm": 14.5629,
       "layer": "F.Cu",
       "nearest_item": "pad 2 of R912",
       "per_layer_mm": {
-       "F.Cu": 6.9271,
-       "B.Cu": 7.3837
+       "F.Cu": 14.5629,
+       "B.Cu": 16.3975
       },
       "required_mm": 3.0,
       "pass": true
@@ -1261,13 +1206,13 @@
     "metal_model": "each screw is swept as spheres of its shaft or head radius along its axis"
    },
    "lines": [
-    "tab screw T921             centre (  12.60,   -1.14,  16.50) nearest pad 2 of T921 on F.Cu at 13.70 mm (needs 1.5)",
-    "tab screw T911             centre (  37.20,   -1.14,  16.50) nearest pad 2 of T911 on F.Cu at 13.70 mm (needs 1.5)",
+    "tab screw T921             centre (  12.60,   -0.98,  16.50) nearest pad 2 of T921 on F.Cu at 13.70 mm (needs 1.5)",
+    "tab screw T911             centre (  37.20,   -0.98,  16.50) nearest pad 2 of T911 on F.Cu at 13.70 mm (needs 1.5)",
     "H1 screw                   centre (  41.50,   71.50,  -1.30) nearest track 6 on /Steam heater switch/OUT_S on F.Cu at 11.46 mm (needs 2.6)",
-    "tray screw u-3.25 z12      centre (  -3.25,    0.00,  12.00) nearest zone RET_F0 fill on F.Cu at 11.41 mm (needs 3.0)",
-    "tray screw u-3.25 z-3      centre (  -3.25,    0.00,  -3.00) nearest zone RET_B0 fill on B.Cu at 3.45 mm (needs 3.0)",
-    "tray screw u50.75 z12      centre (  50.75,    0.00,  12.00) nearest pad 2 of R912 on F.Cu at 12.85 mm (needs 3.0)",
-    "tray screw u50.75 z-3      centre (  50.75,    0.00,  -3.00) nearest pad 2 of R912 on F.Cu at 6.93 mm (needs 3.0)",
+    "tray screw u-3.25 z9.5     centre (  -3.25,    0.00,   9.50) nearest zone RET_F0 fill on F.Cu at 9.12 mm (needs 3.0)",
+    "tray screw u-3.25 z14      centre (  -3.25,    0.00,  14.00) nearest zone RET_F0 fill on F.Cu at 13.28 mm (needs 3.0)",
+    "tray screw u50.75 z9.5     centre (  50.75,    0.00,   9.50) nearest pad 2 of R912 on F.Cu at 10.84 mm (needs 3.0)",
+    "tray screw u50.75 z14      centre (  50.75,    0.00,  14.00) nearest pad 2 of R912 on F.Cu at 14.56 mm (needs 3.0)",
     "lid screw                  centre (  23.75,   80.50,  17.55) nearest zone OUT_C_F1 fill on F.Cu at 13.07 mm (needs 10.0)"
    ]
   },
@@ -1297,7 +1242,7 @@
    "criterion": "C8",
    "kind": "check",
    "passed": true,
-   "summary": "no solid of the tray, lid, rib or film comes within 2.0 mm of either slot's open area, mouth included; least 3.000 mm",
+   "summary": "no solid of the tray, lid or rib comes within 2.0 mm of either slot's open area, mouth included; least 3.000 mm",
    "figures": {
     "required_mm": 2.0,
     "slots": [
@@ -1310,8 +1255,7 @@
       "mouth_u_mm": 45.0,
       "gaps_mm": {
        "tray": 3.0,
-       "lid_single": 17.8554,
-       "film": 29.19
+       "lid_single": 17.8554
       },
       "least_mm": 3.0
      },
@@ -1324,8 +1268,7 @@
       "mouth_u_mm": 45.0,
       "gaps_mm": {
        "tray": 3.0,
-       "lid_single": 17.5208,
-       "film": 45.21
+       "lid_single": 17.5208
       },
       "least_mm": 3.0
      }
@@ -1341,7 +1284,7 @@
    "passed": true,
    "summary": "the two lids are one geometry: the two-colour form differs only in which layers of each part print in the second colour, so no inlay part exists and the lid and the tray are one geometry in both forms; the swap layers are the parts lid_swap and tray_swap, each its part cut to its band",
    "figures": {
-    "lid_volume_mm3": 10372.2116,
+    "lid_volume_mm3": 10398.6068,
     "geometry_identical": true,
     "swap_parts": {
      "lid": {
@@ -1353,9 +1296,9 @@
        21.55,
        22.15
       ],
-      "swap_volume_mm3": 2255.531,
+      "swap_volume_mm3": 2262.8473,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 10372.2116
+      "part_volume_mm3": 10398.6068
      },
      "tray": {
       "band_z_mm": [
@@ -1366,15 +1309,14 @@
        -6.2,
        -5.6
       ],
-      "swap_volume_mm3": 2858.3856,
+      "swap_volume_mm3": 3027.73,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 34381.3584
+      "part_volume_mm3": 37677.9825
      }
     },
     "inlay_part_present": false,
     "shared": [
      "tray",
-     "film",
      "plate",
      "lid outline, lip, toes, vents, bays and screw seat"
     ]
@@ -1399,10 +1341,10 @@
     "clear_of_screw_head_mm": 30.7,
     "clearances": {
      "inside_flat_top": true,
-     "edge_of_flat_top_mm": 11.95,
+     "edge_of_flat_top_mm": 12.2,
      "lid_screw_head_mm": 30.7,
      "aperture_mm": 14.7964,
-     "vent_mm": 4.0634
+     "vent_mm": 4.0789
     },
     "required_clearance_mm": 1.0
    },
@@ -1417,8 +1359,8 @@
    "figures": {
     "lid_height_mm": 29.0,
     "tray_height_mm": 48.0,
-    "tray_logo_clear_of_chamfer_mm": 10.6881,
-    "tray_logo_off_face_centre_mm": 4.9,
+    "tray_logo_clear_of_chamfer_mm": 10.9131,
+    "tray_logo_off_face_centre_mm": 4.8,
     "tray_face_shorter_dimension_mm": 56.6995,
     "tray_expected_height_mm": 48.0,
     "samples": {
@@ -1563,7 +1505,7 @@
       "part": "tray",
       "size_mm": [
        59.8995,
-       84.7492,
+       89.4992,
        27.1
       ],
       "orientation": "outer top face down on the bed (floor down, as modelled)",
@@ -1574,7 +1516,7 @@
       "part": "lid_single",
       "size_mm": [
        59.8995,
-       84.3492,
+       84.5992,
        5.85
       ],
       "orientation": "face down on the bed (turned 180 degrees about u)",
@@ -1585,7 +1527,7 @@
       "part": "lid_two",
       "size_mm": [
        59.8995,
-       84.3492,
+       84.5992,
        5.85
       ],
       "orientation": "face down on the bed (turned 180 degrees about u)",
@@ -1595,9 +1537,9 @@
     ]
    },
    "lines": [
-    "tray          59.9 x   84.7 x   27.1 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 30 bridged; critical faces support-free True",
-    "lid_single    59.9 x   84.3 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True",
-    "lid_two       59.9 x   84.3 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True"
+    "tray          59.9 x   89.5 x   27.1 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 30 bridged; critical faces support-free True",
+    "lid_single    59.9 x   84.6 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True",
+    "lid_two       59.9 x   84.6 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True"
    ]
   },
   {
@@ -1605,7 +1547,7 @@
    "criterion": "C14",
    "kind": "check",
    "passed": true,
-   "summary": "no face flatter than 45 degrees is left unsupported on any part, and none on the barrier end faces, screw seats, slot-rule faces or lid-fit faces",
+   "summary": "no face flatter than 45 degrees is left unsupported on any part, and none on the plate-end faces, screw seats, slot-rule faces or lid-fit faces",
    "figures": {
     "limit_deg": 45.0,
     "bridge_limit_mm": 3.5,
@@ -1616,7 +1558,7 @@
       "installed_orientation": "on top, its outer top face up, holding the board's bare back above the parts",
       "size_mm": [
        59.8995,
-       84.7492,
+       89.4992,
        27.1
       ],
       "fits_bed": true,
@@ -1624,42 +1566,42 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 11.0525,
+        "area_mm2": 11.0523,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.1627,
-         68.75,
+         0.1628,
+         73.5,
          6.3
         ]
        },
        {
-        "area_mm2": 11.1457,
+        "area_mm2": 11.1451,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.116,
-         64.55,
+         0.1164,
+         69.3,
          6.3
         ]
        },
        {
-        "area_mm2": 11.332,
+        "area_mm2": 11.3313,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.0292,
-         51.95,
+         0.0296,
+         56.7,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3712,
+        "area_mm2": 11.3705,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.0115,
-         47.75,
+         0.0116,
+         52.5,
          6.3
         ]
        },
@@ -1669,207 +1611,207 @@
         "z_mm": 6.3,
         "lo": [
          0.0,
-         39.35,
+         44.1,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3861,
+        "area_mm2": 11.3866,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.0054,
-         35.15,
+         0.0051,
+         39.9,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3684,
+        "area_mm2": 11.3697,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.012,
-         30.95,
+         0.0118,
+         35.7,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3287,
+        "area_mm2": 11.3303,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.0309,
-         26.75,
+         0.0301,
+         31.5,
          6.3
         ]
        },
        {
-        "area_mm2": 11.2815,
+        "area_mm2": 11.2845,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.0513,
-         22.55,
+         0.05,
+         27.3,
          6.3
         ]
        },
        {
-        "area_mm2": 11.2149,
+        "area_mm2": 11.2181,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         0.0846,
-         18.35,
+         0.083,
+         23.1,
          6.3
         ]
        },
        {
-        "area_mm2": 10.9997,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         54.2,
-         70.85,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.1012,
+        "area_mm2": 10.9996,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         66.65,
+         75.6,
          6.3
         ]
        },
        {
-        "area_mm2": 11.1881,
+        "area_mm2": 11.1008,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         62.45,
+         71.4,
          6.3
         ]
        },
        {
-        "area_mm2": 11.2585,
+        "area_mm2": 11.1875,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         58.25,
+         67.2,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3145,
+        "area_mm2": 11.2578,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         54.05,
+         63.0,
          6.3
         ]
        },
        {
-        "area_mm2": 11.356,
+        "area_mm2": 11.3137,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         49.85,
+         58.8,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3788,
+        "area_mm2": 11.3552,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         45.65,
+         54.6,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3968,
+        "area_mm2": 11.3784,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         41.45,
+         50.4,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3917,
+        "area_mm2": 11.3965,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         37.25,
+         46.2,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3816,
+        "area_mm2": 11.3919,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         33.05,
+         42.0,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3481,
+        "area_mm2": 11.3824,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         28.85,
+         37.8,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3093,
+        "area_mm2": 11.3495,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         24.65,
+         33.6,
          6.3
         ]
        },
        {
-        "area_mm2": 11.2482,
+        "area_mm2": 11.3117,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         20.45,
+         29.4,
          6.3
         ]
        },
        {
-        "area_mm2": 11.1814,
+        "area_mm2": 11.2512,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         16.25,
+         25.2,
          6.3
         ]
        },
        {
-        "area_mm2": 11.0965,
+        "area_mm2": 11.1856,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
          54.2,
-         12.05,
+         21.0,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.1017,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         54.2,
+         16.8,
          6.3
         ]
        },
@@ -1879,7 +1821,7 @@
         "z_mm": 0.4,
         "lo": [
          15.499,
-         12.2927,
+         17.0176,
          0.4
         ]
        },
@@ -1889,7 +1831,7 @@
         "z_mm": 0.4,
         "lo": [
          18.2407,
-         46.3838,
+         51.1087,
          0.4
         ]
        },
@@ -1899,7 +1841,7 @@
         "z_mm": 0.4,
         "lo": [
          20.7517,
-         41.9801,
+         46.7051,
          0.4
         ]
        },
@@ -1909,7 +1851,7 @@
         "z_mm": 0.4,
         "lo": [
          24.1863,
-         43.8776,
+         48.6026,
          0.4
         ]
        },
@@ -1919,13 +1861,13 @@
         "z_mm": 0.4,
         "lo": [
          21.1418,
-         45.7104,
+         50.4354,
          0.4
         ]
        }
       ],
       "critical_faces": {
-       "creepage barrier end faces": 1,
+       "plate-end faces": 1,
        "screw seats": 6,
        "slot-rule faces": 1,
        "lid-fit faces": 3
@@ -1933,91 +1875,91 @@
       "critical_face_overhangs": [
        {
         "face": "slot-rule faces",
-        "area_mm2": 10.9997,
+        "area_mm2": 10.9996,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.1012,
+        "area_mm2": 11.1008,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.1881,
+        "area_mm2": 11.1875,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.2585,
+        "area_mm2": 11.2578,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3145,
+        "area_mm2": 11.3137,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.356,
+        "area_mm2": 11.3552,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3788,
+        "area_mm2": 11.3784,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3968,
+        "area_mm2": 11.3965,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3917,
+        "area_mm2": 11.3919,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3816,
+        "area_mm2": 11.3824,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3481,
+        "area_mm2": 11.3495,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3093,
+        "area_mm2": 11.3117,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.2482,
+        "area_mm2": 11.2512,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.1814,
+        "area_mm2": 11.1856,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.0965,
+        "area_mm2": 11.1017,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        }
@@ -2030,7 +1972,7 @@
       "installed_orientation": "on the underside, its face down, coming off downward",
       "size_mm": [
        59.8995,
-       84.3492,
+       84.5992,
        5.85
       ],
       "fits_bed": true,
@@ -2038,41 +1980,41 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 88.3962,
+        "area_mm2": 89.207,
         "span_mm": 1.5627,
         "z_mm": 0.6,
         "lo": [
-         5.506,
+         5.505,
          24.7245,
          0.6
         ]
        },
        {
-        "area_mm2": 45.2299,
-        "span_mm": 1.5599,
+        "area_mm2": 45.7667,
+        "span_mm": 1.5602,
         "z_mm": 0.6,
         "lo": [
-         8.078,
+         8.0772,
          24.7244,
          0.6
         ]
        },
        {
-        "area_mm2": 46.2826,
-        "span_mm": 1.5553,
+        "area_mm2": 47.0364,
+        "span_mm": 1.5567,
         "z_mm": 0.6,
         "lo": [
-         10.6259,
+         10.6249,
          24.726,
          0.6
         ]
        },
        {
-        "area_mm2": 95.4584,
-        "span_mm": 1.563,
+        "area_mm2": 96.1058,
+        "span_mm": 1.5623,
         "z_mm": 0.6,
         "lo": [
-         13.1576,
+         13.1574,
          24.7264,
          0.6
         ]
@@ -2088,28 +2030,28 @@
         ]
        },
        {
-        "area_mm2": 95.469,
-        "span_mm": 1.5625,
+        "area_mm2": 96.099,
+        "span_mm": 1.5614,
         "z_mm": 0.6,
         "lo": [
-         36.3342,
+         36.3352,
          24.7264,
          0.6
         ]
        },
        {
-        "area_mm2": 46.2951,
-        "span_mm": 1.5591,
+        "area_mm2": 47.0786,
+        "span_mm": 1.5625,
         "z_mm": 0.6,
         "lo": [
-         41.1071,
+         41.1068,
          24.726,
          0.6
         ]
        },
        {
-        "area_mm2": 45.2384,
-        "span_mm": 1.5615,
+        "area_mm2": 45.7694,
+        "span_mm": 1.5599,
         "z_mm": 0.6,
         "lo": [
          45.8797,
@@ -2118,8 +2060,8 @@
         ]
        },
        {
-        "area_mm2": 88.3963,
-        "span_mm": 1.5632,
+        "area_mm2": 89.1784,
+        "span_mm": 1.563,
         "z_mm": 0.6,
         "lo": [
          50.6526,
@@ -2241,7 +2183,7 @@
       "installed_orientation": "on the underside, its face down, coming off downward",
       "size_mm": [
        59.8995,
-       84.3492,
+       84.5992,
        5.85
       ],
       "fits_bed": true,
@@ -2249,41 +2191,41 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 88.3962,
+        "area_mm2": 89.207,
         "span_mm": 1.5627,
         "z_mm": 0.6,
         "lo": [
-         5.506,
+         5.505,
          24.7245,
          0.6
         ]
        },
        {
-        "area_mm2": 45.2299,
-        "span_mm": 1.5599,
+        "area_mm2": 45.7667,
+        "span_mm": 1.5602,
         "z_mm": 0.6,
         "lo": [
-         8.078,
+         8.0772,
          24.7244,
          0.6
         ]
        },
        {
-        "area_mm2": 46.2826,
-        "span_mm": 1.5553,
+        "area_mm2": 47.0364,
+        "span_mm": 1.5567,
         "z_mm": 0.6,
         "lo": [
-         10.6259,
+         10.6249,
          24.726,
          0.6
         ]
        },
        {
-        "area_mm2": 95.4584,
-        "span_mm": 1.563,
+        "area_mm2": 96.1058,
+        "span_mm": 1.5623,
         "z_mm": 0.6,
         "lo": [
-         13.1576,
+         13.1574,
          24.7264,
          0.6
         ]
@@ -2299,28 +2241,28 @@
         ]
        },
        {
-        "area_mm2": 95.469,
-        "span_mm": 1.5625,
+        "area_mm2": 96.099,
+        "span_mm": 1.5614,
         "z_mm": 0.6,
         "lo": [
-         36.3342,
+         36.3352,
          24.7264,
          0.6
         ]
        },
        {
-        "area_mm2": 46.2951,
-        "span_mm": 1.5591,
+        "area_mm2": 47.0786,
+        "span_mm": 1.5625,
         "z_mm": 0.6,
         "lo": [
-         41.1071,
+         41.1068,
          24.726,
          0.6
         ]
        },
        {
-        "area_mm2": 45.2384,
-        "span_mm": 1.5615,
+        "area_mm2": 45.7694,
+        "span_mm": 1.5599,
         "z_mm": 0.6,
         "lo": [
          45.8797,
@@ -2329,8 +2271,8 @@
         ]
        },
        {
-        "area_mm2": 88.3963,
-        "span_mm": 1.5632,
+        "area_mm2": 89.1784,
+        "span_mm": 1.563,
         "z_mm": 0.6,
         "lo": [
          50.6526,
@@ -2464,7 +2406,7 @@
       "opening": "vent 1",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.1986,
+      "larger_dimension_mm": 10.2021,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2475,7 +2417,7 @@
       "opening": "vent 2",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7123,
+      "larger_dimension_mm": 12.7087,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2486,7 +2428,7 @@
       "opening": "vent 3",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8926,
+      "larger_dimension_mm": 12.8868,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2497,7 +2439,7 @@
       "opening": "vent 4",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.225,
+      "larger_dimension_mm": 10.4604,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2508,7 +2450,7 @@
       "opening": "vent 5",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5202,
+      "larger_dimension_mm": 10.5817,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2519,7 +2461,7 @@
       "opening": "vent 6",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.881,
+      "larger_dimension_mm": 12.6792,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2530,7 +2472,7 @@
       "opening": "vent 7",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7522,
+      "larger_dimension_mm": 12.7979,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2541,7 +2483,7 @@
       "opening": "vent 8",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.9519,
+      "larger_dimension_mm": 10.988,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2552,7 +2494,7 @@
       "opening": "vent 9",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5202,
+      "larger_dimension_mm": 10.5817,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2563,7 +2505,7 @@
       "opening": "vent 10",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.881,
+      "larger_dimension_mm": 12.6792,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2574,10 +2516,10 @@
       "opening": "vent 11",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7522,
+      "larger_dimension_mm": 12.7979,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 21.1911,
+      "remaining_to_mains_copper_mm": 21.2154,
       "nearest": "pad 5 of U921",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
@@ -2585,7 +2527,7 @@
       "opening": "vent 12",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.9519,
+      "larger_dimension_mm": 10.988,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2596,7 +2538,7 @@
       "opening": "vent 13",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.1986,
+      "larger_dimension_mm": 10.2021,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2607,7 +2549,7 @@
       "opening": "vent 14",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7123,
+      "larger_dimension_mm": 12.7087,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2618,10 +2560,10 @@
       "opening": "vent 15",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8926,
+      "larger_dimension_mm": 12.8868,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 21.2048,
+      "remaining_to_mains_copper_mm": 21.2017,
       "nearest": "pad 6 of U921",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
@@ -2629,10 +2571,10 @@
       "opening": "vent 16",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.225,
+      "larger_dimension_mm": 10.4604,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 20.3959,
+      "remaining_to_mains_copper_mm": 20.3958,
       "nearest": "pad 5 of U921",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
@@ -3049,7 +2991,7 @@
       "larger_dimension_mm": 40.0,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 21.1812,
+      "remaining_to_mains_copper_mm": 21.1978,
       "nearest": "zone RET_F0 fill",
       "path": "a 4.0 mm tip cannot enter a 0.20 mm opening"
      },
@@ -3103,7 +3045,7 @@
     "finger vent 8                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 9                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 10                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
-    "finger vent 11                  louvre           1.10 mm: nothing; remaining to Mains copper 21.19 mm",
+    "finger vent 11                  louvre           1.10 mm: nothing; remaining to Mains copper 21.22 mm",
     "finger vent 12                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 13                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 14                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
@@ -3141,7 +3083,7 @@
     "finger left wall top seam       seam             0.20 mm: nothing; remaining to Mains copper 20.82 mm",
     "finger right wall top seam      seam             0.20 mm: nothing; remaining to Mains copper 21.21 mm",
     "finger far wall top seam        seam             0.20 mm: nothing; remaining to Mains copper 21.17 mm",
-    "finger pilaster top seam        seam             0.20 mm: nothing; remaining to Mains copper 21.18 mm",
+    "finger pilaster top seam        seam             0.20 mm: nothing; remaining to Mains copper 21.20 mm",
     "finger finger slit below        finger slit      0.80 mm: nothing; remaining to Mains copper 3.00 mm",
     "finger finger slit above        finger slit      0.80 mm: nothing; remaining to Mains copper 3.00 mm",
     "finger lip seam                 seam             0.45 mm: nothing; remaining to Mains copper 17.16 mm"
@@ -6521,10 +6463,10 @@
      "separation": 2.4
     },
     "open_areas": {
-     "lid_inlet_free_area_mm2": 204.8946,
-     "lid_inlet_face_opening_area_mm2": 289.7647,
+     "lid_inlet_free_area_mm2": 205.2709,
+     "lid_inlet_face_opening_area_mm2": 290.2969,
      "lid_inlet_slot_count": 16,
-     "lid_inlet_total_slot_length_mm": 186.2678,
+     "lid_inlet_total_slot_length_mm": 186.6099,
      "side_outlet_free_area_mm2": 225.0,
      "side_outlet_area_by_wall_mm2": {
       "left": 90.0,
@@ -6532,119 +6474,119 @@
      },
      "side_outlet_slit_count": 25,
      "blade_bays_open_area_mm2": 397.4889,
-     "outlet_to_inlet_ratio": 1.0981
+     "outlet_to_inlet_ratio": 1.0961
     },
     "openings": [
      {
       "id": "vent 1",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.1986,
+      "larger_dimension_mm": 10.2021,
       "sample_points": 45
      },
      {
       "id": "vent 2",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7123,
+      "larger_dimension_mm": 12.7087,
       "sample_points": 54
      },
      {
       "id": "vent 3",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8926,
+      "larger_dimension_mm": 12.8868,
       "sample_points": 54
      },
      {
       "id": "vent 4",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.225,
+      "larger_dimension_mm": 10.4604,
       "sample_points": 45
      },
      {
       "id": "vent 5",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5202,
+      "larger_dimension_mm": 10.5817,
       "sample_points": 45
      },
      {
       "id": "vent 6",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.881,
+      "larger_dimension_mm": 12.6792,
       "sample_points": 54
      },
      {
       "id": "vent 7",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7522,
+      "larger_dimension_mm": 12.7979,
       "sample_points": 54
      },
      {
       "id": "vent 8",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.9519,
+      "larger_dimension_mm": 10.988,
       "sample_points": 54
      },
      {
       "id": "vent 9",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5202,
+      "larger_dimension_mm": 10.5817,
       "sample_points": 45
      },
      {
       "id": "vent 10",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.881,
+      "larger_dimension_mm": 12.6792,
       "sample_points": 54
      },
      {
       "id": "vent 11",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7522,
+      "larger_dimension_mm": 12.7979,
       "sample_points": 54
      },
      {
       "id": "vent 12",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.9519,
+      "larger_dimension_mm": 10.988,
       "sample_points": 54
      },
      {
       "id": "vent 13",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.1986,
+      "larger_dimension_mm": 10.2021,
       "sample_points": 45
      },
      {
       "id": "vent 14",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7123,
+      "larger_dimension_mm": 12.7087,
       "sample_points": 54
      },
      {
       "id": "vent 15",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8926,
+      "larger_dimension_mm": 12.8868,
       "sample_points": 54
      },
      {
       "id": "vent 16",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.225,
+      "larger_dimension_mm": 10.4604,
       "sample_points": 45
      },
      {
@@ -7043,7 +6985,7 @@
    "criterion": "C18",
    "kind": "check",
    "passed": true,
-   "summary": "a receptacle boot swept along each blade, fully seated to fully withdrawn plus 10 mm, keeps 0.55 mm to the lid, tray and film with the lid on and 1.10 mm with it off (needs 0.5) at both envelopes; neighbouring boots are 0.30 mm apart at typical and 0.30 mm at largest_common; boot and bend need 16.4 mm (typical) to 19.4 mm (largest) below the lid face",
+   "summary": "a receptacle boot swept along each blade, fully seated to fully withdrawn plus 10 mm, keeps 0.55 mm to the lid and tray with the lid on and 1.10 mm with it off (needs 0.5) at both envelopes; neighbouring boots are 0.30 mm apart at typical and 0.30 mm at largest_common; boot and bend need 16.4 mm (typical) to 19.4 mm (largest) below the lid face",
    "figures": {
     "required_clearance_mm": 0.5,
     "boots": [
@@ -7056,8 +6998,7 @@
       "lid_off_nearest": "tray",
       "per_body_mm": {
        "lid": 0.55,
-       "tray": 1.1,
-       "film": 64.54
+       "tray": 1.1
       },
       "nearest_other_part": "J921",
       "nearest_other_part_mm": 3.78,
@@ -7072,8 +7013,7 @@
       "lid_off_nearest": "tray",
       "per_body_mm": {
        "lid": 0.55,
-       "tray": 1.6,
-       "film": 64.54
+       "tray": 1.6
       },
       "nearest_other_part": "J941",
       "nearest_other_part_mm": 3.78,
@@ -7088,8 +7028,7 @@
       "lid_off_nearest": "tray",
       "per_body_mm": {
        "lid": 0.55,
-       "tray": 1.6,
-       "film": 64.54
+       "tray": 1.6
       },
       "nearest_other_part": "J921",
       "nearest_other_part_mm": 7.08,
@@ -7104,8 +7043,7 @@
       "lid_off_nearest": "tray",
       "per_body_mm": {
        "lid": 0.55,
-       "tray": 1.1,
-       "film": 63.29
+       "tray": 1.1
       },
       "nearest_other_part": "J921",
       "nearest_other_part_mm": 3.78,
@@ -7120,8 +7058,7 @@
       "lid_off_nearest": "tray",
       "per_body_mm": {
        "lid": 0.55,
-       "tray": 1.46,
-       "film": 63.29
+       "tray": 1.46
       },
       "nearest_other_part": "J941",
       "nearest_other_part_mm": 3.78,
@@ -7136,8 +7073,7 @@
       "lid_off_nearest": "tray",
       "per_body_mm": {
        "lid": 0.55,
-       "tray": 1.46,
-       "film": 63.29
+       "tray": 1.46
       },
       "nearest_other_part": "J921",
       "nearest_other_part_mm": 7.08,
@@ -7256,7 +7192,7 @@
    "criterion": "C16",
    "kind": "check",
    "passed": true,
-   "summary": "at this seating the leads and blade legs stand at least 1.18 mm off the tray and the plate's tapped holes sit at the tab hole height (16.50)",
+   "summary": "at this seating the leads and blade legs stand at least 1.18 mm off the tray, the plate's holes are tapped through at the tab hole height (16.50) and each screw head stands 3.68 mm inside the plate's edges",
    "figures": {
     "lead_to_tray_mm": {
      "T911_leads": 1.4,
@@ -7273,7 +7209,39 @@
     "body_underside_mm": 3.75,
     "lean_deg": 0.0,
     "gap_board_edge_to_plate_mm": 1.0,
-    "film_notch_margin_under_body_mm": 1.55
+    "screw_head_margins_mm": {
+     "lower_edge_margin_mm": 7.7,
+     "upper_edge_margin_mm": 3.675
+    },
+    "tapped_through": true
+   },
+   "lines": []
+  },
+  {
+   "name": "c16.triac_screw_tip_and_engagement",
+   "criterion": "C16",
+   "kind": "check",
+   "passed": true,
+   "summary": "over the screw's length tolerance and the tab's thickness range an M3 x 5 tip stands at most 4.010 mm inside the 5.0 mm plate (0.990 mm short of its back face) and engages at least 3.440 mm of thread (needs 3.0); the 1167 N clamp load shears 43 MPa at that engagement against 70 MPa",
+   "figures": {
+    "tip_depth_max_mm": 4.01,
+    "engagement_min_mm": 3.44,
+    "plate_thickness_mm": 5.0,
+    "tip_margin_mm": 0.99,
+    "required_engagement_mm": 3.0,
+    "clamp_force_N": 1166.6667,
+    "shear_surface_mm2": 27.0177,
+    "shear_stress_MPa": 43.1816,
+    "alloy_shear_MPa": 70.0,
+    "screw_length_mm": [
+     4.76,
+     5.24
+    ],
+    "tab_thickness_mm": [
+     1.23,
+     1.32
+    ],
+    "arithmetic": "tip 5.24 - 1.23 = 4.01; engagement 4.76 - 1.32 = 3.44"
    },
    "lines": []
   },
@@ -7282,7 +7250,7 @@
    "criterion": "C16",
    "kind": "check",
    "passed": true,
-   "summary": "all 8 extreme combinations of body height, lean and tab-face distance rebuild and pass every check; the worst creepage is 3.995 mm against 2.6 mm",
+   "summary": "all 32 extreme combinations of body height, lean, tab-face distance, outline routing tolerance and lead play rebuild and pass every check; the least straight line from Mains copper to the plate is 6.168 mm against 2.6 mm",
    "figures": {
     "combinations": [
      {
@@ -7290,11 +7258,13 @@
        "body_underside_mm": 2.55,
        "lean_deg": -1.0,
        "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 15.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7353,8 +7323,252 @@
         }
        }
       },
-      "least_creepage_mm": 3.995,
-      "gap_mm": 0.785,
+      "least_creepage_mm": 6.3429,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 0.89,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 6.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.1679,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 0.28,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 6.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.3429,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 1.29,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 6.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.1679,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 0.68,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.5392,
       "driver_tilt_deg": {
@@ -7368,11 +7582,13 @@
        "body_underside_mm": 2.55,
        "lean_deg": -1.0,
        "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 15.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7431,8 +7647,252 @@
         }
        }
       },
-      "least_creepage_mm": 4.42,
-      "gap_mm": 1.21,
+      "least_creepage_mm": 6.496,
+      "least_lead_mm": 4.459,
+      "gap_mm": 1.315,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 6.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.2841,
+      "least_lead_mm": 4.459,
+      "gap_mm": 0.705,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 6.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.496,
+      "least_lead_mm": 4.459,
+      "gap_mm": 1.715,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 6.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.2841,
+      "least_lead_mm": 4.459,
+      "gap_mm": 1.105,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.5392,
       "driver_tilt_deg": {
@@ -7446,11 +7906,13 @@
        "body_underside_mm": 2.55,
        "lean_deg": 1.0,
        "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 15.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7509,8 +7971,252 @@
         }
        }
       },
-      "least_creepage_mm": 3.995,
-      "gap_mm": 0.785,
+      "least_creepage_mm": 6.3709,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 0.89,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 8.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.1967,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 0.28,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 9.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.3709,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 1.29,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 8.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.1967,
+      "least_lead_mm": 4.2027,
+      "gap_mm": 0.68,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.55,
       "driver_tilt_deg": {
@@ -7524,11 +8230,13 @@
        "body_underside_mm": 2.55,
        "lean_deg": 1.0,
        "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 15.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7587,8 +8295,252 @@
         }
        }
       },
-      "least_creepage_mm": 4.42,
-      "gap_mm": 1.21,
+      "least_creepage_mm": 6.5234,
+      "least_lead_mm": 4.459,
+      "gap_mm": 1.315,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 8.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.3124,
+      "least_lead_mm": 4.459,
+      "gap_mm": 0.705,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 8.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.5234,
+      "least_lead_mm": 4.459,
+      "gap_mm": 1.715,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 6.5,
+       "T911": 8.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 2.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 15.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.3124,
+      "least_lead_mm": 4.459,
+      "gap_mm": 1.105,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.55,
       "driver_tilt_deg": {
@@ -7602,11 +8554,13 @@
        "body_underside_mm": 4.55,
        "lean_deg": -1.0,
        "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 17.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7665,8 +8619,252 @@
         }
        }
       },
-      "least_creepage_mm": 3.995,
-      "gap_mm": 0.785,
+      "least_creepage_mm": 6.3429,
+      "least_lead_mm": 2.804,
+      "gap_mm": 0.89,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.1679,
+      "least_lead_mm": 2.804,
+      "gap_mm": 0.28,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.3429,
+      "least_lead_mm": 2.804,
+      "gap_mm": 1.29,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.1679,
+      "least_lead_mm": 2.804,
+      "gap_mm": 0.68,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.5392,
       "driver_tilt_deg": {
@@ -7680,11 +8878,13 @@
        "body_underside_mm": 4.55,
        "lean_deg": -1.0,
        "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 17.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7743,8 +8943,252 @@
         }
        }
       },
-      "least_creepage_mm": 4.42,
-      "gap_mm": 1.21,
+      "least_creepage_mm": 6.496,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 1.315,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.2841,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 0.705,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.496,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 1.715,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.5392,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": -1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          5.3,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.3907,
+         "tip_at_uv_mm": [
+          11.8,
+          67.3464
+         ],
+         "gap_the_finger_enters_mm": 10.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        },
+        "J911": {
+         "tip_to_blade_mm": 2.2263,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": 1.4763,
+         "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+        }
+       }
+      },
+      "least_creepage_mm": 6.2841,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 1.105,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.5392,
       "driver_tilt_deg": {
@@ -7758,11 +9202,13 @@
        "body_underside_mm": 4.55,
        "lean_deg": 1.0,
        "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 17.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7821,8 +9267,414 @@
         }
        }
       },
-      "least_creepage_mm": 3.995,
-      "gap_mm": 0.785,
+      "least_creepage_mm": 6.3709,
+      "least_lead_mm": 2.804,
+      "gap_mm": 0.89,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.1967,
+      "least_lead_mm": 2.804,
+      "gap_mm": 0.28,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.3709,
+      "least_lead_mm": 2.804,
+      "gap_mm": 1.29,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 2.645,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.1967,
+      "least_lead_mm": 2.804,
+      "gap_mm": 0.68,
+      "lid_sweep_min_mm": 0.1781,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.5
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": -0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.5234,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 1.315,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": -0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.3124,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 0.705,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.55,
       "driver_tilt_deg": {
@@ -7836,11 +9688,13 @@
        "body_underside_mm": 4.55,
        "lean_deg": 1.0,
        "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": -0.305,
        "tab_hole_height_mm": 17.3
       },
       "all_pass": true,
       "failed": [],
-      "checks_run": 39,
+      "checks_run": 42,
       "findings": {
        "c15.finding_blades_no_receptacle": {
         "J941": {
@@ -7899,8 +9753,90 @@
         }
        }
       },
-      "least_creepage_mm": 4.42,
-      "gap_mm": 1.21,
+      "least_creepage_mm": 6.5234,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 1.715,
+      "lid_sweep_min_mm": 0.1782,
+      "boot_least_clearance_mm": 0.55,
+      "driver_tilt_deg": {
+       "T921": 5.0,
+       "T911": 5.0
+      },
+      "creepage_required_mm": 2.6
+     },
+     {
+      "seating": {
+       "body_underside_mm": 4.55,
+       "lean_deg": 1.0,
+       "tab_face_to_lead_centre_mm": 3.07,
+       "outline_routing_mm": 0.2,
+       "lead_play_mm": 0.305,
+       "tab_hole_height_mm": 17.3
+      },
+      "all_pass": true,
+      "failed": [],
+      "checks_run": 42,
+      "findings": {
+       "c15.finding_blades_no_receptacle": {
+        "J941": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          4.8,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J921": {
+         "tip_to_blade_mm": -1.9936,
+         "tip_at_uv_mm": [
+          12.3,
+          66.8464
+         ],
+         "gap_the_finger_enters_mm": 9.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        },
+        "J911": {
+         "tip_to_blade_mm": -0.1186,
+         "tip_at_uv_mm": [
+          23.8,
+          66.3464
+         ],
+         "gap_the_finger_enters_mm": 8.5,
+         "bay_mm": {
+          "across_thickness_u": 8.9,
+          "across_width_v": 14.8872
+         },
+         "standing_check_fails_at_lean": {
+          "leaning_far_end_up_deg": 0.3,
+          "leaning_far_end_down_deg": null
+         },
+         "standing_gap_at_the_nominal_lean_mm": -0.8686,
+         "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+        }
+       }
+      },
+      "least_creepage_mm": 6.3124,
+      "least_lead_mm": 3.1754,
+      "gap_mm": 1.105,
       "lid_sweep_min_mm": 0.1781,
       "boot_least_clearance_mm": 0.55,
       "driver_tilt_deg": {
@@ -7910,19 +9846,50 @@
       "creepage_required_mm": 2.6
      }
     ],
-    "worst_creepage_mm": 3.995,
+    "worst_creepage_mm": 6.1679,
     "required_mm": 2.6,
+    "axes": [
+     "body height",
+     "lean",
+     "tab-face distance",
+     "outline routing tolerance",
+     "lead play"
+    ],
     "range_source": "params.yaml seating block, each entry unconfirmed: the owner measures it on the delivered board"
    },
    "lines": [
-    "body 2.55 lean -1.0 tab face 2.645 (hole 15.30): pass True (39 checks), creepage 3.995, sweep 0.178, boots 0.54",
-    "body 2.55 lean -1.0 tab face 3.070 (hole 15.30): pass True (39 checks), creepage 4.420, sweep 0.178, boots 0.54",
-    "body 2.55 lean +1.0 tab face 2.645 (hole 15.30): pass True (39 checks), creepage 3.995, sweep 0.178, boots 0.55",
-    "body 2.55 lean +1.0 tab face 3.070 (hole 15.30): pass True (39 checks), creepage 4.420, sweep 0.178, boots 0.55",
-    "body 4.55 lean -1.0 tab face 2.645 (hole 17.30): pass True (39 checks), creepage 3.995, sweep 0.178, boots 0.54",
-    "body 4.55 lean -1.0 tab face 3.070 (hole 17.30): pass True (39 checks), creepage 4.420, sweep 0.178, boots 0.54",
-    "body 4.55 lean +1.0 tab face 2.645 (hole 17.30): pass True (39 checks), creepage 3.995, sweep 0.178, boots 0.55",
-    "body 4.55 lean +1.0 tab face 3.070 (hole 17.30): pass True (39 checks), creepage 4.420, sweep 0.178, boots 0.55"
+    "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305 (hole 15.30, gap 0.890): pass True (42 checks), nearest copper 6.343, lead 4.203, sweep 0.178, boots 0.54",
+    "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305 (hole 15.30, gap 0.280): pass True (42 checks), nearest copper 6.168, lead 4.203, sweep 0.178, boots 0.54",
+    "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305 (hole 15.30, gap 1.290): pass True (42 checks), nearest copper 6.343, lead 4.203, sweep 0.178, boots 0.54",
+    "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305 (hole 15.30, gap 0.680): pass True (42 checks), nearest copper 6.168, lead 4.203, sweep 0.178, boots 0.54",
+    "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305 (hole 15.30, gap 1.315): pass True (42 checks), nearest copper 6.496, lead 4.459, sweep 0.178, boots 0.54",
+    "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305 (hole 15.30, gap 0.705): pass True (42 checks), nearest copper 6.284, lead 4.459, sweep 0.178, boots 0.54",
+    "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305 (hole 15.30, gap 1.715): pass True (42 checks), nearest copper 6.496, lead 4.459, sweep 0.178, boots 0.54",
+    "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305 (hole 15.30, gap 1.105): pass True (42 checks), nearest copper 6.284, lead 4.459, sweep 0.178, boots 0.54",
+    "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305 (hole 15.30, gap 0.890): pass True (42 checks), nearest copper 6.371, lead 4.203, sweep 0.178, boots 0.55",
+    "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305 (hole 15.30, gap 0.280): pass True (42 checks), nearest copper 6.197, lead 4.203, sweep 0.178, boots 0.55",
+    "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305 (hole 15.30, gap 1.290): pass True (42 checks), nearest copper 6.371, lead 4.203, sweep 0.178, boots 0.55",
+    "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305 (hole 15.30, gap 0.680): pass True (42 checks), nearest copper 6.197, lead 4.203, sweep 0.178, boots 0.55",
+    "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305 (hole 15.30, gap 1.315): pass True (42 checks), nearest copper 6.523, lead 4.459, sweep 0.178, boots 0.55",
+    "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305 (hole 15.30, gap 0.705): pass True (42 checks), nearest copper 6.312, lead 4.459, sweep 0.178, boots 0.55",
+    "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305 (hole 15.30, gap 1.715): pass True (42 checks), nearest copper 6.523, lead 4.459, sweep 0.178, boots 0.55",
+    "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305 (hole 15.30, gap 1.105): pass True (42 checks), nearest copper 6.312, lead 4.459, sweep 0.178, boots 0.55",
+    "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305 (hole 17.30, gap 0.890): pass True (42 checks), nearest copper 6.343, lead 2.804, sweep 0.178, boots 0.54",
+    "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305 (hole 17.30, gap 0.280): pass True (42 checks), nearest copper 6.168, lead 2.804, sweep 0.178, boots 0.54",
+    "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305 (hole 17.30, gap 1.290): pass True (42 checks), nearest copper 6.343, lead 2.804, sweep 0.178, boots 0.54",
+    "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305 (hole 17.30, gap 0.680): pass True (42 checks), nearest copper 6.168, lead 2.804, sweep 0.178, boots 0.54",
+    "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305 (hole 17.30, gap 1.315): pass True (42 checks), nearest copper 6.496, lead 3.175, sweep 0.178, boots 0.54",
+    "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305 (hole 17.30, gap 0.705): pass True (42 checks), nearest copper 6.284, lead 3.175, sweep 0.178, boots 0.54",
+    "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305 (hole 17.30, gap 1.715): pass True (42 checks), nearest copper 6.496, lead 3.175, sweep 0.178, boots 0.54",
+    "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305 (hole 17.30, gap 1.105): pass True (42 checks), nearest copper 6.284, lead 3.175, sweep 0.178, boots 0.54",
+    "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305 (hole 17.30, gap 0.890): pass True (42 checks), nearest copper 6.371, lead 2.804, sweep 0.178, boots 0.55",
+    "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305 (hole 17.30, gap 0.280): pass True (42 checks), nearest copper 6.197, lead 2.804, sweep 0.178, boots 0.55",
+    "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305 (hole 17.30, gap 1.290): pass True (42 checks), nearest copper 6.371, lead 2.804, sweep 0.178, boots 0.55",
+    "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305 (hole 17.30, gap 0.680): pass True (42 checks), nearest copper 6.197, lead 2.804, sweep 0.178, boots 0.55",
+    "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305 (hole 17.30, gap 1.315): pass True (42 checks), nearest copper 6.523, lead 3.175, sweep 0.178, boots 0.55",
+    "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305 (hole 17.30, gap 0.705): pass True (42 checks), nearest copper 6.312, lead 3.175, sweep 0.178, boots 0.55",
+    "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305 (hole 17.30, gap 1.715): pass True (42 checks), nearest copper 6.523, lead 3.175, sweep 0.178, boots 0.55",
+    "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305 (hole 17.30, gap 1.105): pass True (42 checks), nearest copper 6.312, lead 3.175, sweep 0.178, boots 0.55"
    ]
   },
   {
@@ -7930,48 +9897,156 @@
    "criterion": "C15",
    "kind": "finding",
    "passed": null,
-   "summary": "with no receptacle fitted the stand-in finger reaches a bare blade in 8 of 8 extreme seatings: a stated, accepted residual, reported and not counted in the range's verdict",
+   "summary": "with no receptacle fitted the stand-in finger reaches a bare blade in 32 of 32 extreme seatings: a stated, accepted residual, reported and not counted in the range's verdict",
    "figures": {
     "reached_blades_by_seating": {
-     "body 2.55 lean -1.0 tab face 2.645": [
+     "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305": [
       "J921",
       "J941"
      ],
-     "body 2.55 lean -1.0 tab face 3.070": [
+     "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305": [
       "J921",
       "J941"
      ],
-     "body 2.55 lean +1.0 tab face 2.645": [
+     "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305": [
       "J911",
       "J921",
       "J941"
      ],
-     "body 2.55 lean +1.0 tab face 3.070": [
+     "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305": [
       "J911",
       "J921",
       "J941"
      ],
-     "body 4.55 lean -1.0 tab face 2.645": [
-      "J921",
-      "J941"
-     ],
-     "body 4.55 lean -1.0 tab face 3.070": [
-      "J921",
-      "J941"
-     ],
-     "body 4.55 lean +1.0 tab face 2.645": [
+     "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305": [
       "J911",
       "J921",
       "J941"
      ],
-     "body 4.55 lean +1.0 tab face 3.070": [
+     "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305": [
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305": [
+      "J911",
+      "J921",
+      "J941"
+     ],
+     "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305": [
       "J911",
       "J921",
       "J941"
      ]
     },
     "combinations": {
-     "body 2.55 lean -1.0 tab face 2.645": {
+     "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305": {
       "J941": {
        "tip_to_blade_mm": -1.3907,
        "tip_at_uv_mm": [
@@ -8027,7 +10102,7 @@
        "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
       }
      },
-     "body 2.55 lean -1.0 tab face 3.070": {
+     "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305": {
       "J941": {
        "tip_to_blade_mm": -1.3907,
        "tip_at_uv_mm": [
@@ -8083,7 +10158,343 @@
        "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
       }
      },
-     "body 2.55 lean +1.0 tab face 2.645": {
+     "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305": {
       "J941": {
        "tip_to_blade_mm": -1.9936,
        "tip_at_uv_mm": [
@@ -8139,7 +10550,7 @@
        "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
       }
      },
-     "body 2.55 lean +1.0 tab face 3.070": {
+     "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305": {
       "J941": {
        "tip_to_blade_mm": -1.9936,
        "tip_at_uv_mm": [
@@ -8195,119 +10606,7 @@
        "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
       }
      },
-     "body 4.55 lean -1.0 tab face 2.645": {
-      "J941": {
-       "tip_to_blade_mm": -1.3907,
-       "tip_at_uv_mm": [
-        5.3,
-        67.3464
-       ],
-       "gap_the_finger_enters_mm": 10.5,
-       "bay_mm": {
-        "across_thickness_u": 8.9,
-        "across_width_v": 14.8872
-       },
-       "standing_check_fails_at_lean": {
-        "leaning_far_end_up_deg": 0.3,
-        "leaning_far_end_down_deg": null
-       },
-       "standing_gap_at_the_nominal_lean_mm": 1.4763,
-       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
-      },
-      "J921": {
-       "tip_to_blade_mm": -1.3907,
-       "tip_at_uv_mm": [
-        11.8,
-        67.3464
-       ],
-       "gap_the_finger_enters_mm": 10.5,
-       "bay_mm": {
-        "across_thickness_u": 8.9,
-        "across_width_v": 14.8872
-       },
-       "standing_check_fails_at_lean": {
-        "leaning_far_end_up_deg": 0.3,
-        "leaning_far_end_down_deg": null
-       },
-       "standing_gap_at_the_nominal_lean_mm": 1.4763,
-       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
-      },
-      "J911": {
-       "tip_to_blade_mm": 2.2263,
-       "tip_at_uv_mm": [
-        23.8,
-        66.3464
-       ],
-       "gap_the_finger_enters_mm": 8.5,
-       "bay_mm": {
-        "across_thickness_u": 8.9,
-        "across_width_v": 14.8872
-       },
-       "standing_check_fails_at_lean": {
-        "leaning_far_end_up_deg": 0.3,
-        "leaning_far_end_down_deg": null
-       },
-       "standing_gap_at_the_nominal_lean_mm": 1.4763,
-       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
-      }
-     },
-     "body 4.55 lean -1.0 tab face 3.070": {
-      "J941": {
-       "tip_to_blade_mm": -1.3907,
-       "tip_at_uv_mm": [
-        5.3,
-        67.3464
-       ],
-       "gap_the_finger_enters_mm": 10.5,
-       "bay_mm": {
-        "across_thickness_u": 8.9,
-        "across_width_v": 14.8872
-       },
-       "standing_check_fails_at_lean": {
-        "leaning_far_end_up_deg": 0.3,
-        "leaning_far_end_down_deg": null
-       },
-       "standing_gap_at_the_nominal_lean_mm": 1.4763,
-       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
-      },
-      "J921": {
-       "tip_to_blade_mm": -1.3907,
-       "tip_at_uv_mm": [
-        11.8,
-        67.3464
-       ],
-       "gap_the_finger_enters_mm": 10.5,
-       "bay_mm": {
-        "across_thickness_u": 8.9,
-        "across_width_v": 14.8872
-       },
-       "standing_check_fails_at_lean": {
-        "leaning_far_end_up_deg": 0.3,
-        "leaning_far_end_down_deg": null
-       },
-       "standing_gap_at_the_nominal_lean_mm": 1.4763,
-       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
-      },
-      "J911": {
-       "tip_to_blade_mm": 2.2263,
-       "tip_at_uv_mm": [
-        23.8,
-        66.3464
-       ],
-       "gap_the_finger_enters_mm": 8.5,
-       "bay_mm": {
-        "across_thickness_u": 8.9,
-        "across_width_v": 14.8872
-       },
-       "standing_check_fails_at_lean": {
-        "leaning_far_end_up_deg": 0.3,
-        "leaning_far_end_down_deg": null
-       },
-       "standing_gap_at_the_nominal_lean_mm": 1.4763,
-       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
-      }
-     },
-     "body 4.55 lean +1.0 tab face 2.645": {
+     "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305": {
       "J941": {
        "tip_to_blade_mm": -1.9936,
        "tip_at_uv_mm": [
@@ -8363,7 +10662,1127 @@
        "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
       }
      },
-     "body 4.55 lean +1.0 tab face 3.070": {
+     "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        5.3,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.3907,
+       "tip_at_uv_mm": [
+        11.8,
+        67.3464
+       ],
+       "gap_the_finger_enters_mm": 10.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      },
+      "J911": {
+       "tip_to_blade_mm": 2.2263,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": 1.4763,
+       "this_blade_bare_neighbours_fitted_gap_mm": 2.2263
+      }
+     },
+     "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305": {
+      "J941": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        4.8,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J921": {
+       "tip_to_blade_mm": -1.9936,
+       "tip_at_uv_mm": [
+        12.3,
+        66.8464
+       ],
+       "gap_the_finger_enters_mm": 9.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      },
+      "J911": {
+       "tip_to_blade_mm": -0.1186,
+       "tip_at_uv_mm": [
+        23.8,
+        66.3464
+       ],
+       "gap_the_finger_enters_mm": 8.5,
+       "bay_mm": {
+        "across_thickness_u": 8.9,
+        "across_width_v": 14.8872
+       },
+       "standing_check_fails_at_lean": {
+        "leaning_far_end_up_deg": 0.3,
+        "leaning_far_end_down_deg": null
+       },
+       "standing_gap_at_the_nominal_lean_mm": -0.8686,
+       "this_blade_bare_neighbours_fitted_gap_mm": -0.1186
+      }
+     },
+     "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305": {
       "J941": {
        "tip_to_blade_mm": -1.9936,
        "tip_at_uv_mm": [
@@ -8422,14 +11841,38 @@
     }
    },
    "lines": [
-    "body 2.55 lean -1.0 tab face 2.645: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
-    "body 2.55 lean -1.0 tab face 3.070: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
-    "body 2.55 lean +1.0 tab face 2.645: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
-    "body 2.55 lean +1.0 tab face 3.070: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
-    "body 4.55 lean -1.0 tab face 2.645: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
-    "body 4.55 lean -1.0 tab face 3.070: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
-    "body 4.55 lean +1.0 tab face 2.645: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
-    "body 4.55 lean +1.0 tab face 3.070: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941"
+    "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 2.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 2.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 2.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 2.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean -1.0 tab face 2.645 routing -0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean -1.0 tab face 2.645 routing +0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean -1.0 tab face 3.070 routing -0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play -0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean -1.0 tab face 3.070 routing +0.2 play +0.305: J941 -1.39 mm, J921 -1.39 mm, J911 2.23 mm; tip reaches J921, J941",
+    "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean +1.0 tab face 2.645 routing -0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean +1.0 tab face 2.645 routing +0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean +1.0 tab face 3.070 routing -0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play -0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941",
+    "body 4.55 lean +1.0 tab face 3.070 routing +0.2 play +0.305: J941 -1.99 mm, J921 -1.99 mm, J911 -0.12 mm; tip reaches J911, J921, J941"
    ]
   }
  ]

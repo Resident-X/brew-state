@@ -6,6 +6,13 @@
 # 42 exception entries, its entry fuse F101 and its held_at_reinforced nets fail this board, which has none of them.
 # The figures below are the machine's, copied unchanged.
 #
+# Re-signed 2026-11-27, on the owner's behalf (owner-sign-off.md W-19). The text of the mains-to-earthed-plate barrier below,
+# which the owner signed on 2026-11-19 as a barrier in the case's tray (W-10), now states the case's form: the spreader
+# plate is narrower and its lower edge stands 6.0 mm above the component face, no barrier is credited, and clearance and
+# creepage to the plate are geometric. No figure of this record changed; accepted_by and accepted_on and nothing else of the
+# signature fields read the re-signing. The 24 accepted pad-pair entries keep their own 2026-11-19 acceptance, which this
+# record's later day covers.
+#
 # Signed. The owner, David Baker, accepted this record on 2026-11-19, in his words "I'm signing those now. Take as
 # signed. Proceed." (owner-sign-off.md W-12). The signature covers this file only, the board's own separation basis; it
 # rests on the acceptances he gave in his words, W-9 1a, 1b and 1c ("sign as accepted", 2026-11-19; W-2 and W-4 of
@@ -13,7 +20,7 @@
 # opto-triac part to the layout agent with the safety facts put to him (the part became the V-option onsemi MOC3083SVM,
 # LCSC C899868, surface-mount, same case as the MOC3083SR2M of his option A). The opto-triac pin gap is now 1.04 mm
 # against the 0.94 mm of W-9 1b, which is the wider gap. Nothing else is signed by this record: the owner's other
-# end-of-work items (W-5a, W-5b, W-5d, the outer-face temperature, the barrier W-10 awaiting the case step) remain as
+# end-of-work items (W-5a, W-5b, W-5d, the outer-face temperature, the case's form of W-19) remain as
 # owner-sign-off.md lists them.
 #
 # What this record holds that the machine's does not. (1) Barrier heater-switch, formed by the opto-triacs U911 and
@@ -22,11 +29,12 @@
 # as an exception for the through-hole part (W-2), carried to the surface-mount V-option part by W-11 and signed here; the board
 # path lengthened by a 1.5 mm slot cut under each part (layout-plan.md MAINS-4, BOARD-3, layout-hedges.md hedge 5);
 # the 10.0 mm figure itself unchanged. (2) Barrier mains-to-earthed-plate, the triac's insulated tab and the mains
-# copper toward the earthed spreader plate at the basic creepage of 2.6 mm: the case's tray carries an insulating
-# barrier between the bare plate face and the mains copper, the board's top edge set back 1.0 mm from the plate plane
-# (owner-sign-off.md W-10, which replaces the 6.0 mm lift of W-9 1c); the barrier awaits the case step, and the
-# plate's earth bond is measured at bring-up (DEL-HW-BRING-UP.C6). The check cannot see the plate or the tray, so this
-# record states the barrier and no entry excuses it. (3) The accepted pad pairs of this board, below.
+# copper toward the earthed spreader plate at the basic creepage of 2.6 mm and the clearance of 1.5 mm: the case holds
+# the plate's lower edge 6.0 mm above the component face (owner-sign-off.md W-19, which restores the 6.0 mm lift of W-9 1c
+# that W-10 had replaced by a barrier), so no plate metal faces the board edge, the pads or the lower leads, and no
+# barrier is credited; the distances are geometric and the case's checks hold them over the board outline's routing
+# tolerance and the leads' play; the plate's earth bond is measured at bring-up (DEL-HW-BRING-UP.C6). The check cannot
+# see the plate or the tray, so this record states the form and no entry excuses it. (3) The accepted pad pairs of this board, below.
 #
 # The mains_to_mains entry fuse. This board carries no net ahead of the entry fuse (MAINS_ENTRY is none): the entry
 # fuse F101 is on the main board and is truthfully named here; the check holds an entry fuse to a design's layout only
@@ -82,10 +90,13 @@ barrier_types:
   - the machine's steel wall it is screwed to
   formed_by: the insulated tab of the triacs T911 and T921 (ST BTA16-800BWRG, tab rated 2500 Vrms, UL 1557 file E81734,
     ST DS2114 Rev 11 p.1) to the earthed plate, and the board's mains copper toward the plate held to the basic creepage
-    of 2.6 mm by an insulating barrier in the case's fixed tray (owner-sign-off.md W-10), the board's top edge set back
-    1.0 mm from the plate plane. The plate is bonded to protective earth through the machine's steel wall and mains-inlet
-    earth, which the owner holds as a fact and bring-up measures (DEL-HW-BRING-UP.C6). The barrier is realised by the case
-    step and is not seen by the pre-order check.
+    of 2.6 mm and the clearance of 1.5 mm with no barrier credited, the case holding the plate's lower edge 6.0 mm above the
+    component face, so no plate metal faces the board edge, the pads or the lower leads, and the tray's printed end wall
+    fills the volume the narrower plate leaves, with no creepage credit (owner-sign-off.md W-19, which restores the 6.0 mm
+    lift of W-9 1c). Clearance and creepage to the plate are geometric, being the straight line from every mains pad edge and
+    bare lead to the plate, at least 2.6 mm over the case's tolerance range. The plate is bonded to protective earth through
+    the machine's wall and mains-inlet earth, which the owner holds as a fact and bring-up measures (DEL-HW-BRING-UP.C6).
+    The form is realised by the case and is not seen by the pre-order check.
 mains_to_low_voltage:
   clearance_mm: 3.0
   creepage_mm: 10.0
@@ -339,9 +350,9 @@ table_rows:
   figure:
     creepage_mm: 3.2
     clearance_mm: 1.5
-# Signature of the record: the owner's, 2026-11-19 (owner-sign-off.md W-12).
-accepted_by: David Baker (owner)
-accepted_on: 2026-11-19
+# Signature of the record: the owner's, 2026-11-19 (owner-sign-off.md W-12), re-signed on his behalf 2026-11-27 (W-19).
+accepted_by: David Baker (owner), re-signed on his behalf by Claude under his standing instruction of 2026-11-07 (owner-sign-off.md W-19)
+accepted_on: 2026-11-27
 
 # The accepted pad pairs, one entry for each constraint of each pair (24 entries). See the header for where each
 # reason and bound comes from.

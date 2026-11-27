@@ -1,4 +1,4 @@
-$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load printer-220-asa.ini --center 110,110 --output slice/lid_single.supports-off.gcode out/lid_single.print.stl
+$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load case/printer-220-asa.ini --center 110,110 --output case/slice/lid_single.supports-off.gcode case/out/lid_single.print.stl
 10 => Processing triangulated mesh
 20 => Generating perimeters
 30 => Preparing infill
@@ -13,11 +13,11 @@ Long bridging extrusions
 Consider enabling supports.
 89 => Calculating overhanging perimeters
 88 => Generating skirt and brim
-90 => Exporting G-code to slice/lid_single.supports-off.gcode
-Slicing result exported to slice/lid_single.supports-off.gcode
+90 => Exporting G-code to case/slice/lid_single.supports-off.gcode
+Slicing result exported to case/slice/lid_single.supports-off.gcode
 exit status 0
 
-$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load printer-220-asa.ini --load support-auto.ini --center 110,110 --output slice/lid_single.supports-auto.gcode out/lid_single.print.stl
+$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load case/printer-220-asa.ini --load case/support-auto.ini --center 110,110 --output case/slice/lid_single.supports-auto.gcode case/out/lid_single.print.stl
 10 => Processing triangulated mesh
 20 => Generating perimeters
 30 => Preparing infill
@@ -27,11 +27,11 @@ $ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load
 70 => Generating support material
 89 => Calculating overhanging perimeters
 88 => Generating skirt and brim
-90 => Exporting G-code to slice/lid_single.supports-auto.gcode
-Slicing result exported to slice/lid_single.supports-auto.gcode
+90 => Exporting G-code to case/slice/lid_single.supports-auto.gcode
+Slicing result exported to case/slice/lid_single.supports-auto.gcode
 exit status 0
 
-$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load printer-220-asa.ini --load support-auto.ini --support-material-threshold 0 --center 110,110 --output slice/lid_single.supports-auto-threshold-0.gcode out/lid_single.print.stl
+$ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load case/printer-220-asa.ini --load case/support-auto.ini --support-material-threshold 0 --center 110,110 --output case/slice/lid_single.supports-auto-threshold-0.gcode case/out/lid_single.print.stl
 10 => Processing triangulated mesh
 20 => Generating perimeters
 30 => Preparing infill
@@ -41,7 +41,7 @@ $ /Applications/PrusaSlicer.app/Contents/MacOS/PrusaSlicer --export-gcode --load
 70 => Generating support material
 89 => Calculating overhanging perimeters
 88 => Generating skirt and brim
-90 => Exporting G-code to slice/lid_single.supports-auto-threshold-0.gcode
-Slicing result exported to slice/lid_single.supports-auto-threshold-0.gcode
+90 => Exporting G-code to case/slice/lid_single.supports-auto-threshold-0.gcode
+Slicing result exported to case/slice/lid_single.supports-auto-threshold-0.gcode
 exit status 0
 

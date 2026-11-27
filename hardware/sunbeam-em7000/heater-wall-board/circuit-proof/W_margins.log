@@ -138,6 +138,70 @@ PASS  current share holds on the aluminium wall at Rc 3 K/W, air 25 degC: 8.93 A
    current share, aluminium k 110, h = 10, Rc = 3 K/W, air 40 degC: steam triac case 94.6 degC; 0.5 current share 6.61 A (model) against the steam element's 5.38 A
 PASS  current share holds on the aluminium wall at Rc 3 K/W, air 40 degC: 6.61 A against 5.38 A
 
+== (e) amendment 2026-11-27: the plate is narrower (80 x 16.975 mm, lower edge 6.0 mm above the board face); the case temperature at the external air (25 and 40 degC), the maker's 125 degC and the 100 degC policy share
+PASS  narrower-plate wall model is the 2026-11-21 model at the plate's height: window 0.016975 m x 0.080 m (the former 0.030 m); plate term 0.2455 K/W (the former plate's 0.1390 K/W) plus the paste's 0.027 K/W is 0.2725 K/W
+   -- wall: aluminium, k 110 W/(m.K) (recorded wall, lowest plausible sheet)
+      h = 10 W/(m2.K): R_wall = 1 / (10 x 0.001358 + 0.194 x sqrt(10 x 110 x 0.0025)) = 2.983 K/W; plate and paste 0.272 K/W
+      h = 5 W/(m2.K): R_wall = 1 / (5 x 0.001358 + 0.194 x sqrt(5 x 110 x 0.0025)) = 4.270 K/W; plate and paste 0.272 K/W
+      air 25 degC, h = 10, Rc = 0 K/W, both heaters on   : junction  67.18 degC; 125 degC HOLDS (+57.8 K), 100 degC share HOLDS (+32.8 K)
+      air 25 degC, h = 10, Rc = 0 K/W, steam heater alone: junction  53.34 degC; 125 degC HOLDS (+71.7 K), 100 degC share HOLDS (+46.7 K)
+      air 25 degC, h = 10, Rc = 1 K/W, both heaters on   : junction  76.27 degC; 125 degC HOLDS (+48.7 K), 100 degC share HOLDS (+23.7 K)
+      air 25 degC, h = 10, Rc = 1 K/W, steam heater alone: junction  58.18 degC; 125 degC HOLDS (+66.8 K), 100 degC share HOLDS (+41.8 K)
+      air 25 degC, h = 10, Rc = 3 K/W, both heaters on   : junction  94.45 degC; 125 degC HOLDS (+30.6 K), 100 degC share HOLDS (+5.6 K)
+      air 25 degC, h = 10, Rc = 3 K/W, steam heater alone: junction  67.86 degC; 125 degC HOLDS (+57.1 K), 100 degC share HOLDS (+32.1 K)
+      air 25 degC, h =  5, Rc = 0 K/W, both heaters on   : junction  78.87 degC; 125 degC HOLDS (+46.1 K), 100 degC share HOLDS (+21.1 K)
+      air 25 degC, h =  5, Rc = 0 K/W, steam heater alone: junction  59.57 degC; 125 degC HOLDS (+65.4 K), 100 degC share HOLDS (+40.4 K)
+      air 25 degC, h =  5, Rc = 1 K/W, both heaters on   : junction  87.96 degC; 125 degC HOLDS (+37.0 K), 100 degC share HOLDS (+12.0 K)
+      air 25 degC, h =  5, Rc = 1 K/W, steam heater alone: junction  64.41 degC; 125 degC HOLDS (+60.6 K), 100 degC share HOLDS (+35.6 K)
+      air 25 degC, h =  5, Rc = 3 K/W, both heaters on   : junction 106.14 degC; 125 degC HOLDS (+18.9 K), 100 degC share FAILS (-6.1 K)
+      air 25 degC, h =  5, Rc = 3 K/W, steam heater alone: junction  74.09 degC; 125 degC HOLDS (+50.9 K), 100 degC share HOLDS (+25.9 K)
+      air 40 degC, h = 10, Rc = 0 K/W, both heaters on   : junction  82.18 degC; 125 degC HOLDS (+42.8 K), 100 degC share HOLDS (+17.8 K)
+      air 40 degC, h = 10, Rc = 0 K/W, steam heater alone: junction  68.34 degC; 125 degC HOLDS (+56.7 K), 100 degC share HOLDS (+31.7 K)
+      air 40 degC, h = 10, Rc = 1 K/W, both heaters on   : junction  91.27 degC; 125 degC HOLDS (+33.7 K), 100 degC share HOLDS (+8.7 K)
+      air 40 degC, h = 10, Rc = 1 K/W, steam heater alone: junction  73.18 degC; 125 degC HOLDS (+51.8 K), 100 degC share HOLDS (+26.8 K)
+      air 40 degC, h = 10, Rc = 3 K/W, both heaters on   : junction 109.45 degC; 125 degC HOLDS (+15.6 K), 100 degC share FAILS (-9.4 K)
+      air 40 degC, h = 10, Rc = 3 K/W, steam heater alone: junction  82.86 degC; 125 degC HOLDS (+42.1 K), 100 degC share HOLDS (+17.1 K)
+      air 40 degC, h =  5, Rc = 0 K/W, both heaters on   : junction  93.87 degC; 125 degC HOLDS (+31.1 K), 100 degC share HOLDS (+6.1 K)
+      air 40 degC, h =  5, Rc = 0 K/W, steam heater alone: junction  74.57 degC; 125 degC HOLDS (+50.4 K), 100 degC share HOLDS (+25.4 K)
+      air 40 degC, h =  5, Rc = 1 K/W, both heaters on   : junction 102.96 degC; 125 degC HOLDS (+22.0 K), 100 degC share FAILS (-3.0 K)
+      air 40 degC, h =  5, Rc = 1 K/W, steam heater alone: junction  79.41 degC; 125 degC HOLDS (+45.6 K), 100 degC share HOLDS (+20.6 K)
+      air 40 degC, h =  5, Rc = 3 K/W, both heaters on   : junction 121.14 degC; 125 degC HOLDS (+3.9 K), 100 degC share FAILS (-21.1 K)
+      air 40 degC, h =  5, Rc = 3 K/W, steam heater alone: junction  89.09 degC; 125 degC HOLDS (+35.9 K), 100 degC share HOLDS (+10.9 K)
+   -- wall: 304 stainless, k 15 W/(m.K) (stated bounding case)
+      h = 10 W/(m2.K): R_wall = 1 / (10 x 0.001358 + 0.194 x sqrt(10 x 15 x 0.0025)) = 7.556 K/W; plate and paste 0.272 K/W
+      h = 5 W/(m2.K): R_wall = 1 / (5 x 0.001358 + 0.194 x sqrt(5 x 15 x 0.0025)) = 11.017 K/W; plate and paste 0.272 K/W
+      air 25 degC, h = 10, Rc = 0 K/W, both heaters on   : junction 108.74 degC; 125 degC HOLDS (+16.3 K), 100 degC share FAILS (-8.7 K)
+      air 25 degC, h = 10, Rc = 0 K/W, steam heater alone: junction  75.47 degC; 125 degC HOLDS (+49.5 K), 100 degC share HOLDS (+24.5 K)
+      air 25 degC, h = 10, Rc = 1 K/W, both heaters on   : junction 117.83 degC; 125 degC HOLDS (+7.2 K), 100 degC share FAILS (-17.8 K)
+      air 25 degC, h = 10, Rc = 1 K/W, steam heater alone: junction  80.31 degC; 125 degC HOLDS (+44.7 K), 100 degC share HOLDS (+19.7 K)
+      air 25 degC, h = 10, Rc = 3 K/W, both heaters on   : junction 136.01 degC; 125 degC FAILS (-11.0 K), 100 degC share FAILS (-36.0 K)
+      air 25 degC, h = 10, Rc = 3 K/W, steam heater alone: junction  89.99 degC; 125 degC HOLDS (+35.0 K), 100 degC share HOLDS (+10.0 K)
+      air 25 degC, h =  5, Rc = 0 K/W, both heaters on   : junction 140.20 degC; 125 degC FAILS (-15.2 K), 100 degC share FAILS (-40.2 K)
+      air 25 degC, h =  5, Rc = 0 K/W, steam heater alone: junction  92.22 degC; 125 degC HOLDS (+32.8 K), 100 degC share HOLDS (+7.8 K)
+      air 25 degC, h =  5, Rc = 1 K/W, both heaters on   : junction 149.29 degC; 125 degC FAILS (-24.3 K), 100 degC share FAILS (-49.3 K)
+      air 25 degC, h =  5, Rc = 1 K/W, steam heater alone: junction  97.06 degC; 125 degC HOLDS (+27.9 K), 100 degC share HOLDS (+2.9 K)
+      air 25 degC, h =  5, Rc = 3 K/W, both heaters on   : junction 167.47 degC; 125 degC FAILS (-42.5 K), 100 degC share FAILS (-67.5 K)
+      air 25 degC, h =  5, Rc = 3 K/W, steam heater alone: junction 106.74 degC; 125 degC HOLDS (+18.3 K), 100 degC share FAILS (-6.7 K)
+      air 40 degC, h = 10, Rc = 0 K/W, both heaters on   : junction 123.74 degC; 125 degC HOLDS (+1.3 K), 100 degC share FAILS (-23.7 K)
+      air 40 degC, h = 10, Rc = 0 K/W, steam heater alone: junction  90.47 degC; 125 degC HOLDS (+34.5 K), 100 degC share HOLDS (+9.5 K)
+      air 40 degC, h = 10, Rc = 1 K/W, both heaters on   : junction 132.83 degC; 125 degC FAILS (-7.8 K), 100 degC share FAILS (-32.8 K)
+      air 40 degC, h = 10, Rc = 1 K/W, steam heater alone: junction  95.31 degC; 125 degC HOLDS (+29.7 K), 100 degC share HOLDS (+4.7 K)
+      air 40 degC, h = 10, Rc = 3 K/W, both heaters on   : junction 151.01 degC; 125 degC FAILS (-26.0 K), 100 degC share FAILS (-51.0 K)
+      air 40 degC, h = 10, Rc = 3 K/W, steam heater alone: junction 104.99 degC; 125 degC HOLDS (+20.0 K), 100 degC share FAILS (-5.0 K)
+      air 40 degC, h =  5, Rc = 0 K/W, both heaters on   : junction 155.20 degC; 125 degC FAILS (-30.2 K), 100 degC share FAILS (-55.2 K)
+      air 40 degC, h =  5, Rc = 0 K/W, steam heater alone: junction 107.22 degC; 125 degC HOLDS (+17.8 K), 100 degC share FAILS (-7.2 K)
+      air 40 degC, h =  5, Rc = 1 K/W, both heaters on   : junction 164.29 degC; 125 degC FAILS (-39.3 K), 100 degC share FAILS (-64.3 K)
+      air 40 degC, h =  5, Rc = 1 K/W, steam heater alone: junction 112.06 degC; 125 degC HOLDS (+12.9 K), 100 degC share FAILS (-12.1 K)
+      air 40 degC, h =  5, Rc = 3 K/W, both heaters on   : junction 182.47 degC; 125 degC FAILS (-57.5 K), 100 degC share FAILS (-82.5 K)
+      air 40 degC, h =  5, Rc = 3 K/W, steam heater alone: junction 121.74 degC; 125 degC HOLDS (+3.3 K), 100 degC share FAILS (-21.7 K)
+PASS  narrower plate holds the maker's 125 degC in every case: 0 of 24 cases over 125 degC; the hottest is 121.1 degC (both on, 40 degC air, h = 5, Rc = 3 K/W)
+NOTE  narrower plate, aluminium wall, the 100 degC policy share: 20 of 24 cases hold; the cases over it, with the load, the air temperature, the air film coefficient h and the joint resistance Rc of each: 25 degC air h 5 Rc 3 both heaters on 106.1 degC; 40 degC air h 10 Rc 3 both heaters on 109.4 degC; 40 degC air h 5 Rc 1 both heaters on 103.0 degC; 40 degC air h 5 Rc 3 both heaters on 121.1 degC
+NOTE  narrower plate, the joint resistance both-on that the 100 degC share leaves on the aluminium wall: 25 degC air, h = 5: 2.32 K/W; 25 degC air, h = 10: 3.61 K/W; 40 degC air, h = 5: 0.67 K/W; 40 degC air, h = 10: 1.96 K/W
+   current share, narrower plate, aluminium k 110, h = 10, Rc = 3 K/W, air 25 degC: steam triac case 84.3 degC; 0.5 current share 8.24 A (model) against the steam element's 5.38 A
+PASS  current share holds on the aluminium wall at the narrower plate, Rc 3 K/W, air 25 degC: 8.24 A against 5.38 A
+   current share, narrower plate, aluminium k 110, h = 10, Rc = 3 K/W, air 40 degC: steam triac case 99.3 degC; 0.5 current share 5.80 A (model) against the steam element's 5.38 A
+PASS  current share holds on the aluminium wall at the narrower plate, Rc 3 K/W, air 40 degC: 5.80 A against 5.38 A
+
 == (f) opto-triac worst-case temperature, onsemi MOC3083M/D Rev. 2
    sheet-implied junction-to-ambient 340 K/W; the LED's 31.6 mW (VF 1.5 V, IF 29.5 mA at the top rail) heats the junction by about 10.7 K (a derivation)
    air 45 degC: headroom to the TOPR ambient limit 85 degC = 40 K for the neighbour rise (the triac 20.0 mm away, unmeasured); junction share 0.88 x 100 = 88 degC leaves 32.3 K after self-heating

@@ -42,10 +42,64 @@ def refused(overrides, forms=("single",)):
 def short_plate():
     from build123d import Pos  # noqa: F401
     m = case.build(forms=("single",))
-    m.parts["plate"] = case.box(-6.25 + 4.0, 53.75 - 4.0, m.v_plate - 5.0, m.v_plate, -7.0, 23.0)          # a 70 mm plate under the same case
+    m.parts["plate"] = case.box(-6.25 + 4.0, 53.75 - 4.0, m.v_plate - 5.0, m.v_plate, 6.0, 22.975)          # a 70 mm plate under the same case
     m._meshes.pop("plate", None)
     check._SCENES.clear()
     return {"results": check.check_c2_c3(m), "refused": refused({"plate.length_mm": 70.0})}
+
+
+def full_height_plate():
+    """The nominal model with the plate's lower edge at the full height of the former drawing, where the tray's printed end wall stands."""
+    m = case.build(forms=("single",))
+    pl = m.info["plate"]
+    m.parts["plate"] = case.box(pl["u0"], pl["u1"], m.v_plate - m.P("plate.thickness_mm"), m.v_plate, pl["former_z0"], pl["z1"])
+    m._meshes.pop("plate", None)
+    check._SCENES.clear()
+    return check.check_c1(m)
+
+
+def tray_against_the_wall():
+    """The nominal model with a printed block added to the tray that reaches the machine wall's plane."""
+    m = case.build(forms=("single",))
+    e = case.case_extent(m)
+    v_wall = m.v_plate - m.P("plate.thickness_mm")
+    m.parts["tray"] = m.parts["tray"] + case.box(e["u0"], e["u1"], v_wall - 0.2, v_wall + 0.6, m.z_floor_bottom, 5.8)
+    m._meshes.pop("tray", None)
+    check._SCENES.clear()
+    return check.check_c2_c3(m)
+
+
+def tray_screw_into_the_pocket():
+    """The tray screws moved up to 19.5 mm, where the pilot cuts the lid toe's pocket and breaks out of the pilaster's top."""
+    m = case.build({"screws.tray_plate_z_mm": [9.5, 19.5]}, ("single",))
+    check._SCENES.clear()
+    return check.tray_screws_fit_plate(m)
+
+
+def loose_film_part():
+    """The nominal model with a bought film part added to its parts list."""
+    m = case.build(forms=("single",))
+    m.parts["film"] = case.box(-6.0, 53.5, m.v_plate, m.v_plate + 0.25, 0.0, 8.0)
+    check._SCENES.clear()
+    return check.check_c1(m)
+
+
+def gap_extreme(which):
+    """The nominal model at the narrowest or the widest board-edge-to-plate gap: the package's tab-face distance and both tolerances at the one extreme."""
+    lo = which == "narrowest"
+    o = {"seating.tab_face_to_lead_centre_mm": 2.645 if lo else 3.07, "seating.lead_play_mm": 0.305 if lo else -0.305,
+         "seating.outline_routing_mm": -0.2 if lo else 0.2}
+    m = case.build(o, ("single",))
+    check._SCENES.clear()
+    return check.check_c1(m) + check.check_c2_c3(m)
+
+
+def tab_screw_of_length(nominal):
+    """The nominal model with the triac screw's nominal length changed, the length tolerance of an ISO 4759-1 js15 screw (+/- 0.24 mm) kept."""
+    m = case.build(forms=("single",))
+    m.P.entry("triac.tab_screw_length_mm").update(value=nominal, min=nominal - 0.24, max=nominal + 0.24)
+    check._SCENES.clear()
+    return check.check_c16_geometry(m)
 
 
 def rib_across_the_slot_mouths():
@@ -142,7 +196,7 @@ def cli(arguments):
     return {"returncode": done.returncode, "stdout": done.stdout, "file": written}
 
 
-CORNERS = {"corner_low": ("min", "min", "min"), "corner_high": ("max", "max", "max")}
+CORNERS = {"corner_low": ("min",) * 5, "corner_high": ("max",) * 5}
 
 def nominal():
     """Every check on the nominal model: the results the tests that read `results` share."""
@@ -158,11 +212,20 @@ JOBS = {
     "corner_high": (lambda: check._seating_combo(({}, None, CORNERS["corner_high"])), 80),
     "c13_no_engraving": (tray_without_its_engraving, 45),
     "c13_swap_too_early": (swap_before_the_logo_floor, 45),
-    "c1_high": (lambda: broken({"film.height_under_body_mm": 3.0}, "check_c1"), 22),
-    "c1_low": (lambda: broken({"film.height_under_body_mm": 0.5}, "check_c1"), 22),
-    "c1_thick": (lambda: broken({"film.thickness_mm": 0.6}, "check_c1"), 22),
+    "c1_low_plate": (lambda: broken({"plate.lower_edge_z_mm": 1.0}, "check_c1"), 25),
+    "c1_full_height_plate": (full_height_plate, 25),
+    "c2_tray_at_the_wall": (tray_against_the_wall, 25),
+    "c2_short_former": (lambda: broken({"plate.former_height_mm": 25.0}, "check_c2_c3"), 22),
+    "c3_screw_in_pocket": (tray_screw_into_the_pocket, 25),
+    "c3_one_edge_screw": (lambda: broken({"screws.tray_plate_z_mm": [6.5, 14.0]}, "check_c2_c3"), 22),
+    "c1_gap_narrowest": (lambda: gap_extreme("narrowest"), 30),
+    "c1_gap_widest": (lambda: gap_extreme("widest"), 30),
+    "c1_loose_part": (loose_film_part, 22),
+    "c9_weak_pilot": (lambda: broken({"screws.tray_pilot_pullout_MPa": 1.0}, "check_c6_c9"), 22),
+    "c16_long_screw": (lambda: tab_screw_of_length(6.0), 25),
+    "c16_short_screw": (lambda: tab_screw_of_length(4.0), 25),
     "cli_json": (lambda: cli(["--format", "json", "--only", "c1.,c15."]), 30),
-    "cli_fails": (lambda: cli(["--only", "c1.", "--set", "film.height_under_body_mm=3.0"]), 25),
+    "cli_fails": (lambda: cli(["--only", "c1.", "--set", "plate.lower_edge_z_mm=1.0"]), 25),
     "c5_no_barb": (lambda: broken({"lid.toe_barb": False}, "check_c5_c11"), 24),
     "c11_driver": (lambda: broken({"screws.driver_max_tilt_deg": 1.0}, "check_c5_c11"), 24),
     "c6_no_finger": (lambda: broken({"seat.finger": False}, "check_c6_c9"), 22),

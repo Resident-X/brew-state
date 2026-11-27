@@ -144,15 +144,15 @@ def test_blade_bays_hold_every_blade_centred_across_x_and_none_is_empty(geometry
     assert empty.ok and empty.measured == 0
 
 
-def test_triac_tapped_holes_film_notches_and_faces_sit_on_the_leads(geometry_results):
+def test_triac_tapped_holes_and_the_plate_face_sit_on_the_leads(geometry_results):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21: The exported case meshes are right-handed physical shapes that fit the board as built. Placed against the board's own three-dimensional model exported from its KiCad file, each case feature that depends on a board feature (the blade bays, the triac tab faces and lead pad holes, the mounting-hole pilot, the slot mouths) lies on that feature within a stated tolerance, and the Staircase logo reads the right way round when the lid is viewed from below in the installed orientation. The check runs on the exported files and the board's exported model, not on the case model's own coordinate frame, and a control that mirrors one exported axis makes it fail. The renders and the record's views are drawn from the same physical frame.
-    for name in ("tapped_holes_on_triac_middle_leads", "tapped_holes_at_tab_hole_height", "film_notches_on_triac_middle_leads"):
+    for name in ("tapped_holes_on_triac_middle_leads", "tapped_holes_at_tab_hole_height"):
         r = named(geometry_results, name)
         assert r.ok and r.measured <= fit.POSITION_TOL_MM, (name, r)
-    for name in ("plate_inner_face_at_tab_face_distance", "film_inner_face_at_seating_distance"):
-        r = named(geometry_results, name)
-        assert r.ok and abs(r.measured - r.expected) <= fit.FACE_TOL_MM, (name, r)
-    assert named(geometry_results, "plate_and_film_beyond_the_plate_side_edge").ok
+    r = named(geometry_results, "plate_inner_face_at_tab_face_distance")
+    assert r.ok and abs(r.measured - r.expected) <= fit.FACE_TOL_MM, r
+    assert named(geometry_results, "plate_beyond_the_plate_side_edge").ok
+    assert "film_inner_face_at_seating_distance" not in {x.name for x in geometry_results}
     assert "triac_lead_rows_in_board_model" not in {r.name for r in geometry_results}      # both rows of three lead holes were found in the board model
 
 
@@ -166,7 +166,7 @@ def test_slot_mouths_keep_the_clear_air_and_the_right_wall_stands_at_them(geomet
 
 def test_board_body_shares_no_volume_with_the_case_and_lies_on_its_seats(geometry_results):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21: The exported case meshes are right-handed physical shapes that fit the board as built. Placed against the board's own three-dimensional model exported from its KiCad file, each case feature that depends on a board feature (the blade bays, the triac tab faces and lead pad holes, the mounting-hole pilot, the slot mouths) lies on that feature within a stated tolerance, and the Staircase logo reads the right way round when the lid is viewed from below in the installed orientation. The check runs on the exported files and the board's exported model, not on the case model's own coordinate frame, and a control that mirrors one exported axis makes it fail. The renders and the record's views are drawn from the same physical frame.
-    for part in ("tray", "lid_single", "lid_two", "film", "plate"):
+    for part in ("tray", "lid_single", "lid_two", "plate"):
         r = named(geometry_results, f"board_body_clear_of_{part}")
         assert r.ok and r.measured <= fit.VOLUME_BOUND_MM3
     seats = named(geometry_results, "board_lies_on_its_seats")
@@ -230,7 +230,7 @@ def test_mirroring_the_exports_in_x_fails_the_named_locating_results(meshes, boa
     assert all(m.is_watertight and m.volume > 0 and m.volume == pytest.approx(meshes[n].volume) for n, m in flipped.items())      # only the handedness differs
     bad = failing(fit.fit_results(flipped, board, params))
     assert {"pilot_on_h1_axis", "bays_hold_blade_pad_holes_lid_single", "bays_hold_blade_pad_holes_lid_two", "bays_centred_on_blades_across_x_lid_single",
-            "tapped_holes_on_triac_middle_leads", "film_notches_on_triac_middle_leads", "logo_reads_right_way_round_lid_single",
+            "tapped_holes_on_triac_middle_leads", "logo_reads_right_way_round_lid_single",
             "logo_reads_right_way_round_lid_two", "logo_reads_right_way_round_tray_top"} <= bad
 
 
@@ -240,7 +240,7 @@ def test_mirroring_the_exports_in_y_fails_the_named_locating_results(meshes, boa
     assert all(m.is_watertight and m.volume > 0 and m.volume == pytest.approx(meshes[n].volume) for n, m in flipped.items())
     bad = failing(fit.fit_results(flipped, board, params))
     assert {"pilot_on_h1_axis", "bays_hold_blade_pad_holes_lid_single", "bays_hold_blade_pad_holes_lid_two", "no_bay_without_blade_lid_single",
-            "plate_inner_face_at_tab_face_distance", "film_inner_face_at_seating_distance", "plate_and_film_beyond_the_plate_side_edge",
+            "plate_inner_face_at_tab_face_distance", "plate_beyond_the_plate_side_edge",
             "logo_reads_right_way_round_lid_single", "logo_reads_right_way_round_lid_two", "logo_reads_right_way_round_tray_top"} <= bad
 
 
@@ -329,7 +329,7 @@ def test_physical_reflection_keeps_solids_valid_and_meshes_outward():
 
 def test_the_physical_export_of_a_part_is_the_reflection_of_the_model_part(model, meshes):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21: The exported case meshes are right-handed physical shapes that fit the board as built. Placed against the board's own three-dimensional model exported from its KiCad file, each case feature that depends on a board feature (the blade bays, the triac tab faces and lead pad holes, the mounting-hole pilot, the slot mouths) lies on that feature within a stated tolerance, and the Staircase logo reads the right way round when the lid is viewed from below in the installed orientation. The check runs on the exported files and the board's exported model, not on the case model's own coordinate frame, and a control that mirrors one exported axis makes it fail. The renders and the record's views are drawn from the same physical frame.
-    for name in ("tray", "plate", "film", "lid_single", "lid_two"):
+    for name in ("tray", "plate", "lid_single", "lid_two"):
         exported = meshes[name]
         reflected = case.physical_mesh(model.mesh(name))
         ok, note = fit._same(fit._signature(reflected), fit._signature(exported))
@@ -356,13 +356,13 @@ def test_render_scene_meshes_are_the_exported_stls_and_a_mirror_is_not(model, me
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21: The exported case meshes are right-handed physical shapes that fit the board as built. Placed against the board's own three-dimensional model exported from its KiCad file, each case feature that depends on a board feature (the blade bays, the triac tab faces and lead pad holes, the mounting-hole pilot, the slot mouths) lies on that feature within a stated tolerance, and the Staircase logo reads the right way round when the lid is viewed from below in the installed orientation. The check runs on the exported files and the board's exported model, not on the case model's own coordinate frame, and a control that mirrors one exported axis makes it fail. The renders and the record's views are drawn from the same physical frame.
     import render
     scene = render.scene_meshes(model)
-    assert set(scene) == {"tray", "lid_single", "lid_two", "film", "plate"}
+    assert set(scene) == {"tray", "lid_single", "lid_two", "plate"}
     for name, mesh in scene.items():
         exported = meshes[name]
         assert mesh.is_watertight and mesh.volume > 0, name
         assert fit._same(fit._signature(mesh), fit._signature(exported))[0], name
         assert _section_distance_ok(mesh, exported, 0.05), name
-        if name in ("tray", "lid_single", "film"):
+        if name in ("tray", "lid_single"):
             for axis in (0, 1):
                 flipped = fit.mirror_mesh(mesh, axis, board.placed_centre[axis])       # about the board's centre line, as the fit controls do
                 assert not (fit._same(fit._signature(flipped), fit._signature(exported))[0] and _section_distance_ok(flipped, exported, 0.05)), (name, axis)
@@ -452,13 +452,10 @@ def test_the_plan_drawing_shows_the_pillars_where_the_exported_tray_has_them_and
     assert len(unmatched([(x, 2 * centre[1] - y) for x, y in seen])) >= 3, "a plan mirrored in Y puts pillars where the tray has none"
 
 
-def test_the_film_template_outline_is_the_exported_film_seen_from_the_case_side_and_a_mirror_is_not(meshes):
-    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21: The exported case meshes are right-handed physical shapes that fit the board as built. Placed against the board's own three-dimensional model exported from its KiCad file, each case feature that depends on a board feature (the blade bays, the triac tab faces and lead pad holes, the mounting-hole pilot, the slot mouths) lies on that feature within a stated tolerance, and the Staircase logo reads the right way round when the lid is viewed from below in the installed orientation. The check runs on the exported files and the board's exported model, not on the case model's own coordinate frame, and a control that mirrors one exported axis makes it fail. The renders and the record's views are drawn from the same physical frame.
-    # seen from the case side, looking toward the wall: u to the right (physical X) and z up (drawing y is minus Z)
-    film = _silhouette(meshes["film"], (0, 2), (1, -1))
-    drawn = unary_union(_svg_polygons(_svg("film-template.svg"), "#fdf1d2"))
-    assert _overlap(_onto(drawn, film), film) >= 0.97
-    assert _overlap(_onto(_mirror(drawn, 0), film), film) < 0.93 and _overlap(_onto(_mirror(drawn, 1), film), film) < 0.7
+def test_no_film_part_or_template_is_exported(meshes):
+    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C21: The exported case meshes are right-handed physical shapes that fit the board as built. Placed against the board's own three-dimensional model exported from its KiCad file, each case feature that depends on a board feature lies on it within a stated tolerance
+    assert "film" not in meshes
+    assert not os.path.exists(os.path.join(CASE_DIR, "out", "film.stl")) and not os.path.exists(os.path.join(CASE_DIR, "out", "film-template.svg"))
 
 
 def test_the_plate_drawing_puts_the_tapped_holes_where_the_exported_plate_has_them_and_a_mirror_does_not(meshes):

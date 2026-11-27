@@ -65,9 +65,9 @@ from shapely.ops import polygonize, unary_union  # noqa: E402
 import board_model  # noqa: E402
 import logo as logo_module  # noqa: E402
 
-PARTS = ("tray", "film", "plate", "lid_single", "lid_two", "lid_swap", "tray_swap")
+PARTS = ("tray", "plate", "lid_single", "lid_two", "lid_swap", "tray_swap")
 PRINTED = ("tray", "lid_single", "lid_two")
-FORMS = {"single": ("tray", "lid_single", "film", "plate"), "two": ("tray", "lid_two", "film", "plate", "lid_swap", "tray_swap")}
+FORMS = {"single": ("tray", "lid_single", "plate"), "two": ("tray", "lid_two", "plate", "lid_swap", "tray_swap")}
 SWAP_OF = {"tray": "tray_swap", "lid_two": "lid_swap"}
 
 # tolerances, each stated in the result that uses it
@@ -369,32 +369,29 @@ def check_bays(meshes: Dict[str, trimesh.Trimesh], board: BoardModel, P: Any, li
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# The triacs: plate, film
+# The triacs: the plate
 # ---------------------------------------------------------------------------------------------------------------------
 
 def check_triacs(meshes: Dict[str, trimesh.Trimesh], board: BoardModel, P: Any) -> List[Result]:
-    """The plate's tapped holes and the film's notches on the triacs' middle leads; the plate and film beyond the board's plate-side edge at the seating figures' distances."""
+    """The plate's tapped-through holes on the triacs' middle leads; the plate beyond the board's plate-side edge at the seating figures' distance."""
     out: List[Result] = []
-    plate, film = meshes["plate"], meshes["film"]
+    plate = meshes["plate"]
     if len(board.triac_rows) != 2:
         return [Result("triac_lead_rows_in_board_model", False, len(board.triac_rows), 2, 0, "rows of three lead holes")]
     row_y = board.triac_rows[0][1]
     middles = [row[0][1] for row in board.triac_rows]
     tfc = P("seating.tab_face_to_lead_centre_mm")
-    film_t = P("film.thickness_mm")
     tab_z = P("seating.body_underside_mm") + P("triac.A_mm") - P("triac.L_mm")
-    # the plate's inner face, the film's inner face
-    plate_face, film_face = float(plate.bounds[0][1]), float(film.bounds[0][1])
+    # the plate's inner face
+    plate_face = float(plate.bounds[0][1])
     edge_y = float(board.outline.bounds[3])
     out.append(Result("plate_inner_face_at_tab_face_distance", abs(plate_face - (row_y + tfc)) <= FACE_TOL_MM, round(plate_face, 4), round(row_y + tfc, 4), FACE_TOL_MM, "mm Y",
                       f"the lead row at Y {row_y:.3f} plus the tab face to lead centre distance {tfc}"))
-    out.append(Result("film_inner_face_at_seating_distance", abs(film_face - (row_y + tfc - film_t)) <= FACE_TOL_MM, round(film_face, 4), round(row_y + tfc - film_t, 4), FACE_TOL_MM, "mm Y",
-                      f"the lead row plus the tab face distance {tfc} less the film thickness {film_t}"))
-    beyond = float(plate.bounds[0][1]) >= edge_y - FACE_TOL_MM and film_face >= edge_y - FACE_TOL_MM and film_face > row_y and plate_face > row_y
-    out.append(Result("plate_and_film_beyond_the_plate_side_edge", beyond, [round(film_face, 3), round(plate_face, 3)], f">= {edge_y:.3f}", FACE_TOL_MM, "mm Y",
-                      "the film's and the plate's inner faces lie beyond the board's plate-side edge, on the lead-hole side of the row"))
-    # tapped holes: voids of the plate section a little behind its inner face
-    depth = P("triac.plate_tap_depth_mm")
+    beyond = plate_face >= edge_y - FACE_TOL_MM and plate_face > row_y
+    out.append(Result("plate_beyond_the_plate_side_edge", beyond, round(plate_face, 3), f">= {edge_y:.3f}", FACE_TOL_MM, "mm Y",
+                      "the plate's inner face lies beyond the board's plate-side edge, on the lead-hole side of the row"))
+    # tapped holes, through the whole plate: voids of the plate section half way through it
+    depth = P("plate.thickness_mm")
     drill = P("triac.plate_tap_drill_mm")
     section = section_material(plate, 1, plate_face + depth / 2)
     found, worst = [], 0.0
@@ -412,21 +409,6 @@ def check_triacs(meshes: Dict[str, trimesh.Trimesh], board: BoardModel, P: Any) 
     z_err = max((abs(f[1] - tab_z) for f in found if f is not None), default=math.inf)
     out.append(Result("tapped_holes_at_tab_hole_height", all_found and z_err <= POSITION_TOL_MM, round(z_err, 4) if all_found else "no tapped hole", 0.0, POSITION_TOL_MM, "mm in Z",
                       f"the tab hole height {tab_z:.3f} above the component face: the seating body underside plus the body height less the tab-top to hole distance"))
-    # film notches under the triac bodies: the gaps in the film's top at a height between the notch floor and the top
-    hn, hb = P("film.height_under_body_mm"), P("film.height_beside_mm")
-    mid_section = section_material(film, 1, (float(film.bounds[0][1]) + float(film.bounds[1][1])) / 2)
-    z_cut = (hn + hb) / 2
-    xs0, xs1 = float(film.bounds[0][0]), float(film.bounds[1][0])
-    strip = mid_section.intersection(LineString([(xs0 - 1, z_cut), (xs1 + 1, z_cut)]))
-    pieces = sorted((g.bounds[0], g.bounds[2]) for g in polygons_of_lines(strip))
-    gaps = [(pieces[i][1], pieces[i + 1][0]) for i in range(len(pieces) - 1)]
-    width = P("triac.B_mm") + 2 * P("film.notch_margin_mm")
-    centres = sorted((a + b) / 2 for a, b in gaps)
-    expect = sorted(middles)
-    err = max((abs(c - e) for c, e in zip(centres, expect)), default=math.inf) if len(centres) == len(expect) else math.inf
-    widths_ok = len(gaps) == len(expect) and all(abs((b - a) - width) <= POSITION_TOL_MM for a, b in gaps)
-    out.append(Result("film_notches_on_triac_middle_leads", err <= POSITION_TOL_MM and widths_ok, round(err, 4) if err < math.inf else f"{len(gaps)} notches found", 0.0, POSITION_TOL_MM, "mm in X",
-                      f"notch centres {[round(c, 3) for c in centres]} against the middle leads {[round(e, 3) for e in expect]}; widths {[round(b - a, 3) for a, b in gaps]} against {width:.2f} (body width plus 2 x margin)"))
     return out
 
 
@@ -464,10 +446,10 @@ def check_slots(meshes: Dict[str, trimesh.Trimesh], board: BoardModel, P: Any) -
     out: List[Result] = []
     if len(board.slots) != 2:
         return [Result("slots_in_board_model", False, len(board.slots), 2, 0, "slots")]
-    gaps = {name: _distance_to_slots(meshes[name], board) for name in ("tray", "lid_single", "lid_two", "film")}
+    gaps = {name: _distance_to_slots(meshes[name], board) for name in ("tray", "lid_single", "lid_two")}
     least = min(gaps.values())
     out.append(Result("slot_mouths_clear_air", least >= keep - CLEARANCE_TOL_MM, round(least, 3), f">= {keep}", CLEARANCE_TOL_MM, "mm",
-                      "the least distance from the tray, either lid or the film to the open area of either slot, mouth included: " + ", ".join(f"{n} {g:.2f}" for n, g in gaps.items())))
+                      "the least distance from the tray or either lid to the open area of either slot, mouth included: " + ", ".join(f"{n} {g:.2f}" for n, g in gaps.items())))
     wall_air = []
     section = section_material(meshes["tray"], 2, 1.0)
     mouth_x = float(max(s.bounds[2] for s in board.slots))
@@ -491,7 +473,7 @@ def _board_body_volume_in(mesh: trimesh.Trimesh, board: BoardModel) -> float:
 def check_clearance(meshes: Dict[str, trimesh.Trimesh], board: BoardModel) -> List[Result]:
     out = []
     t = board.thickness
-    shared = {name: _board_body_volume_in(meshes[name], board) for name in ("tray", "lid_single", "lid_two", "film", "plate")}
+    shared = {name: _board_body_volume_in(meshes[name], board) for name in ("tray", "lid_single", "lid_two", "plate")}
     for name, volume in shared.items():
         out.append(Result(f"board_body_clear_of_{name}", volume <= VOLUME_BOUND_MM3, round(volume, 4), 0.0, VOLUME_BOUND_MM3, "mm3 shared",
                           f"the volume the board body shares with the {name} (boolean intersection of the two meshes)"))

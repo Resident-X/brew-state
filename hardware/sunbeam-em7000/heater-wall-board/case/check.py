@@ -133,7 +133,7 @@ _SCENES: Dict[Tuple[int, str], Scene] = {}
 def scene(m: case.Model, form: str = "single") -> Scene:
     key = (id(m), form)
     if key not in _SCENES:
-        names = ["tray", f"lid_{form}", "film", "plate"] + list(m.bodies.keys())
+        names = ["tray", f"lid_{form}", "plate"] + list(m.bodies.keys())
         _SCENES[key] = Scene(m, names, form)
     return _SCENES[key]
 
@@ -193,18 +193,6 @@ def axis_points(screw: Dict[str, Any], step: float = 0.25) -> List[Tuple[float, 
     return pts
 
 
-def film_top_profile(m: case.Model, step: float = 0.05) -> Tuple[np.ndarray, np.ndarray]:
-    """The film's top edge height at each u, ray-cast on its mesh."""
-    sc = Scene(m, ["film"])
-    v_mid = (m.v_plate + m.v_end) / 2
-    us = np.arange(-6.0, 54.0 + 1e-9, step)
-    tops = []
-    for u in us:
-        hit = sc.first_hit((u, v_mid, 40.0), (0, 0, -1))
-        tops.append(40.0 - hit["distance"] if hit else float("nan"))
-    return us, np.array(tops)
-
-
 def tray_top_at(sc: Scene, u: float, v: float, z_from: float = 40.0) -> Optional[float]:
     hit = sc.first_hit((u, v, z_from), (0, 0, -1))
     return None if hit is None else z_from - hit["distance"]
@@ -238,140 +226,161 @@ def second_moment(polygons: Sequence[ShPolygon]) -> Tuple[float, float, float]:
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-# The creepage barrier
+# The plate's clearance and creepage over the board's tolerances
 # ---------------------------------------------------------------------------------------------------------------------
+
+def gap_range(P: Any) -> Dict[str, float]:
+    """The board-edge-to-plate gap over the maker's tab-face-to-lead-centre range, the outline routing tolerance and the leads' play, from the figures of params.yaml."""
+    row = P("seating.pad_row_v_mm")
+    tfc, rt, lp = P.entry("seating.tab_face_to_lead_centre_mm"), P.entry("seating.outline_routing_mm"), P.entry("seating.lead_play_mm")
+    package_lo, package_hi = tfc["min"] - row, tfc["max"] - row
+    routing, play = max(abs(rt["min"]), abs(rt["max"])), max(abs(lp["min"]), abs(lp["max"]))
+    return {"package_min_mm": package_lo, "package_max_mm": package_hi, "routing_mm": routing, "play_mm": play,
+            "min_mm": package_lo - routing - play, "max_mm": package_hi + routing + play, "nominal_mm": P("seating.tab_face_to_lead_centre_mm") - row}
+
+
+def mains_points(m: case.Model, near_v: float = 12.0, step: float = 0.1) -> Tuple[np.ndarray, List[str], List[str]]:
+    """Boundary points of every Mains-family copper item that comes within `near_v` of the board's plate-side edge, on each copper layer, in
+    the case frame with the lean carried: one row (u, v, z) per point, with the label and the layer of the item it belongs to."""
+    t = m.board.thickness
+    pts, labels, layers = [], [], []
+    c, sn = math.cos(m.phi), math.sin(m.phi)
+    for item in m.board.mains_items:
+        geom = item["geom"]
+        if geom.is_empty or geom.bounds[1] > near_v:
+            continue
+        zc = 0.0 if item["layer"] == "F.Cu" else -t
+        boundary = shapely.segmentize(geom.boundary, step)
+        coords = np.array([xy for g in (boundary.geoms if hasattr(boundary, "geoms") else [boundary]) for xy in g.coords])
+        coords = coords[coords[:, 1] <= near_v]
+        if not len(coords):
+            continue
+        dv = coords[:, 1] - m.pivot_v
+        pts.append(np.stack([coords[:, 0], m.pivot_v + dv * c - zc * sn, zc * c + dv * sn], axis=1))
+        labels += [item["label"]] * len(coords)
+        layers += [item["layer"]] * len(coords)
+    return (np.vstack(pts) if pts else np.zeros((0, 3))), labels, layers
+
+
+def distance_to_box(points: np.ndarray, u0: float, u1: float, v0: float, v1: float, z0: float, z1: float) -> np.ndarray:
+    """The straight-line distance from each point (u, v, z) to an axis-aligned box."""
+    d = np.stack([np.maximum.reduce([u0 - points[:, 0], np.zeros(len(points)), points[:, 0] - u1]),
+                  np.maximum.reduce([v0 - points[:, 1], np.zeros(len(points)), points[:, 1] - v1]),
+                  np.maximum.reduce([z0 - points[:, 2], np.zeros(len(points)), points[:, 2] - z1])], axis=1)
+    return np.linalg.norm(d, axis=1)
+
+
+def plate_distances(m: case.Model) -> Dict[str, Any]:
+    """The straight-line distance from every Mains-family copper item's edge and from each bare lead to the plate solid and to the machine wall's plane, in 3D."""
+    P = m.P
+    pl = m.info["plate"]
+    T = P("plate.thickness_mm")
+    v_wall = m.v_plate - T
+    pts, labels, layers = mains_points(m)
+    d_plate = distance_to_box(pts, pl["u0"], pl["u1"], v_wall, m.v_plate, pl["z0"], pl["z1"])
+    d_wall = pts[:, 1] - v_wall
+    k = int(np.argmin(d_plate))
+    pads = {}
+    for ref in case.TRIAC_REFS:
+        for pad in m.board.refs[ref]["pads"]:
+            poly = ShPolygon([(x - m.board.ox, y - m.board.oy) for x, y in pad["pad"].outline()])
+            for layer in ("F.Cu", "B.Cu"):
+                zc = 0.0 if layer == "F.Cu" else -m.board.thickness
+                boundary = shapely.segmentize(poly.boundary, 0.1)
+                xy = np.array(boundary.coords)
+                dv = xy[:, 1] - m.pivot_v
+                c, sn = math.cos(m.phi), math.sin(m.phi)
+                g = np.stack([xy[:, 0], m.pivot_v + dv * c - zc * sn, zc * c + dv * sn], axis=1)
+                dd = distance_to_box(g, pl["u0"], pl["u1"], v_wall, m.v_plate, pl["z0"], pl["z1"])
+                pads[f"{ref} pad {pad['number']} {layer}"] = float(dd.min())
+    leads = {}
+    for ref in case.TRIAC_REFS:
+        shape = m.bodies[f"{ref}_leads"]["shape"]
+        leads[f"{ref} leads"] = {"to_plate_mm": float(m.parts["plate"].distance_to(shape)),
+                                 "to_wall_plane_mm": float(shape.bounding_box().min.Y - v_wall)}
+    return {"all_copper_mm": float(d_plate.min()), "all_copper_item": f"{labels[k]} on {layers[k]}", "points": int(len(pts)),
+            "all_copper_to_wall_plane_mm": float(d_wall.min()), "pads_mm": pads, "leads": leads,
+            "pad_least_mm": min(pads.values()), "lead_least_mm": min(v["to_plate_mm"] for v in leads.values()),
+            "lead_wall_plane_least_mm": min(v["to_wall_plane_mm"] for v in leads.values())}
+
 
 def check_c1(m: case.Model) -> List[Dict[str, Any]]:
     P, sep = m.P, m.basis
     out: List[Dict[str, Any]] = []
-    need = sep["creepage_mains_mm"]
-    film = m.mesh("film")
-    bounds = film.bounds
-    t_measured = float(bounds[1][1] - bounds[0][1])
-    kind = P("film.kind")
-    lo, hi = P.entry("film.thickness_mm")["min"], P.entry("film.thickness_mm")["max"]
-    out.append(result("c1.barrier_kind_and_thickness", "C1", kind == "film" and lo - 1e-9 <= t_measured <= hi + 1e-9,
-                      f"the barrier is a bought insulating film of {t_measured:.3f} mm held by the tray; a printed wall is not used",
-                      {"kind": kind, "film_thickness_mm": t_measured, "allowed_thickness_mm": [lo, hi],
-                       "printed_wall_minimum_mm": 0.8, "film_holder": "tray end faces (pilasters and floor end) against the plate"}))
+    creep_need, clear_need = sep["creepage_mains_mm"], sep["clearance_mains_mm"]
+    d = plate_distances(m)
 
-    # a printed wall: would it fit the gap over the whole seating range?
-    tfc_min = P.entry("seating.tab_face_to_lead_centre_mm")["min"]
-    row = P("seating.pad_row_v_mm")
-    gap_min = tfc_min - row
-    out.append(result("c1.printed_wall_does_not_fit", "C1", gap_min < 0.8,
-                      f"a 0.8 mm printed wall cannot stand in the board-to-plate gap, which is {gap_min:.3f} mm at its narrowest",
-                      {"gap_narrowest_mm": gap_min, "gap_nominal_mm": P("seating.tab_face_to_lead_centre_mm") - row,
-                       "gap_widest_mm": P.entry("seating.tab_face_to_lead_centre_mm")["max"] - row, "printed_wall_mm": 0.8}))
+    # the gap, stated over the three tolerances, and tied to the model's own geometry
+    g = gap_range(P)
+    edge_v = float(m.board.outline.bounds[1])
+    gap_built = edge_v - m.v_plate
+    expected = P("seating.tab_face_to_lead_centre_mm") - P("seating.pad_row_v_mm") - P("seating.lead_play_mm") + P("seating.outline_routing_mm")
+    out.append(result("c1.gap_over_tolerances", "C1", g["min_mm"] > 0.0 and abs(gap_built - expected) < 1e-6,
+                      f"the board-edge-to-plate gap is {g['min_mm']:.3f} to {g['max_mm']:.3f} mm: the maker's {g['package_min_mm']:.3f} to {g['package_max_mm']:.3f} mm, "
+                      f"less and plus the outline routing tolerance {g['routing_mm']:.1f} mm and the leads' play {g['play_mm']:.3f} mm; this build's gap {gap_built:.3f} mm",
+                      {"gap_min_mm": g["min_mm"], "gap_max_mm": g["max_mm"], "gap_nominal_mm": g["nominal_mm"], "package_range_mm": [g["package_min_mm"], g["package_max_mm"]],
+                       "outline_routing_mm": g["routing_mm"], "lead_play_mm": g["play_mm"], "gap_of_this_build_mm": gap_built,
+                       "arithmetic": f"{g['package_min_mm']:.3f} - {g['routing_mm']:.3f} - {g['play_mm']:.3f} = {g['min_mm']:.3f}; {g['package_max_mm']:.3f} + {g['routing_mm']:.3f} + {g['play_mm']:.3f} = {g['max_mm']:.3f}"}))
 
-    # film span and heights along u
-    us, tops = film_top_profile(m)
-    film_u0, film_u1 = float(bounds[0][0]), float(bounds[1][0])
-    spans = film_u0 <= 0.0 and film_u1 >= 45.0
-    tray_bb = m.mesh("tray").bounds
-    near = m.mesh("tray").vertices[m.mesh("tray").vertices[:, 1] < m.v_end + 0.5]
-    tray_end_u0, tray_end_u1 = float(near[:, 0].min()), float(near[:, 0].max())
-    full = abs(film_u0 - tray_end_u0) < 0.01 and abs(film_u1 - tray_end_u1) < 0.01
-    segs = []
-    start = 0
-    for i in range(1, len(us) + 1):
-        if i == len(us) or abs(tops[i] - tops[start]) > 1e-6:
-            segs.append({"u0": round(float(us[start]), 2), "u1": round(float(us[i - 1]), 2), "top_above_board_face_mm": round(float(tops[start]), 3)})
-            start = i
-    out.append(result("c1.film_spans_board_width", "C1", spans and full,
-                      f"the film spans u {film_u0:.2f} to {film_u1:.2f}, the tray's full outer width at the plate end, and so the board's 0 to 45",
-                      {"film_u_mm": [film_u0, film_u1], "tray_outer_u_at_plate_end_mm": [tray_end_u0, tray_end_u1], "board_u_mm": [0.0, 45.0]}))
-    lines = [f"u {s['u0']:6.2f} to {s['u1']:6.2f}: film top {s['top_above_board_face_mm']:6.3f} above the board face" for s in segs]
-    beside, under = P("film.height_beside_mm"), P("film.height_under_body_mm")
-    notch_ok = all(abs(tops[np.argmin(abs(us - m.triac_u[r]))] - under) < 1e-6 for r in case.TRIAC_REFS)
-    beside_ok = abs(tops[np.argmin(abs(us - 24.0))] - beside) < 1e-6 and abs(tops[np.argmin(abs(us - 1.0))] - beside) < 1e-6
-    out.append(result("c1.film_heights_along_u", "C1", notch_ok and beside_ok,
-                      f"film top {beside:.1f} above the board face beside and between the bodies, {under:.1f} under each body",
-                      {"segments": segs}, lines))
+    # the plate's lower edge, raised above the board's pads and bare leads
+    plate_z0 = float(m.parts["plate"].bounding_box().min.Z)
+    bu_max = P.entry("seating.body_underside_mm")["max"]
+    rear = P.entry("seating.tab_face_to_lead_centre_mm")["min"] - P("triac.c1_mm") / 2
+    derived = bu_max + math.sqrt(max(creep_need ** 2 - rear ** 2, 0.0))
+    lift = P("plate.lower_edge_z_mm")
+    out.append(result("c1.plate_lower_edge_raised", "C1", plate_z0 >= lift - 1e-9 and plate_z0 >= derived - 1e-9,
+                      f"the plate's lower edge stands at z {plate_z0:.3f} above the component face, at least the {lift:.1f} mm figure and the {derived:.3f} mm the bare leads need "
+                      f"({bu_max:.2f} + sqrt({creep_need:.1f}^2 - {rear:.3f}^2)): no plate metal faces the board edge, the pads or the lower leads",
+                      {"plate_lower_edge_z_mm": plate_z0, "figure_mm": lift, "derived_least_mm": derived, "lead_rear_face_to_plate_least_mm": rear,
+                       "lead_metal_top_mm": bu_max, "margin_to_derived_mm": plate_z0 - derived}))
 
-    # the film against the lowest body of the range, and not behind the tab
-    bu_min = P.entry("seating.body_underside_mm")["min"]
-    out.append(result("c1.film_notch_under_lowest_body", "C1", under < bu_min,
-                      f"the notch top {under:.2f} stands {bu_min - under:.2f} under the lowest body underside of the range ({bu_min:.2f})",
-                      {"notch_top_mm": under, "lowest_body_underside_mm": bu_min, "margin_mm": bu_min - under}))
-    dists = {}
-    for ref in case.TRIAC_REFS:
-        dists[ref] = float(m.parts["film"].distance_to(m.bodies[f"{ref}_body"]["shape"]))
-    out.append(result("c1.film_clear_of_triac_bodies", "C1", all(d > 0.0 for d in dists.values()),
-                      "the film touches no triac body or tab, and goes nowhere behind the tab",
-                      {"film_to_triac_mm": dists, "film_front_v_mm": m.v_plate, "tab_face_v_mm": m.v_plate}))
+    # clearance and creepage, each a straight line: no surface path is shorter than the straight line, so no barrier, film or coating is credited
+    out.append(result("c1.clearance_pad_to_plate", "C1", d["pad_least_mm"] >= clear_need,
+                      f"straight air from every triac pad edge, both copper layers, to the plate solid {d['pad_least_mm']:.3f} mm against the basis's {clear_need:.1f} mm",
+                      {"clearance_mm": d["pad_least_mm"], "required_mm": clear_need, "pads_mm": d["pads_mm"]}))
+    out.append(result("c1.creepage_pad_to_plate", "C1", d["pad_least_mm"] >= creep_need,
+                      f"creepage from every triac pad edge to the plate, taken as the straight line (no surface path is shorter) {d['pad_least_mm']:.3f} mm against the basis's {creep_need:.1f} mm, no barrier credited",
+                      {"creepage_mm": d["pad_least_mm"], "required_mm": creep_need, "basis": "straight-line distance; a path over any surface is at least as long", "pads_mm": d["pads_mm"]}))
+    out.append(result("c1.clearance_bare_lead_to_plate", "C1", d["lead_least_mm"] >= clear_need,
+                      f"a bare lead stands {d['lead_least_mm']:.3f} mm from the plate solid, against {clear_need:.1f} mm",
+                      {"clearance_mm": d["lead_least_mm"], "required_mm": clear_need, "leads": d["leads"]}))
+    out.append(result("c1.creepage_bare_lead_to_plate", "C1", d["lead_least_mm"] >= creep_need,
+                      f"a bare lead's straight line to the plate, the shortest path over any surface, is {d['lead_least_mm']:.3f} mm against {creep_need:.1f} mm, no barrier credited",
+                      {"creepage_mm": d["lead_least_mm"], "required_mm": creep_need, "leads": d["leads"]}))
+    out.append(result("c1.creepage_all_mains_copper", "C1", d["all_copper_mm"] >= creep_need,
+                      f"every Mains-family copper item (pad, track, via, pour) keeps at least {d['all_copper_mm']:.3f} mm of straight line to the plate solid (nearest: {d['all_copper_item']}) against {creep_need:.1f} mm",
+                      {"least_mm": d["all_copper_mm"], "item": d["all_copper_item"], "required_mm": creep_need, "points_measured": d["points"]}))
+    wall_least = min(d["all_copper_to_wall_plane_mm"], d["lead_wall_plane_least_mm"])
+    out.append(result("c1.straight_to_wall_plane", "C1", wall_least >= creep_need,
+                      f"the least straight line from Mains copper or a bare lead to the machine wall's plane is {wall_least:.3f} mm against {creep_need:.1f} mm",
+                      {"copper_mm": d["all_copper_to_wall_plane_mm"], "leads_mm": d["lead_wall_plane_least_mm"], "required_mm": creep_need,
+                       "wall_plane_v_mm": m.v_plate - P("plate.thickness_mm")}))
 
-    # creepage per triac pad
-    air = float(0.0 - bounds[1][1])
-    gap = float(0.0 - bounds[0][1])
-    edge = LineString([(-2.0, 0.0), (47.0, 0.0)])
-    t_mm = t_measured
-    rows = []
-    worst = float("inf")
-    z_bottom = float(bounds[0][2])
-    for ref in case.TRIAC_REFS:
-        for pad in m.board.refs[ref]["pads"]:
-            poly = ShPolygon([(x - m.board.ox, y - m.board.oy) for x, y in pad["pad"].outline()])
-            s1 = float(poly.distance(edge))
-            u_pad = pad["hole_u"]
-            # shortest climb on the film face from the board face level to its top edge, over the whole top edge
-            cands = np.hypot(us - u_pad, np.nan_to_num(tops, nan=1e9))
-            s3 = float(cands.min())
-            f_total = s1 + air + s3 + t_mm
-            s3b = abs(-m.board.thickness - z_bottom)
-            b_total = s1 + air + s3b + t_mm
-            lateral = s1 + air + min(u_pad - film_u0, film_u1 - u_pad) + t_mm
-            rows.append({"pad": f"{ref} pad {pad['number']}", "layer": "F.Cu", "segments_mm": {"pad_edge_to_board_edge": s1, "board_edge_to_film_face_air": air,
-                         "film_face_to_top_edge": s3, "film_thickness": t_mm}, "creepage_mm": f_total})
-            rows.append({"pad": f"{ref} pad {pad['number']}", "layer": "B.Cu", "segments_mm": {"pad_edge_to_board_edge": s1, "board_edge_to_film_face_air": air,
-                         "underside_down_the_film_face_to_its_bottom": s3b, "film_thickness": t_mm}, "creepage_mm": b_total})
-            rows.append({"pad": f"{ref} pad {pad['number']}", "layer": "lateral to the film side edge", "segments_mm": {"pad_edge_to_board_edge": s1, "air": air,
-                         "along_the_film": min(u_pad - film_u0, film_u1 - u_pad), "film_thickness": t_mm}, "creepage_mm": lateral})
-            worst = min(worst, f_total, b_total, lateral)
-    lines = [f"{r['pad']:12s} {r['layer']:30s} " + " + ".join(f"{k}={v:.3f}" for k, v in r["segments_mm"].items()) + f" = {r['creepage_mm']:.3f}" for r in rows]
-    s1_min = min(r["segments_mm"]["pad_edge_to_board_edge"] for r in rows)
-    out.append(result("c1.creepage_per_triac_pad", "C1", worst >= need,
-                      f"least creepage from a triac pad edge to the first bare plate {worst:.3f} mm against the basis's {need:.1f} mm",
-                      {"required_mm": need, "least_mm": worst, "pads": rows, "film_thickness_mm": t_mm,
-                       "gap_board_edge_to_plate_mm": gap, "pad_edge_to_board_edge_mm": s1_min}, lines))
-    without = s1_min + gap
-    out.append(result("c1.barrier_is_needed", "C1", without < need,
-                      f"without the barrier the path is {s1_min:.2f} + {gap:.2f} = {without:.2f} mm, short of {need:.1f} mm",
-                      {"path_without_barrier_mm": without, "required_mm": need, "pad_edge_to_board_edge_mm": s1_min, "gap_mm": gap}))
-
-    # every other mains copper item against the film
-    worst_other, label = float("inf"), ""
-    for item in m.board.mains_items:
-        d_edge = float(item["geom"].distance(edge))
-        if d_edge > 12.0:
-            continue
-        near_u = item["geom"].centroid.x
-        # use the nearest point's u for the film height
-        pt = shapely.ops.nearest_points(item["geom"], edge)[0]
-        h = float(np.nan_to_num(tops, nan=1e9)[np.argmin(abs(us - pt.x))])
-        total = d_edge + air + (h if item["layer"] == "F.Cu" else abs(-m.board.thickness - z_bottom)) + t_mm
-        if total < worst_other:
-            worst_other, label = total, f"{item['label']} on {item['layer']}"
-    out.append(result("c1.creepage_all_mains_copper", "C1", worst_other >= need,
-                      f"every other Mains-family copper item keeps at least {worst_other:.3f} mm of creepage to the plate (nearest: {label})",
-                      {"least_mm": worst_other, "item": label, "required_mm": need}))
-
-    # clearances
-    clear_need = sep["clearance_mains_mm"]
-    pad_clear = min(r["segments_mm"]["pad_edge_to_board_edge"] for r in rows) + gap
-    out.append(result("c1.clearance_pad_to_plate", "C1", pad_clear >= clear_need,
-                      f"straight air from a pad edge to the plate plane {pad_clear:.3f} mm against the basis's {clear_need:.1f} mm",
-                      {"clearance_mm": pad_clear, "required_mm": clear_need}))
-    lead_clear = float(m.parts["plate"].distance_to(m.bodies["T911_leads"]["shape"]))
-    lead_clear = min(lead_clear, float(m.parts["plate"].distance_to(m.bodies["T921_leads"]["shape"])))
-    out.append(result("c1.clearance_bare_lead_to_plate", "C1", lead_clear >= clear_need,
-                      f"a bare lead stands {lead_clear:.3f} mm from the bare plate above the film notch, against {clear_need:.1f} mm",
-                      {"clearance_mm": lead_clear, "required_mm": clear_need, "lead_rear_face_to_tab_face_mm": lead_clear}))
-    # the fallback is not used
-    plate_bb = m.parts["plate"].bounding_box()
-    out.append(result("c1.lift_fallback_not_used", "C1", plate_bb.min.Z < 6.0,
-                      f"the plate's lower edge stands at z {plate_bb.min.Z:.2f}, not 6.0 mm above the component face: the case takes the film form",
-                      {"plate_lower_edge_z_mm": plate_bb.min.Z, "film_form": True}))
+    # the end wall stands clear of the board edge, and the plate cannot be seated where the wall is
+    left_in, right_in = -P("case.interior_left_mm"), 45.0 + P("case.interior_right_mm")
+    ew = m.info["end_wall"].bounding_box()
+    front_v = m.v_plate - P("plate.end_wall_top_gap_mm")
+    front = case.box(left_in, right_in, ew.min.Y, front_v, ew.min.Z, ew.max.Z)
+    to_board = float(front.distance_to(m.bodies["board"]["shape"]))
+    pts, _, _ = mains_points(m)
+    to_pads = float(distance_to_box(pts, left_in, right_in, ew.min.Y, front_v, ew.min.Z, ew.max.Z).min())
+    out.append(result("c1.end_wall_stands_off", "C1", to_board >= P("plate.end_wall_top_gap_mm") - 1e-9 and ew.max.Z <= plate_z0 - P("plate.end_wall_top_gap_mm") + 1e-9,
+                      f"the tray's printed end wall, z {ew.min.Z:.2f} to {ew.max.Z:.2f}, stands {to_board:.3f} mm from the board and {to_pads:.3f} mm from Mains copper, its top {plate_z0 - ew.max.Z:.2f} mm under the plate's lower edge",
+                      {"to_board_mm": to_board, "to_mains_copper_mm": to_pads, "front_face_v_mm": front_v, "front_behind_plate_plane_mm": m.v_plate - front_v,
+                       "top_z_mm": ew.max.Z, "gap_under_plate_edge_mm": plate_z0 - ew.max.Z,
+                       "back_face_v_mm": ew.min.Y, "back_in_front_of_wall_plane_mm": ew.min.Y - (m.v_plate - P("plate.thickness_mm")),
+                       "material": "unfilled printed plastic, no creepage credit: at the extremes it stands within the signed clearance of the pads"}))
+    plate_vs_tray = m.parts["plate"] & m.parts["tray"]
+    overlap = float(plate_vs_tray.volume) if plate_vs_tray is not None and hasattr(plate_vs_tray, "volume") else 0.0
+    out.append(result("c1.plate_clear_of_end_wall", "C1", overlap < 1e-6,
+                      f"the plate shares {overlap:.3f} mm3 with the tray: a plate whose lower edge stood lower, at the full height of the former drawing, would have to occupy the end wall's place",
+                      {"intersection_volume_mm3": overlap, "plate_lower_edge_z_mm": plate_z0, "former_lower_edge_z_mm": m.info["plate"]["former_z0"]}))
+    names = sorted(m.parts)
+    loose = [n for n in names if n not in ("tray", "plate", "lid_single", "lid_two", "lid_swap", "tray_swap")]
+    stray = [k for k in m.P.data if k in ("film", "coating", "shim", "barrier")]
+    out.append(result("c1.no_loose_part_or_coating", "C1", not loose and not stray,
+                      f"the model's parts are {', '.join(names)}: no insulating film, coating, shim or other loose part, and params.yaml holds no figure for one",
+                      {"parts": names, "loose_parts": loose, "params_sections_for_one": stray}))
     return out
 
 
@@ -391,28 +400,37 @@ def check_c2_c3(m: case.Model) -> List[Dict[str, Any]]:
     out = []
     e = case_extent(m)
     pb = m.mesh("plate").bounds
-    margins = {"left": e["u0"] - pb[0][0], "right": pb[1][0] - e["u1"], "bottom": e["z0"] - pb[0][2], "top": pb[1][2] - e["z1"]}
+    pl = m.info["plate"]
+    # the former outline: the plate's length and its former height, centred on the case's extent; the plate itself now stands higher
+    fz0, fz1 = pl["former_z0"], pl["former_z1"]
+    margins = {"left": e["u0"] - pb[0][0], "right": pb[1][0] - e["u1"], "bottom": e["z0"] - fz0, "top": fz1 - e["z1"]}
     need = P("plate.min_margin_mm")
-    # the parts that stand in the cavity: board, parts and blades also lie inside the plate outline
     cav = np.array([m.mesh(n).bounds for n in m.bodies])
-    cav_inside = bool(cav[:, 0, 0].min() >= pb[0][0] and cav[:, 1, 0].max() <= pb[1][0] and cav[:, 0, 2].min() >= pb[0][2] and cav[:, 1, 2].max() <= pb[1][2])
-    out.append(result("c2.case_within_plate", "C2", min(margins.values()) >= need and cav_inside,
-                      f"the case lies inside the plate outline with {min(margins.values()):.3f} mm least margin (needs {need:.2f}); the board, blades and parts lie inside it too",
+    cav_inside = bool(cav[:, 0, 0].min() >= pb[0][0] and cav[:, 1, 0].max() <= pb[1][0] and cav[:, 0, 2].min() >= fz0 and cav[:, 1, 2].max() <= fz1)
+    out.append(result("c2.case_within_former_outline", "C2", min(margins.values()) >= need and cav_inside,
+                      f"the case lies inside the plate's former {pb[1][0] - pb[0][0]:.1f} x {fz1 - fz0:.1f} mm outline with {min(margins.values()):.3f} mm least margin (needs {need:.2f}); the board, blades and parts lie inside it too",
                       {"margins_mm": margins, "required_mm": need, "case_extent_mm": e,
+                       "former_outline_mm": {"u0": float(pb[0][0]), "u1": float(pb[1][0]), "z0": float(fz0), "z1": float(fz1)},
                        "plate_extent_mm": {"u0": float(pb[0][0]), "u1": float(pb[1][0]), "z0": float(pb[0][2]), "z1": float(pb[1][2])},
                        "parts_inside_plate_outline": cav_inside}))
     c = P("plate.wall_opening_clearance_mm")
-    opening = {"u0": float(pb[0][0] - c), "u1": float(pb[1][0] + c), "z0": float(pb[0][2] - c), "z1": float(pb[1][2] + c)}
+    opening = {"u0": float(pb[0][0] - c), "u1": float(pb[1][0] + c), "z0": float(fz0 - c), "z1": float(fz1 + c)}
     harness_exit_u = 45.0 + P("case.interior_right_mm") + P("case.wall_mm")
     out.append(result("c2.wall_opening_stated", "C2",
                       opening["u0"] < e["u0"] and opening["u1"] > e["u1"] and opening["z0"] < e["z0"] and opening["z1"] > e["z1"] and pb[1][0] > harness_exit_u,
-                      f"the opening in the plastic wall is the plate outline plus {c:.1f} mm per side: u {opening['u0']:.2f} to {opening['u1']:.2f}, z {opening['z0']:.2f} to {opening['z1']:.2f}; no larger opening is needed",
+                      f"the opening in the plastic wall is the plate's former outline plus {c:.1f} mm per side: u {opening['u0']:.2f} to {opening['u1']:.2f}, z {opening['z0']:.2f} to {opening['z1']:.2f}; no larger opening is needed",
                       {"opening_mm": opening, "plate_clearance_mm": c, "opening_width_mm": opening["u1"] - opening["u0"],
                        "opening_height_mm": opening["z1"] - opening["z0"], "cable_exit_u_mm": harness_exit_u}))
+    # only the plate touches the wall: no printed part comes within the stated distance of the wall's plane
+    v_wall = m.v_plate - P("plate.thickness_mm")
+    stand = P("plate.end_wall_wall_clear_mm")
+    printed = [n for n in ("tray", "lid_single", "lid_two") if n in m.parts]
+    nearest = {n: float(m.mesh(n).bounds[0][1] - v_wall) for n in printed}
+    out.append(result("c2.only_plate_touches_wall", "C2", all(v >= stand - 1e-6 for v in nearest.values()),
+                      f"no printed part comes within {stand:.1f} mm of the machine wall's plane (v {v_wall:.3f}): the nearest, the tray's end wall, stands {min(nearest.values()):.3f} mm in front of it, so only the plate touches the wall",
+                      {"wall_plane_v_mm": v_wall, "required_mm": stand, "nearest_mm": nearest}))
     # the plate's length
     bolt = P("plate.bolt_zone_mm")
-    width = e["u1"] - e["u0"]
-    # outer width at the plate end: the widest the tray is within 9 mm of the end face
     verts = m.mesh("tray").vertices
     at_plate = verts[verts[:, 1] < m.v_end + P("case.pilaster_len_mm") + 0.1]
     width_plate = float(at_plate[:, 0].max() - at_plate[:, 0].min())
@@ -427,15 +445,47 @@ def check_c2_c3(m: case.Model) -> List[Dict[str, Any]]:
     figures = []
     for end, sign in ((float(pb[0][0]), 1), (float(pb[1][0]), -1)):
         cx = end + sign * bolt / 2
-        edge_to_case = (cx - washer / 2 - e["u0"]) * -1 if sign > 0 else (cx + washer / 2 - e["u1"]) * 1
-        # distance from the washer's inner edge to the case, positive when the washer stands outside the case
         outside = (e["u0"] - (cx + washer / 2)) if sign > 0 else ((cx - washer / 2) - e["u1"])
-        figures.append({"bolt_u_mm": cx, "washer_clear_of_case_mm": outside})
-        zones_ok &= outside >= 0 and (cx - washer / 2) >= pb[0][0] - 1e-9 and (cx + washer / 2) <= pb[1][0] + 1e-9
+        for bz in pl["bolt_zs"]:
+            inside_z = min(bz - washer / 2 - pb[0][2], pb[1][2] - (bz + washer / 2))
+            figures.append({"bolt_u_mm": cx, "bolt_z_mm": bz, "washer_clear_of_case_mm": outside, "washer_inside_plate_in_z_mm": float(inside_z)})
+            zones_ok &= outside >= 0 and (cx - washer / 2) >= pb[0][0] - 1e-9 and (cx + washer / 2) <= pb[1][0] + 1e-9 and inside_z >= 0.0
     out.append(result("c3.wall_bolts_outside_case", "C3", zones_ok,
-                      "each wall bolt and its washer stands in the plate's end zone, outside the case, so the plate, case and board leave the wall as one unit",
+                      f"each of the {len(figures)} wall bolts and its {washer:.0f} mm washer stands in the plate's end zone, outside the case and inside the plate's height, so the plate, case and board leave the wall as one unit",
                       {"bolts": figures}))
+    out.append(tray_screws_fit_plate(m))
     return out
+
+
+def tray_screws_fit_plate(m: case.Model) -> Dict[str, Any]:
+    """Each tray screw's countersunk head keeps the edge distance from the plate's four edges, and its pilot and head stand clear of the lid toe's pocket."""
+    P = m.P
+    pl = m.info["plate"]
+    head_r = P("screws.tray_plate_head_dia_mm") / 2
+    edge_need = P("plate.screw_edge_distance_mm")
+    pocket_need = P("plate.min_pilot_to_pocket_mm")
+    rows = []
+    ok = True
+    pockets = {u: case.pocket_solid(m, u) for u in m.info["toe_u"]}
+    for u in m.info["tray_pilaster_u"]:
+        for z in P("screws.tray_plate_z_mm"):
+            edges = {"lower": z - head_r - pl["z0"], "upper": pl["z1"] - (z + head_r), "left": u - head_r - pl["u0"], "right": pl["u1"] - (u + head_r)}
+            pilot = case.pilot_solid(m, u, z)
+            head = case.head_solid(m, u, z)
+            to_pocket = {"pilot": min(float(pilot.distance_to(p)) for p in pockets.values()), "head": min(float(head.distance_to(p)) for p in pockets.values())}
+            pilot_top = float(pilot.bounding_box().max.Z)
+            row = {"screw": f"u {u:g} z {z:g}", "edge_distances_mm": edges, "least_edge_mm": min(edges.values()), "to_pocket_mm": to_pocket,
+                   "pilot_top_z_mm": pilot_top, "pilaster_top_z_mm": P("case.z_wall_top_mm")}
+            row["pass"] = (min(edges.values()) >= edge_need - 1e-9 and min(to_pocket.values()) >= pocket_need - 1e-9
+                           and pilot_top <= P("case.z_wall_top_mm") - P("envelope.min_wall_mm"))
+            ok &= row["pass"]
+            rows.append(row)
+    least_edge = min(r["least_edge_mm"] for r in rows)
+    least_pocket = min(min(r["to_pocket_mm"].values()) for r in rows)
+    return result("c3.tray_screws_fit_plate", "C3", ok,
+                  f"each of the {len(rows)} tray screws' countersunk heads stands at least {least_edge:.3f} mm inside the plate's edges (needs {edge_need:.2f}) and its pilot and head at least {least_pocket:.3f} mm from the lid toe's pocket (needs {pocket_need:.2f}), the pilot's top under the pilaster's top by the minimum wall",
+                  {"screws": rows, "edge_distance_required_mm": edge_need, "pocket_distance_required_mm": pocket_need,
+                   "plate_edges_mm": {"z0": pl["z0"], "z1": pl["z1"], "u0": pl["u0"], "u1": pl["u1"]}})
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -529,7 +579,7 @@ def lid_removal_installed(m: case.Model, form: str, poses: Sequence[Tuple[str, f
 def check_c4(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
     lid = m.info.get("lid_envelope", m.parts[f"lid_{form}"])
     frame = wall_frame(m)
-    obstacles = {"tray": m.info.get("tray_envelope", m.parts["tray"]), "film": m.parts["film"], "plate": m.parts["plate"], "wall opening frame": frame}
+    obstacles = {"tray": m.info.get("tray_envelope", m.parts["tray"]), "plate": m.parts["plate"], "wall opening frame": frame}
     for name, body in m.bodies.items():
         obstacles[name] = body["shape"]
     poses, pivot = sweep_poses(m)
@@ -567,7 +617,7 @@ def check_c4(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
               f"(the sweep is checked to {installed['slide_checked_to_mm']:.0f} mm)"]
     gate = cable_gate_result(m, form, installed["slide_to_free_the_toes_mm"] or 0.0)
     return [result("c4.lid_sweep", "C4", passed,
-                   f"the lid, tilted {m.P('lid.sweep_tilt_deg'):.0f} deg about its plate-end toe line and drawn out, clears the tray, film, plate, board, parts, blades and the wall opening by at least {overall:.3f} mm (worst: {worst[0]}); fitted clearance {fitted_min:.3f} mm; installed, the far end drops {installed['drop_at_far_end_during_tilt_mm']:.2f} mm and the toes are free after a {installed['slide_to_free_the_toes_mm']:.1f} mm slide",
+                   f"the lid, tilted {m.P('lid.sweep_tilt_deg'):.0f} deg about its plate-end toe line and drawn out, clears the tray, plate, board, parts, blades and the wall opening by at least {overall:.3f} mm (worst: {worst[0]}); fitted clearance {fitted_min:.3f} mm; installed, the far end drops {installed['drop_at_far_end_during_tilt_mm']:.2f} mm and the toes are free after a {installed['slide_to_free_the_toes_mm']:.1f} mm slide",
                    {"minimum_clearance_mm": overall, "floor_mm": SWEEP_FLOOR, "worst_obstacle": worst[0], "worst_pose": worst[1],
                     "fitted_minimum_mm": fitted_min, "fitted_clearances_mm": fitted, "poses": len(poses), "tilt_deg": m.P("lid.sweep_tilt_deg"),
                     "tilt_axis": {"v_mm": pivot[0], "z_mm": pivot[1]}, "tolerance": "exact B-rep distance",
@@ -713,7 +763,7 @@ def check_fixings(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
     shaft = Pos(h1["u"], h1["v"], top + 40.0 / 2) * Cylinder(P("screws.driver_dia_mm") / 2, 40.0)
     shaft = m.to_board_frame(shaft)
     gaps = {}
-    for name in ("tray", "film", "plate"):
+    for name in ("tray", "plate"):
         gaps[name] = float(shaft.distance_to(m.parts[name]))
     for name, body in m.bodies.items():
         if name not in ("board",):
@@ -849,7 +899,51 @@ def check_c6_c9(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
                        "basis": "a cantilever from the plate end, uniform section as at v %.0f (conservative: the pilasters stiffen the root), tip load" % v_sec,
                        "rib_section_mm": [P("seat.rib_width_mm"), float(m.underside_z(blade_v) - m.floor_top(blade_v))],
                        "rib_span_between_buttresses_mm": [8.1, 11.4]}))
+    out.append(root_result(m, force, L, x, delta_triac, allowed))
     return out
+
+
+def root_figures(m: case.Model, force: float, span: float, x: float, flex_triac: float) -> Dict[str, Any]:
+    """The tray root's tension under the push-on load and the triac end's motion at the tray screws' stance.
+
+    The push-on force acts along z at the blades, a lever `span` from the plate end, so the root carries a moment and a shear. The tray's
+    end face bears on the plate down to the plate's lower edge, which is the pivot; every tray screw above it is pulled out of its printed
+    pilot in proportion to its height over the pivot. The pilots' pull-out is taken as a shear stress on the screw's major-diameter
+    cylinder over the length engaged in the pilaster. The root's rotation, from the pilots' shear displacement, moves the board's triac end
+    on top of the tray's own flexure."""
+    P = m.P
+    pivot = m.info["plate"]["z0"]
+    zs = [float(z) for z in P("screws.tray_plate_z_mm")]
+    n_pil = int(P("screws.tray_plate_count_per_pilaster"))
+    levers = [z - pivot for z in zs]
+    sides = len(m.info["tray_pilaster_u"])
+    moment = force * span
+    k = moment / (sides * sum(a * a for a in levers))               # N per mm of height over the pivot
+    tension = {f"z {z:g}": k * a for z, a in zip(zs, levers)}
+    t_max = k * max(levers)
+    d = P("screws.tray_plate_dia_mm")
+    engaged = P("screws.tray_plate_length_mm") - P("plate.thickness_mm")
+    allowance = P("screws.tray_pilot_pullout_MPa")
+    capacity = allowance * math.pi * d * engaged
+    G = P("material.modulus_MPa") / (2.0 * (1.0 + P("material.poisson_ratio")))
+    shear_disp = t_max * P("screws.tray_pilot_shear_layer_mm") / (G * math.pi * d * engaged)
+    rotation = shear_disp / max(levers)
+    root_motion = rotation * x
+    total = flex_triac + root_motion
+    return {"pivot_z_mm": pivot, "screw_z_mm": zs, "levers_mm": levers, "screws_per_pilaster": n_pil, "pilasters": sides, "moment_Nmm": moment,
+            "tension_per_screw_N": tension, "tension_max_N": t_max, "engaged_length_mm": engaged, "pullout_allowance_MPa": allowance,
+            "pullout_capacity_N": capacity, "utilisation": t_max / capacity, "pilot_shear_displacement_mm": shear_disp,
+            "root_rotation_rad": rotation, "root_motion_at_triac_end_mm": root_motion, "tray_flexure_at_triac_end_mm": flex_triac,
+            "triac_end_motion_mm": total, "span_mm": span, "x_mm": x, "insertion_force_N": force}
+
+
+def root_result(m: case.Model, force: float, span: float, x: float, flex_triac: float, allowed: float) -> Dict[str, Any]:
+    f = root_figures(m, force, span, x, flex_triac)
+    ok = f["tension_max_N"] <= f["pullout_capacity_N"] and f["triac_end_motion_mm"] <= allowed and min(f["levers_mm"]) > 0.0
+    return result("c9.tray_root_tension_and_triac_end_motion", "C9", ok,
+                  f"at the tray screws' stance (z {', '.join(f'{z:g}' for z in f['screw_z_mm'])}, pivot at the plate's lower edge z {f['pivot_z_mm']:.1f}) the {force:.1f} N push-on load pulls the top screw with {f['tension_max_N']:.0f} N against "
+                  f"{f['pullout_capacity_N']:.0f} N of printed pull-out ({f['pullout_allowance_MPa']:.1f} MPa over {f['engaged_length_mm']:.1f} mm), and the triac end moves {f['triac_end_motion_mm']:.4f} mm against {allowed:.2f} mm allowed",
+                  dict(f, allowed_motion_mm=allowed, basis="moment of the push-on force about the plate's lower edge shared among the tray screws in proportion to their height over it; pull-out as shear on the major-diameter cylinder"))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -916,13 +1010,13 @@ def check_c8(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
     for i, slot in enumerate(m.board.slots):
         prism = m.to_board_frame(case.prism(list(slot.exterior.coords)[:-1], -t, 0.0))
         gaps = {}
-        for name in ("tray", f"lid_{form}", "film"):
+        for name in ("tray", f"lid_{form}"):
             gaps[name] = float(prism.distance_to(m.parts[name]))
         least = min(gaps.values())
         rows.append({"slot": "AB"[i], "v_mm": [slot.bounds[1], slot.bounds[3]], "mouth_u_mm": slot.bounds[2], "gaps_mm": gaps, "least_mm": least})
         ok &= least >= keep
     return [result("c8.slot_mouths_clear", "C8", ok,
-                   "no solid of the tray, lid, rib or film comes within %.1f mm of either slot's open area, mouth included; least %.3f mm" % (keep, min(r["least_mm"] for r in rows)),
+                   "no solid of the tray, lid or rib comes within %.1f mm of either slot's open area, mouth included; least %.3f mm" % (keep, min(r["least_mm"] for r in rows)),
                    {"required_mm": keep, "slots": rows, "slot_open_area": "the notch polygon of Edge.Cuts extruded through the board's thickness, mouth at u 45"})]
 
 
@@ -988,7 +1082,7 @@ def critical_regions(m: case.Model, name: str) -> Dict[str, List[Tuple[float, fl
     regions: Dict[str, List[Tuple[float, ...]]] = {}
     if name == "tray":
         e = case_extent(m)
-        regions["creepage barrier end faces"] = [(e["u0"] - 0.1, e["u1"] + 0.1, m.v_end - 0.05, m.v_end + 0.05, -7.0, 21.0)]
+        regions["plate-end faces"] = [(e["u0"] - 0.1, e["u1"] + 0.1, m.v_end - 0.05, m.v_end + 0.05, -7.0, 21.0)]
         depth = P("screws.tray_plate_length_mm") - P("plate.thickness_mm") + 0.5
         seats = []
         for u in m.info["tray_pilaster_u"]:
@@ -1101,7 +1195,7 @@ def check_c14(m: case.Model) -> List[Dict[str, Any]]:
     out.append(result("c14.bed_fit", "C14", fit_ok, "every printed part fits the %.0f x %.0f mm bed in its stated orientation" % (bed[0], bed[1]),
                       {"bed_mm": list(bed), "parts": [{"part": r["part"], "size_mm": r["size_mm"], "orientation": r["orientation"], "installed_orientation": r["installed_orientation"], "fits": r["fits_bed"]} for r in rows]}, lines))
     out.append(result("c14.overhang", "C14", over_ok,
-                      "no face flatter than %.0f degrees is left unsupported on any part, and none on the barrier end faces, screw seats, slot-rule faces or lid-fit faces" % P("printer.overhang_limit_deg"),
+                      "no face flatter than %.0f degrees is left unsupported on any part, and none on the plate-end faces, screw seats, slot-rule faces or lid-fit faces" % P("printer.overhang_limit_deg"),
                       {"limit_deg": P("printer.overhang_limit_deg"), "bridge_limit_mm": P("printer.bridge_limit_mm"), "parts": rows}))
     return out
 
@@ -1328,7 +1422,7 @@ def check_c13(m: case.Model) -> List[Dict[str, Any]]:
     out.append(result("c13.forms_share_dimensions", "C13", same and swap_ok,
                       "the two lids are one geometry: the two-colour form differs only in which layers of each part print in the second colour, so no inlay part exists and the lid and the tray are one geometry in both forms; the swap layers are the parts lid_swap and tray_swap, each its part cut to its band",
                       {"lid_volume_mm3": float(a.volume), "geometry_identical": bool(same), "swap_parts": inside, "inlay_part_present": "inlay" in m.parts,
-                       "shared": ["tray", "film", "plate", "lid outline, lip, toes, vents, bays and screw seat"]}))
+                       "shared": ["tray", "plate", "lid outline, lip, toes, vents, bays and screw seat"]}))
     # the logo on the lid
     poly_sh = m.info["mark_geometry"]
     area = m.info.get("mark_area_uv")
@@ -1738,7 +1832,7 @@ def check_c18(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
     P = m.P
     need = P("boots.clearance_mm")
     travel = P("blade.standoff_mm") + P("blade.above_shoulder_mm") + P("boots.withdraw_extra_mm")
-    obstacles = {"lid": Scene(m, [f"lid_{form}"]), "tray": Scene(m, ["tray"]), "film": Scene(m, ["film"])}
+    obstacles = {"lid": Scene(m, [f"lid_{form}"]), "tray": Scene(m, ["tray"])}
     part_scenes = {name: Scene(m, [name]) for name in m.bodies if name != "board"}
     rows = []
     ok = True
@@ -1752,9 +1846,9 @@ def check_c18(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
             pts = np.array([m.board_global(tuple(p)) for p in local])
             dist = {name: float(sc.closest_distances(pts).min()) for name, sc in obstacles.items()}
             on = min(dist.values())
-            off = min(dist["tray"], dist["film"])
+            off = dist["tray"]
             near_on = min(dist, key=dist.get)
-            near_off = "tray" if dist["tray"] <= dist["film"] else "film"
+            near_off = "tray"
             # the boot against the other bodies of the board, for information: the boot's seated box, the mouth on the board's face
             seated = np.array([m.board_global(tuple(p)) for p in box_surface_points(uc - env["across_thickness"] / 2, uc + env["across_thickness"] / 2,
                                                                                    vc - env["across_width"] / 2, vc + env["across_width"] / 2, 0.05, env["length"])])
@@ -1796,7 +1890,7 @@ def check_c18(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
     lines.append("stand-in finger tip to each bare blade, tip anywhere in the bays: " + ", ".join(f"{k} {v:.2f} mm" for k, v in reach.items()))
     bays = case.aperture_boxes(m)
     return [result("c18.boot_clearance", "C18", ok and gaps_ok,
-                   f"a receptacle boot swept along each blade, fully seated to fully withdrawn plus {P('boots.withdraw_extra_mm'):.0f} mm, keeps {min(r['lid_on_least_clearance_mm'] for r in rows):.2f} mm to the lid, tray and film with the lid on and {min(r['lid_off_least_clearance_mm'] for r in rows):.2f} mm with it off (needs {need:.1f}) at both envelopes; neighbouring boots are {gaps['typical']['J941-J921']:.2f} mm apart at typical and {gaps['largest_common']['J941-J921']:.2f} mm at largest_common; boot and bend need {depth['typical']:.1f} mm (typical) to {depth['largest_common']:.1f} mm (largest) below the lid face",
+                   f"a receptacle boot swept along each blade, fully seated to fully withdrawn plus {P('boots.withdraw_extra_mm'):.0f} mm, keeps {min(r['lid_on_least_clearance_mm'] for r in rows):.2f} mm to the lid and tray with the lid on and {min(r['lid_off_least_clearance_mm'] for r in rows):.2f} mm with it off (needs {need:.1f}) at both envelopes; neighbouring boots are {gaps['typical']['J941-J921']:.2f} mm apart at typical and {gaps['largest_common']['J941-J921']:.2f} mm at largest_common; boot and bend need {depth['typical']:.1f} mm (typical) to {depth['largest_common']:.1f} mm (largest) below the lid face",
                    {"required_clearance_mm": need, "boots": rows, "boot_to_boot_gap_mm": gaps, "boot_to_boot_pass_envelope": pitch_env,
                     "boot_to_boot_ok_at_pass_envelope": gaps_ok,
                     "bay_mm": {"across_thickness_u": bays[0]["du"], "across_width_v": bays[0]["dv"], "lean_allowance_each_side_mm": case.lean_allowance(m)},
@@ -1856,63 +1950,111 @@ def run_all(m: case.Model, form: str = "single", include_sweep: bool = True, onl
     return results
 
 
+def triac_screw_figures(P: Any) -> Dict[str, float]:
+    """How far a triac screw's tip stands inside the plate and how much thread it engages, over the screw's length tolerance and the tab's thickness range."""
+    length = P.entry("triac.tab_screw_length_mm")
+    b2 = P.entry("triac.b2_mm")
+    plate = P("plate.thickness_mm")
+    tip_max = length["max"] - b2["min"]
+    engagement_min = length["min"] - b2["max"]
+    need = P("triac.tab_screw_min_engagement_mm")
+    d = P("triac.tab_screw_dia_mm")
+    clamp = P("triac.tab_screw_torque_Nm") * 1000.0 / (P("triac.tab_screw_torque_coefficient") * d)        # N, from T = K F d with T in N mm
+    area = math.pi * P("triac.plate_tap_drill_mm") * engagement_min                                         # shear surface at the tap-drilled diameter, a smaller cylinder than the thread's
+    shear = clamp / area
+    return {"tip_depth_max_mm": tip_max, "engagement_min_mm": engagement_min, "plate_thickness_mm": plate, "tip_margin_mm": plate - tip_max,
+            "required_engagement_mm": need, "clamp_force_N": clamp, "shear_surface_mm2": area, "shear_stress_MPa": shear,
+            "alloy_shear_MPa": P("triac.plate_alloy_shear_MPa"), "screw_length_mm": [length["min"], length["max"]], "tab_thickness_mm": [b2["min"], b2["max"]]}
+
+
 def check_c16_geometry(m: case.Model) -> List[Dict[str, Any]]:
-    """What the seating range changes in one build: lead clearance under the board and the plate hole at the tab hole height."""
+    """What the seating range changes in one build: lead clearance under the board, the plate's holes at the tab hole height and the triac screws' depth and thread."""
     P = m.P
     out = []
-    # leads and blade legs clear of the tray and its floor
     gaps = {}
     for name in ("T911_leads", "T921_leads", "J941", "J921", "J911"):
         gaps[name] = float(m.bodies[name]["shape"].distance_to(m.parts["tray"]))
-    # the legs of the blades stand either side of the backing rib, 0 gap would load them
     least = min(gaps.values())
-    # the plate's tapped hole at the tab hole height: found by scanning z at each triac's u with a ray along -v
+    # the plate's holes, tapped through from the triac side: found by scanning z at each triac's u with a ray along -v that passes the whole plate
     sc = Scene(m, ["plate"])
     found = {}
+    T = P("plate.thickness_mm")
     for ref in case.TRIAC_REFS:
-        deep = []
+        through = []
         for z in np.arange(m.tab_hole_z - 2.5, m.tab_hole_z + 2.5, 0.05):
-            hit = sc.first_hit((m.triac_u[ref], m.v_plate + 1.0, float(z)), (0, -1, 0), length=10.0)
-            if hit and hit["distance"] > 1.5:
-                deep.append(float(z))
-        found[ref] = (sum(deep) / len(deep)) if deep else None
+            hit = sc.first_hit((m.triac_u[ref], m.v_plate + 1.0, float(z)), (0, -1, 0), length=T + 5.0)
+            if hit is None:
+                through.append(float(z))
+        found[ref] = (sum(through) / len(through)) if through else None
     plate_ok = all(v is not None and abs(v - m.tab_hole_z) < 0.1 for v in found.values())
-    out.append(result("c16.seat_clear_of_leads_and_plate_hole", "C16", least > 0.3 and plate_ok,
-                      f"at this seating the leads and blade legs stand at least {least:.2f} mm off the tray and the plate's tapped holes sit at the tab hole height ({m.tab_hole_z:.2f})",
+    pl = m.info["plate"]
+    head_r = P("triac.tab_screw_head_dia_mm") / 2
+    heads = {"lower_edge_margin_mm": m.tab_hole_z - head_r - pl["z0"], "upper_edge_margin_mm": pl["z1"] - (m.tab_hole_z + head_r)}
+    heads_ok = min(heads.values()) >= P("plate.screw_edge_distance_mm")
+    out.append(result("c16.seat_clear_of_leads_and_plate_hole", "C16", least > 0.3 and plate_ok and heads_ok,
+                      f"at this seating the leads and blade legs stand at least {least:.2f} mm off the tray, the plate's holes are tapped through at the tab hole height ({m.tab_hole_z:.2f}) and each screw head stands {min(heads.values()):.2f} mm inside the plate's edges",
                       {"lead_to_tray_mm": gaps, "plate_hole_z_mm": found, "tab_hole_z_mm": m.tab_hole_z, "body_underside_mm": m.body_underside,
-                       "lean_deg": P("seating.lean_deg"), "gap_board_edge_to_plate_mm": -m.v_plate,
-                       "film_notch_margin_under_body_mm": m.body_underside - P("film.height_under_body_mm")}))
+                       "lean_deg": P("seating.lean_deg"), "gap_board_edge_to_plate_mm": float(m.board.outline.bounds[1]) - m.v_plate,
+                       "screw_head_margins_mm": heads, "tapped_through": True}))
+    f = triac_screw_figures(P)
+    out.append(result("c16.triac_screw_tip_and_engagement", "C16",
+                      f["tip_depth_max_mm"] < f["plate_thickness_mm"] and f["engagement_min_mm"] >= f["required_engagement_mm"] and f["shear_stress_MPa"] < f["alloy_shear_MPa"],
+                      f"over the screw's length tolerance and the tab's thickness range an M3 x {P('triac.tab_screw_length_mm'):.0f} tip stands at most {f['tip_depth_max_mm']:.3f} mm inside the {f['plate_thickness_mm']:.1f} mm plate "
+                      f"({f['tip_margin_mm']:.3f} mm short of its back face) and engages at least {f['engagement_min_mm']:.3f} mm of thread (needs {f['required_engagement_mm']:.1f}); "
+                      f"the {f['clamp_force_N']:.0f} N clamp load shears {f['shear_stress_MPa']:.0f} MPa at that engagement against {f['alloy_shear_MPa']:.0f} MPa",
+                      dict(f, arithmetic=f"tip {f['screw_length_mm'][1]:.2f} - {f['tab_thickness_mm'][0]:.2f} = {f['tip_depth_max_mm']:.2f}; engagement {f['screw_length_mm'][0]:.2f} - {f['tab_thickness_mm'][1]:.2f} = {f['engagement_min_mm']:.2f}")))
     return out
 
 
-def _seating_combo(args: Tuple[Dict[str, Any], Optional[str], Tuple[str, str, str]]) -> Dict[str, Any]:
-    """One extreme combination of body height, lean and tab-face distance, rebuilt and checked in full."""
-    overrides, skin, (bu, lean, tfc) = args
-    os.nice(5)
+def combo_overrides(overrides: Dict[str, Any], skin: Optional[str], combo: Tuple[str, ...]) -> Dict[str, Any]:
+    """The parameter overrides of one extreme combination: `combo` names min or max for each of the five axes of SEATING_AXES."""
+    bu, lean, tfc, routing, play = combo
     base = case.Params.load(overrides, skin)
     o = dict(overrides)
     o["seating.body_underside_mm"] = base.entry("seating.body_underside_mm")[bu]
     o["seating.lean_deg"] = base.entry("seating.lean_deg")[lean]
     o["seating.tab_face_to_lead_centre_mm"] = base.entry("seating.tab_face_to_lead_centre_mm")[tfc]
+    o["seating.outline_routing_mm"] = base.entry("seating.outline_routing_mm")[routing]
+    o["seating.lead_play_mm"] = base.entry("seating.lead_play_mm")[play]
+    return o
+
+
+def _seating_combo(args: Tuple[Dict[str, Any], Optional[str], Tuple[str, ...]]) -> Dict[str, Any]:
+    """One extreme combination of body height, lean, tab-face distance, outline routing tolerance and lead play, rebuilt and checked in full."""
+    overrides, skin, combo = args
+    os.nice(5)
+    o = combo_overrides(overrides, skin, combo)
     m = case.build(o, forms=("single",), skin=skin)
     results = run_all(m, include_sweep=True)
     counted = verdicts(results)
-    creep = next(r for r in results if r["name"] == "c1.creepage_per_triac_pad")
+    clearance = next(r for r in results if r["name"] == "c1.creepage_all_mains_copper")
     boots = next(r for r in results if r["name"] == "c18.boot_clearance")
     return {"seating": {"body_underside_mm": o["seating.body_underside_mm"], "lean_deg": o["seating.lean_deg"],
-                        "tab_face_to_lead_centre_mm": o["seating.tab_face_to_lead_centre_mm"], "tab_hole_height_mm": m.tab_hole_z},
+                        "tab_face_to_lead_centre_mm": o["seating.tab_face_to_lead_centre_mm"], "outline_routing_mm": o["seating.outline_routing_mm"],
+                        "lead_play_mm": o["seating.lead_play_mm"], "tab_hole_height_mm": m.tab_hole_z},
             "all_pass": all(r["passed"] for r in counted), "failed": [r["name"] for r in counted if not r["passed"]], "checks_run": len(counted),
             "findings": {r["name"]: r["figures"]["blades"] for r in results if r.get("kind") == "finding"},
-            "least_creepage_mm": creep["figures"]["least_mm"], "gap_mm": creep["figures"]["gap_board_edge_to_plate_mm"],
+            "least_creepage_mm": clearance["figures"]["least_mm"],
+            "least_lead_mm": next(r for r in results if r["name"] == "c1.creepage_bare_lead_to_plate")["figures"]["creepage_mm"],
+            "gap_mm": next(r for r in results if r["name"] == "c1.gap_over_tolerances")["figures"]["gap_of_this_build_mm"],
             "lid_sweep_min_mm": next(r for r in results if r["name"] == "c4.lid_sweep")["figures"]["minimum_clearance_mm"],
             "boot_least_clearance_mm": min(min(b["lid_on_least_clearance_mm"], b["lid_off_least_clearance_mm"]) for b in boots["figures"]["boots"]),
             "driver_tilt_deg": dict(m.info.get("driver_tilt_deg", {})), "creepage_required_mm": m.basis["creepage_mains_mm"]}
 
 
-def seating_range(overrides: Dict[str, Any], skin: Optional[str] = None, workers: int = 4) -> List[Dict[str, Any]]:
-    """Every extreme combination of body height, lean and tab-face distance, each rebuilt and checked, up to four at a time."""
+SEATING_AXES = ("body height", "lean", "tab-face distance", "outline routing tolerance", "lead play")
+
+
+def seating_combinations() -> List[Tuple[str, ...]]:
+    """Every extreme of the five tolerance axes: 32 combinations."""
+    return [c for c in itertools.product(("min", "max"), repeat=len(SEATING_AXES))]
+
+
+def seating_range(overrides: Dict[str, Any], skin: Optional[str] = None, workers: int = 4,
+                  combos: Optional[Sequence[Tuple[str, ...]]] = None) -> List[Dict[str, Any]]:
+    """Every extreme combination of body height, lean, tab-face distance, outline routing tolerance and lead play, each rebuilt and checked, up to four at a time."""
     import multiprocessing
-    combos = [(bu, lean, tfc) for bu in ("min", "max") for lean in ("min", "max") for tfc in ("min", "max")]
+    combos = list(combos) if combos is not None else seating_combinations()
     jobs = [(overrides, skin, c) for c in combos]
     if workers > 1:
         with multiprocessing.get_context("spawn").Pool(min(workers, 4)) as pool:
@@ -1922,11 +2064,12 @@ def seating_range(overrides: Dict[str, Any], skin: Optional[str] = None, workers
     least = min(r["least_creepage_mm"] for r in rows)
     need = rows[0]["creepage_required_mm"]
     return [result("c16.seating_range", "C16", all(r["all_pass"] for r in rows) and least >= need,
-                   f"all {len(rows)} extreme combinations of body height, lean and tab-face distance rebuild and pass every check; the worst creepage is {least:.3f} mm against {need:.1f} mm",
-                   {"combinations": rows, "worst_creepage_mm": least, "required_mm": need,
+                   f"all {len(rows)} extreme combinations of body height, lean, tab-face distance, outline routing tolerance and lead play rebuild and pass every check; the least straight line from Mains copper to the plate is {least:.3f} mm against {need:.1f} mm",
+                   {"combinations": rows, "worst_creepage_mm": least, "required_mm": need, "axes": list(SEATING_AXES),
                     "range_source": "params.yaml seating block, each entry unconfirmed: the owner measures it on the delivered board"},
                    [f"body {r['seating']['body_underside_mm']:.2f} lean {r['seating']['lean_deg']:+.1f} tab face {r['seating']['tab_face_to_lead_centre_mm']:.3f} "
-                    f"(hole {r['seating']['tab_hole_height_mm']:.2f}): pass {r['all_pass']} ({r['checks_run']} checks), creepage {r['least_creepage_mm']:.3f}, sweep {r['lid_sweep_min_mm']:.3f}, boots {r['boot_least_clearance_mm']:.2f}"
+                    f"routing {r['seating']['outline_routing_mm']:+.1f} play {r['seating']['lead_play_mm']:+.3f} "
+                    f"(hole {r['seating']['tab_hole_height_mm']:.2f}, gap {r['gap_mm']:.3f}): pass {r['all_pass']} ({r['checks_run']} checks), nearest copper {r['least_creepage_mm']:.3f}, lead {r['least_lead_mm']:.3f}, sweep {r['lid_sweep_min_mm']:.3f}, boots {r['boot_least_clearance_mm']:.2f}"
                     + ("" if r["all_pass"] else " FAILED " + ", ".join(r["failed"])) for r in rows]),
             seating_range_finding(rows)]
 
@@ -1938,7 +2081,8 @@ def seating_range_finding(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     lines = []
     for r in rows:
         blades = r["findings"][name]
-        label = f"body {r['seating']['body_underside_mm']:.2f} lean {r['seating']['lean_deg']:+.1f} tab face {r['seating']['tab_face_to_lead_centre_mm']:.3f}"
+        label = (f"body {r['seating']['body_underside_mm']:.2f} lean {r['seating']['lean_deg']:+.1f} tab face {r['seating']['tab_face_to_lead_centre_mm']:.3f} "
+                 f"routing {r['seating']['outline_routing_mm']:+.1f} play {r['seating']['lead_play_mm']:+.3f}")
         reached = sorted(ref for ref, b in blades.items() if b["tip_to_blade_mm"] <= 0.0)
         touched[label] = reached
         lines.append(f"{label}: " + ", ".join(f"{ref} {b['tip_to_blade_mm']:.2f} mm" for ref, b in blades.items()) + (f"; tip reaches {', '.join(reached)}" if reached else "; no blade reached"))
@@ -1984,7 +2128,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         results += seating_range(overrides, model.P.skin_name)
     payload = {"criterion": TRACE, "board_sha256": model.board.sha256, "overrides": overrides, "skin": model.P.skin_name,
                "seating": {"body_underside_mm": model.body_underside, "lean_deg": model.P("seating.lean_deg"),
-                           "tab_face_to_lead_centre_mm": model.P("seating.tab_face_to_lead_centre_mm"), "tab_hole_height_mm": model.tab_hole_z},
+                           "tab_face_to_lead_centre_mm": model.P("seating.tab_face_to_lead_centre_mm"), "outline_routing_mm": model.P("seating.outline_routing_mm"),
+                           "lead_play_mm": model.P("seating.lead_play_mm"), "tab_hole_height_mm": model.tab_hole_z},
                "basis": model.basis, "passed": all(r["passed"] for r in verdicts(results)), "findings": [r["name"] for r in results if r.get("kind") == "finding"],
                "checks": results}
     payload = jsonable(payload)

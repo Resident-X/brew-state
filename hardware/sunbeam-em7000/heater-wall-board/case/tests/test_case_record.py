@@ -147,64 +147,49 @@ def test_the_intro_counts_are_the_nominal_and_range_runs(record, results, rng):
     assert len(findings) == 1
     rchecks = [r for r in rng["checks"] if r["kind"] == "check"]
     rfind = [r for r in rng["checks"] if r["kind"] == "finding"]
-    assert all(r["passed"] for r in rchecks) and rng["passed"] is True and len(rng["checks"]) == 46
+    assert all(r["passed"] for r in rchecks) and rng["passed"] is True and len(rng["checks"]) == len(results) + 2
     assert "%d of %d pass, with two findings reported and not counted" % (len(rchecks), len(rchecks)) in intro
     assert len(rfind) == 2
-    assert "all eight extremes of the seating range" in intro and "twenty-one criteria" in intro
+    assert "all 32 extremes of the seating range" in intro and "twenty-one criteria" in intro
     assert "Nothing has been printed yet" in intro
 
 
 # ---------------------------------------------------------------- C1 to C3
 
-def test_c1_the_record_points_at_the_film_barrier_with_the_models_figures(record, results, rng, basis):
-    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C1: The case's fixed base, the tray the board is screwed to and never the removable lid, carries an insulating barrier between the bare spreader plate face and the board's mains copper wherever the separation basis's basic creepage to the earthed plate would not otherwise hold. The barrier is a creepage barrier only and is not relied on as solid insulation. It is designed for the board as the assembler delivers it, with the triacs seated on their lead shoulders, from the board's layout file and the triac's package model, and it tolerates the delivered triacs' seating scatter. The case drawing or model states the barrier's minimum solid thickness, its height above the board face at each point along the plate edge, that it spans the board's width, the creepage path it gives from each triac pad edge to the first bare plate against the 2.6 mm the basis signs, and the gap it leaves between the board edge and the plate. The barrier is a printed wall of the tray, or a thin bought insulating film that the tray holds, and the drawing states which; a printed wall is at least 0.8 mm thick wherever it stands in the board-to-plate gap or the gap is shown wide enough for it. If neither can be made, the case instead holds the plate's lower edge at least 6.0 mm above the board's component face, which leaves the triac's leads 3.4 mm from the plate; that fallback reverses the owner's recorded plate position and takes the owner's recorded decision before it is used, and the drawing states which form the case takes. Making the plate and printing the case are out of scope.
+def test_c1_the_record_states_the_raised_plate_the_gap_and_the_straight_lines_with_the_models_figures(record, results, rng, basis):
+    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C1: The case's fixed base, the tray the board is screwed to and never the removable lid, carries an insulating barrier between the bare spreader plate face and the board's mains copper wherever the separation basis's basic creepage to the earthed plate would not otherwise hold, or the case holds the plate's lower edge 6.0 mm above the board; the 6.0 mm fallback is taken here
     body = sec(record, "C1")
-    assert "bought insulating film" in body and "**not used**" in body
-    film = named(results, "c1.barrier_kind_and_thickness")["figures"]
-    assert film["kind"] == "film"
-    assert num(body, r"thickness (\d\.\d+) mm") == pytest.approx(film["film_thickness_mm"])
-    assert "(allowed %.2f to %.2f)" % tuple(film["allowed_thickness_mm"]) in body
-    creep = named(results, "c1.creepage_per_triac_pad")["figures"]
-    assert num(body, r"= (\d\.\d+) mm against the basis's") == pytest.approx(creep["least_mm"], abs=0.0005)
-    assert num(body, r"the basis's (\d\.\d+) mm") == pytest.approx(basis["creepage_mains_mm"])
-    top = next(p for p in creep["pads"] if p["layer"] == "F.Cu")["segments_mm"]
-    assert "%.3f + %.3f + %.3f + %.3f = %.3f mm" % (top["pad_edge_to_board_edge"], top["board_edge_to_film_face_air"], top["film_face_to_top_edge"],
-                                                    top["film_thickness"], creep["least_mm"]) in body
-    bottom = next(p for p in creep["pads"] if p["layer"] == "B.Cu")
-    assert num(body, r"bottom copper (\d\.\d+) mm") == pytest.approx(bottom["creepage_mm"], abs=0.005)
-    worst = named(rng["checks"], "c16.seating_range")["figures"]["worst_creepage_mm"]
-    assert num(body, r"\((\d\.\d+) mm worst over the seating range\)") == pytest.approx(worst, abs=0.0005)
-    need = named(results, "c1.barrier_is_needed")["figures"]
-    assert "%.2f + %.2f = %.2f mm" % (need["pad_edge_to_board_edge_mm"], need["gap_mm"], need["path_without_barrier_mm"]) in body
-    gap = named(results, "c1.printed_wall_does_not_fit")["figures"]
-    assert num(body, r"(\d\.\d+) to \d\.\d+ mm over the package") == pytest.approx(gap["gap_narrowest_mm"])
-    assert num(body, r"\d\.\d+ to (\d\.\d+) mm over the package") == pytest.approx(gap["gap_widest_mm"], abs=0.005)
-    assert num(body, r"Gap between the board edge and the plate: (\d\.\d) mm nominal") == pytest.approx(gap["gap_nominal_mm"])
-    assert num(body, r"a (\d\.\d) mm printed wall cannot be guaranteed") == pytest.approx(gap["printed_wall_mm"])
-    heights = named(results, "c1.film_heights_along_u")["figures"]["segments"]
-    assert num(body, r"(\d\.\d+) mm beside and between") == pytest.approx(max(s["top_above_board_face_mm"] for s in heights))
-    assert num(body, r"(\d\.\d+) mm under each body") == pytest.approx(min(s["top_above_board_face_mm"] for s in heights))
-    low = [s for s in heights if s["top_above_board_face_mm"] < 3]
-    assert "(u %.2f to %.2f and %.2f to %.2f)" % (low[0]["u0"], low[0]["u1"], low[1]["u0"], low[1]["u1"]) in body
-    notch = named(results, "c1.film_notch_under_lowest_body")["figures"]
-    assert num(body, r"the notch top standing (\d\.\d+) mm under the lowest body underside of the seating range \((\d\.\d+) mm\)") == pytest.approx(notch["margin_mm"])
-    assert num(body, r"underside of the seating range \((\d\.\d+) mm\)") == pytest.approx(notch["lowest_body_underside_mm"])
-    span = named(results, "c1.film_spans_board_width")["figures"]
-    assert "u %.2f to %.2f" % tuple(span["film_u_mm"]) in body
-    assert num(body, r"pad edge to the plate plane (\d\.\d+) mm") == pytest.approx(named(results, "c1.clearance_pad_to_plate")["figures"]["clearance_mm"])
-    assert num(body, r"bare lead to the bare plate above the film's notch (\d\.\d+) mm") == pytest.approx(
-        named(results, "c1.clearance_bare_lead_to_plate")["figures"]["clearance_mm"])
-    assert num(body, r"against the basis's (\d\.\d) mm clearance") == pytest.approx(basis["clearance_mains_mm"])
-    assert num(body, r"stands at z (-\d\.\d+)\)") == pytest.approx(named(results, "c1.lift_fallback_not_used")["figures"]["plate_lower_edge_z_mm"], abs=0.006)
-    assert "not relied on as solid insulation" in body
+    assert "**the case holds the spreader plate's lower edge 6.0 mm above the board's component face**" in body and "**No barrier is used**" in body
+    lift = named(results, "c1.plate_lower_edge_raised")["figures"]
+    assert "z %.3f" % lift["plate_lower_edge_z_mm"] in body and "{:.3f} mm".format(lift["derived_least_mm"]) in body
+    assert "4.55 + sqrt(2.6^2 - 2.40^2) = %.3f mm" % lift["derived_least_mm"] in body
+    gap = named(results, "c1.gap_over_tolerances")["figures"]
+    assert "%.3f to %.3f mm over the" % tuple(gap["package_range_mm"]) in body or "%.3f to %.3f mm (ST DS2114" % tuple(gap["package_range_mm"]) in body
+    assert "%.3f - 0.2 - 0.305 = %.3f mm and %.3f + 0.2 + 0.305 = %.3f mm" % (gap["package_range_mm"][0], gap["gap_min_mm"], gap["package_range_mm"][1], gap["gap_max_mm"]) in body
+    assert gap["arithmetic"].startswith("0.785 - 0.200 - 0.305 = 0.280")
+    pad = named(results, "c1.creepage_pad_to_plate")["figures"]
+    lead = named(results, "c1.creepage_bare_lead_to_plate")["figures"]
+    wall = named(results, "c1.straight_to_wall_plane")["figures"]
+    assert "Nominal: %.3f mm from the nearest pad edge" % pad["creepage_mm"] in body and "%.3f mm from a bare lead" % lead["creepage_mm"] in body
+    assert "%.3f mm from the wall plane" % wall["copper_mm"] in body
+    worst = named(rng["checks"], "c16.seating_range")["figures"]["combinations"]
+    assert "the least is %.3f mm from any Mains copper and %.3f mm from a bare lead" % (min(c["least_creepage_mm"] for c in worst), min(c["least_lead_mm"] for c in worst)) in body
+    assert num(body, r"against the basis's (\d\.\d) mm creepage and (\d\.\d) mm clearance") == pytest.approx(basis["creepage_mains_mm"])
+    assert num(body, r"against the basis's \d\.\d mm creepage and (\d\.\d) mm clearance") == pytest.approx(basis["clearance_mains_mm"])
+    wallf = named(results, "c1.end_wall_stands_off")["figures"]
+    assert "stands %.3f mm from the board and %.3f mm from Mains copper at the nominal seating" % (wallf["to_board_mm"], wallf["to_mains_copper_mm"]) in body
+    assert "(z -6.60)" in body and "(z 5.80)" in body and wallf["top_z_mm"] == pytest.approx(5.8) and wallf["back_in_front_of_wall_plane_mm"] == pytest.approx(0.5) and wallf["front_behind_plate_plane_mm"] == pytest.approx(0.2)
+    assert "takes no creepage credit" in body and "unfilled printed plastic" in body
+    assert "film" not in body.split("**Check against the criterion.**")[1].replace("no film", "")
     assert "case-drawings.svg" in body and os.path.exists(os.path.join(CASE_DIR, "out", "case-drawings.svg"))
+    assert "W-10's barrier in the tray is not built" in body and "restores the lift of W-9 1c" in body
 
 
-def test_c2_the_case_inside_the_plate_outline_and_the_wall_opening_are_the_models(record, results, params):
+def test_c2_the_case_inside_the_former_outline_and_the_wall_opening_are_the_models(record, results, params):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C2: The case drawing or model lies wholly within the spreader plate's outline in both directions across the wall, so that only the plate touches the wall, and states the opening in the plastic wall as the plate outline plus a stated clearance, with no larger opening needed for the case, the blades or the harness, which sit in the cavity. Cutting the wall is out of scope.
     body = sec(record, "C2")
-    c2 = named(results, "c2.case_within_plate")["figures"]
-    ext, plate = c2["case_extent_mm"], c2["plate_extent_mm"]
+    c2 = named(results, "c2.case_within_former_outline")["figures"]
+    ext, plate = c2["case_extent_mm"], c2["former_outline_mm"]
     got = [float(x) for x in re.search(r"case extent u (-?\d+\.\d+) to (-?\d+\.\d+), z (-?\d+\.\d+) to (-?\d+\.\d+), v (-?\d+\.\d+) to (-?\d+\.\d+)", body).groups()]
     assert got == pytest.approx([ext["u0"], ext["u1"], ext["z0"], ext["z1"], ext["v0"], ext["v1"]], abs=0.006)
     got = [float(x) for x in re.search(r"outline is u (-?\d+\.\d+) to (-?\d+\.\d+), z (-?\d+\.\d+) to (-?\d+\.\d+)", body).groups()]
@@ -219,13 +204,15 @@ def test_c2_the_case_inside_the_plate_outline_and_the_wall_opening_are_the_model
     assert num(body, r"and (\d\.\d+) mm above and below") == pytest.approx(m["bottom"], abs=0.001) == pytest.approx(m["top"], abs=0.001)
     assert c2["parts_inside_plate_outline"] is True and "board, the blades and the parts lie inside it too" in body
     opening = named(results, "c2.wall_opening_stated")["figures"]
-    assert num(body, r"outline plus (\d\.\d) mm per side") == pytest.approx(opening["plate_clearance_mm"]) == params["plate"]["wall_opening_clearance_mm"]["value"]
+    assert num(body, r"former outline plus (\d\.\d) mm per side") == pytest.approx(opening["plate_clearance_mm"]) == params["plate"]["wall_opening_clearance_mm"]["value"]
     assert num(body, r"(\d+\.\d) x \d+\.\d mm, and nothing else") == pytest.approx(opening["opening_width_mm"])
     assert num(body, r"\d+\.\d x (\d+\.\d) mm, and nothing else") == pytest.approx(opening["opening_height_mm"])
     assert opening["opening_mm"]["u0"] == pytest.approx(plate["u0"] - opening["plate_clearance_mm"])
     assert opening["opening_mm"]["z1"] == pytest.approx(plate["z1"] + opening["plate_clearance_mm"])
     assert num(body, r"\(u (\d+\.\d)\)\.") == pytest.approx(opening["cable_exit_u_mm"])
     assert opening["cable_exit_u_mm"] < opening["opening_mm"]["u1"] and "Cutting the wall is out of scope" in body
+    wall = named(results, "c2.only_plate_touches_wall")["figures"]
+    assert num(body, r"stands (\d\.\d+) mm in front of the machine wall's plane") == pytest.approx(wall["nearest_mm"]["tray"]) and "only the plate touches the wall" in body
 
 
 def test_c3_the_plate_length_arithmetic_is_the_models_wherever_the_record_states_it(record, results, params):
@@ -243,8 +230,8 @@ def test_c3_the_plate_length_arithmetic_is_the_models_wherever_the_record_states
     assert num(body, r"plate is (\d+\.\d) mm long") == pytest.approx(c3["plate_length_mm"])
     assert num(body, r"case is (\d+\.\d+) mm wide at the pilasters") == pytest.approx(c3["case_outer_width_mm"])
     assert num(body, r"each end carries a (\d+\.\d) mm bolt zone") == pytest.approx(c3["bolt_zone_mm"])
-    assert num(body, r"with (\d\.\d) mm washers") == pytest.approx(params["plate"]["bolt_washer_dia_mm"]["value"])
-    assert "two M4 bolts" in body and "provisional until the owner cuts and measures the wall" in body
+    assert num(body, r"with a (\d\.\d) mm washer") == pytest.approx(params["plate"]["bolt_washer_dia_mm"]["value"])
+    assert "one M4 bolt" in body and "provisional until the owner cuts and measures the wall" in body
     assert re.search(r"^4\. Plate size", record.split("## Owner list")[1], flags=re.M), "the provisional size is owner list item 4"
     bolts = named(results, "c3.wall_bolts_outside_case")["figures"]["bolts"]
     for tag in ("C10", "C11"):
@@ -352,8 +339,7 @@ def test_c7_every_screw_row_is_the_checks_distance_and_figure(record, results, b
     margins = {s["screw"]: s["distance_mm"] - s["required_mm"] for s in check["screws"]}
     least = min(margins, key=margins.get)
     assert num(body, r"The least margin over its figure is (\d\.\d+) mm") == pytest.approx(margins[least], abs=0.005)
-    centre = next(s for s in check["screws"] if s["screw"] == least)["centre_uvz_mm"]
-    assert centre[0] < 0 and centre[2] < 0 and "at the lower left tray screw" in body
+    assert least == "lid screw" and "at the lid screw" in body
     assert named(results, "c7.screws_clear_of_mains_copper")["summary"].count("%.2f" % margins[least]) == 1
     h1 = named(results, "c7.h1_pad_and_courtyard")["figures"]
     top, bottom = h1["layers"]["F.Cu"], h1["layers"]["B.Cu"]
@@ -375,11 +361,11 @@ def test_c8_both_slot_rows_are_the_checks_gaps(record, results):
     slots = {s["slot"]: s for s in check["slots"]}
     rows = {r[0]: r for r in table_rows(body, "Slot")}
     assert set(rows) == set(slots) == {"A", "B"}
-    for name, (_, tray, lid, film, least) in rows.items():
+    for name, (_, tray, lid, least) in rows.items():
         g = slots[name]["gaps_mm"]
         assert num(tray, r"(\d+\.\d+)") == pytest.approx(g["tray"], abs=0.0005)
         assert num(lid, r"(\d+\.\d+)") == pytest.approx(g["lid_single"], abs=0.006)
-        assert num(film, r"(\d+\.\d+)") == pytest.approx(g["film"], abs=0.006)
+        assert "film" not in g
         assert num(least, r"(\d+\.\d+)") == pytest.approx(slots[name]["least_mm"], abs=0.0005)
         assert slots[name]["least_mm"] >= check["required_mm"]
         v0, v1 = slots[name]["v_mm"]
@@ -488,26 +474,26 @@ def test_c11_fitting_and_removal_order_and_wall_bolts_outside_the_case(record, r
 
 
 def test_c12_the_plate_is_flat_with_only_the_listed_holes_and_the_sizes_are_the_models(record, params, model, results):
-    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C12: The case record gives the spreader plate's drawing in the printed-case form, a flat plate with nothing cut from it, how the plate is made or sourced, and the interface material of the triac faces to the plate and of the plate to the wall, since none is in the catalogue and none is priced. It states the depth the case and plate add behind the board and grades it as unconfirmed for the owner to check at assembly, and states the order in which the board, case and plate are fitted and removed. It replaces what the earlier ear-and-bracket form recorded for these (the bracket's drawing, its spacers and its mounts); the thermal analysis of the triacs' interface to the wall is the assembly judgement's and is out of scope, as is making or sourcing the plate.
+    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C12: The case record gives the spreader plate's drawing in the printed-case form, a flat plate with nothing cut from it, how the plate is made or sourced, and the interface material of the triac faces to the plate and of the plate to the wall, since none is in the catalogue
     body = sec(record, "C12")
     plate = params["plate"]
-    m = re.search(r"provisionally (\d+) x (\d+) x (\d+) mm aluminium", body)
-    assert m and tuple(float(x) for x in m.groups()) == (plate["length_mm"]["value"], plate["height_mm"]["value"], plate["thickness_mm"]["value"])
     info = model.info["plate"]
-    assert info["u1"] - info["u0"] == pytest.approx(plate["length_mm"]["value"])
-    assert "nothing cut from it" in body and "ten holes" in body
-    tap, tray_screws, bolts = 2, params["screws"]["tray_plate_count_per_pilaster"]["value"] * 2, 4
-    assert tap + tray_screws + bolts == 10
-    assert "two blind tapped M3 holes" in body and "four M3 countersunk holes" in body and "four 4.5 mm holes for the M4 wall bolts" in body
-    assert num(body, r"\((\d\.\d) mm drill") == pytest.approx(params["triac"]["plate_tap_drill_mm"]["value"])
-    assert num(body, r"drill, (\d\.\d) mm deep") == pytest.approx(params["triac"]["plate_tap_depth_mm"]["value"])
-    assert num(body, r"leaving (\d\.\d) mm unbroken behind") == pytest.approx(plate["thickness_mm"]["value"] - params["triac"]["plate_tap_depth_mm"]["value"])
+    height = info["z1"] - info["z0"]
+    m = re.search(r"provisionally (\d+\.\d) x (\d+\.\d+) x (\d+\.\d) mm aluminium", body)
+    assert m and tuple(float(x) for x in m.groups()) == pytest.approx((plate["length_mm"]["value"], height, plate["thickness_mm"]["value"]))
+    assert info["u1"] - info["u0"] == pytest.approx(plate["length_mm"]["value"]) and info["z0"] == plate["lower_edge_z_mm"]["value"] == 6.0
+    assert "nothing cut from it" in body and "eight holes" in body
+    tap, tray_screws, bolts = 2, params["screws"]["tray_plate_count_per_pilaster"]["value"] * 2, len(info["bolt_zs"]) * 2
+    assert tap + tray_screws + bolts == 8 and len(info["bolt_zs"]) == 1
+    assert "two M3 holes tapped through the whole plate from the triac side" in body and "four M3 countersunk holes" in body and "two 4.5 mm holes for the M4 wall bolts" in body
+    assert num(body, r"\((\d\.\d) mm tapping drill") == pytest.approx(params["triac"]["plate_tap_drill_mm"]["value"])
+    assert num(body, r"tapping drill, (\d\.\d) mm deep") == pytest.approx(plate["thickness_mm"]["value"]), "tapped through the whole plate"
     assert params["plate"]["bolt_dia_mm"]["value"] + 0.5 == pytest.approx(4.5)
     assert num(body, r"head diameter (\d\.\d) mm") == pytest.approx(params["screws"]["tray_plate_head_dia_mm"]["value"])
-    assert "aluminium bar of %d x %d mm section cut to length" % (plate["height_mm"]["value"], plate["thickness_mm"]["value"]) in body
+    assert "aluminium bar of 17 x %d mm section cut to length" % plate["thickness_mm"]["value"] in body
     assert "not in the catalogue and is not priced" in body
-    assert num(body, r"At least (\d+\.\d) x (\d+) mm") == pytest.approx(named(results, "c3.plate_length")["figures"]["required_mm"])
-    assert num(body, r"At least (\d+\.\d) x (\d+) mm", 2) == plate["height_mm"]["value"] and "59.50 + 2 x 10.0 = 79.50" in body
+    assert num(body, r"At least (\d+\.\d) x (\d+\.\d+) mm") == pytest.approx(named(results, "c3.plate_length")["figures"]["required_mm"])
+    assert num(body, r"At least (\d+\.\d) x (\d+\.\d+) mm", 2) == pytest.approx(height) and "59.50 + 2 x 10.0 = 79.50)" in body
 
 
 def test_c12_the_departure_from_the_owners_slot_words_interface_depth_and_what_it_replaces_are_stated(record, params, model, results, rng):
@@ -515,7 +501,9 @@ def test_c12_the_departure_from_the_owners_slot_words_interface_depth_and_what_i
     body = sec(record, "C12")
     said = "short vertical slot or a hole about 1 mm oversize"
     assert said in body and said in read(os.path.join(BOARD_DIR, "assembler-fitting-record.md")), "the owner's words quoted are the ones the repository records"
-    assert "needs a nut on the face that lies on the wall" in body and "the owner's acceptance of the departure is outstanding (owner list item 3)" in body
+    assert "needs a nut on the face that lies on the wall" in body and "would put a screw head in the heat path" in body
+    assert "`owner-sign-off.md` W-19 records the departure, signed on the owner's behalf; owner list item 3 asks him to confirm it" in body
+    assert "tip stands at most" in body and "4.01 mm inside the 5.0 mm plate" in body and "engages at least 4.76 - 1.32 = 3.44 mm of thread" in body
     seat = params["seating"]
     hi = seat["body_underside_mm"]["max"] + params["triac"]["A_mm"]["value"] - params["triac"]["L_mm"]["value"]
     lo = seat["body_underside_mm"]["min"] + params["triac"]["A_mm"]["value"] - params["triac"]["L_mm"]["value"]
@@ -525,13 +513,13 @@ def test_c12_the_departure_from_the_owners_slot_words_interface_depth_and_what_i
     assert "unconfirmed" in body.split("**Depth the case and plate add")[1].split("**Order of fitting")[0]
     behind = -params["case"]["z_floor_bottom_mm"]["value"] - params["parts"]["board_thickness_mm"]["value"]
     assert num(body, r"adds (\d\.\d) mm \(the tray's outer top face") == pytest.approx(behind)
-    v1 = named(results, "c2.case_within_plate")["figures"]["case_extent_mm"]["v1"]
+    v1 = named(results, "c2.case_within_former_outline")["figures"]["case_extent_mm"]["v1"]
     plate_face = model.v_plate
     wall_face = plate_face - params["plate"]["thickness_mm"]["value"]
     assert num(body, r"stands (\d+\.\d) mm from the plate's wall face") == pytest.approx(v1 - wall_face, abs=0.01)
     assert num(body, r"inner face at v (-\d\.\d)") == pytest.approx(plate_face, abs=0.01)
     assert num(body, r"wall face at v (-\d\.\d)") == pytest.approx(wall_face, abs=0.01)
-    assert num(body, r"the case then runs from v (-\d\.\d+) to (\d+\.\d+)") == pytest.approx(named(results, "c2.case_within_plate")["figures"]["case_extent_mm"]["v0"], abs=0.006)
+    assert num(body, r"the case then runs from v (-\d\.\d+) to (\d+\.\d+)") == pytest.approx(named(results, "c2.case_within_former_outline")["figures"]["case_extent_mm"]["v0"], abs=0.006)
     replaced = body.split("**What this replaces.**")[1]
     division = read(os.path.join(os.path.dirname(os.path.dirname(BOARD_DIR)), "..", "docs", "sunbeam-em7000", "controller-board-division.md"))
     for heading in ("**The bracket.**", "**The two mounts are mounting holes", "**The order of fitting and of removal.**", "**The depth the bracket adds, unconfirmed.**"):
@@ -769,7 +757,7 @@ def test_c14_slicer_results_per_part_are_the_slicer_summaries(record):
     assert "lid, two-colour" in body and "two filament changes, after the layers that end at 0.4 and 1.0 mm" in body
 
 
-def test_c14_support_totals_by_kind_and_the_two_diagnostic_entries_are_the_slicers(record, results):
+def test_c14_support_totals_by_kind_and_the_diagnostic_entry_are_the_slicers(record, results):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C14: The case record states the printer it is designed to print on as a common low-cost open-frame FDM machine with a 220 by 220 mm bed, a 0.4 mm nozzle and 0.2 mm layers, the owner's printer being one instance, and every printed part fits that bed in the stated print orientation. The record names ASA as the baseline material and states what printing it open-frame needs (a draft shield, a brim, a cardboard box as the cheapest enclosure) and why PC, PETG and PLA are not the baseline. Each part prints with no support material on the creepage barrier, the screw seats, the slot mouths and the lid-fit faces, the orientation and any support that remains are stated per part, and a slicer's sliced result for each part is recorded as the check. The case is assembled with ordinary screws and no part needs post-print machining. Out of scope: printing the case.
     body = sec(record, "C14")
     tray, lid = slice_summary("tray"), slice_summary("lid_single")
@@ -788,9 +776,9 @@ def test_c14_support_totals_by_kind_and_the_two_diagnostic_entries_are_the_slice
     assert "the totals fall to %.1f mm on the tray and %.1f mm on each lid" % (tray["supports_auto_threshold_0"]["support_filament_mm"],
                                                                               lid["supports_auto_threshold_0"]["support_filament_mm"]) in body
     entries = {e["critical_feature"]: e for e in lid["supports_auto"]["supported_faces_that_are_critical"]}
-    assert set(entries) == {"screw seat", "lid-fit faces"} and len(lid["supports_auto"]["supported_faces_that_are_critical"]) == 2
-    seat, fit = entries["screw seat"], entries["lid-fit faces"]
-    assert seat["flat_roof"] is False and fit["flat_roof"] is True
+    assert set(entries) == {"screw seat"} and len(lid["supports_auto"]["supported_faces_that_are_critical"]) == 1
+    seat = entries["screw seat"]
+    assert seat["flat_roof"] is False
     for part in ("lid_single", "lid_two"):
         s = slice_summary(part)
         assert s["supports_auto"]["supported_faces_that_are_critical"] == lid["supports_auto"]["supported_faces_that_are_critical"]
@@ -798,28 +786,26 @@ def test_c14_support_totals_by_kind_and_the_two_diagnostic_entries_are_the_slice
     zero = lid["supports_auto_threshold_0"]["supported_faces_that_are_critical"][0]
     assert zero["critical_feature"] == "screw seat"
     noise = lid["limits"]["noise_area_mm2"]
-    assert seat["facet_area_mm2"] < noise and fit["facet_area_mm2"] < noise, "both entries are under the noise area the rule tolerates"
-    diag = body.split("**The two diagnostic entries on a critical face.**")[1].split("\n\n")[0]
+    assert seat["facet_area_mm2"] < noise, "the entry is under the noise area the rule tolerates"
+    diag = body.split("**The diagnostic entry on a critical face.**")[1].split("\n\n")[0]
     assert "%.2f mm of support filament under %.2f mm2, facets at %.1f to %.1f degrees, none a flat roof" % ((seat["filament_mm"], seat["facet_area_mm2"]) + tuple(seat["angle_deg"])) in diag
     assert "(%.2f mm at the slicer's own threshold)" % zero["filament_mm"] in diag
-    assert "%.2f mm of support filament under %.2f mm2, a zero-area flat sliver at print z %.2f mm" % (fit["filament_mm"], fit["facet_area_mm2"], fit["facet_print_z_mm"][0]) in diag
-    assert "The 44.2 is a sliver triangle" in diag and seat["angle_deg"][0] == 44.2
-    assert "1.0 mm2 (`printer.noise_area_mm2`" in diag and noise == 1.0 and "The rule gained a clause in this change" in diag
-    assert "at or above that area the old rule stands unchanged" in diag
-    assert "summed over every entry of a part's run" in diag and "total 0.47 mm2" in diag and seat["facet_area_mm2"] + fit["facet_area_mm2"] < noise
-    assert "The earlier entry moved because the mesh was reflected" in diag and "the geometry of the seat did not change" in diag
+    assert "`critical_entry_problems` of `case/slice.py`" in diag and "1.0 mm2 (`printer.noise_area_mm2`" in diag and noise == 1.0
+    assert "at or above that area the rule stands unchanged, entry by entry" in diag and "summed over every entry of a part's run" in diag
+    assert "The one entry, %.2f mm2, is under it" % seat["facet_area_mm2"] in diag
+    assert "The entries move with the mesh" in diag and "the geometry of the seat did not change" in diag
     assert tray["supports_auto"]["supported_faces_that_are_critical"] == [] and tray["supports_auto_threshold_0"]["supported_faces_that_are_critical"] == []
     assert "The tray has no such entry" in diag
     flush = tray["supports_auto"]["flush_to_critical_plane"]
     slot = [f for f in flush if f["critical_face"] == "slot-rule faces"]
-    barrier = [f for f in flush if f["critical_face"] == "creepage barrier end faces"]
+    barrier = [f for f in flush if f["critical_face"] == "plate-end faces"]
     assert len(slot) + len(barrier) == len(flush)
     assert "in %d places the diagnostic support would stand flush" % len(flush) in diag
-    assert "(%d beside the slot-rule face at the outlet slits, %d beside a barrier end face)" % (len(slot), len(barrier)) in diag
+    assert "(%d beside the slot-rule face at the outlet slits, %d beside a plate-end face)" % (len(slot), len(barrier)) in diag
     assert lid["supports_auto"]["flush_to_critical_plane"] == []
     for part in PARTS:
         assert slice_summary(part)["supports_off"]["support_generated"] is False
-    assert "The design owner accepts both as diagnostic entries, not a support that remains" in diag
+    assert "The design owner accepts the entry as a diagnostic entry, not a support that remains" in diag
 
 
 def test_c14_geometry_check_of_overhangs_critical_faces_screws_and_no_machining(record, results, params):
@@ -850,13 +836,13 @@ def test_c14_geometry_check_of_overhangs_critical_faces_screws_and_no_machining(
     fixing = body.split("**Fixings.**")[1].split("**Honest grade.**")[0]
     assert "M3 x %.0f countersunk (four, tray to plate)" % params["screws"]["tray_plate_length_mm"]["value"] in fixing
     assert "M3 x %.0f pan head (H1)" % params["screws"]["h1_length_mm"]["value"] in fixing
-    assert "M3 x 10 countersunk (lid)" in fixing and "M3 pan head through the tab holes (two)" in fixing and "M4 wall bolts (four)" in fixing
+    assert "M3 x 10 countersunk (lid)" in fixing and "M3 x 5 pan head through the tab holes (two)" in fixing and "M4 wall bolts (two)" in fixing
     assert "No part needs post-print machining" in fixing
-    for where in ("creepage barrier", "screw seats", "slot-mouth faces", "lid-fit faces"):
+    for where in ("plate-end faces", "screw seats", "slot-mouth faces", "lid-fit faces"):
         assert where in body
     for why in ("exactly 45 degrees", "bridged", "first-layer patches"):
         assert why in body
-    r10 = wall_resistance(10, params["plate"]["height_mm"]["value"] / 1000.0, params["plate"]["length_mm"]["value"] / 1000.0)
+    r10 = wall_resistance(10, (22.975 - params["plate"]["lower_edge_z_mm"]["value"]) / 1000.0, params["plate"]["length_mm"]["value"] / 1000.0)
     nominal, hot = 25 + 9.09 * (r10 + 1), 40 + 9.09 * (r10 + 3)
     assert "nominal plate temperature of %.1f degC and a bound of %.1f degC" % (nominal, hot) in body
 
@@ -940,7 +926,7 @@ def test_c15_receptacle_off_state_is_a_finding_with_the_models_figures_and_never
     assert num(finding, r"stand (\d\.\d) mm apart") == pytest.approx(pitch)
     assert num(finding, r"leaves (\d\.\d+) mm between two boots") == pytest.approx(named(results, "c18.boot_clearance")["figures"]["boot_to_boot_gap_mm"]["typical"]["J941-J921"])
     combos = named(rng["checks"], "c16.seating_range")["figures"]["combinations"]
-    assert len(combos) == 8
+    assert len(combos) == 32
     for combo in combos:
         found = combo["findings"]["c15.finding_blades_no_receptacle"]
         for blade in ("J941", "J911"):
@@ -949,7 +935,7 @@ def test_c15_receptacle_off_state_is_a_finding_with_the_models_figures_and_never
     ranged = named(rng["checks"], "c15.finding_blades_no_receptacle_seating_range")
     assert ranged["kind"] == "finding" and ranged["passed"] is None
     assert "reached in %s extreme seatings" % re.search(r"(\d+ of \d+) extreme seatings", ranged["summary"]).group(1) in finding
-    assert ranged["summary"].count("8 of 8") == 1 and "8 of 8 extreme seatings" in finding
+    assert ranged["summary"].count("32 of 32") == 1 and "32 of 32 extreme seatings" in finding
     assert "The owner accepted this residual on 2026-11-26" in finding and "\"Accept, state the rule (Recommended)\"" in finding and "service state inside the machine's own enclosure" in finding
     assert "**The rule: the machine is never energised with a receptacle off a blade.**" in finding
 
@@ -983,14 +969,16 @@ def test_c15_enclosure_statement_states_the_basis_credit_and_what_the_openings_l
 
 # ---------------------------------------------------------------- C16
 
-def test_c16_range_with_sources_unconfirmed_and_the_eight_extremes_result(record, params, rng, basis, results):
+def test_c16_range_with_sources_unconfirmed_and_the_32_extremes_result(record, params, rng, basis, results):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C16: The board-to-plate fit takes the scatter of the delivered triacs' seating, stated as a range of tab-hole height and lean, without loading the soldered leads: the tray's board seat and the barrier are shown by the model to meet at the range's extremes. The plate's tab holes are either a short slot or an oversize hole, or tapped holes drilled at the measured height of the delivered triacs with the tray printed to the measured values, and the case record states which the case takes; for tapped holes it states that the owner's acceptance of that departure from his ruling of 2026-11-24 (slot or oversize hole) is outstanding. The range with its source is recorded as unconfirmed for the owner to check at assembly.
     body = sec(record, "C16")
     seat = params["seating"]
     rows = {r[0]: r for r in table_rows(body, "Quantity")}
     assert "**unconfirmed**" in body
-    assert all(seat[k]["unconfirmed"] is True for k in ("body_underside_mm", "lean_deg", "differential_lean_deg", "tab_face_to_lead_centre_mm", "lead_protrusion_below_board_mm"))
+    assert all(seat[k]["unconfirmed"] is True for k in ("body_underside_mm", "lean_deg", "differential_lean_deg", "tab_face_to_lead_centre_mm", "lead_protrusion_below_board_mm", "outline_routing_mm", "lead_play_mm"))
     assert all(r[3] for r in rows.values()), "every bound has its source"
+    assert "-%.1f to +%.1f mm" % (seat["outline_routing_mm"]["max"], seat["outline_routing_mm"]["max"]) in rows["board outline routing tolerance"][2]
+    assert "-%.3f to +%.3f mm" % (seat["lead_play_mm"]["max"], seat["lead_play_mm"]["max"]) in rows["lead play in its drilled hole"][2]
     lo, hi = seat["body_underside_mm"]["min"], seat["body_underside_mm"]["max"]
     assert "%.2f to %.2f mm" % (lo, hi) in rows["body underside above the board face"][2]
     assert "%.1f to %.1f degrees" % (seat["lean_deg"]["min"], seat["lean_deg"]["max"]) in rows["common lean of both triacs"][2].replace("+", "")
@@ -1005,9 +993,10 @@ def test_c16_range_with_sources_unconfirmed_and_the_eight_extremes_result(record
     assert "%.1f mm (derived)" % named(results, "c16.seat_clear_of_leads_and_plate_hole")["figures"]["tab_hole_z_mm"] in rows["tab-hole height above the board face"][1]
     seating = named(rng["checks"], "c16.seating_range")
     combos = seating["figures"]
-    assert len(combos["combinations"]) == 8 and all(c["all_pass"] for c in combos["combinations"]) and seating["passed"] is True
-    assert "model is built at all eight extremes" in body
-    assert num(body, r"worst creepage is (\d\.\d+) mm against") == pytest.approx(combos["worst_creepage_mm"])
+    assert len(combos["combinations"]) == 32 and all(c["all_pass"] for c in combos["combinations"]) and seating["passed"] is True
+    assert "model is built at all 32 extremes of body height, lean, tab-face distance, outline routing tolerance and lead play" in body
+    assert num(body, r"from any Mains copper to the plate is (\d\.\d+) mm") == pytest.approx(combos["worst_creepage_mm"], abs=0.0005)
+    assert num(body, r"from a bare lead (\d\.\d+) mm, against") == pytest.approx(min(c["least_lead_mm"] for c in combos["combinations"]), abs=0.0005)
     assert num(body, r"against (\d\.\d) mm; the gap") == pytest.approx(basis["creepage_mains_mm"])
     assert num(body, r"the boot clearance is at least (\d\.\d+) mm") == pytest.approx(min(c["boot_least_clearance_mm"] for c in combos["combinations"]), abs=0.005)
     assert num(body, r"lid sweep clearance is at least (\d\.\d+) mm") == pytest.approx(min(c["lid_sweep_min_mm"] for c in combos["combinations"]), abs=0.0005)
@@ -1018,11 +1007,11 @@ def test_c16_range_with_sources_unconfirmed_and_the_eight_extremes_result(record
     seated = named(results, "c16.seat_clear_of_leads_and_plate_hole")["figures"]
     assert num(body, r"stand off the tray by at least (\d\.\d+) mm at the nominal seating") == pytest.approx(min(seated["lead_to_tray_mm"].values()), abs=0.005)
     assert "the owner measures the delivered board" in body and "printed to the measured values" in body
-    assert "owner's acceptance of the departure is outstanding (owner list item 3)" in body and "tapped M3 plate holes at the measured tab-hole height" in body
+    assert "recorded in `owner-sign-off.md` W-19, signed on the owner's behalf; he is asked to confirm it (item 3)" in body and "M3 holes tapped through the plate at the measured tab-hole height" in body
     i4 = params["triac"]["I4_mm"]
     assert "about %.1f mm with a range of %.1f to %.1f mm" % (i4["value"], i4["min"], i4["max"]) in body and "deliberately wider than I4's and covers it" in body
     assert tab_lo <= i4["min"] and tab_hi >= i4["max"]
-    assert "item 3" in body and re.search(r"^3\. Accept tapped M3 tab holes", record.split("## Owner list")[1], flags=re.M)
+    assert "item 3" in body and re.search(r"^3\. Confirm the tapped M3 tab holes in the plate", record.split("## Owner list")[1], flags=re.M)
 
 
 # ---------------------------------------------------------------- C17
@@ -1033,15 +1022,16 @@ def wall_resistance(h, height_m, length_m, t_m=0.0025, k=110.0):
 
 
 def test_c17_plate_temperatures_are_recomputed_from_the_thermal_figures_and_graded(record, params):
-    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C17: The case record derives the temperature the case reaches at the plate and the barrier from the thermal records, states the printed material's heat-deflection temperature from its maker's document, and grades the material as holding or not holding; where it does not hold the record names the owner acceptance needed. It states the material's flame rating against the mains pads' 10 A and records that no rating is asked of the case, as an item for the owner.
+    # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C17: The case record derives the temperature the case reaches at the plate and the barrier from the thermal records, states the printed material's heat-deflection temperature from its maker's document, and grades the material against it
     body = sec(record, "C17")
     proof = read(os.path.join(BOARD_DIR, "circuit-proof.md"))
-    assert "2.572 K/W at h = 10, and 3.704 K/W at h = 5" in proof and "T_air + 9.09 x (R_wall" in proof
+    narrower = proof.split("## The narrower plate and the triacs' thermal judgement on it")[1].split("\n## ")[0]
+    assert "T_air + 9.09 x (R_wall" in proof and "2.572 K/W at h = 10, and 3.704 K/W at h = 5" in proof, "the former plate's section is unchanged"
     watts = 9.09
-    height = params["plate"]["height_mm"]["value"] / 1000.0
+    height = (22.975 - params["plate"]["lower_edge_z_mm"]["value"]) / 1000.0
     length = params["plate"]["length_mm"]["value"] / 1000.0
     r10, r5 = wall_resistance(10, height, length), wall_resistance(5, height, length)
-    assert r10 == pytest.approx(2.572, abs=0.0006) and r5 == pytest.approx(3.704, abs=0.0006)
+    assert "%.3f K/W at h = 10 and %.3f K/W at h = 5" % (r10, r5) in narrower
     assert "R_wall = %.3f K/W at h = 10 and %.3f K/W at h = 5" % (r10, r5) in body
     cases = [(25, 10, r10, 1), (40, 10, r10, 3), (40, 5, r5, 3)]
     temps = [air + watts * (r + rc) for air, _, r, rc in cases]
@@ -1051,8 +1041,7 @@ def test_c17_plate_temperatures_are_recomputed_from_the_thermal_figures_and_grad
         assert num(row[5], r"(\d+\.\d) degC") == pytest.approx(t, abs=0.06), row
         assert "%d degC" % air in row[1] and row[2] == str(h) and "%d K/W" % rc in row[3]
         assert row[4] == "%d + %.2f x (%.3f + %d)" % (air, watts, r, rc), row
-    assert [round(t, 1) for t in temps] == [57.5, 90.6, 100.9]
-    assert "9.09 W together" in body and "P = 2 x (H + L) = %.3f m" % (2 * (height + length)) in body
+    assert "9.09 W together" in body and "P = 2 x (H + L) = %.3f m" % (2 * (height + length)) in body and "H = %.6f m" % height in body
     hdt = [102.6, 98.0, 96.0]
     assert "96 to 103 degC" in body
     for maker in ("Polymaker PolyLite ASA", "Ricoh Rapid Fab ASA", "TDS_ASA_Filament.pdf"):
@@ -1060,19 +1049,20 @@ def test_c17_plate_temperatures_are_recomputed_from_the_thermal_figures_and_grad
     for figure in hdt:
         assert re.search(r"\b%s degC \(" % ("%g" % figure), body), figure
     margin = min(hdt) - temps[1]
-    assert num(body, r"margin (\d\.\d) K to the lowest maker figure") == pytest.approx(margin, abs=0.06)
-    assert "ASA **holds** at the nominal case (57.5 degC) and at the 90.6 degC bound" in body
-    assert "ASA **does not hold** at the 100.9 degC bound" in body and "nor on a stainless wall" in body
-    assert min(hdt) < temps[2] < max(hdt) and sum(1 for x in hdt if x < temps[2]) == 2, "inside the band and above two of its three figures"
-    assert max(hdt) > temps[1] and min(hdt) > temps[1] > temps[0]
+    assert num(body, r"margin (\d\.\d) K to the lowest maker figure") == pytest.approx(margin, abs=0.06) and margin > 0
+    assert "ASA **holds** at the nominal case (%.1f degC) and at the %.1f degC bound" % (temps[0], temps[1]) in body
+    assert "ASA **does not hold** at the %.1f degC bound" % temps[2] in body and "nor on a stainless wall" in body
+    assert temps[2] > max(hdt) and min(hdt) > temps[1] > temps[0], "above the makers' band at the still-air bound, under its lowest figure at the hot bound"
     stainless = [wall_resistance(10, height, length, k=15.0), wall_resistance(5, height, length, k=15.0)]
-    assert stainless == pytest.approx([6.300, 9.323], abs=0.001)
     assert "wall resistance of %.3f and %.3f K/W" % tuple(stainless) in body
     for t in (25 + watts * (stainless[0] + 1), 40 + watts * (stainless[0] + 3), 40 + watts * (stainless[1] + 3)):
         assert "%.1f" % t in body
     assert "pilaster end faces and the screw pilots" in body
-    assert "continuous full power on both triacs" in body and "105 degC" in body and "holds at all three" in body
-    assert "film" in params["film"]["kind"]["value"] and "105 degC" in params["film"]["thickness_mm"]["source"]
+    assert "continuous full power on both triacs" in body and "no film on it" in body
+    assert "film" not in params
+    # the plate is narrower than the one the earlier figures were drawn for, so every temperature is higher
+    older = [25 + watts * (wall_resistance(10, 0.030, length) + 1), 40 + watts * (wall_resistance(10, 0.030, length) + 3), 40 + watts * (wall_resistance(5, 0.030, length) + 3)]
+    assert all(new > old for new, old in zip(temps, older)) and [round(t, 1) for t in older] == [57.5, 90.6, 100.9]
 
 
 def test_c17_owner_acceptance_does_not_claim_a_bring_up_measurement_and_the_flame_rating_item_is_recorded(record):
@@ -1087,7 +1077,7 @@ def test_c17_owner_acceptance_does_not_claim_a_bring_up_measurement_and_the_flam
     assert "**does not hold**" in body and "**the acceptance is open**" in body.split(CHECK_TABLE)[1]
     flame = body.split("**Flame.**")[1].split(CHECK_TABLE)[0]
     assert "UL 94 HB" in flame and "10 A" in flame and "No flame rating is asked of the case by any requirement" in flame
-    assert "owner item" in flame and "flame-retardant filament" in flame and "V-0 or VTM-0" in flame
+    assert "owner item" in flame and "flame-retardant filament" in flame and "No film is used, so none is specified" in flame
     owner = record.split("## Owner list")[1]
     assert re.search(r"^6\. Flame rating: ASA is HB", owner, flags=re.M) and re.search(r"^5\. Plate temperature", owner, flags=re.M)
     assert "No bring-up criterion measures the plate" in owner.split("\n6. ")[0]
@@ -1139,18 +1129,18 @@ def test_c18_boot_envelopes_clearances_bend_room_and_lid_removal_match_the_model
 def test_c18_no_dimension_another_criterion_fixes_was_reduced(record, results, basis):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C18: The case leaves room around each of the three 6.3 mm blades for a receptacle with its insulating boot fitted, with the boot's outer size and the figure's source stated in the case record, so that a receptacle is pushed on and pulled off along the stated direction, with the lid on and with it off, without the receptacle or its boot touching the case, the lid or the film, and the wire leaving the boot has a stated bend room. The model shows the boot's swept envelope clear of the case at its stated size and at the largest size of a common insulated receptacle the record names, and no case dimension that another criterion of this leaf fixes is reduced to make it.
     body = sec(record, "C18").split("**No dimension another criterion fixes was reduced.**")[1]
-    assert num(body, r"creepage \((\d\.\d+) mm against") == pytest.approx(named(results, "c1.creepage_per_triac_pad")["figures"]["least_mm"])
-    assert num(body, r"the clearance \((\d\.\d+) mm against") == pytest.approx(named(results, "c1.clearance_pad_to_plate")["figures"]["clearance_mm"])
+    assert num(body, r"nearest Mains copper to the plate \((\d\.\d+) mm against") == pytest.approx(named(results, "c1.creepage_pad_to_plate")["figures"]["creepage_mm"], abs=0.0005)
+    assert num(body, r"the bare lead's \((\d\.\d+) mm against") == pytest.approx(named(results, "c1.creepage_bare_lead_to_plate")["figures"]["creepage_mm"], abs=0.0005)
     slot = min(s["least_mm"] for s in named(results, "c8.slot_mouths_clear")["figures"]["slots"])
     assert num(body, r"slot-mouth clearance \((\d\.\d) mm against") == pytest.approx(slot)
-    assert num(body, r"case-to-plate margin \((\d\.\d+) mm against") == pytest.approx(min(named(results, "c2.case_within_plate")["figures"]["margins_mm"].values()), abs=0.001)
+    assert num(body, r"case-to-plate margin \((\d\.\d+) mm against") == pytest.approx(min(named(results, "c2.case_within_former_outline")["figures"]["margins_mm"].values()), abs=0.001)
     assert "79.50 against 80.0" in body
     bay = named(results, "c11.blade_terminals_reachable_lid_on")["figures"]["blades"][0]["aperture_mm"]
     assert "to %.1f x %.2f mm" % tuple(bay) in body
-    for name in ("c1.creepage_per_triac_pad", "c1.clearance_pad_to_plate", "c8.slot_mouths_clear", "c2.case_within_plate", "c3.plate_length", "c18.boot_clearance"):
+    for name in ("c1.creepage_pad_to_plate", "c1.creepage_bare_lead_to_plate", "c8.slot_mouths_clear", "c2.case_within_former_outline", "c3.plate_length", "c18.boot_clearance"):
         assert named(results, name)["passed"]
     assert basis["creepage_mains_mm"] == 2.6 and basis["clearance_mains_mm"] == 1.5
-    assert "at the model's nominal and at all eight seating extremes" in body
+    assert "at the model's nominal and at all 32 seating extremes" in body
 
 
 # ---------------------------------------------------------------- C19
@@ -1220,7 +1210,7 @@ def test_c19_heat_release_is_stated_as_placed_for_convection_and_not_sized_and_p
     for label, part in (("tray", "tray"), ("lid, single-colour form", "lid_single"), ("lid, two-colour form", "lid_two")):
         assert rows[label][1] == parts[part]["orientation"] and rows[label][2] == parts[part]["installed_orientation"]
     assert "Print orientation, stated separately" in body and "none of these is the installed orientation" in body
-    assert "The film is cut from sheet and the plate is cut from bar; neither prints" in body
+    assert "The plate is cut from bar and does not print; no film is made" in body
 
 
 # ---------------------------------------------------------------- C20

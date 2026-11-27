@@ -701,7 +701,7 @@ tasks:
         if [ -x "{{.PRUSASLICER}}" ]; then "{{.PRUSASLICER}}" --help | head -1; else echo "PrusaSlicer not found at {{.PRUSASLICER}}: install it, or set PRUSASLICER"; fi
 
   hw:case:
-    desc: Build the printed case of the heater wall board from its layout file and params.yaml and export it to hardware/sunbeam-em7000/heater-wall-board/case/out in the right-handed physical frame (X = u, Y = -v; STEP and STL per part, the print-orientation STL, a 3MF per colour form, the film cutting template, the plate drawing and the case drawings). CLI_ARGS pass through, for example `-- --set seating.body_underside_mm=2.55`. Needs the environment `task hw:cad` creates
+    desc: Build the printed case of the heater wall board from its layout file and params.yaml and export it to hardware/sunbeam-em7000/heater-wall-board/case/out in the right-handed physical frame (X = u, Y = -v; STEP and STL per part, the print-orientation STL, a 3MF per colour form, the plate drawing and the case drawings). CLI_ARGS pass through, for example `-- --set seating.body_underside_mm=2.55`. Needs the environment `task hw:cad` creates
     dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
     cmds:
       - '"{{.CAD_PYTHON}}" case.py {{.CLI_ARGS}}'
@@ -731,7 +731,7 @@ tasks:
       - '"{{.CAD_PYTHON}}" board_model.py --kicad-cli "{{.KICAD_CLI}}"'
 
   hw:case:fit:
-    desc: Check that the exported case fits the board as built, reading only the files in out/ (as a printer or viewer reads them, right-handed) and the cached board model, never the case model's frame - the mounting-hole pilot, the blade bays, the triac tapped holes, film notches and faces, the slot mouths, the board body clear of the case and on its seats, the logo reading the right way round, and the print STLs and 3MFs as the same shapes. `-- --controls` also runs the negative controls (exports mirrored in X and in Y, mirrored artwork); `-- --format json` passes through. Needs `task hw:case` run first
+    desc: Check that the exported case fits the board as built, reading only the files in out/ (as a printer or viewer reads them, right-handed) and the cached board model, never the case model's frame - the mounting-hole pilot, the blade bays, the triac tapped-through holes and the plate's face, the slot mouths, the board body clear of the case and on its seats, the logo reading the right way round, and the print STLs and 3MFs as the same shapes. `-- --controls` also runs the negative controls (exports mirrored in X and in Y, mirrored artwork); `-- --format json` passes through. Needs `task hw:case` run first
     dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
     cmds:
       - '"{{.CAD_PYTHON}}" fit.py {{.CLI_ARGS}}'
@@ -751,7 +751,7 @@ tasks:
       - '"{{.CAD_PYTHON}}" slice.py {{.CLI_ARGS}}'
 
   hw:case:test:
-    desc: Run the tests of the printed case (pytest, in the CAD environment). They build the model, check it, and run the negative controls (each rebuilds the model with one dimension broken, four at a time in worker processes); the default run takes about five minutes, uses up to four processes and leaves out the tests marked heavy. `-- --heavy` adds them, the rebuild of every one of the eight extremes of the seating range, about ten minutes more. The tests that read the renders draw their own into a temporary folder; the tests that read the slicer summaries fail when `task hw:case:slice` has not run, or when a summary is older than the sources it pins
+    desc: Run the tests of the printed case (pytest, in the CAD environment). They build the model, check it, and run the negative controls (each rebuilds the model with one dimension broken, four at a time in worker processes); the default run takes about five minutes, uses up to four processes and leaves out the tests marked heavy. `-- --heavy` adds them, the rebuild of every one of the 32 extremes of the seating range's five tolerances, about forty minutes more. The tests that read the renders draw their own into a temporary folder; the tests that read the slicer summaries fail when `task hw:case:slice` has not run, or when a summary is older than the sources it pins
     dir: "{{.ROOT_DIR}}/{{.HW_DIR}}/sunbeam-em7000/heater-wall-board/case"
     cmds:
       - '"{{.CAD_PYTHON}}" -m pytest -p no:cacheprovider -q tests {{.CLI_ARGS}}'

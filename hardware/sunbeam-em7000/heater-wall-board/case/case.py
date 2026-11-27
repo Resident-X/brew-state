@@ -4,8 +4,9 @@
 The model reads the board's layout file and project file at build time (outline,
 slots, mounting hole, pads, courtyards, the nets of the Mains classes) and the
 figures in params.yaml, and builds the tray, the lid in each colour form, the
-engraved logo grooves, the barrier film, the spreader plate and simple solids for the
-board and its parts. Everything is built in a case MODEL frame in millimetres:
+engraved logo grooves, the spreader plate and simple solids for the
+board and its parts. No insulating film or other loose part is modelled: the plate stands clear of the board's pads and the
+tray's printed end wall fills the volume the plate leaves. Everything is built in a case MODEL frame in millimetres:
 
     u = x_pcb - ox     0 to 45 across the board
     v = y_pcb - oy     0 at the board's plate-side edge, 75 at the blade end
@@ -27,14 +28,14 @@ This is the frame in which kicad-cli exports the board's own three-dimensional m
 by `print_rotation` and moved to the bed.
 
 The command line exports every printed part
-as STEP and STL, a 3MF per colour form, the film cutting template, the plate
+as STEP and STL, a 3MF per colour form, the plate
 drawing and the case drawings:
 
     python case.py --out out --set seating.body_underside_mm=2.55
     python case.py --skin flow
 
 The model is a safety core and a selectable skin. The core (core.py, and the builders
-below that follow the board, the film, the seat, the screws and the pilasters) fixes
+below that follow the board, the end wall, the seat, the screws and the pilasters) fixes
 everything the board relies on and the envelope a plan outline must lie in; a skin
 (skins.py, chosen by the `skin` entry of params.yaml or --skin) supplies the plan
 outline of the walls and the lid beyond the core, the edge treatment, the vent pattern
@@ -388,8 +389,6 @@ class Model:
     screws: List[Dict[str, Any]] = field(default_factory=list)
     supports: List[Dict[str, Any]] = field(default_factory=list)
     openings: List[Dict[str, Any]] = field(default_factory=list)
-    film_outline: List[Tuple[float, float]] = field(default_factory=list)
-    film_holes: List[Tuple[float, float, float]] = field(default_factory=list)
     info: Dict[str, Any] = field(default_factory=dict)
     _meshes: Dict[str, trimesh.Trimesh] = field(default_factory=dict)
 
@@ -421,15 +420,6 @@ class Model:
         return self._meshes[name]
 
     # -- derived figures ------------------------------------------------------------------------------------------
-    def film_height_at(self, u: float) -> float:
-        """The film's top above the board face at u."""
-        P = self.P
-        for ref in TRIAC_REFS:
-            half = P("triac.B_mm") / 2 + P("film.notch_margin_mm")
-            if abs(u - self.triac_u[ref]) <= half + 1e-9:
-                return P("film.height_under_body_mm")
-        return P("film.height_beside_mm")
-
     @property
     def z_floor_bottom(self) -> float:
         return self.P("case.z_floor_bottom_mm")
@@ -458,6 +448,11 @@ def frame(overrides: Optional[Dict[str, Any]] = None, skin: Any = None) -> Model
     name = skin if isinstance(skin, str) else None
     P = Params.load(overrides, name)
     board = read_board()
+    shift = P("seating.outline_routing_mm")
+    if shift:
+        # the routed outline's tolerance moves the board's edges and the slot mouths along v; the pads, holes and leads stay put
+        board.outline = affinity.translate(board.outline, 0.0, shift)
+        board.slots = [affinity.translate(slot, 0.0, shift) for slot in board.slots]
     sep = basis()
     phi = math.radians(P("seating.lean_deg"))
     pivot_v = P("seating.pad_row_v_mm")
@@ -466,9 +461,8 @@ def frame(overrides: Optional[Dict[str, Any]] = None, skin: Any = None) -> Model
     if abs(row_v - pivot_v) > 1e-6 or abs(board.thickness - P("parts.board_thickness_mm")) > 1e-6:
         raise SystemExit("params.yaml disagrees with the board file about the pad row or the board thickness")
     tfc = P("seating.tab_face_to_lead_centre_mm")
-    v_plate = pivot_v - tfc
-    film_t = P("film.thickness_mm")
-    v_end = v_plate + film_t
+    v_plate = pivot_v + P("seating.lead_play_mm") - tfc
+    v_end = v_plate
     body_underside = P("seating.body_underside_mm")
     tab_hole_z = body_underside + P("triac.A_mm") - P("triac.L_mm")
     m = Model(P, board, sep, phi, pivot_v, v_plate, v_end, tab_hole_z, body_underside, triac_u)
@@ -484,7 +478,6 @@ def build(overrides: Optional[Dict[str, Any]] = None, forms: Sequence[str] = ("s
 
     build_bodies(m)
     build_tray(m)
-    build_film(m)
     build_plate(m)
     for form in forms:
         build_lid(m, form)
@@ -518,17 +511,19 @@ def build_bodies(m: Model) -> None:
         m.bodies[f"{ref}_body"] = {"shape": body + tab, "mains": False, "kind": "triac"}
         leads = []
         for pad in board.refs[ref]["pads"]:
-            leads.append(box(pad["hole_u"] - lw / 2, pad["hole_u"] + lw / 2, m.pivot_v - c1 / 2, m.pivot_v + c1 / 2, -t - prot, bu))
+            lead_v = m.pivot_v + P("seating.lead_play_mm")          # the lead sits in its hole off the hole's centre by the play
+            leads.append(box(pad["hole_u"] - lw / 2, pad["hole_u"] + lw / 2, lead_v - c1 / 2, lead_v + c1 / 2, -t - prot, bu))
         m.bodies[f"{ref}_leads"] = {"shape": fuse(leads), "mains": True, "kind": "leads"}
         # the tab screw: M3 pan head on the case side of the tab, shaft into the plate
         r = P("triac.tab_screw_dia_mm") / 2
         head_h = P("triac.tab_screw_head_height_mm")
         head_r = P("triac.tab_screw_head_dia_mm") / 2
         face = m.v_plate + b2
+        tip = face - P("triac.tab_screw_length_mm")
         m.screws.append({"id": f"tab screw {ref}", "kind": "tab", "u": u, "z": m.tab_hole_z, "axis": "v",
-                         "v0": m.v_plate - P("triac.plate_tap_depth_mm"), "v1": face + head_h, "radius": r,
+                         "v0": tip, "v1": face + head_h, "radius": r,
                          "head_radius": head_r, "head_v0": face, "head_v1": face + head_h, "touchable": False,
-                         "shape": cyl_v(u, m.tab_hole_z, m.v_plate - P("triac.plate_tap_depth_mm"), face, r)
+                         "shape": cyl_v(u, m.tab_hole_z, tip, face, r)
                          + cyl_v(u, m.tab_hole_z, face, face + head_h, head_r)})
 
     # varistors, optos, resistors, header with housing, blades: drawn on the untilted board then tilted with it
@@ -594,6 +589,25 @@ def tray_body(m: Model, spec: Any, zb: float, zt: float) -> Any:
     return body
 
 
+def pilot_solid(m: Model, u: float, z: float) -> Any:
+    """The tray-to-plate screw's pilot in a pilaster, a tear-drop hole from the end face to the depth the screw reaches."""
+    P = m.P
+    depth = P("screws.tray_plate_length_mm") - P("plate.thickness_mm") + 0.5
+    return tear_v(u, z, m.v_end - 1, m.v_plate + depth, P("case.pilot_dia_mm") / 2)
+
+
+def head_solid(m: Model, u: float, z: float) -> Any:
+    """The tray-to-plate screw's countersunk head, in the plate's back face."""
+    P = m.P
+    v_back = m.v_plate - P("plate.thickness_mm")
+    return cyl_v(u, z, v_back, v_back + P("screws.tray_plate_head_height_mm"), P("screws.tray_plate_head_dia_mm") / 2)
+
+
+def pocket_solid(m: Model, u: float) -> Any:
+    """The pocket under the hook in the pilaster at u, for the lid's toe."""
+    return prism_vz([(m.v_end + a, b) for a, b in pocket_profile(m)], u - m.P("lid.pocket_width_mm") / 2, u + m.P("lid.pocket_width_mm") / 2)
+
+
 def build_tray(m: Model) -> None:
     P, board = m.P, m.board
     zb = m.z_floor_bottom
@@ -605,8 +619,13 @@ def build_tray(m: Model) -> None:
     left_in, right_in = -P("case.interior_left_mm"), 45.0 + P("case.interior_right_mm")
     far_in = P("case.v_far_wall_inner_mm")
     split = P("case.floor_far_from_v_mm")
-    tray = tray - box(left_in, right_in, m.v_end - 1, split, m.floor_top(0), zt + 1)
+    # the end wall closes the plate end below the plate's raised lower edge, in the volume the narrower plate leaves; the cavity is cut
+    # back to its board-side face, which stands the seam behind the plate plane, so only the floor and the pilasters reach the plane
+    end_wall = end_wall_box(m)
+    tray = tray + end_wall
+    tray = tray - box(left_in, right_in, m.v_plate - P("plate.end_wall_top_gap_mm"), split, m.floor_top(0), zt + 1)
     tray = tray - box(left_in, right_in, split, far_in, m.floor_top(split + 1), zt + 1)
+    m.info["end_wall"] = end_wall
 
     # seat group, drawn on the untilted board and tilted with it, then clipped to the tray's volume
     t = board.thickness
@@ -671,10 +690,9 @@ def build_tray(m: Model) -> None:
     pu = pilaster_u(m)
     pilot_r = P("case.pilot_dia_mm") / 2
     screw_r = P("screws.tray_plate_dia_mm") / 2
-    depth = P("screws.tray_plate_length_mm") - P("plate.thickness_mm") + 0.5
     for u in pu:
         for z in P("screws.tray_plate_z_mm"):
-            tray = tray - tear_v(u, z, m.v_end - 1, m.v_plate + depth, pilot_r)
+            tray = tray - pilot_solid(m, u, z)
             v_back = m.v_plate - P("plate.thickness_mm")
             m.screws.append({"id": f"tray screw u{u:g} z{z:g}", "kind": "tray_plate", "u": u, "z": z, "axis": "v",
                              "v0": v_back, "v1": v_back + P("screws.tray_plate_length_mm"), "radius": screw_r,
@@ -682,11 +700,8 @@ def build_tray(m: Model) -> None:
                              "head_v1": v_back + P("screws.tray_plate_head_height_mm"), "touchable": False,
                              "shape": cyl_v(u, z, v_back, v_back + P("screws.tray_plate_length_mm"), screw_r)})
     # pocket under the hook, in each pilaster, for the lid's toe
-    za = P("case.z_lid_under_mm")
-    pocket = pocket_profile(m)
-    pw = P("lid.pocket_width_mm")
     for u in toe_u(m):
-        tray = tray - prism_vz([(m.v_end + a, b) for a, b in pocket], u - pw / 2, u + pw / 2)
+        tray = tray - pocket_solid(m, u)
 
     # cable notch at the top of the right wall
     n0, n1 = P("lid.cable_notch_v_mm")
@@ -738,76 +753,56 @@ def build_tray(m: Model) -> None:
     m.info.update({"tray_pilaster_u": pu, "toe_u": toe_u(m)})
 
 
-# -- the film ---------------------------------------------------------------------------------------------------------
-
-def build_film(m: Model) -> None:
-    P = m.P
-    t = P("film.thickness_mm")
-    pu = pilaster_u(m)
-    wall = P("case.wall_mm")
-    pil = P("case.pilaster_out_mm")
-    left = -P("case.interior_left_mm") - wall - pil
-    right = 45.0 + P("case.interior_right_mm") + wall + pil
-    zb = m.z_floor_bottom
-    zb_f = zb
-    half = P("triac.B_mm") / 2 + P("film.notch_margin_mm")
-    hb, hn = P("film.height_beside_mm"), P("film.height_under_body_mm")
-    pts = [(left, zb_f)]
-    pts_top: List[Tuple[float, float]] = []
-    notches = sorted((m.triac_u[r] - half, m.triac_u[r] + half) for r in TRIAC_REFS)
-    pts_top.append((left, hb))
-    for a, b in notches:
-        pts_top += [(a, hb), (a, hn), (b, hn), (b, hb)]
-    pts_top.append((right, hb))
-    outline = [(left, zb_f), (right, zb_f), (right, hb)] + [p for a, b in reversed(notches) for p in [(b, hb), (b, hn), (a, hn), (a, hb)]] + [(left, hb)]
-    # drop repeated points
-    clean: List[Tuple[float, float]] = []
-    for p in outline:
-        if not clean or abs(clean[-1][0] - p[0]) > 1e-9 or abs(clean[-1][1] - p[1]) > 1e-9:
-            clean.append(p)
-    m.film_outline = clean
-    holes: List[Tuple[float, float, float]] = []
-    d = P("film.screw_hole_dia_mm")
-    for u in pu:
-        for z in P("screws.tray_plate_z_mm"):
-            if z < hb - d:  # a screw below the film's top edge passes through the film
-                holes.append((u, z, d))
-    m.film_holes = holes
-    film = prism_uz(clean, m.v_plate, m.v_end)
-    for u, z, dia in holes:
-        film = film - cyl_v(u, z, m.v_plate - 1, m.v_end + 1, dia / 2)
-    m.parts["film"] = film
-
-
 # -- the plate --------------------------------------------------------------------------------------------------------
 
-def build_plate(m: Model) -> None:
+def plate_geometry(m: Model) -> Dict[str, float]:
+    """The plate's edges in the case frame: its length and former height centre it on the case's extent, its lower edge is raised to the
+    figure of `plate.lower_edge_z_mm` in the board frame, and its upper edge stays at the former top."""
     P = m.P
     e = case_extent(m)
     cu, cz = (e["u0"] + e["u1"]) / 2, (e["z0"] + e["z1"]) / 2
-    L, H, T = P("plate.length_mm"), P("plate.height_mm"), P("plate.thickness_mm")
-    u0, u1, z0, z1 = cu - L / 2, cu + L / 2, cz - H / 2, cz + H / 2
+    L, H = P("plate.length_mm"), P("plate.former_height_mm")
+    return {"u0": cu - L / 2, "u1": cu + L / 2, "z0": P("plate.lower_edge_z_mm"), "z1": cz + H / 2, "cu": cu,
+            "former_z0": cz - H / 2, "former_z1": cz + H / 2}
+
+
+def end_wall_box(m: Model, plate_lower_edge: Optional[float] = None) -> Any:
+    """The tray's printed end wall: the tray's full outer width at the plate end, from the floor's underside to the plate's lower edge
+    less the seam, in the volume the narrower plate leaves, its back face 0.5 mm in front of the machine wall's plane. Its board-side
+    face is recessed by the seam behind the plate plane across the cavity's width, so it stands further from the board than the plate does."""
+    P = m.P
+    e = case_extent(m)
+    edge = P("plate.lower_edge_z_mm") if plate_lower_edge is None else plate_lower_edge
+    top = edge - P("plate.end_wall_top_gap_mm")
+    back = m.v_plate - P("plate.thickness_mm") + P("plate.end_wall_wall_clear_mm")
+    return box(e["u0"], e["u1"], back, m.v_plate, m.z_floor_bottom, top)
+
+
+def build_plate(m: Model) -> None:
+    P = m.P
+    g = plate_geometry(m)
+    u0, u1, z0, z1, cu = g["u0"], g["u1"], g["z0"], g["z1"], g["cu"]
+    T = P("plate.thickness_mm")
     plate = box(u0, u1, m.v_plate - T, m.v_plate, z0, z1)
     # countersunk holes for the tray screws from the back face
     head_r = P("screws.tray_plate_head_dia_mm") / 2
-    head_h = P("screws.tray_plate_head_height_mm")
     r_clear = 1.7
     for u in pilaster_u(m):
         for z in P("screws.tray_plate_z_mm"):
             plate = plate - cyl_v(u, z, m.v_plate - T - 1, m.v_plate + 1, r_clear)
             cone = Pos(u, m.v_plate - T, z) * Rot(X=-90) * Solid.make_cone(head_r, r_clear, head_r - r_clear, Plane.XY)
             plate = plate - cone
-    # tab screw holes, tapped, at the tab hole height
+    # tab screw holes, tapped through the whole plate from the triac side, at the tab hole height
     for ref in TRIAC_REFS:
-        plate = plate - cyl_v(m.triac_u[ref], m.tab_hole_z, m.v_plate - P("triac.plate_tap_depth_mm"), m.v_plate + 1,
-                              P("triac.plate_tap_drill_mm") / 2)
-    # wall bolt holes: two at each end, centred in the bolt zone
+        plate = plate - cyl_v(m.triac_u[ref], m.tab_hole_z, m.v_plate - T - 1, m.v_plate + 1, P("triac.plate_tap_drill_mm") / 2)
+    # wall bolt holes: one at each end, centred in the bolt zone at the plate's mid-height
     bz = P("plate.bolt_zone_mm")
+    cz = (z0 + z1) / 2
     for end, sign in ((u0, 1), (u1, -1)):
-        for dz in (-7.5, 7.5):
-            plate = plate - cyl_v(end + sign * (bz / 2), cz + dz, m.v_plate - T - 1, m.v_plate + 1, P("plate.bolt_dia_mm") / 2 + 0.25)
+        plate = plate - cyl_v(end + sign * (bz / 2), cz, m.v_plate - T - 1, m.v_plate + 1, P("plate.bolt_dia_mm") / 2 + 0.25)
     m.parts["plate"] = plate
-    m.info["plate"] = {"u0": u0, "u1": u1, "z0": z0, "z1": z1, "cu": cu, "cz": cz}
+    m.info["plate"] = {"u0": u0, "u1": u1, "z0": z0, "z1": z1, "cu": cu, "cz": cz, "bolt_zs": [cz],
+                       "former_z0": g["former_z0"], "former_z1": g["former_z1"]}
 
 
 # -- the lid ----------------------------------------------------------------------------------------------------------
@@ -1024,7 +1019,7 @@ def driver_clearances(m: Model, ref: str, tilt_deg: float) -> Dict[str, float]:
     sb = shaft.bounding_box()
     found = {}
     skip = {f"{ref}_body", f"{ref}_leads"}
-    candidates = {name: m.parts[name] for name in ("tray", "film", "plate")}
+    candidates = {name: m.parts[name] for name in ("tray", "plate")}
     candidates.update({name: body["shape"] for name, body in m.bodies.items() if name not in skip})
     for name, ob in candidates.items():
         ob_bb = ob.bounding_box()
@@ -1096,7 +1091,7 @@ def export_all(m: Model, out: str, forms: Sequence[str] = ("single", "two")) -> 
     os.makedirs(out, exist_ok=True)
     written = []
     meshes = {}
-    for name in ("tray", "film", "plate", "lid_single", "lid_two", "lid_swap", "tray_swap"):
+    for name in ("tray", "plate", "lid_single", "lid_two", "lid_swap", "tray_swap"):
         if name not in m.parts:
             continue
         step = os.path.join(out, f"{name}.step")
@@ -1112,7 +1107,6 @@ def export_all(m: Model, out: str, forms: Sequence[str] = ("single", "two")) -> 
             written.append(stl)
     for form in forms:
         written.append(write_3mf(m, form, os.path.join(out, f"case-{form}.3mf")))
-    written.append(film_template_svg(m, os.path.join(out, "film-template.svg")))
     written.append(plate_drawing_svg(m, os.path.join(out, "plate-drawing.svg")))
     written.append(case_drawings_svg(m, os.path.join(out, "case-drawings.svg")))
     return written
@@ -1121,7 +1115,7 @@ def export_all(m: Model, out: str, forms: Sequence[str] = ("single", "two")) -> 
 def part_colours(m: Model, form: str) -> Dict[str, str]:
     P = m.P
     colours = {"tray": P(f"forms.{form}.tray_colour"), f"lid_{form}": P(f"forms.{form}.lid_colour"),
-               "film": P("forms.film_colour"), "plate": P("forms.plate_colour")}
+               "plate": P("forms.plate_colour")}
     if form == "two":
         if "lid_swap" in m.parts:
             colours["lid_swap"] = P("forms.two.lid_floor_colour")
@@ -1181,42 +1175,6 @@ def _poly_path(points: Sequence[Tuple[float, float]], fy) -> str:
     return " ".join(f"{x:.3f},{fy(y):.3f}" for x, y in points)
 
 
-def film_template_svg(m: Model, path: str) -> str:
-    """The film cutting template at 1:1: outline, screw holes and dimensions, in millimetres, seen from the case side (looking toward the wall, the board's far end behind the viewer): u to the right and z up, which is the view of the physical object from that side."""
-    u0 = min(p[0] for p in m.film_outline)
-    u1 = max(p[0] for p in m.film_outline)
-    z0 = min(p[1] for p in m.film_outline)
-    z1 = max(p[1] for p in m.film_outline)
-    pad = 14.0
-    W, H = (u1 - u0) + 2 * pad, (z1 - z0) + 2 * pad
-    fy = lambda z: z1 - z + pad  # noqa: E731
-    fx = lambda u: u - u0 + pad  # noqa: E731
-    out = [SVG_HEAD.format(w=f"{W:.2f}", h=f"{H:.2f}", vb=f"0 0 {W:.3f} {H:.3f}")]
-    out.append(f'<title>Barrier film cutting template, 1:1, seen from the case side, thickness {m.P("film.thickness_mm"):.2f} mm</title>\n')
-    out.append('<g font-family="monospace" font-size="1.7" fill="#000">\n')
-    pts = " ".join(f"{fx(u):.3f},{fy(z):.3f}" for u, z in m.film_outline)
-    out.append(f'<polygon points="{pts}" fill="#fdf1d2" stroke="#000" stroke-width="0.15"/>\n')
-    for u, z, d in m.film_holes:
-        out.append(f'<circle cx="{fx(u):.3f}" cy="{fy(z):.3f}" r="{d / 2:.3f}" fill="#fff" stroke="#000" stroke-width="0.15"/>\n')
-        out.append(f'<text x="{fx(u):.2f}" y="{fy(z) - d / 2 - 1.5:.2f}" text-anchor="middle">hole {d:.1f} at u {u:.2f} z {z:.2f}</text>\n')
-    out.append(f'<text x="{pad}" y="{pad - 8:.2f}">Film {u1 - u0:.2f} wide x {z1 - z0:.2f} tall, {m.P("film.thickness_mm"):.2f} thick, 1:1</text>\n')
-    out.append(f'<text x="{pad}" y="{pad - 4:.2f}">Top edge z {m.P("film.height_beside_mm"):.1f}, notch top z {m.P("film.height_under_body_mm"):.1f} (z 0 is the board face, bottom z {z0:.2f})</text>\n')
-    out.append(f'<text x="{pad}" y="{pad - 0.5:.2f}">Insulating sheet rated 105 degC, UL 94 V-0 or VTM-0</text>\n')
-    # dimension lines: overall width, heights, notch width
-    def hdim(ua, ub, z, label, dy=0.0):
-        out.append(f'<line x1="{fx(ua):.3f}" y1="{fy(z) + dy:.3f}" x2="{fx(ub):.3f}" y2="{fy(z) + dy:.3f}" stroke="#c00" stroke-width="0.12"/>\n')
-        out.append(f'<text x="{(fx(ua) + fx(ub)) / 2 - 8:.2f}" y="{fy(z) + dy - 0.8:.2f}" fill="#c00">{label}</text>\n')
-    hdim(u0, u1, z0, f"overall {u1 - u0:.2f}", 5.0)
-    for ref in TRIAC_REFS:
-        half = m.P("triac.B_mm") / 2 + m.P("film.notch_margin_mm")
-        hdim(m.triac_u[ref] - half, m.triac_u[ref] + half, m.P("film.height_under_body_mm"), f"notch {2 * half:.1f}", -4.0)
-    out.append(f'<line x1="{pad - 3}" y1="{fy(m.P("film.height_beside_mm")):.3f}" x2="{pad - 3}" y2="{fy(z0):.3f}" stroke="#c00" stroke-width="0.12"/>\n')
-    out.append(f'<text x="2" y="{(fy(m.P("film.height_beside_mm")) + fy(z0)) / 2:.2f}" fill="#c00">{m.P("film.height_beside_mm") - z0:.2f}</text>\n')
-    out.append("</g>\n</svg>\n")
-    open(path, "w", encoding="utf-8").write("".join(out))
-    return path
-
-
 def wrap_lines(lines: Sequence[str], width_mm: float, size: float = 1.9) -> List[str]:
     """Lines broken to fit a sheet width, a monospace character being about 0.6 of the font size wide."""
     import textwrap
@@ -1273,7 +1231,7 @@ def plate_drawing_svg(m: Model, path: str) -> str:
     fx = lambda u: margin + (u - pl["u0"])  # noqa: E731
     fy = lambda z: margin + 14 + (pl["z1"] - z)  # noqa: E731
     for i, t in enumerate(wrap_lines(["SPREADER PLATE, aluminium, flat, nothing cut from it, seen from the case side (the inner face, looking toward the wall, the case's far end behind the viewer), 1:1, millimetres. "
-                                      f"{L:.1f} long x {H:.1f} tall x {P('plate.thickness_mm'):.1f} thick; provisional until the owner cuts and measures the wall."], L, 2.0)):
+                                      f"{L:.1f} long x {H:.3f} tall x {P('plate.thickness_mm'):.1f} thick: the former {P('plate.former_height_mm'):.1f} mm plate with its lower edge raised to z {pl['z0']:.1f} above the board face, its upper edge at the former top z {pl['z1']:.3f}; provisional until the owner cuts and measures the wall."], L, 2.0)):
         sheet.text(margin, margin + 2 + 3.6 * i, t, size=2.0)
     sheet.poly([(fx(pl["u0"]), fy(pl["z1"])), (fx(pl["u1"]), fy(pl["z1"])), (fx(pl["u1"]), fy(pl["z0"])), (fx(pl["u0"]), fy(pl["z0"]))],
                "fill:#e9ebee;stroke:#000;stroke-width:0.25")
@@ -1285,8 +1243,8 @@ def plate_drawing_svg(m: Model, path: str) -> str:
         x0 = end if sign > 0 else end - bz
         sheet.poly([(fx(x0), fy(pl["z1"])), (fx(x0 + bz), fy(pl["z1"])), (fx(x0 + bz), fy(pl["z0"])), (fx(x0), fy(pl["z0"]))],
                    "fill:#fbe7cf;fill-opacity:0.7;stroke:#c60;stroke-width:0.12;stroke-dasharray:1 1")
-        for dz in (-7.5, 7.5):
-            cx, cz = end + sign * bz / 2, pl["cz"] + dz
+        for cz in pl["bolt_zs"]:
+            cx = end + sign * bz / 2
             sheet.circle((fx(cx), fy(cz)), P("plate.bolt_washer_dia_mm") / 2, "fill:none;stroke:#c60;stroke-width:0.12")
             sheet.circle((fx(cx), fy(cz)), P("plate.bolt_dia_mm") / 2 + 0.25, "fill:#fff;stroke:#000;stroke-width:0.2")
         sheet.text(fx(x0 + bz / 2), fy(pl["z0"]) + 4, f"bolt zone {bz:.1f}", fill="#c60", size=1.9, anchor="middle")
@@ -1305,15 +1263,15 @@ def plate_drawing_svg(m: Model, path: str) -> str:
         sheet.text(fx(u) + (-3 if i == 0 else 3), fy(nominal) - 2.5, f"{ref} tab screw u {u:.2f} z {nominal:.2f}", fill="#c00", size=1.8, anchor="end" if i == 0 else "start")
     ty = fy(pl["z0"]) + 12
     lines = [
-        "Red bar: the tab hole height range %.2f to %.2f (nominal %.2f); the tapped M3 holes (dia %.1f, %.1f deep) are drilled at the measured height." % (
-            lo, hi, nominal, P("triac.plate_tap_drill_mm"), P("triac.plate_tap_depth_mm")),
+        "Red bar: the tab hole height range %.2f to %.2f (nominal %.2f); the M3 holes (tapping drill %.1f) are drilled and tapped through the whole plate from this face at the measured height; the screws are M3 x %.0f." % (
+            lo, hi, nominal, P("triac.plate_tap_drill_mm"), P("triac.tab_screw_length_mm")),
         "The range is unconfirmed: the owner measures the delivered board before marking the plate.",
-        "Four M3 countersunk holes, countersunk on the back face (the wall face, away from the viewer; head dia %.1f shown by its circle), take the tray screws; the back face lies on the machine wall. The two M3 tapped holes enter the inner face drawn here." % P("screws.tray_plate_head_dia_mm"),
-        "Wall bolts M4, two at each end, washer dia %.1f, standing in the %.1f mm end zones outside the case." % (P("plate.bolt_washer_dia_mm"), bz),
+        "Four M3 countersunk holes, countersunk on the back face (the wall face, away from the viewer; head dia %.1f shown by its circle), take the tray screws at z %s; the back face lies on the machine wall. The two M3 tapped-through holes enter the inner face drawn here." % (P("screws.tray_plate_head_dia_mm"), ", ".join(f"{z:g}" for z in P("screws.tray_plate_z_mm"))),
+        "Wall bolts M4, one at the plate's mid-height (z %.2f) at each end, washer dia %.1f, standing in the %.1f mm end zones outside the case." % (pl["cz"], P("plate.bolt_washer_dia_mm"), bz),
         "Length arithmetic: case outer width at the plate %.2f + 2 x bolt zone %.1f = %.2f, not more than the plate length %.1f (margin %.2f)." % (
             e["u1"] - e["u0"], bz, e["u1"] - e["u0"] + 2 * bz, L, L - (e["u1"] - e["u0"] + 2 * bz)),
-        "Wall opening = plate outline + %.1f per side: %.1f x %.1f." % (P("plate.wall_opening_clearance_mm"), L + 2 * P("plate.wall_opening_clearance_mm"),
-                                                                       H + 2 * P("plate.wall_opening_clearance_mm")),
+        "Wall opening = the plate's former outline + %.1f per side: %.1f x %.1f." % (P("plate.wall_opening_clearance_mm"), L + 2 * P("plate.wall_opening_clearance_mm"),
+                                                                       P("plate.former_height_mm") + 2 * P("plate.wall_opening_clearance_mm")),
         "Interface material between the triac faces and the plate, and between the plate and the wall, is not in the catalogue and is stated in the case record.",
     ]
     lines = wrap_lines(lines, L, 1.9)
@@ -1340,8 +1298,8 @@ def case_drawings_svg(m: Model, path: str) -> str:
     op = P("plate.wall_opening_clearance_mm")
     margin, gap = 10.0, 16.0
     plan_box = (-8.0, -8.0, 56.0, 86.0)             # u0, v0, u1, v1
-    side_box = (-8.0, pl["z0"] - 2, 86.0, pl["z1"] + 2)   # v0, z0, v1, z1
-    end_box = (pl["u0"] - op - 2, pl["z0"] - op - 2, pl["u1"] + op + 2, pl["z1"] + op + 2)
+    side_box = (-8.0, pl["former_z0"] - 2, 86.0, pl["z1"] + 2)   # v0, z0, v1, z1
+    end_box = (pl["u0"] - op - 2, pl["former_z0"] - op - 2, pl["u1"] + op + 2, pl["z1"] + op + 2)
     pw, ph = plan_box[2] - plan_box[0], plan_box[3] - plan_box[1]
     sw, sh = side_box[2] - side_box[0], side_box[3] - side_box[1]
     ew, eh = end_box[2] - end_box[0], end_box[3] - end_box[1]
@@ -1431,23 +1389,22 @@ def case_drawings_svg(m: Model, path: str) -> str:
     sheet.text(end_o[0], end_o[1] - 3, "END ELEVATION (seen from the far end, looking toward the wall; u to the right)", size=2.0)
     sheet.shape(sh_box(end_box[0], end_box[1], end_box[2], end_box[3]), efx, efy, "fill:none")
     sheet.shape(sh_box(pl["u0"], pl["z0"], pl["u1"], pl["z1"]), efx, efy, "fill:#dfe3e6;stroke:#444;stroke-width:0.15")
-    sheet.shape(sh_box(pl["u0"] - op, pl["z0"] - op, pl["u1"] + op, pl["z1"] + op), efx, efy, "fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1")
+    sheet.shape(sh_box(pl["u0"] - op, pl["former_z0"] - op, pl["u1"] + op, pl["z1"] + op), efx, efy, "fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1")
     sheet.shape(sil["end"], efx, efy, "fill:#eef0f2;stroke:#000;stroke-width:0.2")
     for u in m.info["tray_pilaster_u"]:
         for z in P("screws.tray_plate_z_mm"):
             sheet.circle((efx(u), efy(z)), P("screws.tray_plate_dia_mm") / 2, "fill:#000")
     for ref in TRIAC_REFS:
         sheet.circle((efx(m.triac_u[ref]), efy(m.tab_hole_z)), P("triac.tab_screw_dia_mm") / 2, "fill:#000")
-    sheet.text(efx(pl["u0"] - op) + 1, efy(pl["z1"] + op) - 1.2, f"wall opening = plate + {op:.1f} per side", fill="#c60", size=1.7)
+    sheet.text(efx(pl["u0"] - op) + 1, efy(pl["z1"] + op) - 1.2, f"wall opening = the plate's former outline + {op:.1f} per side", fill="#c60", size=1.7)
     # ---- legend
     ly = margin + 16 + max(ph, sh + gap + 14 + eh) + 8
     legend = [
         "Board is held by: 11 pillars and the H1 boss and screw (seat plane tilted with the board's lean), the backing rib, the hold-down finger on the left wall and the locating ribs. The lid holds nothing.",
         "Lid: two toes under hooks on the pilasters at the plate end, one M3 x 10 countersunk screw from +z at the far end. It comes off by lifting the far end and drawing it out along the pilaster grooves.",
-        "Tray to plate: four M3 x 12 countersunk screws from the plate's back face into 2.6 pilot holes in the pilasters. Tab screws: M3 into the plate, reached with the lid off along the blue lines.",
-        "Barrier: bought insulating film %.2f mm thick clamped between the tray's end faces and the plate, top %.1f above the board face beside the triacs and %.1f under each body." % (
-            P("film.thickness_mm"), P("film.height_beside_mm"), P("film.height_under_body_mm")),
-        "Opening in the plastic wall: plate outline plus %.1f per side. Slot mouths keep %.1f mm of clear air to the right wall." % (op, 3.0),
+        "Tray to plate: four M3 x 12 countersunk screws from the plate's back face into 2.6 pilot holes in the pilasters. Tab screws: M3 x 5 through the tab into the plate's tapped-through holes, reached with the lid off along the blue lines.",
+        "No barrier: the plate's lower edge stands %.1f mm above the board face, so no plate metal faces the board edge, the pads or the leads; the tray's printed end wall fills the volume the plate leaves, unfilled plastic with no creepage credit." % P("plate.lower_edge_z_mm"),
+        "Opening in the plastic wall: the plate's former outline plus %.1f per side. Slot mouths keep %.1f mm of clear air to the right wall." % (op, 3.0),
     ]
     legend = wrap_lines(legend, width - 2 * margin, 1.8)
     for i, line in enumerate(legend):

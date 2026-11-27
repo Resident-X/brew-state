@@ -31,6 +31,18 @@ seating:
     max: 3.07
     unconfirmed: true
     source: "DS2114 Rev 11 Table 6: c2 2.40 to 2.72 (tab face to the lead's rear face) plus half of c1 0.49 to 0.70, as hardware/sunbeam-em7000/heater-wall-board/layout-plan.md:164 states it (2.86 nominal)"
+  outline_routing_mm:
+    value: 0.0
+    min: -0.2
+    max: 0.2
+    unconfirmed: true
+    source: "the board outline's routing tolerance at the fabricator's regular tier, +/- 0.2 mm (docs/board-manufacturer-jlcpcb.md, published, unverified; 0.1 mm at its precision tier); it moves the board's plate-side edge, the board slab and the slot mouths along v and leaves the pads, holes and leads where the drilling puts them. The owner measures it on the delivered board"
+  lead_play_mm:
+    value: 0.0
+    min: -0.305
+    max: 0.305
+    unconfirmed: true
+    source: "the play of a triac lead in its 1.1 mm drilled hole along v, which the assembler's soldering freezes: (1.1 - 0.49) / 2 = 0.305 mm to either side at the thinnest lead (c1 0.49) and (1.1 - 0.70) / 2 = 0.20 mm at the thickest (DS2114 Rev 11 Table 6 p.9, lead thickness c1 0.49 to 0.70; hole 1.1 mm, fit.py TRIAC_LEAD_HOLE_D_MM); the whole triac, its tab face and the plate it is bolted to move with the lead, the pads do not. The extreme is taken as the assumption that the lead can sit against either side of its hole. The owner measures it on the delivered board"
   lead_protrusion_below_board_mm:
     value: 2.0
     min: 0.0
@@ -47,7 +59,7 @@ triac:
   F_mm: {value: 6.40, min: 6.20, max: 6.60, source: "DS2114 Rev 11 Table 6 p.9, tab (flange) height above the moulded body"}
   B_mm: {value: 10.40, min: 10.00, max: 10.40, source: "DS2114 Rev 11 Table 6 p.9, body width; the model uses the maximum"}
   C_mm: {value: 4.60, min: 4.40, max: 4.60, source: "DS2114 Rev 11 Table 6 p.9, body thickness; the model uses the maximum"}
-  b2_mm: {value: 1.32, source: "DS2114 Rev 11 Table 6 p.9, tab thickness (maximum)"}
+  b2_mm: {value: 1.32, min: 1.23, max: 1.32, source: "DS2114 Rev 11 Table 6 p.9, tab thickness b2: the model uses the maximum 1.32; the minimum 1.23 is the figure the 2026-11-27 readiness pass read from the same table (to be confirmed against the sheet by whoever next opens it)"}
   hole_dia_mm: {value: 3.88, source: "DS2114 Rev 11 Table 6 p.9, tab hole diameter I (maximum 3.88)"}
   c1_mm: {value: 0.49, source: "DS2114 Rev 11 Table 6 p.9, lead thickness; the minimum, so the lead's rear face distance to the plate is the smallest the package allows"}
   lead_width_mm: {value: 0.88, source: "DS2114 Rev 11 Table 6 p.9, b1 maximum"}
@@ -56,16 +68,12 @@ triac:
   tab_screw_dia_mm: {value: 3.0, source: "M3 pan-head machine screw through the tab hole into the plate, the torque of fabrication-notes.md:70 (0.55 to 0.70 N m)"}
   tab_screw_head_dia_mm: {value: 5.6, source: "ISO 14583 M3 pan head, head diameter 5.6 maximum"}
   tab_screw_head_height_mm: {value: 2.4, source: "ISO 14583 M3 pan head, head height 2.4 maximum"}
-  plate_tap_drill_mm: {value: 2.5, source: "M3 tapping drill diameter"}
-  plate_tap_depth_mm: {value: 4.0, source: "blind tapped depth in the 5.0 mm plate, which leaves 1.0 mm unbroken behind"}
-
-film:
-  kind: {value: film, source: "the barrier is a thin bought insulating film held by the tray: a printed wall would have to be 0.8 mm thick in a gap the package tolerance alone takes from 1.21 down to 0.79 mm"}
-  thickness_mm: {value: 0.25, min: 0.18, max: 0.30, source: "design thickness; electrical insulating sheet 0.18 to 0.30 mm, rated at least 105 degC, UL 94 V-0 or VTM-0 (polypropylene barrier sheet, polyester or polyimide sheet, vulcanised fibre)"}
-  height_beside_mm: {value: 8.0, source: "design figure: film top above the board face beside and between the triac bodies"}
-  height_under_body_mm: {value: 2.2, source: "design figure: film top in the notch under a triac body, 0.35 mm under the lowest body of the seating range (2.55)"}
-  notch_margin_mm: {value: 1.0, source: "design figure: notch width = B max + 2 x this"}
-  screw_hole_dia_mm: {value: 3.4, source: "M3 clearance hole of the film for the tray-to-plate screws"}
+  tab_screw_length_mm: {value: 5.0, min: 4.76, max: 5.24, source: "M3 x 5 pan-head machine screw, length under the head; the length tolerance js15, +/- 0.24 mm for a nominal length over 3 and up to 6 mm (ISO 4759-1 length tolerance class, IT15 = 0.48 mm)"}
+  plate_tap_drill_mm: {value: 2.5, source: "M3 tapping drill diameter; the hole is tapped through the whole plate from the triac side, so no thread ends in the plate"}
+  tab_screw_min_engagement_mm: {value: 3.0, source: "design figure: 1.0 x the screw diameter, the least thread engagement in the tapped aluminium hole at the 0.55 to 0.70 N m of fabrication-notes.md; the case record shows the shear stress at the least engagement against a soft-alloy shear strength"}
+  tab_screw_torque_Nm: {value: 0.70, source: "fabrication-notes.md: 0.55 to 0.70 N m, the upper figure"}
+  tab_screw_torque_coefficient: {value: 0.20, source: "nut factor K of a plain steel screw in a dry tapped aluminium hole, T = K F d, the usual 0.2"}
+  plate_alloy_shear_MPa: {value: 70.0, source: "assumed: the shear strength of the weakest common plate alloy (1050 or 5052 in the soft tempers, about 60 to 140 MPa); the plate's alloy is not yet chosen, so the lowest is taken"}
 
 case:
   wall_mm: {value: 2.0, source: "design figure"}
@@ -88,11 +96,16 @@ case:
 
 plate:
   length_mm: {value: 80.0, source: "provisional until the owner cuts and measures the machine wall"}
-  height_mm: {value: 30.0, source: "provisional until the owner cuts and measures the machine wall"}
+  former_height_mm: {value: 30.0, source: "the plate's former height, which fixes the outline the case lies within (C11) and the upper edge: the plate stays centred on the case's extent here, its top at 22.975 mm at nominal; provisional until the owner cuts and measures the machine wall"}
+  lower_edge_z_mm: {value: 6.0, source: "the plate's lower edge above the board's component face, fixed in the board frame: the owner's W-9 1c lift figure; the bare lead's rear face stands at least 2.40 mm off the plate plane (DS2114 c2 minimum) and its metal rises to the body underside at 4.55 mm at most, so 2.6 mm of straight air needs an edge at or above 4.55 + sqrt(2.6^2 - 2.40^2) = 5.55 mm"}
+  end_wall_top_gap_mm: {value: 0.2, source: "design figure: the tray's end wall tops out this far under the plate's lower edge, and its board-side face stands this far behind the plate plane (the seam of case.seam_mm)"}
+  end_wall_wall_clear_mm: {value: 0.5, source: "design figure: the end wall's back face stands this far in front of the machine wall's plane, so only the plate touches the wall"}
+  screw_edge_distance_mm: {value: 0.5, source: "design figure: a tray screw's countersunk head keeps this far inside each edge of the plate"}
+  min_pilot_to_pocket_mm: {value: 0.4, source: "design figure: a tray screw's pilot keeps this far from the lid toe's pocket in the pilaster"}
   thickness_mm: {value: 5.0, source: "provisional until the owner cuts and measures the machine wall"}
   min_margin_mm: {value: 0.25, source: "design figure: the case lies inside the plate outline by at least this on every side"}
   wall_opening_clearance_mm: {value: 1.5, source: "design figure: the opening in the machine's plastic wall is the plate outline plus this per side"}
-  bolt_zone_mm: {value: 10.0, source: "M4 wall bolt with a 9 mm washer, 0.5 mm either side of the washer"}
+  bolt_zone_mm: {value: 10.0, source: "one M4 wall bolt at the plate's mid-height at each end with a 9 mm washer, 0.5 mm either side of the washer: the narrower plate has no room for two"}
   bolt_washer_dia_mm: {value: 9.0, source: "M4 form A washer, 9 mm outer diameter (ISO 7089 M4 is 9.0)"}
   bolt_dia_mm: {value: 4.0, source: "M4 wall bolt"}
   wall_frame_depth_mm: {value: 10.0, source: "the opening modelled as a plate-outline-plus-clearance aperture this far in front of the wall plane"}
@@ -100,7 +113,9 @@ plate:
 
 screws:
   tray_plate_count_per_pilaster: {value: 2, source: "two heights per pilaster for the push-on moment"}
-  tray_plate_z_mm: {value: [12.0, -3.0], source: "wide stance in z, 15 mm apart"}
+  tray_plate_z_mm: {value: [9.5, 14.0], source: "stance 4.5 mm apart in z, both inside the plate raised to 6.0 mm: the lower sits 3.5 mm and its countersink 0.5 mm above the plate's lower edge; a pilot at 19.5 mm would cut the lid toe's pocket (z 16.5 to 21.0) and break out of the 20.5 mm pilaster top, so the upper stands at 14.0, 1.2 mm under the pocket floor at the circle"}
+  tray_pilot_pullout_MPa: {value: 5.0, source: "assumed pull-out allowance of a thread-forming M3 screw in a printed ASA pilot, as shear stress on the cylinder of the screw's major diameter over its engaged length: about an eighth of a typical ASA tensile strength of 40 MPa, to cover the weak layer bonds of a printed part and the pilot's tear-drop form; no maker figure for printed pilots was found and the printed plastic's measured strength is out of scope"}
+  tray_pilot_shear_layer_mm: {value: 0.5, source: "the thread pitch of M3, the thickness of plastic that shears about a screw thread, for the pilot's shear displacement under load"}
   tray_plate_dia_mm: {value: 3.0, source: "M3 x 12 countersunk machine screw entered from the plate's back face"}
   tray_plate_length_mm: {value: 12.0, source: "M3 x 12"}
   tray_plate_head_dia_mm: {value: 6.0, source: "ISO 7046 M3 countersunk head, 6.0 maximum"}
@@ -199,6 +214,7 @@ printer:
 material:
   name: {value: ASA, source: "baseline"}
   modulus_MPa: {value: 2000.0, source: "ASA tensile modulus, the ASTM D638 2010 MPa of the Ricoh Rapid Fab TDS rounded down (sources/asa in the lookup)"}
+  poisson_ratio: {value: 0.35, source: "typical ASA Poisson's ratio (an engineering plastic's 0.35), for the shear modulus of the pilot's displacement; no maker figure was read"}
   allowed_board_motion_mm: {value: 0.05, source: "design criterion: displacement of the triac end of the board against the plate under the maximum insertion force"}
 
 # The safety core and the skin. Everything above is the core: the separation figures, the barrier, the pilasters, the
@@ -223,7 +239,7 @@ installed:
 boots:
   typical: {value: [10.5, 7.8, 22.0], unconfirmed: true, source: "assumed, owner to measure his boots: Vogt 3906 PVC fully insulated 6.3x0.8, A 10.5, L 21 (Vogt catalogue p.376, drawing) and JST LVDDF2-250A W 7.4, E 7.8, L 22.0 (JST catalogue, text); larger of each, column meanings unconfirmed"}
   largest_common: {value: [13.0, 7.8, 25.0], unconfirmed: true, source: "assumed, owner to measure his boots: Vogt 3933 PVC 4-6 mm2, A 13, L 25 (Vogt catalogue p.375, drawing) and JST LVDDF5.5-250A E 7.8, L 25.0 (JST catalogue, text); larger of each, column meanings unconfirmed"}
-  clearance_mm: {value: 0.5, source: "design figure: the least clearance a boot keeps to the lid, the tray and the film along its whole travel"}
+  clearance_mm: {value: 0.5, source: "design figure: the least clearance a boot keeps to the lid and the tray along its whole travel"}
   withdraw_extra_mm: {value: 10.0, source: "design figure: the boot is swept from fully seated to fully withdrawn off the blade tip plus this"}
   wire_od_mm: {value: 3.4, source: "assumed, owner to measure his wire: the wire leaving the boot's end on the blade axis"}
   bend_od_multiple: {value: 5.0, source: "design allowance; distributor guidance 3 to 5 x OD; no maker figure"}
@@ -258,7 +274,7 @@ logo:
   sheet_clear_mm: {value: 1.0, source: "owner: a sheet line is kept only where it stays this far from every other groove at the placed size"}
   min_feature_mm: {value: 0.6, source: "design figure, 2026-11-26 tidy-up: wider and shallower so the groove floor is seen off-axis; the floor stays in view to about 68 degrees off the face normal; the least land between two grooves (nearer ones merge) and the least groove (narrower ones are dropped)"}
   lid_min_height_mm: {value: 28.0, source: "owner: the logo on the lid face is at least this tall when that costs no vent its permitted field"}
-  tray_height_mm: {value: 48.0, source: "owner: the logo on the tray's outer top face is this tall, centred on that face; it stands 4.9 mm nearer the plate than centred because the floor is thickened under its grooves (to keep the minimum wall under them) and that thickened pad may not reach the bay block, where the blade legs leave only 0.3 mm at the -1 degree lean"}
+  tray_height_mm: {value: 48.0, source: "owner: the logo on the tray's outer top face is this tall, centred on that face; it stands 4.8 mm nearer the plate than centred because the floor is thickened under its grooves (to keep the minimum wall under them) and that thickened pad may not reach the bay block, where the blade legs leave only 0.3 mm at the -1 degree lean"}
   tray_edge_clear_mm: {value: 4.0, source: "owner: the logo keeps this far from where the tray top's chamfer begins; it is shifted off centre only when it would come nearer"}
   face_margin_mm: {value: 1.0, source: "design figure: a logo keeps this far from the edge of a flat face"}
   pad_margin_mm: {value: 1.0, source: "design figure: the tray floor is thickened inside the cavity this far beyond the logo's grooves so the floor under them keeps the core's minimum wall"}
@@ -326,5 +342,4 @@ skins:
         tray_floor_colour: {value: "#e6e1d6", source: "bone: the tray's swap layers, which are the logo's groove floors on the tray's top and a pinstripe round its top chamfer"}
         swap_start_mm: {value: 0.4, source: "design figure: each part prints face down in its own colour to this height above the bed, then the filament is changed; it is the depth of the shallowest groove (the logo's), so that groove's floor is the first layer of the second colour"}
         swap_layers: {value: 3, source: "design figure: layers printed in the second colour before the change back, 0.4 to 1.0 mm above the bed: three layers of bone over graphite under the tray logo's floor, enough for a pale filament to print opaque, and two layers of graphite over the lid's 0.6 mm deep groove floors; a filament change colours the whole layer, so the same 0.6 mm shows as a pinstripe in the middle of each part's 1.6 mm chamfer"}
-      film_colour: {value: "#e0a030", source: "amber"}
       plate_colour: {value: "#b4b8bd", source: "aluminium grey"}
