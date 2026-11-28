@@ -406,7 +406,10 @@ def test_c13_the_far_end_block_is_omitted_with_a_reason_where_it_would_crowd_the
         return m, m.info["far_end_block"]
     nominal, reason = built({})
     assert reason is None and len([g for g in nominal.info["grooves"] if g.square]) == 8
-    for overrides, word in (({"skins.flow.lines.edge_land_mm": 3.8}, "chamfer"), ({"skins.flow.block.clear_mm": 2.5}, "collar")):
+    # an edge land just wider than the distance the nominal block keeps to the chamfer crowds it, whatever that distance is at the lid's width (a land 0.5 mm wider sends the skin's streamline fit into a build that does not finish in ten minutes)
+    crowding_land = nominal.skin.block(nominal.core)["to_chamfer_mm"] + 0.1
+    assert crowding_land > nominal.P.S("lines.edge_land_mm")
+    for overrides, word in (({"skins.flow.lines.edge_land_mm": crowding_land}, "chamfer"), ({"skins.flow.block.clear_mm": 2.5}, "collar")):
         m, reason = built(overrides)
         assert reason and word in reason and not [g for g in m.info["grooves"] if g.square]
     # fewer than two bars leaves no block either, and the build still succeeds

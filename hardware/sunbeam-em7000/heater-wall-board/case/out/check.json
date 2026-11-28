@@ -210,7 +210,7 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the plate's lower edge z 6.000 is the ledge's top, 12.600 mm above the tray floor's underside (63.00 layers of 0.2 mm): at the ledge the plate shares 0.000 mm3 with the tray, 0.05 mm lower 14.028 mm3, and at its former position, z -7.025, 3323.7 mm3, so a lower plate cannot be seated",
+   "summary": "the plate's lower edge z 6.000 is the ledge's top, 12.600 mm above the tray floor's underside (63.00 layers of 0.2 mm): at the ledge the plate shares 0.000 mm3 with the tray, 0.05 mm lower 14.032 mm3, and at its former position, z -7.025, 3324.8 mm3, so a lower plate cannot be seated",
    "figures": {
     "ledge_z_mm": 6.0,
     "plate_lower_edge_z_mm": 6.0,
@@ -218,9 +218,9 @@
     "layers_of_0.2_mm": 63.0,
     "shared_volume_at_ledge_mm3": 0.0,
     "step_below_mm": 0.05,
-    "shared_volume_below_ledge_mm3": 14.0275,
+    "shared_volume_below_ledge_mm3": 14.032,
     "former_lower_edge_z_mm": -7.025,
-    "shared_volume_at_former_position_mm3": 3323.737,
+    "shared_volume_at_former_position_mm3": 3324.8454,
     "contact_v_mm": [
      -5.5,
      -1.2
@@ -269,15 +269,15 @@
    "summary": "the case lies inside the plate's former 85.0 x 30.0 mm outline with 0.425 mm least margin (needs 0.25); the board, blades and parts lie inside it too",
    "figures": {
     "margins_mm": {
-     "left": 10.050000574011218,
-     "right": 10.050500574011224,
+     "left": 10.04000057401122,
+     "right": 10.040500574011212,
      "bottom": 0.425,
      "top": 0.425
     },
     "required_mm": 0.25,
     "case_extent_mm": {
-     "u0": -8.7,
-     "u1": 56.1995,
+     "u0": -8.71,
+     "u1": 56.2095,
      "z0": -6.6,
      "z1": 22.55,
      "v0": -5.5,
@@ -324,8 +324,8 @@
       "top": 1.5
      },
      "end wall": {
-      "left": 11.75,
-      "right": 11.75,
+      "left": 11.74,
+      "right": 11.74,
       "bottom": 1.5,
       "top": 21.5
      }
@@ -395,14 +395,14 @@
    "criterion": "C3",
    "kind": "check",
    "passed": true,
-   "summary": "plate length 85.00 >= case outer width at the plate 64.50 + 2 x bolt zone 10.0 = 84.50 (margin 0.50)",
+   "summary": "plate length 85.00 >= case outer width at the plate 64.52 + 2 x bolt zone 10.0 = 84.52 (margin 0.48)",
    "figures": {
     "plate_length_mm": 85.0,
-    "case_outer_width_mm": 64.5,
+    "case_outer_width_mm": 64.52,
     "bolt_zone_mm": 10.0,
-    "required_mm": 84.5,
-    "margin_mm": 0.5,
-    "arithmetic": "64.50 + 2 x 10.0 = 84.50 <= 85.00"
+    "required_mm": 84.52,
+    "margin_mm": 0.48,
+    "arithmetic": "64.52 + 2 x 10.0 = 84.52 <= 85.00"
    },
    "lines": []
   },
@@ -417,13 +417,13 @@
      {
       "bolt_u_mm": -13.75,
       "bolt_z_mm": 16.0,
-      "washer_clear_of_case_mm": 0.55,
+      "washer_clear_of_case_mm": 0.54,
       "washer_inside_plate_in_z_mm": 5.5
      },
      {
       "bolt_u_mm": 61.25,
       "bolt_z_mm": 16.0,
-      "washer_clear_of_case_mm": 0.5505,
+      "washer_clear_of_case_mm": 0.5405,
       "washer_inside_plate_in_z_mm": 5.5
      }
     ]
@@ -435,40 +435,40 @@
    "criterion": "C3",
    "kind": "check",
    "passed": true,
-   "summary": "each of the 2 tray screws' countersinks stands at least 2.500 mm inside the plate's edges (needs 0.50) and its insert hole and head at least 2.255 mm from the lid toe's pocket (needs 0.40), the hole's top under the pilaster's top by the insert wall",
+   "summary": "each of the 2 tray screws' countersinks stands at least 2.500 mm inside the plate's edges (needs 0.50) and its insert hole and head at least 2.251 mm from the lid toe's pocket (needs 0.40), the hole's top under the pilaster's top by the insert wall",
    "figures": {
     "screws": [
      {
-      "screw": "u -4.5 z 11.65",
+      "screw": "u -4.505 z 11.65",
       "edge_distances_mm": {
        "lower": 2.5,
        "upper": 11.2,
-       "left": 11.1,
-       "right": 67.6
+       "left": 11.095,
+       "right": 67.605
       },
       "least_edge_mm": 2.5,
       "to_pocket_mm": {
-       "hole": 2.2554,
-       "head": 4.9876
+       "hole": 2.2513,
+       "head": 4.9882
       },
-      "insert_hole_top_z_mm": 14.4784,
+      "insert_hole_top_z_mm": 14.4855,
       "pilaster_top_z_mm": 20.5,
       "pass": true
      },
      {
-      "screw": "u 52 z 11.65",
+      "screw": "u 52.005 z 11.65",
       "edge_distances_mm": {
        "lower": 2.5,
        "upper": 11.2,
-       "left": 67.6,
-       "right": 11.1
+       "left": 67.605,
+       "right": 11.095
       },
       "least_edge_mm": 2.5,
       "to_pocket_mm": {
-       "hole": 2.2554,
-       "head": 4.9876
+       "hole": 2.2513,
+       "head": 4.9882
       },
-      "insert_hole_top_z_mm": 14.4784,
+      "insert_hole_top_z_mm": 14.4855,
       "pilaster_top_z_mm": 20.5,
       "pass": true
      }
@@ -489,7 +489,7 @@
    "criterion": "C3",
    "kind": "check",
    "passed": true,
-   "summary": "each of the 1 pairs of the 2 tray screws stands at least 56.50 mm apart on the axes (needs 6.8); the 5.5 mm heads and the 6.3 mm countersinks of the ISO 7046 M3 screw leave their gaps",
+   "summary": "each of the 1 pairs of the 2 tray screws stands at least 56.51 mm apart on the axes (needs 6.8); the 5.5 mm heads and the 6.3 mm countersinks of the ISO 7046 M3 screw leave their gaps",
    "figures": {
     "pairs": [
      {
@@ -497,9 +497,9 @@
        0,
        1
       ],
-      "axes_mm": 56.5,
-      "head_gap_mm": 51.0,
-      "countersink_gap_mm": 50.2,
+      "axes_mm": 56.51,
+      "head_gap_mm": 51.01,
+      "countersink_gap_mm": 50.21,
       "pass": true
      }
     ],
@@ -515,27 +515,27 @@
    "criterion": "C3",
    "kind": "check",
    "passed": true,
-   "summary": "2 M3 heat-set inserts, one in each of 2 pilasters, in holes 4.0 mm across and 6.7 mm deep for the 5.7 mm insert with 1.0 mm of reservoir under it; the wall round each hole is at least 2.000 mm (needs 2.0); the M3 x 10 screw engages 5.0 mm of the insert (at least 3.0 mm, at most the insert's 5.7 mm) and stops 1.7 mm short of the hole's floor, so the head seats and the bar is clamped",
+   "summary": "2 M3 heat-set inserts, one in each of 2 pilasters, in holes 4.01 mm across (the maker's range 4.01 to 4.09 mm) and 6.7 mm deep (the maker's least 6.5 mm) for the 5.7 mm insert with 1.0 mm of reservoir under it; the wall round each hole is at least 2.000 mm (needs 2.0); the M3 x 10 screw engages 5.0 mm of the insert (at least 3.0 mm, at most the insert's 5.7 mm) and stops 1.7 mm short of the hole's floor, so the head seats and the bar is clamped",
    "figures": {
     "inserts": [
      {
-      "insert": "u -4.5 z 11.65",
+      "insert": "u -4.505 z 11.65",
       "wall_mm": {
        "outer_face_mm": 2.0,
        "cavity_mm": 2.0,
-       "pocket_mm": 2.2554,
-       "top_mm": 6.0216
+       "pocket_mm": 2.2513,
+       "top_mm": 6.0145
       },
       "least_wall_mm": 2.0,
       "pass": true
      },
      {
-      "insert": "u 52 z 11.65",
+      "insert": "u 52.005 z 11.65",
       "wall_mm": {
        "outer_face_mm": 2.0,
        "cavity_mm": 2.0,
-       "pocket_mm": 2.2554,
-       "top_mm": 6.0216
+       "pocket_mm": 2.2513,
+       "top_mm": 6.0145
       },
       "least_wall_mm": 2.0,
       "pass": true
@@ -545,7 +545,14 @@
     "screws_counted": 2,
     "pilasters": 2,
     "per_pilaster": 1,
-    "hole_dia_mm": 4.0,
+    "hole_dia_mm": 4.01,
+    "hole_dia_range_mm": [
+     4.01,
+     4.09
+    ],
+    "hole_in_maker_range": true,
+    "hole_depth_min_mm": 6.5,
+    "hole_depth_meets_maker_min": true,
     "hole_depth_mm": 6.7,
     "insert_length_mm": 5.7,
     "reservoir_mm": 1.0,
@@ -701,8 +708,8 @@
      0.7352
     ],
     "toe_u_mm": [
-     -6.8,
-     54.3
+     -6.81,
+     54.31
     ]
    },
    "lines": []
@@ -720,8 +727,8 @@
      "lid screw"
     ],
     "toe_u_mm": [
-     -6.8,
-     54.3
+     -6.81,
+     54.31
     ]
    },
    "lines": []
@@ -1057,7 +1064,7 @@
    "criterion": "C9",
    "kind": "check",
    "passed": true,
-   "summary": "the backing rib touches the board under each blade; under 75.6 N the tray section (I = 26450 mm^4, span 70.0 mm) deflects 0.164 mm at the blades and 0.0048 mm at the triac end, against 0.05 mm allowed",
+   "summary": "the backing rib touches the board under each blade; under 75.6 N the tray section (I = 26471 mm^4, span 70.0 mm) deflects 0.164 mm at the blades and 0.0048 mm at the triac end, against 0.05 mm allowed",
    "figures": {
     "contact": [
      {
@@ -1103,12 +1110,12 @@
     "insertion_force_N": 75.6,
     "push_on_direction": "-z (into the board)",
     "section_at_v_mm": 56.0,
-    "section_area_mm2": 456.8642,
-    "second_moment_mm4": 26450.2723,
-    "centroid_z_mm": 3.7597,
+    "section_area_mm2": 457.3215,
+    "second_moment_mm4": 26470.693,
+    "centroid_z_mm": 3.7608,
     "modulus_MPa": 2000.0,
     "span_mm": 70.04,
-    "deflection_at_blades_mm": 0.1637,
+    "deflection_at_blades_mm": 0.1635,
     "deflection_at_triac_end_mm": 0.0048,
     "allowed_mm": 0.05,
     "basis": "a cantilever from the plate end, uniform section as at v 56 (conservative: the pilasters stiffen the root), tip load",
@@ -1128,7 +1135,7 @@
    "criterion": "C9",
    "kind": "check",
    "passed": true,
-   "summary": "at the inserts' stance (z 11.65, push-on pivot at the plate's lower edge z 6.0, pull-off pivot at the pilaster's top z 20.5) the 75.6 N load loads each insert with 469 N pushing on and 299 N pulling off against 680 N of assumed pull-out, and the triac end moves 0.0126 mm pushing on and 0.0080 mm pulling off against 0.05 mm allowed",
+   "summary": "at the inserts' stance (z 11.65, push-on pivot at the plate's lower edge z 6.0, pull-off pivot at the pilaster's top z 20.5) the 75.6 N load loads each insert with 469 N pushing on and 299 N pulling off against 680 N of assumed pull-out, and the triac end moves 0.0126 mm pushing on and 0.0079 mm pulling off against 0.05 mm allowed",
    "figures": {
     "pivot_z_mm": 6.0,
     "pull_off_pivot_z_mm": 20.5,
@@ -1153,7 +1160,7 @@
     },
     "pull_off_tension_max_N": 299.1539,
     "engaged_length_mm": 5.7,
-    "insert_hole_dia_mm": 4.0,
+    "insert_hole_dia_mm": 4.01,
     "pullout_allowance_N": 680.0,
     "pullout_capacity_N": 680.0,
     "utilisation": 0.6891,
@@ -1167,7 +1174,7 @@
     "pull_off_root_motion_at_triac_end_mm": 0.0032,
     "tray_flexure_at_triac_end_mm": 0.0048,
     "triac_end_motion_mm": 0.0126,
-    "pull_off_triac_end_motion_mm": 0.008,
+    "pull_off_triac_end_motion_mm": 0.0079,
     "span_mm": 70.04,
     "x_mm": 10.0,
     "insertion_force_N": 75.6,
@@ -1239,75 +1246,83 @@
       "pass": true
      },
      {
-      "screw": "tray screw u-4.5 z11.65",
+      "screw": "tray screw u-4.505 z11.65",
       "kind": "tray_plate",
       "centre_uvz_mm": [
-       -4.5,
+       -4.505,
        -1.0,
        11.65
       ],
-      "distance_mm": 11.6171,
+      "distance_mm": 11.6194,
       "layer": "F.Cu",
       "nearest_item": "zone RET_F0 fill",
       "per_layer_mm": {
-       "F.Cu": 11.6171,
-       "B.Cu": 13.0567
+       "F.Cu": 11.6194,
+       "B.Cu": 13.0588
       },
       "required_mm": 3.0,
       "pass": true
      },
      {
-      "screw": "insert u-4.5 z11.65",
+      "screw": "insert u-4.505 z11.65",
       "kind": "insert",
       "centre_uvz_mm": [
-       -4.5,
+       -4.505,
        2.35,
        11.65
       ],
-      "distance_mm": 9.1043,
+      "distance_mm": 9.1016,
       "layer": "F.Cu",
       "nearest_item": "zone RET_F0 fill",
       "per_layer_mm": {
-       "F.Cu": 9.1043,
-       "B.Cu": 10.5452
+       "F.Cu": 9.1016,
+       "B.Cu": 10.5423
       },
       "required_mm": 2.6,
+      "copper_below_axis_mm": 11.65,
+      "copper_below_axis_required_mm": 4.8355,
+      "tear_drop_roof_mm": 2.8355,
+      "copper_below_axis_pass": true,
       "pass": true
      },
      {
-      "screw": "tray screw u52 z11.65",
+      "screw": "tray screw u52.005 z11.65",
       "kind": "tray_plate",
       "centre_uvz_mm": [
-       52.0,
+       52.005,
        -1.0,
        11.65
       ],
-      "distance_mm": 13.3961,
+      "distance_mm": 13.3992,
       "layer": "F.Cu",
       "nearest_item": "pad 2 of R912",
       "per_layer_mm": {
-       "F.Cu": 13.3961,
-       "B.Cu": 15.5475
+       "F.Cu": 13.3992,
+       "B.Cu": 15.5503
       },
       "required_mm": 3.0,
       "pass": true
      },
      {
-      "screw": "insert u52 z11.65",
+      "screw": "insert u52.005 z11.65",
       "kind": "insert",
       "centre_uvz_mm": [
-       52.0,
+       52.005,
        2.35,
        11.65
       ],
-      "distance_mm": 10.7983,
+      "distance_mm": 10.7964,
       "layer": "F.Cu",
       "nearest_item": "pad 2 of R912",
       "per_layer_mm": {
-       "F.Cu": 10.7983,
-       "B.Cu": 12.6311
+       "F.Cu": 10.7964,
+       "B.Cu": 12.6289
       },
       "required_mm": 2.6,
+      "copper_below_axis_mm": 11.65,
+      "copper_below_axis_required_mm": 4.8355,
+      "tear_drop_roof_mm": 2.8355,
+      "copper_below_axis_pass": true,
       "pass": true
      },
      {
@@ -1332,16 +1347,16 @@
     "basis_distance_mm": 2.6,
     "tray_to_plate_design_mm": 3.0,
     "lid_mm": 10.0,
-    "metal_model": "each screw is swept as spheres of its shaft or head radius along its axis"
+    "metal_model": "each screw is swept as spheres of its shaft or head radius along its axis; an insert is swept as spheres of its hole's radius plus the wall, which is exact toward the board only while the axis stands above the board's higher copper plane by at least the tear-drop roof (the hole's radius times sqrt 2, the roof standing above the axis, away from the board) plus the wall, the copper_below_axis_mm figure of its row"
    },
    "lines": [
     "tab screw T921             centre (  12.60,   -0.98,  16.50) nearest pad 2 of T921 on F.Cu at 13.70 mm (needs 1.5)",
     "tab screw T911             centre (  37.20,   -0.98,  16.50) nearest pad 2 of T911 on F.Cu at 13.70 mm (needs 1.5)",
     "H1 screw                   centre (  41.50,   71.50,  -1.30) nearest track 6 on /Steam heater switch/OUT_S on F.Cu at 11.46 mm (needs 2.6)",
-    "tray screw u-4.5 z11.65    centre (  -4.50,   -1.00,  11.65) nearest zone RET_F0 fill on F.Cu at 11.62 mm (needs 3.0)",
-    "insert u-4.5 z11.65        centre (  -4.50,    2.35,  11.65) nearest zone RET_F0 fill on F.Cu at 9.10 mm (needs 2.6)",
-    "tray screw u52 z11.65      centre (  52.00,   -1.00,  11.65) nearest pad 2 of R912 on F.Cu at 13.40 mm (needs 3.0)",
-    "insert u52 z11.65          centre (  52.00,    2.35,  11.65) nearest pad 2 of R912 on F.Cu at 10.80 mm (needs 2.6)",
+    "tray screw u-4.505 z11.65  centre (  -4.50,   -1.00,  11.65) nearest zone RET_F0 fill on F.Cu at 11.62 mm (needs 3.0)",
+    "insert u-4.505 z11.65      centre (  -4.50,    2.35,  11.65) nearest zone RET_F0 fill on F.Cu at 9.10 mm (needs 2.6)",
+    "tray screw u52.005 z11.65  centre (  52.01,   -1.00,  11.65) nearest pad 2 of R912 on F.Cu at 13.40 mm (needs 3.0)",
+    "insert u52.005 z11.65      centre (  52.01,    2.35,  11.65) nearest pad 2 of R912 on F.Cu at 10.80 mm (needs 2.6)",
     "lid screw                  centre (  23.75,   80.50,  17.55) nearest zone OUT_C_F1 fill on F.Cu at 13.07 mm (needs 10.0)"
    ]
   },
@@ -1413,7 +1428,7 @@
    "passed": true,
    "summary": "the two lids are one geometry: the two-colour form differs only in which layers of each part print in the second colour, so no inlay part exists and the lid and the tray are one geometry in both forms; the swap layers are the parts lid_swap and tray_swap, each its part cut to its band",
    "figures": {
-    "lid_volume_mm3": 12468.5896,
+    "lid_volume_mm3": 12476.9025,
     "geometry_identical": true,
     "swap_parts": {
      "lid": {
@@ -1425,9 +1440,9 @@
        21.55,
        22.15
       ],
-      "swap_volume_mm3": 2506.35,
+      "swap_volume_mm3": 2507.3363,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 12468.5896
+      "part_volume_mm3": 12476.9025
      },
      "tray": {
       "band_z_mm": [
@@ -1438,9 +1453,9 @@
        -6.2,
        -5.6
       ],
-      "swap_volume_mm3": 3253.5631,
+      "swap_volume_mm3": 3254.6082,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 47201.7336
+      "part_volume_mm3": 47239.0118
      }
     },
     "inlay_part_present": false,
@@ -1488,9 +1503,9 @@
    "figures": {
     "lid_height_mm": 29.0,
     "tray_height_mm": 48.0,
-    "tray_logo_clear_of_chamfer_mm": 10.9521,
+    "tray_logo_clear_of_chamfer_mm": 10.9522,
     "tray_logo_off_face_centre_mm": 4.8,
-    "tray_face_shorter_dimension_mm": 61.6995,
+    "tray_face_shorter_dimension_mm": 61.7195,
     "tray_expected_height_mm": 48.0,
     "samples": {
      "lid": 1360,
@@ -1633,7 +1648,7 @@
      {
       "part": "tray",
       "size_mm": [
-       64.8995,
+       64.9195,
        89.5,
        27.1
       ],
@@ -1644,7 +1659,7 @@
      {
       "part": "lid_single",
       "size_mm": [
-       64.8995,
+       64.9195,
        84.6,
        5.85
       ],
@@ -1655,7 +1670,7 @@
      {
       "part": "lid_two",
       "size_mm": [
-       64.8995,
+       64.9195,
        84.6,
        5.85
       ],
@@ -1686,7 +1701,7 @@
       "orientation": "outer top face down on the bed (floor down, as modelled)",
       "installed_orientation": "on top, its outer top face up, holding the board's bare back above the parts",
       "size_mm": [
-       64.8995,
+       64.9195,
        89.5,
        27.1
       ],
@@ -1695,157 +1710,157 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 16.0005,
+        "area_mm2": 16.0196,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          75.6,
          6.3
         ]
        },
        {
-        "area_mm2": 16.103,
+        "area_mm2": 16.1208,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          71.4,
          6.3
         ]
        },
        {
-        "area_mm2": 16.1875,
+        "area_mm2": 16.2075,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          67.2,
          6.3
         ]
        },
        {
-        "area_mm2": 16.2578,
+        "area_mm2": 16.2778,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          63.0,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3137,
+        "area_mm2": 16.3337,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          58.8,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3552,
+        "area_mm2": 16.3752,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          54.6,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3784,
+        "area_mm2": 16.3984,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          50.4,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3965,
+        "area_mm2": 16.4165,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          46.2,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3919,
+        "area_mm2": 16.4119,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          42.0,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3824,
+        "area_mm2": 16.4024,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          37.8,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3495,
+        "area_mm2": 16.3695,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          33.6,
          6.3
         ]
        },
        {
-        "area_mm2": 16.3117,
+        "area_mm2": 16.3317,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          29.4,
          6.3
         ]
        },
        {
-        "area_mm2": 16.2512,
+        "area_mm2": 16.2712,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          25.2,
          6.3
         ]
        },
        {
-        "area_mm2": 16.1856,
+        "area_mm2": 16.2056,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          21.0,
          6.3
         ]
        },
        {
-        "area_mm2": 16.1017,
+        "area_mm2": 16.1217,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         56.7,
+         56.71,
          16.8,
          6.3
         ]
        },
        {
-        "area_mm2": 16.0523,
+        "area_mm2": 16.0723,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1855,7 +1870,7 @@
         ]
        },
        {
-        "area_mm2": 16.1451,
+        "area_mm2": 16.1651,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1865,7 +1880,7 @@
         ]
        },
        {
-        "area_mm2": 16.3313,
+        "area_mm2": 16.3513,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1875,7 +1890,7 @@
         ]
        },
        {
-        "area_mm2": 16.3705,
+        "area_mm2": 16.3905,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1885,7 +1900,7 @@
         ]
        },
        {
-        "area_mm2": 16.3984,
+        "area_mm2": 16.4184,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1895,7 +1910,7 @@
         ]
        },
        {
-        "area_mm2": 16.3866,
+        "area_mm2": 16.4066,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1905,7 +1920,7 @@
         ]
        },
        {
-        "area_mm2": 16.3697,
+        "area_mm2": 16.3897,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1915,7 +1930,7 @@
         ]
        },
        {
-        "area_mm2": 16.3303,
+        "area_mm2": 16.3503,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1925,7 +1940,7 @@
         ]
        },
        {
-        "area_mm2": 16.2845,
+        "area_mm2": 16.3045,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1935,7 +1950,7 @@
         ]
        },
        {
-        "area_mm2": 16.2181,
+        "area_mm2": 16.2381,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1949,8 +1964,8 @@
         "span_mm": 2.6976,
         "z_mm": 0.4,
         "lo": [
-         17.9991,
-         17.0566,
+         18.009,
+         17.0568,
          0.4
         ]
        },
@@ -1959,8 +1974,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         20.7407,
-         51.1477,
+         20.7507,
+         51.1478,
          0.4
         ]
        },
@@ -1969,8 +1984,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         23.2517,
-         46.7441,
+         23.2617,
+         46.7442,
          0.4
         ]
        },
@@ -1979,8 +1994,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         26.6863,
-         48.6416,
+         26.6963,
+         48.6417,
          0.4
         ]
        },
@@ -1989,8 +2004,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         23.6418,
-         50.4744,
+         23.6518,
+         50.4745,
          0.4
         ]
        }
@@ -2004,91 +2019,91 @@
       "critical_face_overhangs": [
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.0005,
+        "area_mm2": 16.0196,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.103,
+        "area_mm2": 16.1208,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.1875,
+        "area_mm2": 16.2075,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.2578,
+        "area_mm2": 16.2778,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3137,
+        "area_mm2": 16.3337,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3552,
+        "area_mm2": 16.3752,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3784,
+        "area_mm2": 16.3984,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3965,
+        "area_mm2": 16.4165,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3919,
+        "area_mm2": 16.4119,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3824,
+        "area_mm2": 16.4024,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3495,
+        "area_mm2": 16.3695,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.3117,
+        "area_mm2": 16.3317,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.2512,
+        "area_mm2": 16.2712,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.1856,
+        "area_mm2": 16.2056,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 16.1017,
+        "area_mm2": 16.1217,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        }
@@ -2100,7 +2115,7 @@
       "orientation": "face down on the bed (turned 180 degrees about u)",
       "installed_orientation": "on the underside, its face down, coming off downward",
       "size_mm": [
-       64.8995,
+       64.9195,
        84.6,
        5.85
       ],
@@ -2113,7 +2128,7 @@
         "span_mm": 1.5618,
         "z_mm": 0.6,
         "lo": [
-         5.9927,
+         6.0027,
          24.725,
          0.6
         ]
@@ -2123,7 +2138,7 @@
         "span_mm": 1.5602,
         "z_mm": 0.6,
         "lo": [
-         9.0408,
+         9.0508,
          24.725,
          0.6
         ]
@@ -2133,7 +2148,7 @@
         "span_mm": 1.5538,
         "z_mm": 0.6,
         "lo": [
-         12.0505,
+         12.0605,
          24.7266,
          0.6
         ]
@@ -2143,7 +2158,7 @@
         "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         15.0218,
+         15.0318,
          24.7284,
          0.6
         ]
@@ -2153,7 +2168,7 @@
         "span_mm": 2.3557,
         "z_mm": 0.4,
         "lo": [
-         23.5211,
+         23.5311,
          39.0046,
          0.4
         ]
@@ -2163,7 +2178,7 @@
         "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         39.5162,
+         39.5262,
          24.7284,
          0.6
         ]
@@ -2173,7 +2188,7 @@
         "span_mm": 1.5666,
         "z_mm": 0.6,
         "lo": [
-         44.7432,
+         44.7532,
          24.7266,
          0.6
         ]
@@ -2183,7 +2198,7 @@
         "span_mm": 1.5625,
         "z_mm": 0.6,
         "lo": [
-         49.9705,
+         49.9805,
          24.725,
          0.6
         ]
@@ -2193,7 +2208,7 @@
         "span_mm": 1.5653,
         "z_mm": 0.6,
         "lo": [
-         55.1978,
+         55.2078,
          24.725,
          0.6
         ]
@@ -2203,7 +2218,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         39.65,
+         39.66,
          7.5164,
          0.6
         ]
@@ -2213,7 +2228,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         41.8571,
+         41.8671,
          7.5164,
          0.6
         ]
@@ -2223,7 +2238,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         44.0643,
+         44.0743,
          7.5164,
          0.6
         ]
@@ -2233,7 +2248,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         46.2714,
+         46.2814,
          7.5164,
          0.6
         ]
@@ -2243,7 +2258,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         48.4786,
+         48.4886,
          7.5164,
          0.6
         ]
@@ -2253,7 +2268,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         50.6857,
+         50.6957,
          7.5164,
          0.6
         ]
@@ -2263,7 +2278,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         52.8929,
+         52.9029,
          7.5164,
          0.6
         ]
@@ -2273,7 +2288,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         55.1,
+         55.11,
          7.5164,
          0.6
         ]
@@ -2283,7 +2298,7 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         27.7706,
+         27.7806,
          59.6018,
          0.4
         ]
@@ -2293,7 +2308,7 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         26.8548,
+         26.8648,
          57.1562,
          0.4
         ]
@@ -2311,7 +2326,7 @@
       "orientation": "face down on the bed (turned 180 degrees about u)",
       "installed_orientation": "on the underside, its face down, coming off downward",
       "size_mm": [
-       64.8995,
+       64.9195,
        84.6,
        5.85
       ],
@@ -2324,7 +2339,7 @@
         "span_mm": 1.5618,
         "z_mm": 0.6,
         "lo": [
-         5.9927,
+         6.0027,
          24.725,
          0.6
         ]
@@ -2334,7 +2349,7 @@
         "span_mm": 1.5602,
         "z_mm": 0.6,
         "lo": [
-         9.0408,
+         9.0508,
          24.725,
          0.6
         ]
@@ -2344,7 +2359,7 @@
         "span_mm": 1.5538,
         "z_mm": 0.6,
         "lo": [
-         12.0505,
+         12.0605,
          24.7266,
          0.6
         ]
@@ -2354,7 +2369,7 @@
         "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         15.0218,
+         15.0318,
          24.7284,
          0.6
         ]
@@ -2364,7 +2379,7 @@
         "span_mm": 2.3557,
         "z_mm": 0.4,
         "lo": [
-         23.5211,
+         23.5311,
          39.0046,
          0.4
         ]
@@ -2374,7 +2389,7 @@
         "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         39.5162,
+         39.5262,
          24.7284,
          0.6
         ]
@@ -2384,7 +2399,7 @@
         "span_mm": 1.5666,
         "z_mm": 0.6,
         "lo": [
-         44.7432,
+         44.7532,
          24.7266,
          0.6
         ]
@@ -2394,7 +2409,7 @@
         "span_mm": 1.5625,
         "z_mm": 0.6,
         "lo": [
-         49.9705,
+         49.9805,
          24.725,
          0.6
         ]
@@ -2404,7 +2419,7 @@
         "span_mm": 1.5653,
         "z_mm": 0.6,
         "lo": [
-         55.1978,
+         55.2078,
          24.725,
          0.6
         ]
@@ -2414,7 +2429,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         39.65,
+         39.66,
          7.5164,
          0.6
         ]
@@ -2424,7 +2439,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         41.8571,
+         41.8671,
          7.5164,
          0.6
         ]
@@ -2434,7 +2449,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         44.0643,
+         44.0743,
          7.5164,
          0.6
         ]
@@ -2444,7 +2459,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         46.2714,
+         46.2814,
          7.5164,
          0.6
         ]
@@ -2454,7 +2469,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         48.4786,
+         48.4886,
          7.5164,
          0.6
         ]
@@ -2464,7 +2479,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         50.6857,
+         50.6957,
          7.5164,
          0.6
         ]
@@ -2474,7 +2489,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         52.8929,
+         52.9029,
          7.5164,
          0.6
         ]
@@ -2484,7 +2499,7 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         55.1,
+         55.11,
          7.5164,
          0.6
         ]
@@ -2494,7 +2509,7 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         27.7706,
+         27.7806,
          59.6018,
          0.4
         ]
@@ -2504,7 +2519,7 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         26.8548,
+         26.8648,
          57.1562,
          0.4
         ]
@@ -3120,7 +3135,7 @@
       "larger_dimension_mm": 40.0,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 21.5129,
+      "remaining_to_mains_copper_mm": 21.5143,
       "nearest": "zone RET_F0 fill",
       "path": "a 4.0 mm tip cannot enter a 0.20 mm opening"
      },

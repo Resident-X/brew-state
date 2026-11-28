@@ -564,8 +564,9 @@ def insert_wall(m: case.Model, u: float, z: float) -> Dict[str, float]:
     P = m.P
     e = case.case_extent(m)
     r = P("case.insert_hole_dia_mm") / 2
-    left_in, right_in = -P("case.interior_left_mm"), 45.0 + P("case.interior_right_mm")
-    outer, inner = (u - r - e["u0"], left_in - (u + r)) if u < 22.0 else (e["u1"] - (u + r), (u - r) - right_in)
+    board_width = float(m.board.outline.bounds[2])
+    left_in, right_in = -P("case.interior_left_mm"), board_width + P("case.interior_right_mm")
+    outer, inner = (u - r - e["u0"], left_in - (u + r)) if u < (e["u0"] + e["u1"]) / 2 else (e["u1"] - (u + r), (u - r) - right_in)
     hole = case.insert_hole_solid(m, u, z)
     pocket = min(float(hole.distance_to(case.pocket_solid(m, tu))) for tu in m.info["toe_u"])
     top = P("case.z_wall_top_mm") - float(hole.bounding_box().max.Z)
@@ -579,6 +580,9 @@ def tray_insert_seat(m: case.Model) -> Dict[str, Any]:
     per = int(P("screws.tray_plate_count_per_pilaster"))
     wall_need = P("case.insert_wall_min_mm")
     depth, length = P("case.insert_hole_depth_mm"), P("case.insert_length_mm")
+    dia, hole_range, depth_min = P("case.insert_hole_dia_mm"), P.entry("case.insert_hole_dia_mm"), P.entry("case.insert_hole_depth_mm")["min"]
+    hole_in_range = hole_range["min"] - 1e-9 <= dia <= hole_range["max"] + 1e-9
+    depth_ok = depth >= depth_min - 1e-9
     engaged = P("screws.tray_plate_length_mm") - P("plate.thickness_mm")
     min_thread = 6 * P("screws.tray_insert_shear_layer_mm")
     reservoir = depth - length
@@ -590,12 +594,13 @@ def tray_insert_seat(m: case.Model) -> Dict[str, Any]:
     n_inserts = sum(1 for s in m.screws if s["kind"] == "insert")
     n_screws = sum(1 for s in m.screws if s["kind"] == "tray_plate")
     tip_to_floor = depth - engaged
-    ok = (all(r["pass"] for r in rows) and n_inserts == n_screws == pilasters * per == len(rows)
+    ok = (all(r["pass"] for r in rows) and n_inserts == n_screws == pilasters * per == len(rows) and hole_in_range and depth_ok
           and 0.0 < engaged <= length + 1e-9 and tip_to_floor > 0.0 and reservoir >= 0.5 - 1e-9 and engaged >= min_thread - 1e-9)
     return result("c3.tray_insert_seat", "C3", ok,
-                  f"{n_inserts} M3 heat-set inserts, one in each of {pilasters} pilasters, in holes {P('case.insert_hole_dia_mm'):.1f} mm across and {depth:.1f} mm deep for the {length:.1f} mm insert with {reservoir:.1f} mm of reservoir under it; the wall round each hole is at least {min(r['least_wall_mm'] for r in rows):.3f} mm (needs {wall_need:.1f}); "
+                  f"{n_inserts} M3 heat-set inserts, one in each of {pilasters} pilasters, in holes {dia:.2f} mm across (the maker's range {hole_range['min']:.2f} to {hole_range['max']:.2f} mm) and {depth:.1f} mm deep (the maker's least {depth_min:.1f} mm) for the {length:.1f} mm insert with {reservoir:.1f} mm of reservoir under it; the wall round each hole is at least {min(r['least_wall_mm'] for r in rows):.3f} mm (needs {wall_need:.1f}); "
                   f"the M3 x {P('screws.tray_plate_length_mm'):.0f} screw engages {engaged:.1f} mm of the insert (at least {min_thread:.1f} mm, at most the insert's {length:.1f} mm) and stops {tip_to_floor:.1f} mm short of the hole's floor, so the head seats and the bar is clamped",
-                  {"inserts": rows, "inserts_counted": n_inserts, "screws_counted": n_screws, "pilasters": pilasters, "per_pilaster": per, "hole_dia_mm": P("case.insert_hole_dia_mm"),
+                  {"inserts": rows, "inserts_counted": n_inserts, "screws_counted": n_screws, "pilasters": pilasters, "per_pilaster": per, "hole_dia_mm": dia,
+                   "hole_dia_range_mm": [hole_range["min"], hole_range["max"]], "hole_in_maker_range": hole_in_range, "hole_depth_min_mm": depth_min, "hole_depth_meets_maker_min": depth_ok,
                    "hole_depth_mm": depth, "insert_length_mm": length, "reservoir_mm": reservoir, "wall_required_mm": wall_need, "screw_length_mm": P("screws.tray_plate_length_mm"),
                    "bar_thickness_mm": P("plate.thickness_mm"), "engaged_length_mm": engaged, "minimum_thread_mm": min_thread, "tip_to_hole_floor_mm": tip_to_floor})
 
@@ -1097,16 +1102,26 @@ def check_c7(m: case.Model) -> List[Dict[str, Any]]:
         else:
             need = sep["clearance_mains_mm"]
         passed = d >= need
+        below = {}
+        if s["kind"] == "insert":
+            # the sphere the metal is modelled by is exact toward the board only while the whole hole and its wall lie above the board's higher copper plane: the tear-drop's roof
+            # (the radius times sqrt 2) and the wall stand above the axis, so the axis has to stand at least that far above the copper
+            higher_plane = max(0.0, -m.board.thickness)
+            above = min(m.board_local((p[0], p[1], p[2]))[2] for p in pts) - higher_plane
+            roof = P("case.insert_hole_dia_mm") / 2 * math.sqrt(2.0)
+            below = {"copper_below_axis_mm": above, "copper_below_axis_required_mm": roof + P("case.insert_wall_min_mm"), "tear_drop_roof_mm": roof,
+                     "copper_below_axis_pass": above >= roof + P("case.insert_wall_min_mm") - 1e-9}
+            passed &= below["copper_below_axis_pass"]
         ok &= passed
         centre = (s["u"], s["v"] if "v" in s else (s["v0"] + s["v1"]) / 2, s["z"] if "z" in s else (s["z0"] + s["z1"]) / 2)
         rows.append({"screw": s["id"], "kind": s["kind"], "centre_uvz_mm": [round(c, 3) for c in centre], "distance_mm": d, "layer": nearest_layer,
-                     "nearest_item": label, "per_layer_mm": {k: v[0] for k, v in per.items()}, "required_mm": need, "pass": passed})
+                     "nearest_item": label, "per_layer_mm": {k: v[0] for k, v in per.items()}, "required_mm": need, **below, "pass": passed})
     lines = [f"{r['screw']:26s} centre ({r['centre_uvz_mm'][0]:7.2f}, {r['centre_uvz_mm'][1]:7.2f}, {r['centre_uvz_mm'][2]:6.2f}) "
              f"nearest {r['nearest_item']} on {r['layer']} at {r['distance_mm']:.2f} mm (needs {r['required_mm']:.1f})" for r in rows]
     out.append(result("c7.screws_clear_of_mains_copper", "C7", ok,
                       f"every screw keeps its figure from Mains copper on both layers; the least margin is {min(r['distance_mm'] - r['required_mm'] for r in rows):.2f} mm",
                       {"screws": rows, "basis_distance_mm": basis_dist, "tray_to_plate_design_mm": 3.0, "lid_mm": sep["creepage_lv_mm"],
-                       "metal_model": "each screw is swept as spheres of its shaft or head radius along its axis"}, lines))
+                       "metal_model": "each screw is swept as spheres of its shaft or head radius along its axis; an insert is swept as spheres of its hole's radius plus the wall, which is exact toward the board only while the axis stands above the board's higher copper plane by at least the tear-drop roof (the hole's radius times sqrt 2, the roof standing above the axis, away from the board) plus the wall, the copper_below_axis_mm figure of its row"}, lines))
     # H1 pad and courtyard against Mains copper on both layers, in plan
     h1 = m.board.refs["H1"]
     c = h1["courtyard"]

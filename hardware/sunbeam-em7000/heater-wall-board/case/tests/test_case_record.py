@@ -227,7 +227,7 @@ def test_c3_the_plate_length_arithmetic_is_the_models_wherever_the_record_states
     c3 = named(results, "c3.plate_length")["figures"]
     assert c3["arithmetic"] == "%.2f + 2 x %.1f = %.2f <= %.2f" % (c3["case_outer_width_mm"], c3["bolt_zone_mm"], c3["required_mm"], c3["plate_length_mm"])
     assert (c3["case_outer_width_mm"], c3["bolt_zone_mm"], c3["plate_length_mm"]) == (45.0 + params["case"]["interior_left_mm"]["value"] + params["case"]["interior_right_mm"]["value"] + 2 * (params["case"]["wall_mm"]["value"] + params["case"]["pilaster_out_mm"]["value"]), params["plate"]["bolt_zone_mm"]["value"], params["plate"]["length_mm"]["value"])
-    assert c3["required_mm"] == pytest.approx(c3["case_outer_width_mm"] + 2 * c3["bolt_zone_mm"]) and c3["margin_mm"] == pytest.approx(0.5)
+    assert c3["required_mm"] == pytest.approx(c3["case_outer_width_mm"] + 2 * c3["bolt_zone_mm"]) and c3["margin_mm"] == pytest.approx(c3["plate_length_mm"] - c3["required_mm"])
     stated = "%.2f + 2 x %.1f = %.2f <= %.1f" % (c3["case_outer_width_mm"], c3["bolt_zone_mm"], c3["required_mm"], c3["plate_length_mm"])
     margin = "margin %.2f mm" % c3["margin_mm"]
     for tag in ("C3", "C11"):
@@ -284,7 +284,7 @@ def test_c5_the_lid_screw_and_the_toes_are_where_the_model_puts_them(record, res
     assert num(body, r"(\d+\.\d) mm from the wall plane") == pytest.approx(screw["distance_to_wall_plane_mm"])
     assert num(body, r"\(at least (\d+) is asked\)") == pytest.approx(screw["required_distance_to_wall_mm"])
     assert num(body, r"and (\d+\.\d) mm from the opening frame") == pytest.approx(screw["distance_to_opening_frame_mm"], abs=0.05)
-    assert screw["driver_shaft_interference_mm3"] == 0.0 and screw["head_proud_of_lid_top_mm"] == 0.0
+    assert screw["driver_shaft_interference_mm3"] == pytest.approx(0.0, abs=1e-9) and screw["head_proud_of_lid_top_mm"] == pytest.approx(0.0, abs=1e-9)
     fixings = named(results, "c5.fixings_reached_installed")["figures"]["fixings"]
     shaft = next(f for f in fixings if f["fixing"] == "board screw H1")["driver_shaft_dia_mm"]
     assert num(body, r"a (\d\.\d) mm shaft") == pytest.approx(shaft)
@@ -499,8 +499,8 @@ def test_c12_the_plate_is_flat_with_only_the_listed_holes_and_the_sizes_are_the_
     assert num(body, r"head diameter (\d\.\d) mm") == pytest.approx(params["screws"]["tray_plate_head_dia_mm"]["value"])
     assert "standard 20 x %d mm flat aluminium bar and cuts it to %d mm" % (plate["thickness_mm"]["value"], plate["length_mm"]["value"]) in body
     assert "not in the catalogue and is not priced" in body
-    assert num(body, r"bar is at least (\d+\.\d) mm long") == pytest.approx(named(results, "c3.plate_length")["figures"]["required_mm"])
-    assert "64.50 + 2 x 10.0 = 84.50)" in body and "%.0f mm wide, a standard stock width" % height in body
+    assert num(body, r"bar is at least (\d+\.\d+) mm long") == pytest.approx(named(results, "c3.plate_length")["figures"]["required_mm"])
+    assert "%.2f + 2 x 10.0 = %.2f)" % (named(results, "c3.plate_length")["figures"]["case_outer_width_mm"], named(results, "c3.plate_length")["figures"]["required_mm"]) in body and "%.0f mm wide, a standard stock width" % height in body
 
 
 def test_c12_the_departure_from_the_owners_slot_words_interface_depth_and_what_it_replaces_are_stated(record, params, model, results, rng):
@@ -1145,7 +1145,7 @@ def test_c18_no_dimension_another_criterion_fixes_was_reduced(record, results, b
     slot = min(s["least_mm"] for s in named(results, "c8.slot_mouths_clear")["figures"]["slots"])
     assert num(body, r"slot-mouth clearance \((\d\.\d) mm against") == pytest.approx(slot)
     assert num(body, r"case-to-plate margin \((\d\.\d+) mm against") == pytest.approx(min(named(results, "c2.case_within_former_outline")["figures"]["margins_mm"].values()), abs=0.001)
-    assert "84.50 against 85.0" in body
+    assert "%.2f against %.1f" % (named(results, "c3.plate_length")["figures"]["required_mm"], named(results, "c3.plate_length")["figures"]["plate_length_mm"]) in body
     bay = named(results, "c11.blade_terminals_reachable_lid_on")["figures"]["blades"][0]["aperture_mm"]
     assert "to %.1f x %.2f mm" % tuple(bay) in body
     for name in ("c1.creepage_pad_to_plate", "c1.creepage_bare_lead_to_plate", "c8.slot_mouths_clear", "c2.case_within_former_outline", "c3.plate_length", "c18.boot_clearance"):

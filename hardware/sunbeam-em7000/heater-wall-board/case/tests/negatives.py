@@ -125,6 +125,29 @@ def insert_at_mains_copper():
     return {"passed": check.check_c7(m)[0]["passed"], "row": rows["insert near mains"], "base": rows[base["id"]]}
 
 
+def insert_axis_at(zs):
+    """The nominal model with one more insert hole at each height in `zs` (case frame), whose sphere stays clear of copper by the signed distance: the rows of the mains-copper check."""
+    m = case.build(forms=("single",))
+    base = next(s for s in m.screws if s["kind"] == "insert")
+    for z in zs:
+        m.screws.append(dict(base, id=f"insert z{z:g}", z=z))
+    check._SCENES.clear()
+    got = check.check_c7(m)[0]
+    return {"passed": got["passed"], "rows": {r["screw"]: r for r in got["figures"]["screws"]}, "base": base["id"], "metal_model": got["figures"]["metal_model"]}
+
+
+def insert_with_hole(dia, depth=None, length=None, wall_min=None):
+    """The insert seat check on a model whose hole, depth, insert length or least wall is replaced, the other figures kept where the figure being tried is not theirs (a hole above the maker's range is given a smaller least wall so that the pilaster's wall does not refuse it first)."""
+    overrides = {"case.insert_hole_dia_mm": dia}
+    if depth is not None:
+        overrides["case.insert_hole_depth_mm"] = depth
+    if length is not None:
+        overrides["case.insert_length_mm"] = length
+    if wall_min is not None:
+        overrides["case.insert_wall_min_mm"] = wall_min
+    return insert_seat_with(overrides)
+
+
 def two_screws_in_a_pilaster():
     """The earlier fixing: two tray screws in each pilaster at z 9.5 and 14.0, 4.5 mm apart, on the model's own countersunk heads."""
     m = case.build({"screws.tray_plate_z_mm": [9.5, 14.0]}, ("single",))
@@ -289,6 +312,10 @@ JOBS = {
     "c2_long_screw": (lambda: insert_seat_with({"screws.tray_plate_length_mm": 14.0}), 25),
     "c2_short_screw": (lambda: insert_seat_with({"screws.tray_plate_length_mm": 7.0}), 25),
     "c2_shallow_hole": (lambda: insert_seat_with({"case.insert_hole_depth_mm": 5.9}), 25),
+    "c2_undersized_hole": (lambda: insert_with_hole(3.2), 25),
+    "c2_oversized_hole": (lambda: insert_with_hole(4.2, wall_min=1.8), 25),
+    "c2_depth_below_maker_minimum": (lambda: insert_with_hole(4.01, depth=6.0, length=5.0), 25),
+    "c4_insert_axis_near_and_below_copper": (lambda: insert_axis_at([4.0, -6.0]), 30),
     "c1_gap_narrowest": (lambda: gap_extreme("narrowest"), 30),
     "c1_gap_widest": (lambda: gap_extreme("widest"), 30),
     "c1_loose_part": (loose_film_part, 22),

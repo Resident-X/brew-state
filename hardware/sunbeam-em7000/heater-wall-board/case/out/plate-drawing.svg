@@ -13,8 +13,8 @@
 <text x="10.00" y="37.20" fill="#111" font-size="2.0" text-anchor="start">stock's width tolerance is an assumption, to be read from the</text>
 <text x="10.00" y="40.80" fill="#111" font-size="2.0" text-anchor="start">supplier's standard when the bar is sourced.</text>
 <polygon points="10.000,24.000 95.000,24.000 95.000,44.000 10.000,44.000" style="fill:#e9ebee;stroke:#000;stroke-width:0.25"/>
-<polygon points="20.250,27.450 84.750,27.450 84.750,56.600 20.250,56.600" style="fill:none;stroke:#06c;stroke-width:0.2;stroke-dasharray:1.5 1"/>
-<text x="21.25" y="30.45" fill="#06c" font-size="1.9" text-anchor="start">case outline 64.50 x 29.15</text>
+<polygon points="20.240,27.450 84.760,27.450 84.760,56.600 20.240,56.600" style="fill:none;stroke:#06c;stroke-width:0.2;stroke-dasharray:1.5 1"/>
+<text x="21.24" y="30.45" fill="#06c" font-size="1.9" text-anchor="start">case outline 64.52 x 29.15</text>
 <polygon points="10.000,24.000 20.000,24.000 20.000,44.000 10.000,44.000" style="fill:#fbe7cf;fill-opacity:0.7;stroke:#c60;stroke-width:0.12;stroke-dasharray:1 1"/>
 <circle cx="15.000" cy="34.000" r="4.500" style="fill:none;stroke:#c60;stroke-width:0.12"/>
 <circle cx="15.000" cy="34.000" r="2.250" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
@@ -23,12 +23,12 @@
 <circle cx="90.000" cy="34.000" r="4.500" style="fill:none;stroke:#c60;stroke-width:0.12"/>
 <circle cx="90.000" cy="34.000" r="2.250" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
 <text x="90.00" y="48.00" fill="#c60" font-size="1.9" text-anchor="middle">bolt zone 10.0</text>
-<circle cx="24.250" cy="38.350" r="3.150" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<circle cx="24.250" cy="38.350" r="2.750" style="fill:none;stroke:#000;stroke-width:0.12"/>
-<circle cx="24.250" cy="38.350" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
-<circle cx="80.750" cy="38.350" r="3.150" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
-<circle cx="80.750" cy="38.350" r="2.750" style="fill:none;stroke:#000;stroke-width:0.12"/>
-<circle cx="80.750" cy="38.350" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
+<circle cx="24.245" cy="38.350" r="3.150" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<circle cx="24.245" cy="38.350" r="2.750" style="fill:none;stroke:#000;stroke-width:0.12"/>
+<circle cx="24.245" cy="38.350" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
+<circle cx="80.755" cy="38.350" r="3.150" style="fill:#fff;stroke:#000;stroke-width:0.2"/>
+<circle cx="80.755" cy="38.350" r="2.750" style="fill:none;stroke:#000;stroke-width:0.12"/>
+<circle cx="80.755" cy="38.350" r="1.700" style="fill:#9a9a9a;stroke:#000;stroke-width:0.12"/>
 <line x1="41.350" y1="34.700" x2="41.350" y2="32.700" style="stroke:#c00;stroke-width:1.2;stroke-opacity:0.35"/>
 <circle cx="41.350" cy="33.500" r="1.550" style="fill:#fff;stroke:#c00;stroke-width:0.25"/>
 <text x="38.35" y="31.00" fill="#c00" font-size="1.8" text-anchor="end">T921 tab screw u 12.60 z 16.50</text>
@@ -55,8 +55,8 @@
 <text x="10.00" y="113.80" fill="#111" font-size="1.9" text-anchor="start">the inner face drawn here.</text>
 <text x="10.00" y="117.20" fill="#111" font-size="1.9" text-anchor="start">Wall bolts M4, one at the plate's mid-height (z 16.00) at each end, washer</text>
 <text x="10.00" y="120.60" fill="#111" font-size="1.9" text-anchor="start">dia 9.0, standing in the 10.0 mm end zones outside the case.</text>
-<text x="10.00" y="124.00" fill="#111" font-size="1.9" text-anchor="start">Length arithmetic: case outer width at the plate 64.50 + 2 x bolt zone</text>
-<text x="10.00" y="127.40" fill="#111" font-size="1.9" text-anchor="start">10.0 = 84.50, not more than the plate length 85.0 (margin 0.50).</text>
+<text x="10.00" y="124.00" fill="#111" font-size="1.9" text-anchor="start">Length arithmetic: case outer width at the plate 64.52 + 2 x bolt zone</text>
+<text x="10.00" y="127.40" fill="#111" font-size="1.9" text-anchor="start">10.0 = 84.52, not more than the plate length 85.0 (margin 0.48).</text>
 <text x="10.00" y="130.80" fill="#111" font-size="1.9" text-anchor="start">Wall opening = the plate and the tray's end wall together + 1.5 per side:</text>
 <text x="10.00" y="134.20" fill="#111" font-size="1.9" text-anchor="start">88.0 x 35.6, within the unit's opening in the plastic wall (z -10.0 to</text>
 <text x="10.00" y="137.60" fill="#111" font-size="1.9" text-anchor="start">35.0).</text>

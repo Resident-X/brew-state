@@ -98,11 +98,21 @@ def test_c1_the_distance_is_a_function_of_the_record_figures_and_the_pair_is_jud
 # ---------------------------------------------------------------- C2: one insert in each pilaster
 
 def test_c2_one_insert_in_each_pilaster_with_the_wall_at_the_minimum_and_the_screw_inside_it(results, params, record, model):
-    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2: The case model places one M3 heat-set insert in each pilaster's end face, in a hole of the size and depth the insert's maker states, with the wall round the hole held at the record's minimum, and a short M3 countersunk screw through the bar threads into it; the record names the insert's size, hole and depth. Out of scope: the insert maker's brand.
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2: The case model places one M3 heat-set insert in each pilaster's end face, in a hole of the size and depth the insert's maker states, with the wall round the hole held at the record's minimum, and a short M3 countersunk screw through the bar threads into it. The record names the insert's size and the maker's published hole range and minimum depth with their source and the date they were read, and the case model refuses a hole outside that range or shallower than that depth. Out of scope: which maker's insert the owner buys, provided its published hole range and depth are those the record states.
+
     got = named(results, "c3.tray_insert_seat")
     f = got["figures"]
     assert got["passed"] and f["inserts_counted"] == f["screws_counted"] == f["pilasters"] == 2 and f["per_pilaster"] == 1
-    assert (f["hole_dia_mm"], f["hole_depth_mm"], f["insert_length_mm"]) == (4.0, 6.7, 5.7)
+    hole, depth_entry = params.entry("case.insert_hole_dia_mm"), params.entry("case.insert_hole_depth_mm")
+    assert (f["hole_dia_mm"], f["hole_depth_mm"], f["insert_length_mm"]) == (params("case.insert_hole_dia_mm"), params("case.insert_hole_depth_mm"), params("case.insert_length_mm"))
+    # the maker's published range and least depth are params of their own, and the model's hole is the maker's lower figure
+    assert (hole["min"], hole["max"], depth_entry["min"]) == (4.01, 4.09, 6.5) and f["hole_dia_mm"] == hole["min"] and f["hole_depth_mm"] >= depth_entry["min"]
+    assert f["hole_in_maker_range"] and f["hole_depth_meets_maker_min"] and f["hole_dia_range_mm"] == [4.01, 4.09] and f["hole_depth_min_mm"] == 6.5
+    for entry in (hole, depth_entry):
+        for needle in ("PEM", "2026-11-28", "WebSearch", "https://www.pemnet.com/products/product-finder/iutc-m3/", "the owner confirms it against the insert he buys"):
+            assert needle in entry["source"], needle
+    length_source = params.entry("case.insert_length_mm")["source"]
+    assert "design figure" in length_source and "not PEM's" in length_source, "the 5.7 mm length is the design's own, as PEM's length was not captured"
     assert all(r["least_wall_mm"] >= params("case.insert_wall_min_mm") - 1e-9 for r in f["inserts"]) and params("case.insert_wall_min_mm") == 2.0
     # the screw's engaged length lies within the insert and short of the hole's floor, and it does not leave the bar unclamped
     assert f["engaged_length_mm"] == pytest.approx(params("screws.tray_plate_length_mm") - params("plate.thickness_mm")) == pytest.approx(5.0)
@@ -126,13 +136,17 @@ def test_c2_one_insert_in_each_pilaster_with_the_wall_at_the_minimum_and_the_scr
         assert volume(model.parts["tray"] & beyond) > 0.9 * volume(beyond), "the hole stops at its floor"
         assert volume(hole) > math.pi * r * r * depth
     # the record names the insert's size, hole and depth
-    assert "M3 heat-set insert" in record and "5.7 mm long" in record and "a hole 4.0 mm across and 6.7 mm deep" in record
+    assert "M3 heat-set insert" in record and "5.7 mm long" in record and "a hole 4.01 mm across and 6.7 mm deep" in record
+    for needle in ("PEM (Penn Engineering)", "Type IUT", "4.01 mm (+0.08), so 4.01 to 4.09 mm", "minimum hole depth 6.5 mm", "2026-11-28", "web-search result text only", "refuses automated fetch",
+                   "https://www.pemnet.com/products/product-finder/iutc-m3/", "the owner confirms it against the part he buys", "5.7 mm is the design's own figure"):
+        assert needle in record, needle
     assert "`c3.tray_insert_seat`" in record and "2.0 mm" in record
 
 
 @pytest.mark.controls("c2_thin_wall", "c2_long_screw", "c2_short_screw", "c2_shallow_hole", "c3_screw_in_pocket")
 def test_c2_a_thin_wall_a_screw_too_long_or_short_and_a_shallow_hole_are_each_refused(controls, params):
-    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2: The case model places one M3 heat-set insert in each pilaster's end face, in a hole of the size and depth the insert's maker states, with the wall round the hole held at the record's minimum, and a short M3 countersunk screw through the bar threads into it; the record names the insert's size, hole and depth. Out of scope: the insert maker's brand.
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2: The case model places one M3 heat-set insert in each pilaster's end face, in a hole of the size and depth the insert's maker states, with the wall round the hole held at the record's minimum, and a short M3 countersunk screw through the bar threads into it. The record names the insert's size and the maker's published hole range and minimum depth with their source and the date they were read, and the case model refuses a hole outside that range or shallower than that depth. Out of scope: which maker's insert the owner buys, provided its published hole range and depth are those the record states.
+
     thin = controls.get("c2_thin_wall")
     assert not thin["passed"] and min(r["least_wall_mm"] for r in thin["figures"]["inserts"]) < params("case.insert_wall_min_mm")
     long = controls.get("c2_long_screw")
@@ -146,6 +160,24 @@ def test_c2_a_thin_wall_a_screw_too_long_or_short_and_a_shallow_hole_are_each_re
     assert not pocket["passed"]
 
 
+@pytest.mark.controls("c2_undersized_hole", "c2_oversized_hole", "c2_depth_below_maker_minimum")
+def test_c2_a_hole_outside_the_makers_range_or_shallower_than_the_makers_minimum_is_refused(controls, results, params):
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2: The case model places one M3 heat-set insert in each pilaster's end face, in a hole of the size and depth the insert's maker states, with the wall round the hole held at the record's minimum, and a short M3 countersunk screw through the bar threads into it. The record names the insert's size and the maker's published hole range and minimum depth with their source and the date they were read, and the case model refuses a hole outside that range or shallower than that depth. Out of scope: which maker's insert the owner buys, provided its published hole range and depth are those the record states.
+
+    low, high, depth_min = params.entry("case.insert_hole_dia_mm")["min"], params.entry("case.insert_hole_dia_mm")["max"], params.entry("case.insert_hole_depth_mm")["min"]
+    assert named(results, "c3.tray_insert_seat")["passed"], "the nominal hole and depth pass"
+    small = controls.get("c2_undersized_hole")
+    assert not small["passed"] and small["figures"]["hole_dia_mm"] == 3.2 < low and small["figures"]["hole_in_maker_range"] is False
+    assert all(r["pass"] for r in small["figures"]["inserts"]) and small["figures"]["hole_depth_meets_maker_min"], "the walls only grow: the maker's range is what refuses it"
+    large = controls.get("c2_oversized_hole")
+    assert not large["passed"] and large["figures"]["hole_dia_mm"] > high and large["figures"]["hole_in_maker_range"] is False
+    assert all(r["pass"] for r in large["figures"]["inserts"]) and large["figures"]["hole_depth_meets_maker_min"], "the least wall is lowered with it: the maker's range is what refuses it"
+    shallow = controls.get("c2_depth_below_maker_minimum")
+    assert not shallow["passed"] and shallow["figures"]["hole_depth_mm"] == 6.0 < depth_min and shallow["figures"]["hole_depth_meets_maker_min"] is False
+    assert shallow["figures"]["hole_in_maker_range"] and shallow["figures"]["reservoir_mm"] >= 0.5 and all(r["pass"] for r in shallow["figures"]["inserts"]), "the reservoir, the wall and the hole are fine: the maker's least depth is what refuses it"
+    assert check.tray_insert_seat.__doc__ and "maker's size and depth" in check.tray_insert_seat.__doc__
+
+
 # ---------------------------------------------------------------- C3: the root, the allowance and the proof load
 
 def test_c3_the_insert_allowance_the_window_and_the_two_directions_are_recomputed_from_the_params(results, params, record):
@@ -155,6 +187,8 @@ def test_c3_the_insert_allowance_the_window_and_the_two_directions_are_recompute
     force, span = params("blade.insertion_force_N"), f["span_mm"]
     z, pivot, top, allowance = params("screws.tray_plate_z_mm")[0], f["pivot_z_mm"], params("case.z_wall_top_mm"), params("screws.tray_insert_pullout_N")
     assert allowance == 680.0 and "assumed" in params.entry("screws.tray_insert_pullout_N")["source"] and "moulded-ABS" in params.entry("screws.tray_insert_pullout_N")["source"]
+    for needle in ("PEM", "680 N", "730 N", "2026-11-28", "the owner confirms it against the insert he buys"):
+        assert needle in params.entry("screws.tray_insert_pullout_N")["source"], needle
     # arithmetic: each direction is the moment shared between two inserts over the insert's lever
     moment = force * span
     push, pull = moment / (2 * (z - pivot)), moment / (2 * (top - z))
@@ -167,7 +201,7 @@ def test_c3_the_insert_allowance_the_window_and_the_two_directions_are_recompute
     upper = pocket_floor - wall - r * math.sqrt(2.0)
     lower_sink = pivot + params("plate.screw_edge_distance_mm") + params("screws.tray_plate_countersink_dia_mm") / 2
     lower_allowance = pivot + moment / 2 / allowance
-    assert upper == pytest.approx(11.67, abs=0.005) and lower_sink == pytest.approx(9.65) and lower_allowance == pytest.approx(9.89, abs=0.005)
+    assert upper == pytest.approx(16.5 - 2.0 - 2.005 * math.sqrt(2.0)) and lower_sink == pytest.approx(9.65) and lower_allowance == pytest.approx(9.89, abs=0.005)
     assert max(lower_sink, lower_allowance) < z <= upper, "the insert's height stands inside the window"
     assert moment / 2 / (upper - pivot) == pytest.approx(467, abs=1.0) and moment / 2 / (12.5 - pivot) == pytest.approx(407, abs=1.0) and moment / 2 / (top - 12.5) == pytest.approx(331, abs=1.0)
     # the triac end's motion, in both directions, holds the limit the record already states
@@ -177,8 +211,8 @@ def test_c3_the_insert_allowance_the_window_and_the_two_directions_are_recompute
     assert f["proof_factor"] == 2.0 and f["proof_load_N"] == pytest.approx(151.2) and 15.5 * 9.81 == pytest.approx(f["proof_load_N"], abs=1.0)
     assert allowance < f["proof_tension_max_N"] < 1170.0
     # what the record states
-    for needle in ("**The pull-out allowance used** for each insert is 680 N", "the insert maker's lower moulded-ABS figure", "an assumption for printed ASA in this layer direction",
-                   "%.0f N pushing on" % f["proof_tension_max_N"], "**The insert's height.**", "9.9 to 11.67 mm", "**The owner's proof load, with home kit.**", "15.5 kg", "151 N",
+    for needle in ("**The pull-out allowance used** for each insert is 680 N", "PEM's lower moulded-ABS figure", "an assumption for printed ASA in this layer direction",
+                   "%.0f N pushing on" % f["proof_tension_max_N"], "**The insert's height.**", "9.9 to %.2f mm" % upper, "**The owner's proof load, with home kit.**", "15.5 kg", "151 N",
                    "in both directions", "deliberately tests beyond the 680 N allowance", "the direct M3 x 16 screw with a 4 mm step", "**Pull-off.**", "%.0f N, %.3f of the allowance" % (f["pull_off_tension_max_N"], f["pull_off_utilisation"]),
                    "%.4f mm pushing on" % f["triac_end_motion_mm"], "%.4f mm pulling off" % f["pull_off_triac_end_motion_mm"], "bar is clamped to a bench with the tray fitted"):
         assert needle in record, needle
@@ -195,7 +229,7 @@ def test_c3_an_allowance_below_the_load_fails_in_each_direction_it_is_exceeded(c
 
 # ---------------------------------------------------------------- C4: the hole keeps the mains distance
 
-def test_c4_each_insert_hole_and_its_wall_keeps_the_larger_of_the_signed_clearance_and_creepage_from_mains_copper(results, basis, record):
+def test_c4_each_insert_hole_and_its_wall_keeps_the_larger_of_the_signed_clearance_and_creepage_from_mains_copper(results, basis, record, params):
     # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C4: The case model states the distance from each insert hole and its wall to the nearest mains copper in the board's design, and it is at least the larger of the separation basis's signed clearance and creepage, whatever the screw is made of. Out of scope: the position of the board's own mounting holes.
     check7 = named(results, "c7.screws_clear_of_mains_copper")
     inserts = [s for s in check7["figures"]["screws"] if s["kind"] == "insert"]
@@ -203,6 +237,12 @@ def test_c4_each_insert_hole_and_its_wall_keeps_the_larger_of_the_signed_clearan
     need = max(basis["clearance_mains_mm"], basis["creepage_mains_mm"])
     assert need == 2.6 and all(s["required_mm"] == need and s["distance_mm"] >= need and s["pass"] for s in inserts)
     assert all(s["nearest_item"] and set(s["per_layer_mm"]) == {"F.Cu", "B.Cu"} for s in inserts), "the nearest copper is named and both layers are measured"
+    # the sphere that models the metal assumes the board's copper lies below the axis by the tear-drop's roof and the wall: the row states it and passes it
+    roof = params("case.insert_hole_dia_mm") / 2 * math.sqrt(2.0)
+    for s in inserts:
+        assert s["tear_drop_roof_mm"] == pytest.approx(roof) and s["copper_below_axis_required_mm"] == pytest.approx(roof + params("case.insert_wall_min_mm"))
+        assert s["copper_below_axis_pass"] and s["copper_below_axis_mm"] >= s["copper_below_axis_required_mm"]
+    assert "tear-drop roof" in check7["figures"]["metal_model"] and "away from the board" in check7["figures"]["metal_model"]
     for s in inserts:
         assert ("insert (u %g, z %g)" % (s["centre_uvz_mm"][0], s["centre_uvz_mm"][2])) in record and ("%.2f mm" % s["distance_mm"]) in record
     assert "each insert's hole and its wall keep the larger of the signed clearance and creepage, 2.6 mm" in record and "whatever the screw is made of" in record
@@ -217,26 +257,44 @@ def test_c4_an_insert_wall_between_the_clearance_and_the_creepage_of_mains_coppe
     assert got["row"]["required_mm"] == max(basis["clearance_mains_mm"], basis["creepage_mains_mm"])
 
 
+@pytest.mark.controls("c4_insert_axis_near_and_below_copper")
+def test_c4_an_insert_axis_that_stands_under_the_board_s_copper_or_too_near_its_plane_is_refused_though_the_sphere_clears_it(controls, basis, params):
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C4: The case model states the distance from each insert hole and its wall to the nearest mains copper in the board's design, and it is at least the larger of the separation basis's signed clearance and creepage, whatever the screw is made of. Out of scope: the position of the board's own mounting holes.
+
+    got = controls.get("c4_insert_axis_near_and_below_copper")
+    need = max(basis["clearance_mains_mm"], basis["creepage_mains_mm"])
+    roof_and_wall = params("case.insert_hole_dia_mm") / 2 * math.sqrt(2.0) + params("case.insert_wall_min_mm")
+    assert not got["passed"] and got["rows"][got["base"]]["pass"], "the nominal inserts pass and the added ones are what fail"
+    for name, axis_z in (("insert z4", 4.0), ("insert z-6", -6.0)):
+        row = got["rows"][name]
+        assert row["distance_mm"] >= need, "the sphere alone clears the copper by the signed distance, so only the plane guard can refuse it"
+        assert row["copper_below_axis_mm"] == pytest.approx(axis_z) and axis_z < roof_and_wall and row["copper_below_axis_pass"] is False and row["pass"] is False
+    assert got["rows"]["insert z-6"]["copper_below_axis_mm"] < 0.0, "a copper plane above the axis is a negative figure"
+
+
 # ---------------------------------------------------------------- C5: the bar, the bolts and the opening follow the pilasters
 
 def test_c5_the_bar_the_wall_bolts_and_the_opening_follow_the_pilaster_width(results, params, record, model):
-    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C5: The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. Out of scope: the owner's wall cut and signing of the sign-off lines.
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C5: The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. The lid's skin keeps the eight streamlines, sixteen vents and eight far-end bars the look was judged with, its parameters re-fitted to the wider lid, and the record restates the inlet free area at the new width. Out of scope: the owner's wall cut and signing of the sign-off lines.
+
     length = named(results, "c3.plate_length")["figures"]
     pil, wall = params("case.pilaster_out_mm"), params("case.wall_mm")
-    assert pil + wall == 8.0 and params("plate.bolt_zone_mm") == 10.0
+    # the pilaster holds the hole and the wall each side of it, and the bolt zones are the earlier 10.0 mm
+    assert pil + wall == pytest.approx(params("case.insert_hole_dia_mm") + 2 * params("case.insert_wall_min_mm")) and params("plate.bolt_zone_mm") == 10.0
     width = 45.0 + params("case.interior_left_mm") + params("case.interior_right_mm") + 2 * (wall + pil)
-    assert length["case_outer_width_mm"] == pytest.approx(width) == pytest.approx(64.5)
-    assert length["required_mm"] == pytest.approx(width + 20.0) and length["plate_length_mm"] == params("plate.length_mm") == 85.0 and length["margin_mm"] == pytest.approx(0.5)
+    assert length["case_outer_width_mm"] == pytest.approx(width) and width == pytest.approx(64.52)
+    assert length["required_mm"] == pytest.approx(width + 20.0) and length["plate_length_mm"] == params("plate.length_mm") == 85.0 and length["margin_mm"] == pytest.approx(85.0 - width - 20.0)
     bolts = named(results, "c3.wall_bolts_outside_case")
     assert bolts["passed"]
     washer_need = params("plate.washer_to_case_clearance_mm")
     assert all(b["washer_clear_of_case_mm"] >= washer_need for b in bolts["figures"]["bolts"]) and [round(b["bolt_u_mm"], 2) for b in bolts["figures"]["bolts"]] == [-13.75, 61.25]
     opening = named(results, "c2.wall_opening_stated")
     assert opening["passed"] and opening["figures"]["opening_width_mm"] == pytest.approx(params("plate.length_mm") + 2 * params("plate.wall_opening_clearance_mm")) == pytest.approx(88.0)
-    for needle in ("85.0 mm long", "64.50 + 2 x 10.0 = 84.50 <= 85.0", "88.0 x 35.6 mm", "u -13.75 and 61.25", "0.55 mm clear of the case"):
+    clear = min(b["washer_clear_of_case_mm"] for b in bolts["figures"]["bolts"])
+    for needle in ("85.0 mm long", "%.2f + 2 x 10.0 = %.2f <= 85.0" % (width, width + 20.0), "88.0 x 35.6 mm", "u -13.75 and 61.25", "%.2f mm clear of the case" % clear):
         assert needle in record, needle
     plate = drawing_text("plate-drawing.svg")
-    assert "cut to 85 mm long" in plate and "case outer width at the plate 64.50 + 2 x bolt zone 10.0 = 84.50" in plate and "88.0 x 35.6" in plate and "margin 0.50" in plate
+    assert "cut to 85 mm long" in plate and "case outer width at the plate %.2f + 2 x bolt zone 10.0 = %.2f" % (width, width + 20.0) in plate and "88.0 x 35.6" in plate and "margin %.2f" % length["margin_mm"] in plate
     division = flat(read(DIVISION))
     assert "**88.0 mm long**" in division and "its span along the wall is set by the case" in division and "85 mm bar" in division
     assert model.info["plate"]["u1"] - model.info["plate"]["u0"] == pytest.approx(85.0)
@@ -244,7 +302,8 @@ def test_c5_the_bar_the_wall_bolts_and_the_opening_follow_the_pilaster_width(res
 
 @pytest.mark.controls("c5_wide_pilasters_short_bar", "c5_wide_pilasters_long_bar", "c5_washer_too_close")
 def test_c5_a_wider_pilaster_with_the_same_bar_is_refused_and_with_a_longer_bar_the_opening_follows(controls, params):
-    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C5: The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. Out of scope: the owner's wall cut and signing of the sign-off lines.
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C5: The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. The lid's skin keeps the eight streamlines, sixteen vents and eight far-end bars the look was judged with, its parameters re-fitted to the wider lid, and the record restates the inlet free area at the new width. Out of scope: the owner's wall cut and signing of the sign-off lines.
+
     short = controls.get("c5_wide_pilasters_short_bar")["refused"]
     assert short and "keep-out" in short, "pilasters 2.0 mm wider each leave the 85 mm bar short of the case and its bolt zones"
     longer = by_name(controls.get("c5_wide_pilasters_long_bar"))
@@ -253,6 +312,21 @@ def test_c5_a_wider_pilaster_with_the_same_bar_is_refused_and_with_a_longer_bar_
     assert [round(b["bolt_u_mm"], 2) for b in longer["c3.wall_bolts_outside_case"]["figures"]["bolts"]] != [-13.75, 61.25], "the bolts move out with the bar's ends"
     tight = by_name(controls.get("c5_washer_too_close"))["c3.wall_bolts_outside_case"]
     assert not tight["passed"] and min(b["washer_clear_of_case_mm"] for b in tight["figures"]["bolts"]) < 2.0
+
+
+def test_c5_the_lid_skin_keeps_the_sixteen_vents_eight_streamlines_and_eight_far_end_bars_and_the_record_restates_the_inlet_area(model, params, record):
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C5: The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. The lid's skin keeps the eight streamlines, sixteen vents and eight far-end bars the look was judged with, its parameters re-fitted to the wider lid, and the record restates the inlet free area at the new width. Out of scope: the owner's wall cut and signing of the sign-off lines.
+
+    from shapely.geometry import LineString
+    skin, core = model.skin, model.core
+    streamlines = skin.streamlines(core)
+    assert len(model.info["vents"]) == 16 and len(streamlines) == 8
+    assert all(LineString(line).length >= model.P.S("lines.min_line_mm") for line in streamlines)
+    assert len([g for g in model.info["grooves"] if g.square]) == 8 == model.P.S("block.bars") and model.info["far_end_block"] is None
+    area = check.vent_areas(model)["lid_inlet_free_area_mm2"]
+    assert area == pytest.approx(210.8, abs=0.1)
+    assert "%.1f mm2 of free area" % area in record, "the record restates the inlet free area at the width the lid has now"
+    assert "`skins.flow.lines.min_line_mm` 10.5" in record and "re-fitted when the pilasters widened" in record and model.P.S("lines.min_line_mm") == 10.5
 
 
 # ---------------------------------------------------------------- C6: set flush, marked from the tray
@@ -303,15 +377,28 @@ EARLIER_FIXING = (
 )
 
 
+# a live statement of the plate the case takes names the 85 mm bar beside the 80.0 mm of the amendment it supersedes
+EARLIER_BAR_STATEMENT = r"the plate the case takes[^|]{0,120}80\.0 mm long"
+
+
 def earlier_fixing_problems(text):
-    return [why for pattern, why in EARLIER_FIXING if re.search(pattern, text)]
+    found = [why for pattern, why in EARLIER_FIXING if re.search(pattern, text)]
+    # a figures-table row that still says the case takes an 80.0 mm bar and does not state the 85 mm bar
+    if any(re.search(EARLIER_BAR_STATEMENT, line) and "85 mm" not in line for line in text.splitlines()):
+        found.append("the 80.0 mm bar stated as the plate the case takes, with no 85 mm amendment")
+    return found
 
 
 def test_c7_no_earlier_count_pilot_hole_screw_length_or_bar_length_remains_in_the_record_or_the_drawings(record, params, results):
     # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C7: The case record and every drawing the case model emits, the plate drawing and the case drawings among them, state the tray's fixing once, as this solution gives it: the number of screws and inserts, their stance, the bar's length and the wall opening, and no earlier count, stance or length of the fixing remains stated in them, which the test shows by searching each for the earlier count, the pilot hole and the earlier screw length. The division record's opening carries the new length and says its span along the wall is set by the case. Out of scope: the owner's sign-off lines, which the next criterion covers.
     plate, drawings = drawing_text("plate-drawing.svg"), drawing_text("case-drawings.svg")
-    for name, text in (("the case record", record), ("the plate drawing", plate), ("the case drawings", drawings)):
+    figures = read(os.path.join(BOARD_DIR, "constraints-figures.md"))
+    parameters = read(os.path.join(CASE_DIR, "params.yaml"))
+    for name, text in (("the case record", record), ("the plate drawing", plate), ("the case drawings", drawings), ("the figures record", figures), ("the parameter sources", parameters)):
         assert earlier_fixing_problems(text) == [], name
+    # the searches reach the two files the first search missed: each carried one earlier statement of the bar, and each is found when it is put back
+    assert "the earlier bar length, width or opening" in earlier_fixing_problems(parameters.replace("5 mm thick (its length is plate.length_mm)", "5 mm thick and cut to 80 mm"))
+    assert "85 mm" in figures and any("the 80.0 mm bar stated" in why for why in earlier_fixing_problems(figures.replace("the bar the case now takes is 85 mm long", "the bar the case now takes is long")))
     # the searches find what they are for
     assert earlier_fixing_problems("The tray is fixed with four M3 x 12 countersunk screws into the pilots") == ["the earlier count of four tray screws", "the earlier screw length"]
     assert "the pilot hole of the earlier fixing" in earlier_fixing_problems("marks the holes through the pilot holes of the tray screws")
