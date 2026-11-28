@@ -210,7 +210,7 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the plate's lower edge z 6.000 is the ledge's top, 12.600 mm above the tray floor's underside (63.00 layers of 0.2 mm): at the ledge the plate shares 0.000 mm3 with the tray, 0.05 mm lower 12.903 mm3, and at its former position, z -7.025, 3045.6 mm3, so a lower plate cannot be seated",
+   "summary": "the plate's lower edge z 6.000 is the ledge's top, 12.600 mm above the tray floor's underside (63.00 layers of 0.2 mm): at the ledge the plate shares 0.000 mm3 with the tray, 0.05 mm lower 12.903 mm3, and at its former position, z -7.025, 2961.9 mm3, so a lower plate cannot be seated",
    "figures": {
     "ledge_z_mm": 6.0,
     "plate_lower_edge_z_mm": 6.0,
@@ -220,7 +220,7 @@
     "step_below_mm": 0.05,
     "shared_volume_below_ledge_mm3": 12.9025,
     "former_lower_edge_z_mm": -7.025,
-    "shared_volume_at_former_position_mm3": 3045.6376,
+    "shared_volume_at_former_position_mm3": 2961.8599,
     "contact_v_mm": [
      -5.5,
      -1.2
@@ -1386,9 +1386,9 @@
        -6.2,
        -5.6
       ],
-      "swap_volume_mm3": 3027.73,
+      "swap_volume_mm3": 2991.748,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 37729.5925
+      "part_volume_mm3": 37644.6431
      }
     },
     "inlay_part_present": false,
@@ -1643,106 +1643,6 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 11.0523,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.1628,
-         73.5,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.1451,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.1164,
-         69.3,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.3313,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.0296,
-         56.7,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.3705,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.0116,
-         52.5,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.3984,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.0,
-         44.1,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.3866,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.0051,
-         39.9,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.3697,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.0118,
-         35.7,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.3303,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.0301,
-         31.5,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.2845,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.05,
-         27.3,
-         6.3
-        ]
-       },
-       {
-        "area_mm2": 11.2181,
-        "span_mm": 2.004,
-        "z_mm": 6.3,
-        "lo": [
-         0.083,
-         23.1,
-         6.3
-        ]
-       },
-       {
         "area_mm2": 10.9996,
         "span_mm": 2.004,
         "z_mm": 6.3,
@@ -1889,6 +1789,106 @@
         "lo": [
          54.2,
          16.8,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.0523,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.1628,
+         73.5,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.1451,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.1164,
+         69.3,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.3313,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.0296,
+         56.7,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.3705,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.0116,
+         52.5,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.3984,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.0,
+         44.1,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.3866,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.0051,
+         39.9,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.3697,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.0118,
+         35.7,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.3303,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.0301,
+         31.5,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.2845,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.05,
+         27.3,
+         6.3
+        ]
+       },
+       {
+        "area_mm2": 11.2181,
+        "span_mm": 2.004,
+        "z_mm": 6.3,
+        "lo": [
+         0.083,
+         23.1,
          6.3
         ]
        },

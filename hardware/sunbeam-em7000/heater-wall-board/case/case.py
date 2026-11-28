@@ -777,12 +777,15 @@ def end_wall_box(m: Model, edge: Optional[float] = None) -> Any:
     """The tray's printed end wall: the tray's full outer width at the plate end, from the floor's underside up to a ledge at the plate's
     lower edge, in the volume the narrower plate leaves, its back face 0.5 mm in front of the machine wall's plane. The bar's lower edge
     rests on the ledge. Its board-side face is recessed behind the plate plane across the cavity's width, so it stands further from the
-    board than the plate does."""
+    board than the plate does. Its sides and its back face carry the tray's own bottom chamfer, so the body's chamfer runs on round the wall;
+    the bottom edge on the board-side face, where the wall meets the tray body, stays square."""
     P = m.P
     e = case_extent(m)
     top = plate_lower_edge(m) if edge is None else edge
     back = m.v_plate - P("plate.thickness_mm") + P("plate.end_wall_wall_clear_mm")
-    return box(e["u0"], e["u1"], back, m.v_plate, m.z_floor_bottom, top)
+    chamfer = float(m.skin.tray(m.core).bottom_chamfer)
+    outline = [(e["u0"], back), (e["u1"], back), (e["u1"], m.v_plate), (e["u0"], m.v_plate)]
+    return chamfer_prism(outline, m.z_floor_bottom, top, bottom=chamfer, square_at_v=m.v_plate)
 
 
 def build_plate(m: Model) -> None:
