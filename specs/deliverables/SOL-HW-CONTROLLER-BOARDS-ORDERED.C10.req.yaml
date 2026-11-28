@@ -4,9 +4,9 @@ title: On the order date each board's catalogue extract is read again and re-dat
 status: active
 version: 1
 measurement_type: binary
-verification: inspection
+verification: test
 text: |
-  On the order date, before payment, each board's catalogue extract is read again from the manufacturer's catalogue and re-dated, so the check that gates payment judges stock and lifecycle read that day and not at the design's lock; a part the new read shows out of stock or past its lifecycle is brought to the schematic leaf as an amendment before the board is ordered. Placing the order is out of scope.
+  On the order date, before payment, each board's catalogue extract is read again from the manufacturer's catalogue and re-dated, and the order's check refuses an order whose extract's read_on is not the order's own date, so a stale read of stock or lifecycle cannot reach payment; a part the new read shows out of stock or past its lifecycle is brought to the schematic leaf as an amendment before the board is ordered. The extract's age window (max_age_days) is not what holds this, because the real boards state a long one. Placing the order is out of scope.
 links:
   - target: SOL-HW-CONTROLLER-BOARDS-ORDERED
     type: criterion-of
