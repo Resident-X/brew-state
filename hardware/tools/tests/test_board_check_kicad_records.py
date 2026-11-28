@@ -229,10 +229,21 @@ class PinCoverageProof(Proved):
     def test_a_pin_left_out_of_a_listed_parts_entry_is_caught_on_a_copy_of_the_throwaway_design_that_spares_its_listed_pins(self):
         # SOL-PRE-ORDER-CHECK-EVERY-CONNECTED-PIN-LISTED.C4: The on-demand seeded-fault proof removes from a copy of a throwaway design, outside the tracked tree, the entry of one connected pin of a listed part that keeps its other pins listed and requires the check to fail it, the record of the seeded run naming the fault and the rule that caught it
         # OBL-VERIFICATION-DISCIPLINE-001.C9: A check is shown to fail on the defect it exists to catch rather than asserted to be capable of it
-        faults = [fault for fault in board_prove.FAULTS if fault[1].startswith("pin coverage:")]
-        self.assertEqual(len(faults), 1)
-        fault = faults[0]
-        self.assertEqual(fault[2], "pin_limit")
+        # SOL-PRE-ORDER-CHECK-PIN-COVERAGE-PROOF-TEST-COUNTS-THE-FAULTS-IT-SEEDS.C1: The pin-coverage proof's test names each pin-coverage fault the proof seeds, requires the proof to hold exactly those, and requires each to be caught by the rule it names, so a fault added or removed without the test fails the test. Out of scope: the other seeded faults and the rule's own behaviour.
+        left_out = "a connected pin of a listed integrated circuit left out of its entry"
+        beside_unlisted = "a connected pin of a listed integrated circuit left out beside pins on no net"
+        held = {fault[0] for fault in board_prove.FAULTS if fault[1].startswith("pin coverage:")}
+        self.assertEqual(held, {left_out, beside_unlisted})
+        for name in (left_out, beside_unlisted):
+            with self.subTest(fault=name):
+                named = [fault for fault in board_prove.FAULTS if fault[0] == name]
+                self.assertEqual(len(named), 1)
+                self.assertEqual(named[0][2], "pin_limit")
+                self.assertCaught(name)
+                caught, evidence = outcomes()[name]
+                self.assertTrue(caught, evidence)
+                self.assertIn(f" | {named[0][2]} | ", evidence)
+        fault = next(fault for fault in board_prove.FAULTS if fault[0] == left_out)
         self.assertEqual(board_prove.target_of(fault), board_prove.KEYS_TARGET)
         self.assertEqual(fault[6], "U1 pin 2")
         self.assertCaught(fault[0])

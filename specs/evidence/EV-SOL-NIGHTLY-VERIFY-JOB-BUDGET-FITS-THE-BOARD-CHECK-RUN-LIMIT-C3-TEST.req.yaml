@@ -1,0 +1,16 @@
+id: EV-SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT-C3-TEST
+type: evidence
+title: test evidence for SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T09:54:30.439114Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_verify_gate.py::test_the_gates_job_budget_outlasts_the_board_checks_one_run_limit_by_an_hour
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-372494d21547b0ce
+links:
+  - target: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C3
+    type: satisfies

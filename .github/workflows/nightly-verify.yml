@@ -58,16 +58,25 @@ jobs:
   gates:
     name: Every gate but the sweep
     runs-on: ubuntu-24.04
-    # The first observed runs took about twenty minutes, most of it the
-    # emulation tier, but stopped short of building and running every host
-    # environment; the budget stays wide until a run that does has been timed.
-    timeout-minutes: 120
+    # The job runs the whole declaration, board gates included, and each KiCad
+    # run in them may take up to KICAD_TIMEOUT_S (hardware/tools/board_check.py)
+    # before the check fails the design by name. The budget must outlast that
+    # one-run limit or a hung run is cancelled with the job and the night shows
+    # cancelled rather than the failing design. The floor is the limit in
+    # minutes plus an hour; the rest covers the emulation tier and a full
+    # design check, neither yet timed in a hosted run. A larger limit needs a
+    # larger budget; a test holds the two together.
+    timeout-minutes: 240
     steps:
       # Actions are pinned to the commit a release points at rather than to the
       # tag, for the reason the sweep workflow gives beside its own pins.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # The whole history, not the one commit a checkout takes by default:
+          # the placement and critical routing history gate reads every commit
+          # the records cite and refuses a shallow clone.
+          fetch-depth: 0
 
       - name: Install the task runner
         env:
@@ -130,11 +139,15 @@ jobs:
       # as provisioning rather than as a board gate failing. Which of these installs completes
       # on a hosted runner is what the first nightly run demonstrates.
       - name: Install KiCad with its standard libraries, a monospaced font and the YAML reader
+        # Its own limit, well under the job's budget: a wait anywhere in this
+        # step ends as a failure of the step, naming it, and not as a job
+        # cancelled at its budget with nothing named.
+        timeout-minutes: 15
         env:
           KICAD_PPA: "kicad/kicad-10.0-releases"
           # The fingerprint the archive's owner publishes for its signing key.
           KICAD_PPA_KEY: "FDA854F61C4D0D9572BB95E5245D5502FAD7A805"
-          KICAD_VERSION: "10.0.7~ubuntu24.04.1"
+          KICAD_VERSION: "10.0.8~ubuntu24.04.1"
           FONT_VERSION: "2.37-8"
           YAML_VERSION: "6.0.1-2build2"
         run: |
@@ -152,6 +165,18 @@ jobs:
           echo "deb [signed-by=/etc/apt/keyrings/kicad-ppa.gpg] https://ppa.launchpadcontent.net/${KICAD_PPA}/ubuntu noble main" \
             | sudo tee /etc/apt/sources.list.d/kicad-ppa.list > /dev/null
           sudo apt-get update
+          # The archive withdraws old versions, so before anything is installed
+          # each of the three packages is looked up in this archive's own
+          # listing, and a version it does not offer fails here naming the
+          # package, the version wanted, the versions on offer and the archive.
+          for package in kicad kicad-symbols kicad-footprints; do
+            offered="$(apt-cache madison "${package}" \
+              | awk -F ' [|] ' -v archive="${KICAD_PPA}" 'index($3, archive) { gsub(/^ +| +$/, "", $2); print $2 }' || true)"
+            if ! printf '%s\n' "${offered}" | grep -Fxq -- "${KICAD_VERSION}"; then
+              echo "${package} ${KICAD_VERSION} is not offered by the archive ${KICAD_PPA} (https://ppa.launchpadcontent.net/${KICAD_PPA}/ubuntu noble main); versions on offer: $(printf '%s' "${offered}" | tr '\n' ' ')" >&2
+              exit 1
+            fi
+          done
           sudo apt-get install -y --no-install-recommends \
             "kicad=${KICAD_VERSION}" "kicad-symbols=${KICAD_VERSION}" "kicad-footprints=${KICAD_VERSION}" \
             "fonts-dejavu-core=${FONT_VERSION}" "python3-yaml=${YAML_VERSION}"

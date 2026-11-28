@@ -1,0 +1,16 @@
+id: EV-SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS-C1-TEST-7
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T09:54:13.039482Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_geometry.py::test_the_way_a_slot_is_drawn_round_does_not_change_whether_a_line_is_held
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-29c6ba0390cd7182
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1
+    type: satisfies

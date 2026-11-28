@@ -1,0 +1,12 @@
+id: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC.C4
+type: criterion
+title: The hosted nightly reaches the end of the board tests with no failing module
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A dispatched run of the nightly verification workflow on the hosted Ubuntu runner reaches the end of the board tooling's test task with no failing module, where the three tests above failed in runs 46136364038 and 46136374257. Out of scope are the sweep jobs of the same run.
+links:
+  - target: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC
+    type: criterion-of

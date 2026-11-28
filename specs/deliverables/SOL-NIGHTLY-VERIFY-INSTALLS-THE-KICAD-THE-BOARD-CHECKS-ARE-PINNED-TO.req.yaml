@@ -1,0 +1,37 @@
+id: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO
+type: deliverable
+category: solution
+title: The nightly verification installs the KiCad the board checks are pinned to and fails quickly, naming the tool, when it cannot
+status: active
+version: 2
+text: |
+  Restores the nightly verification's reach to the board gates. The nightly job `gates` in .github/workflows/nightly-verify.yml runs `task fw:verify`, which includes the board gates (`hw:verify` and `hw:test:round`), but every scheduled run since at least 2026-11-16 has failed in the step that installs KiCad before any board gate starts: the package archive no longer offers the exact version the step names (10.0.7~ubuntu24.04.1), and apt reports that the version for kicad was not found. The run of 2026-11-23 did not even fail: it was cancelled at exactly 120 minutes, the job's budget, still inside that install step, so the night showed cancelled and named nothing. The board gates have therefore not been judged nightly for the period, which the nightly exists to do (SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2). The finished work that gave the runner its libraries pinned the version exactly, which is the right discipline but left nothing that notices the archive withdrawing the pin.
+
+  Locus: the step "Install KiCad with its standard libraries, a monospaced font and the YAML reader" of the `gates` job in .github/workflows/nightly-verify.yml (its env block holds KICAD_VERSION and the archive's key and name; the install and the post-install assertions follow). The board check's minimum is KiCad 10.0 (hardware/tools/board_check.py, the version check near line 222). The workflow's declaration tests are in firmware/tools/tests/test_verify_gate.py.
+
+  Settled for the build:
+  - The version the workflow names is moved to one the archive offers now and that is not older than the check's minimum, chosen by probing the archive's package listing for kicad, kicad-symbols and kicad-footprints at one common version; the three packages and the post-install assertions keep the exact-version discipline, so two nights install the same KiCad. The check's own minimum and the signed-key comparison are unchanged. Pinning to anything newer than the board files were last proved against is a version the build records and the first dispatched run confirms; if the board gates then fail for a reason of the new version, that is a separate maintenance item and not a reason to loosen the pin.
+  - A version the archive no longer offers is made a quick, named failure. The step gets its own time limit well under the job's budget, and, before installing, it asks apt which version of each of the three packages the archive offers and, when the named one is not among them, exits non-zero printing the package, the version it wanted, the versions on offer and the archive. Installing without that check is rejected because it is the failure that stood unnoticed for twelve nights; replacing the exact pin with "whatever the archive offers" is rejected because it makes two nights differ and the check's findings with them.
+  - Why the 2026-11-23 run waited two hours instead of failing in about thirty seconds is not established, and this solution does not claim to remove the cause. What it requires is that no wait inside the install step can outlast the step's own limit of at most fifteen minutes (criterion C2), so the same wait ends as a named failure of the step. Finding the cause is out of scope.
+  - The nightly criterion of the round-gate solution that runs only changed units (that every board unit runs to completion on a runner that installs the CAD tool at the required version) relies on this install working and does not plan it again: that solution depends on this one in the graph. Criterion C3 here asks only that a dispatched run gets past the install and starts the two board gates; running every board unit to completion and reporting each verdict is that criterion's.
+  - The declaration test goes beside the other nightly workflow tests in firmware/tools/tests/test_verify_gate.py, on the standard library only as that file requires, and drives the pre-install check of the step's script with stand-in apt commands that report the named version missing, present, and absent from an empty listing, so no network or KiCad is needed.
+  - The proof that the install works is a manual dispatch of the nightly workflow on the branch; the evidence is the install step's lines and the board gates' lines in that run, not the run's overall status, as the sibling's evidence is.
+
+  Out of scope: the nightly's time budget, the firmware gates' verdicts, runners for other operating systems, and caching the install.
+rationale: |
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 asks, that a design passes its verification before it is ordered, and OBL-VERIFICATION-DISCIPLINE-001.C7, that verification runs to completion without the machine present: the nightly is how the board checks run when nobody is at the machine, and a nightly that cannot install the tool they need judges nothing while reading as a routine failure. A maintenance item, because the install step was correct when written and the archive's withdrawal of a pinned version is what changed. Authored on 2026-11-28 so the defect is in the graph and not only in a pull request.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C7
+    type: targets
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: DEC-MAINTENANCE-CONTINUOUS-LANE
+    type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 5b8dada7f217a55a1ad57546efaa8f5120d1a6446c40156755926925f87d33b8
+  gating_profile: ""

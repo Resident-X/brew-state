@@ -1,0 +1,12 @@
+id: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C3
+type: criterion
+title: A dispatched nightly run reaches the board gates and reports their verdicts
+status: active
+version: 2
+measurement_type: binary
+verification: demonstration
+text: |
+  A manual dispatch of the nightly workflow on the branch gets past the KiCad install step and starts the board check (hw:verify) and the board tooling's tests (hw:test:round), whether or not any other gate in the run failed. Out of scope: the verdicts of the board gates and of the firmware gates, and running every board unit to completion, which the round-gate solution's nightly criterion owns.
+links:
+  - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO
+    type: criterion-of

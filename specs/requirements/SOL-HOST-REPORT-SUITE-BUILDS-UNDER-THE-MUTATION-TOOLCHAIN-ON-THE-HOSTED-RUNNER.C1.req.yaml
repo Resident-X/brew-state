@@ -1,0 +1,12 @@
+id: SOL-HOST-REPORT-SUITE-BUILDS-UNDER-THE-MUTATION-TOOLCHAIN-ON-THE-HOSTED-RUNNER.C1
+type: criterion
+title: Every suite builds under the mutation toolchain on the hosted runner
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A dispatched run of the nightly verification workflow on the hosted Ubuntu runner has no shard job of the full mutation sweep that fails because a suite does not build under the mutation toolchain, where 31 of 209 failed for the host report suite in runs 46136364038 and 46136374257. Out of scope is a shard that fails for another reason.
+links:
+  - target: SOL-HOST-REPORT-SUITE-BUILDS-UNDER-THE-MUTATION-TOOLCHAIN-ON-THE-HOSTED-RUNNER
+    type: criterion-of

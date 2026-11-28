@@ -644,3 +644,81 @@ class PlanAndCopperFails(Base):
         self.assertIn(f"in the commit before it, {planned[:12]}", text,
                       "the plan is judged in the commit before the first placement")
         self.assertIn("CHECK | plan before placement | PASS | the floorplan in HEAD", text)
+
+
+class BoardPathChain(Base):
+    """The path the board is at in each commit, and the layout plan read in the board's folder at that commit."""
+
+    def test_a_plan_renamed_out_of_an_earlier_designs_folder_is_not_followed_back_into_it(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: Tests on throwaway repositories, using generic names, show where a board's history starts: the board is the chain of paths from the head commit's board path backward through the renames git detects, its history begins at the commit where that chain's file is added, and commits before it or off the chain hold no board. So when an earlier design's commits on the branch's line of history hold a board at a folder name that a later board then reuses, the history command judges the later board from the commit that first holds that board and not from the earlier design's commits, in plain and in routed mode and in its text and JSON output, and the earlier design's copper does not stand as the later board's first copper. A board deleted and added again at the same path in one commit is the same board; a commit whose parents give conflicting board paths fails as a fault, naming it; and the layout plan is read at the board's folder at each commit and the plan's own renames are not followed. The same repository with the later board's own placement record misordered still fails. Out of scope: judging the earlier design.
+        self.repo.placed()
+        self.repo.routed()
+        self.repo.git("rm", "-q", "b/b.kicad_pcb")
+        os.makedirs(os.path.join(self.repo.path, "n"))
+        self.repo.git("mv", "b/layout-plan.md", "n/layout-plan.md")
+        self.repo.git("commit", "-q", "-m", "n: the plan moves out of the earlier design's folder, its board retired")
+        self.repo.folder = "n"
+        self.repo.restart()
+        self.repo.placed()
+        judged = self.repo.routed()
+        hand = self.repo.git("rev-parse", "HEAD~1")
+        self.repo.through_router(judged)
+        for extra in ((), ("--routed",)):
+            with self.subTest(extra=extra):
+                lines, document = self.assertPasses(*extra)
+                self.assertIn(f"CHECK | first track | PASS | {hand[:12]} is the first commit carrying a track",
+                              "\n".join(lines))
+                self.assertFalse([check for check in document["checks"] if check["verdict"] != "PASS"])
+
+    def test_an_earlier_design_a_merge_brings_in_at_the_boards_own_path_is_not_its_history(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: Tests on throwaway repositories, using generic names, show where a board's history starts: the board is the chain of paths from the head commit's board path backward through the renames git detects, its history begins at the commit where that chain's file is added, and commits before it or off the chain hold no board. So when an earlier design's commits on the branch's line of history hold a board at a folder name that a later board then reuses, the history command judges the later board from the commit that first holds that board and not from the earlier design's commits, in plain and in routed mode and in its text and JSON output, and the earlier design's copper does not stand as the later board's first copper. A board deleted and added again at the same path in one commit is the same board; a commit whose parents give conflicting board paths fails as a fault, naming it; and the layout plan is read at the board's folder at each commit and the plan's own renames are not followed. The same repository with the later board's own placement record misordered still fails. Out of scope: judging the earlier design.
+        self.repo.placed()
+        self.repo.routed()
+        self.repo.git("checkout", "-q", "-b", "later-design")
+        self.repo.remove()
+        self.repo.restart("seed")
+        self.repo.placed()
+        judged = self.repo.routed()
+        hand = self.repo.git("rev-parse", "HEAD~1")
+        self.repo.through_router(judged)
+        self.repo.rename("b")
+        self.repo.git("checkout", "-q", "main")
+        self.repo.write("docs/notes.md", "an unrelated change on the line holding the earlier design\n")
+        self.repo.git("add", "-A")
+        self.repo.git("commit", "-q", "-m", "docs: an unrelated change on main")
+        self.repo.git("checkout", "-q", "later-design")
+        self.repo.git("merge", "-q", "--no-ff", "-m", "merge main, which still holds the earlier design at the path", "main")
+        for extra in ((), ("--routed",)):
+            with self.subTest(extra=extra):
+                lines, document = self.assertPasses(*extra)
+                self.assertIn(f"CHECK | first track | PASS | {hand[:12]} is the first commit carrying a track",
+                              "\n".join(lines))
+                self.assertFalse(document["checks"][0]["check"] == "board path")
+
+    def test_a_commit_whose_parents_give_the_board_two_paths_fails_naming_it_and_judges_nothing_else(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: Tests on throwaway repositories, using generic names, show where a board's history starts: the board is the chain of paths from the head commit's board path backward through the renames git detects, its history begins at the commit where that chain's file is added, and commits before it or off the chain hold no board. So when an earlier design's commits on the branch's line of history hold a board at a folder name that a later board then reuses, the history command judges the later board from the commit that first holds that board and not from the earlier design's commits, in plain and in routed mode and in its text and JSON output, and the earlier design's copper does not stand as the later board's first copper. A board deleted and added again at the same path in one commit is the same board; a commit whose parents give conflicting board paths fails as a fault, naming it; and the layout plan is read at the board's folder at each commit and the plan's own renames are not followed. The same repository with the later board's own placement record misordered still fails. Out of scope: judging the earlier design.
+        self.repo.placed()
+        self.repo.git("checkout", "-q", "-b", "renamer")
+        self.repo.rename("renamed", "b: the folder is renamed on a branch")
+        self.repo.git("checkout", "-q", "main")
+        self.repo.folder = "b"
+        self.repo.commit(board(PLACES[1], copper=[HAND]), "b: route A by hand, on main")
+        self.repo.git("merge", "-q", "--no-ff", "-m", "merge the rename", "renamer")
+        merge = self.repo.git("rev-parse", "HEAD")
+        self.repo.folder = "renamed"
+        failed = self.assertFails("give the board the paths", check="board path")
+        self.assertTrue(any(merge[:12] in line for line in failed), failed)
+        status, lines, document = self.repo.run("--routed")
+        self.assertEqual([check["check"] for check in document["checks"]], ["board path"])
+
+    def test_a_merge_whose_parents_give_the_board_one_path_is_followed_through_both(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: Tests on throwaway repositories, using generic names, show where a board's history starts: the board is the chain of paths from the head commit's board path backward through the renames git detects, its history begins at the commit where that chain's file is added, and commits before it or off the chain hold no board. So when an earlier design's commits on the branch's line of history hold a board at a folder name that a later board then reuses, the history command judges the later board from the commit that first holds that board and not from the earlier design's commits, in plain and in routed mode and in its text and JSON output, and the earlier design's copper does not stand as the later board's first copper. A board deleted and added again at the same path in one commit is the same board; a commit whose parents give conflicting board paths fails as a fault, naming it; and the layout plan is read at the board's folder at each commit and the plan's own renames are not followed. The same repository with the later board's own placement record misordered still fails. Out of scope: judging the earlier design.
+        self.repo.placed()
+        self.repo.git("checkout", "-q", "-b", "side")
+        self.repo.commit(message="b: a commit on the side line")
+        self.repo.git("checkout", "-q", "main")
+        self.repo.commit(board(PLACES[1], copper=[HAND]), "b: route A by hand, on main")
+        self.repo.git("merge", "-q", "--no-ff", "-m", "merge the side line", "side")
+        judged = self.repo.commit(board(copper=[LOCKED]), "b: lock A")
+        self.repo.through_router(judged)
+        self.assertPasses()

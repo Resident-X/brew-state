@@ -1,0 +1,12 @@
+id: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C6
+type: criterion
+title: Pass 1's BOARD-22 row holds the text it held when the pass was judged
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The BOARD-22 row of pass 1 in the main board's layout plan holds the text it held when the pass was judged, "Of the 320 vias none lies inside a surface-mount pad, read from the pad outlines in the board file.", restored by a new commit that rewrites no history, so the plan equals what was written when the router ran; the plan does not state the final board's via count in that row, and no signed exception and no tolerance for a number is added to the history command. Out of scope: whether 320 is the board's true via count.
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME
+    type: criterion-of

@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: A build round runs only the verification units whose inputs changed since they last passed
 status: active
-version: 1
+version: 2
 text: |
   Why this exists. A build round selects whole tiers by changed path. A sentence changed in the hardware notes runs the host tier and every board tooling test, about forty-five minutes, to repeat checks of that file that take under a second. Any edit to the firmware tree runs the twenty-minute emulation tier. A second round after a one-line fix pays the whole cost again. DEC-VERIFICATION-ROUND-TARGETED-NIGHTLY-FULL now has the round run only the verification units whose inputs changed since they last passed. SOL-VERIFY-UNIT-READS-DECLARED-AND-PROVEN supplies every unit's declared inputs and tools. This solution makes the round use them.
 
@@ -121,4 +121,6 @@ links:
   - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
     type: supersedes
   - target: SOL-VERIFY-NIGHTLY-FULL-ON-MAIN
+    type: depends-on
+  - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO
     type: depends-on

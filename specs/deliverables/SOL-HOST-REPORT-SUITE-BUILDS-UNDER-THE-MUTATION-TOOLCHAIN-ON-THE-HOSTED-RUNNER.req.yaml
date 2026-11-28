@@ -1,0 +1,23 @@
+id: SOL-HOST-REPORT-SUITE-BUILDS-UNDER-THE-MUTATION-TOOLCHAIN-ON-THE-HOSTED-RUNNER
+type: deliverable
+category: solution
+title: The host report test suite builds under the mutation toolchain so the full sweep judges
+status: active
+version: 1
+text: |
+  Makes the host report test suite build under the mutation toolchain on the hosted Ubuntu runner, so the full mutation sweep judges the combined population. In the first nightly runs in which the KiCad install worked (runs 46136364038 and 46136374257 at commit 3c486bcd) 31 of 209 shard jobs of the full sweep failed, every one for the suite test_host_report (the mutants of the plant's common and thermoblock sources): test/test_host_report/test_host_report.c at about line 734 calls fileno, and the toolchain's compiler reports "call to undeclared function 'fileno'; ISO C99 and later do not support implicit function declarations", so the sweep reports the suite does not build under the mutation toolchain (exit 2). The judging job of the sweep is skipped as a result, so the full sweep has judged nothing. The same shard counts (209 jobs, 178 successes, 31 failures) appear in the scheduled nightly of main, run 46135569280, so the break is on main and not on the branch. It is not found by the round, which sweeps only changed plant lines.
+
+  Root cause and locus: firmware/platformio.ini builds with the C11 standard flag, which hides the POSIX function fileno from the C library on glibc; the macOS library declares it regardless, so the suite builds on the owner's Mac. The line came in with commit 6529d6fa. The compiler that makes the implicit declaration an error is the mutation toolchain's. The exact difference that lets the ordinary native test build the file was not determined; the build states it.
+
+  Settled for the build:
+  - The fix is in the test file: define the POSIX feature-test macro the function needs before the first include (the 2008 revision value), or avoid the function. Rejected: changing the standard flag for the whole firmware build, which moves every source's declarations for one test's use, and excluding the suite from the sweep, which hides a suite of the plant's tests from judgement.
+  - The build checks the other suites of the sweep for the same implicit declaration under the same toolchain, and fixes any it finds, or states that none was found.
+  - Planning notes. The demonstration needs a dispatched run of the nightly verification workflow, which runs the sharded sweep; the judging job then runs, and mutants judged for the first time on the hosted toolchain may need the judgement record's entries (the record lists host-dependent survivors); a survivor the judging job reports is handled by the sweep's judgement route and is not hidden here. The sweep's toolchain needs LLVM 19 and Mull and is not available to a local run without them.
+  - Out of scope: the judgement of any survivor the sweep reports once it runs, the round's changed-lines sweep, and the board tests (the sibling item).
+rationale: |-
+  Restores the behaviour OBL-VERIFICATION-DISCIPLINE-001.C2 asks: a test is shown to catch a plausible future change, which the full mutation sweep does for the plant's tests. A sweep whose suite does not build, and whose judging job is skipped, judges nothing.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C2
+    type: targets

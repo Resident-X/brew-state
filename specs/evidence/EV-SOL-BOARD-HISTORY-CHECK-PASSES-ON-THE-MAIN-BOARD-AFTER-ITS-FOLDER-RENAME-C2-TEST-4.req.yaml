@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME-C2-TEST-4
+type: evidence
+title: test evidence for SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T09:54:48.415395Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_history_critical.py::test_the_old_folder_name_left_in_the_pass_after_a_rename_is_unchanged_and_a_longer_name_holding_it_is_not
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-735c98993117c217
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2
+    type: satisfies

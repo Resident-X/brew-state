@@ -1,0 +1,12 @@
+id: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC.C1
+type: criterion
+title: The scripting-environment test passes whichever interpreter runs it
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The test of the layout tools' refusal to run without the layout editor's board module gives the tools an interpreter that cannot import it and asserts they refuse, and it passes on a host where the interpreter running the tests can import the module. Out of scope are the tools' behaviour under an interpreter that can import it.
+links:
+  - target: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC
+    type: criterion-of

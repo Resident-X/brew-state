@@ -149,7 +149,7 @@ Maintenance nodes carry only defects of work that was already built. Defects of 
 - Mounting-hole rule counts a one-pin plated terminal as a fixing: `SOL-PRE-ORDER-CHECK-MOUNTING-HOLE-LEAVES-A-PLATED-TERMINAL-ALONE`; plated hole of a low-voltage part not measured round slots: `SOL-PRE-ORDER-CHECK-PLATED-HOLE-OF-A-LOW-VOLTAGE-PART-IS-MEASURED-ROUND-THE-SLOTS`. The first fixed in `579ca814`.
 - A net tie's graphic read as low-voltage copper: `SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS`. Fixed in `579ca814`.
 - A slot open to the board edge not read: `SOL-PRE-ORDER-CHECK-READS-A-SLOT-OPEN-TO-THE-BOARD-EDGE`.
-- Creepage path runs through a slot junction (an over-conservative reading, 9.179 mm where the true path is 15.5 mm): `SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS`.
+- Creepage path runs through a slot junction (an over-conservative reading, 9.179 mm where the true path is 15.5 mm): `SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS`. Fixed in `24ca97a5`, `5081190f` and `4347f436`; the path now gives 15.534 mm and 16.021 mm.
 - No way to accept a workmanship line: `SOL-PRE-ORDER-CHECK-JUDGES-OWNER-ACCEPTED-WORKMANSHIP-LINES` (authored, not built).
 - Exceptions must cover every reported shortfall pair, and must stay unsigned until the owner signs: `SOL-MAIN-BOARD-EXCEPTIONS-COVER-EVERY-REPORTED-SHORTFALL-PAIR`; the record's signature and the derating signatures: `SOL-SEPARATION-BASIS-RECORD-STANDS-SIGNED-ON-THE-FINISHED-LAYOUTS-EXCEPTION-SET`.
 - The pump-triac exceptions follow the land drawn: `SOL-SEPARATION-BASIS-PUMP-TRIAC-EXCEPTIONS-FOLLOW-THE-LAND-DRAWN`. The laminate condition: `SOL-SEPARATION-BASIS-LAMINATE-CONDITION-NEEDS-NO-INDEX-AT-POLLUTION-DEGREE-2`.

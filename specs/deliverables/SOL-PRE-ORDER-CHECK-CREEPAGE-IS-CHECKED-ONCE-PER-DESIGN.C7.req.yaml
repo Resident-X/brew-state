@@ -1,0 +1,12 @@
+id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C7
+type: criterion
+title: The hardware notes and the hw:verify description state that the creepage is computed once, in a pass of its own
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  hardware/README.md and the description of the hw:verify task state that the signed creepage is computed once per design check, in a pass of its own, and that the first pass, the mounting-hole pass and the sensing pass hold no creepage constraint. Out of scope: the history of how the creepage came to be run three times, which this solution's text holds.
+links:
+  - target: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
+    type: criterion-of

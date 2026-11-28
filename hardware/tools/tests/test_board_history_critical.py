@@ -6,6 +6,9 @@ One of the files the original test file is divided into by topic; the tests are 
 
 from __future__ import annotations
 
+import contextlib
+import io
+import json
 import os
 import re
 import subprocess
@@ -17,7 +20,7 @@ sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import board_history  # noqa: E402
-from board_history_fixtures import Base, CRITICAL_ROWS, HAND, LOCKED, METHOD, PLACEMENT_ROWS, PLACES, PLAN, REPO, ROUTED, board, candidate, critical, critical_pass, placement, track  # noqa: E402,F401
+from board_history_fixtures import Base, Repo, CRITICAL_ROWS, HAND, LOCKED, METHOD, PLACEMENT_ROWS, PLACES, PLAN, REPO, ROUTED, board, candidate, critical, critical_pass, placement, track  # noqa: E402,F401
 
 
 class CriticalRoutingFails(Base):
@@ -219,6 +222,250 @@ class CriticalRoutingFails(Base):
         self.repo.git("branch", "-q", "-D", "board")
         self.assertFails("holds no `## Placement` section", check="placement section")
         self.assertFails("is not in this repository's history from HEAD", check="pass 1 board judged")
+
+
+class RenamedBoard(Base):
+    """A board whose folder is renamed after a pass cited its commits, the pass's Views command naming the folder."""
+
+    def renamed(self, pass_rows=None, views_after="beta"):
+        """Design in `alpha`, pass 1 naming `alpha`, the router, then the folder renamed to `beta` and the pass's Views
+        command following it; the commit before the router's, the judged commit and the router's."""
+        self.repo.folder = "alpha"
+        os.makedirs(os.path.join(self.repo.path, "alpha"))
+        self.repo.placed()
+        judged = self.repo.routed()
+        self.repo.commit(message="b: critical routing pass 1",
+                         critical=critical([critical_pass(1, judged, pass_rows, folder="alpha")]))
+        router = self.repo.commit(board(copper=[LOCKED, ROUTED]), "b: router")
+        self.repo.rename("beta")
+        self.repo.commit(message="b: the pass names the renamed folder",
+                         critical=critical([critical_pass(1, judged, pass_rows, folder=views_after)]))
+        return judged, router
+
+    def test_a_board_renamed_after_the_router_ran_is_followed_in_both_modes_and_formats(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        self.renamed()
+        for extra in ((), ("--routed",)):
+            with self.subTest(extra=extra):
+                _, document = self.assertPasses(*extra)
+                self.assertEqual({check["check"] for check in document["checks"]} >= {
+                    "first track", "placement section", "pass 1 board judged", "pass 1 before router",
+                    "pass 1 verdicts"}, True)
+                self.assertEqual([check for check in document["checks"] if check["verdict"] != "PASS"], [])
+
+    def test_the_same_history_without_the_rename_is_judged_as_before(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        self.repo.placed()
+        self.repo.through_router(self.repo.routed())
+        _, plain = self.assertPasses()
+        _, routed = self.assertPasses("--routed")
+        self.assertEqual(len(plain["checks"]), len(routed["checks"]))
+
+    def test_a_number_changed_after_the_router_still_fails_the_before_router_check_after_a_rename(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        judged, _ = self.renamed()
+        edited = ["| WORK-1 | judgement | quality | pass | net-A, whole board, 541 vias | |", CRITICAL_ROWS[1]]
+        self.repo.commit(message="b: a number edited",
+                         critical=critical([critical_pass(1, judged, edited, folder="beta")]))
+        self.assertFails("pass 1 now differs from the pass in the commit before the router's",
+                         check="pass 1 before router")
+        self.assertFails("pass 1 now differs from the pass in the commit before the router's",
+                         check="pass 1 before router", args=("--routed",))
+
+    def test_a_views_command_naming_a_folder_other_than_the_boards_fails_after_a_rename(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        self.renamed(views_after="gamma")
+        self.assertFails("pass 1 now differs from the pass in the commit before the router's",
+                         check="pass 1 before router")
+
+    def test_the_old_folder_name_left_in_the_pass_after_a_rename_is_unchanged_and_a_longer_name_holding_it_is_not(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        self.renamed(views_after="alpha")
+        self.assertFails("pass 1 now differs", check="pass 1 before router")
+        lines = ["- **Views**: `--board alpha/b.kicad_pcb`", "- `alphabet/alpha` and alpha.txt"]
+        self.assertEqual(board_history.in_present_folder(lines, "alpha", "beta"),
+                         ["- **Views**: `--board beta/b.kicad_pcb`", "- `alphabet/beta` and alpha.txt"])
+        self.assertEqual(board_history.in_present_folder(lines, "alpha", "alpha"), lines)
+
+    def test_a_missing_record_and_a_pass_out_of_order_still_fail_after_a_rename(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        judged, _ = self.renamed()
+        self.repo.commit(message="b: the placement section is dropped", placement="")
+        self.assertFails("the section is not changed after the first track", check="placement section")
+        self.repo.commit(message="b: the pass is renumbered", critical=critical([critical_pass(2, judged, folder="beta")]))
+        self.assertFails("the passes are numbered 2, not from 1 in order", check="critical routing section")
+
+    def test_a_cited_commit_not_in_the_history_still_fails_after_a_rename(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        self.renamed()
+        self.repo.commit(message="b: a commit the history never held is cited",
+                         critical=critical([critical_pass(1, "0123456789abcdef0123456789abcdef01234567", folder="beta")]))
+        self.assertFails("is not in this repository", check="pass 1 board judged")
+
+    def test_the_second_pass_after_a_rename_follows_the_first_ones_router_commit(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+        judged, router = self.renamed()
+        relocked = track((5, 9), (20, 9), "A", True)
+        self.repo.commit(board(copper=[LOCKED]), "b: remove the router's copper")
+        second = self.repo.commit(board(copper=[relocked]), "b: re-route A, locked")
+        self.repo.commit(message="b: pass 2", critical=critical([critical_pass(1, judged, folder="beta"),
+                                                                 critical_pass(2, second, folder="beta")]))
+        self.repo.commit(board(copper=[relocked, track((5, 11), (20, 11), "GND", False)]), "b: router again")
+        _, document = self.assertPasses("--routed")
+        self.assertIn("pass 2 before router", {check["check"] for check in document["checks"]})
+
+
+class CatalogueAsItStood(Base):
+    """A pass is judged against the practice catalogue as it stood in the commit before its router's."""
+
+    LATER = METHOD + """
+#### LATER-1. An item added after the pass was recorded
+
+- **Judged on:** `layer-F.Cu`.
+"""
+
+    def test_an_item_added_to_the_catalogue_after_the_router_ran_does_not_fail_the_pass_whether_renamed_or_not(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C4: Tests on throwaway repositories, using generic item names, show that a routing pass is judged against the practice catalogue as it stood when that pass's router ran: an item added to the catalogue after the pass was recorded does not fail the pass, and an item that was in the catalogue at that time and has no verdict in the pass still fails, in plain and in routed mode and in its text and JSON output, whether or not the board was renamed. Out of scope: judging whether a recorded verdict is right.
+        for renamed in (False, True):
+            with self.subTest(renamed=renamed):
+                self.repo = Repo(self)
+                self.repo.placed()
+                self.repo.through_router(self.repo.routed())
+                if renamed:
+                    self.repo.rename("renamed")
+                self.repo.write("docs/board-design-method.md", self.LATER)
+                self.repo.commit(message="docs: an item is added to the catalogue")
+                for extra in ((), ("--routed",)):
+                    lines, document = self.assertPasses(*extra)
+                    verdicts = [check for check in document["checks"] if check["check"] == "pass 1 verdicts"]
+                    self.assertEqual(len(verdicts), 1)
+                    self.assertIn("3 checklist items", verdicts[0]["detail"])
+
+    def test_an_item_in_the_catalogue_when_the_router_ran_and_missing_from_the_pass_fails_whether_renamed_or_not(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C4: Tests on throwaway repositories, using generic item names, show that a routing pass is judged against the practice catalogue as it stood when that pass's router ran: an item added to the catalogue after the pass was recorded does not fail the pass, and an item that was in the catalogue at that time and has no verdict in the pass still fails, in plain and in routed mode and in its text and JSON output, whether or not the board was renamed. Out of scope: judging whether a recorded verdict is right.
+        for renamed in (False, True):
+            with self.subTest(renamed=renamed):
+                self.repo = Repo(self)
+                self.repo.placed()
+                judged = self.repo.routed()
+                self.repo.write("docs/board-design-method.md", self.LATER)
+                self.repo.commit(message="docs: an item is added to the catalogue")
+                self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
+                self.repo.commit(board(copper=[LOCKED, ROUTED]), "b: router")
+                if renamed:
+                    self.repo.rename("renamed")
+                self.assertFails("pass 1 neither judges LATER-1 nor lists it as bearing on no critical net",
+                                 check="pass 1 verdicts")
+                self.assertFails("pass 1 neither judges LATER-1", check="pass 1 verdicts", args=("--routed",))
+
+
+class EveryBoardWithAPlacementSection(Base):
+    """`--all`, which the nightly complete verification runs: every board whose tracked plan holds a placement heading."""
+
+    def run_all(self, *extra, cwd=None):
+        """The command's exit status, its report's lines and its JSON document, run from `cwd` or the repository."""
+        before = os.getcwd()
+        os.chdir(cwd or self.repo.path)
+        try:
+            stream, document = io.StringIO(), io.StringIO()
+            status = board_history.main(["--all", *extra], out=stream)
+            self.assertEqual(board_history.main(["--all", "--json", *extra], out=document), status)
+        finally:
+            os.chdir(before)
+        return status, stream.getvalue().splitlines(), json.loads(document.getvalue())
+
+    def other_board(self, folder, plan_text):
+        os.makedirs(os.path.join(self.repo.path, folder))
+        self.repo.write(f"{folder}/b.kicad_pcb", board())
+        self.repo.write(f"{folder}/layout-plan.md", plan_text)
+        self.repo.commit(message=f"{folder}: a board and its plan")
+
+    def test_every_board_with_a_placement_heading_is_judged_in_both_modes_and_one_without_is_not(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
+        self.repo.placed()
+        self.repo.through_router(self.repo.routed())
+        self.other_board("unplaced", PLAN)
+        status, lines, document = self.run_all()
+        self.assertEqual(status, 0, "\n".join(lines))
+        self.assertEqual(document["result"], "PASS")
+        self.assertEqual([(run["board"], run["mode"], run["result"]) for run in document["runs"]],
+                         [("b/b.kicad_pcb", "plain", "PASS"), ("b/b.kicad_pcb", "routed", "PASS")])
+        self.assertEqual(lines[0].split(" | ")[:4], ["BOARD", "b/b.kicad_pcb", "plain", "PASS"])
+        self.assertTrue(lines[-1].startswith("RESULT | PASS | 2 runs, 2 passed"), lines[-1])
+
+    def test_a_board_that_adds_a_placement_heading_joins_and_a_broken_one_fails_the_run_naming_it(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
+        self.repo.placed()
+        self.repo.through_router(self.repo.routed())
+        self.other_board("joined", PLAN + "\n## Placement\n\nNo candidate is recorded here.\n")
+        status, lines, document = self.run_all()
+        self.assertEqual(status, 1, "\n".join(lines))
+        self.assertEqual(document["result"], "FAIL")
+        failed = [(run["board"], run["mode"]) for run in document["runs"] if run["result"] == "FAIL"]
+        self.assertEqual(failed, [("joined/b.kicad_pcb", "plain"), ("joined/b.kicad_pcb", "routed")])
+        self.assertTrue(any(line.startswith("BOARD | joined/b.kicad_pcb | plain | FAIL |") for line in lines), lines)
+        self.assertTrue(any(line.startswith("CHECK | ") and "FAIL" in line for line in lines), lines)
+        self.repo.commit(message="b: a placement record is changed after the first track",
+                         placement=placement([candidate(1, "0123456789abcdef0123456789abcdef01234567")], 1))
+        status, lines, document = self.run_all()
+        self.assertEqual(status, 1)
+        self.assertIn(("b/b.kicad_pcb", "plain"), [(run["board"], run["mode"]) for run in document["runs"]
+                                                  if run["result"] == "FAIL"])
+
+    def test_a_shallow_clone_is_refused_naming_it_and_no_board_is_read_as_passing(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
+        self.repo.placed()
+        self.repo.through_router(self.repo.routed())
+        shallow = os.path.join(self.repo.root, "shallow")
+        subprocess.run(["git", "clone", "-q", "--depth", "1", f"file://{self.repo.path}", shallow], check=True,
+                       capture_output=True)
+        status, lines, document = self.run_all(cwd=shallow)
+        self.assertEqual(status, 2, "\n".join(lines))
+        self.assertEqual(document["result"], "REFUSED")
+        self.assertEqual([run["result"] for run in document["runs"]], ["REFUSED", "REFUSED"])
+        self.assertTrue(all("shallow clone" in refusal["why"] for run in document["runs"] for refusal in run["refusals"]))
+        self.assertTrue(any("the repository is a shallow clone" in line for line in lines if line.startswith("REFUSED |")))
+        self.assertTrue(lines[-1].startswith("RESULT | REFUSED |"), lines[-1])
+
+    def test_a_repository_with_no_placement_heading_is_refused_rather_than_passed(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
+        self.repo.planned()
+        status, lines, document = self.run_all()
+        self.assertEqual(status, 2, "\n".join(lines))
+        self.assertEqual(document["result"], "REFUSED")
+        self.assertIn("no tracked layout-plan.md holds a `## Placement` heading", document["runs"][0]["detail"])
+
+    def test_a_placement_heading_beside_no_board_or_beside_two_is_refused_naming_the_plan(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
+        for name, boards in (("no board", []), ("two boards", ["one.kicad_pcb", "two.kicad_pcb"])):
+            with self.subTest(case=name):
+                self.repo = Repo(self)
+                self.repo.planned()
+                folder = os.path.join(self.repo.path, "orphan")
+                os.makedirs(folder)
+                self.repo.write("orphan/layout-plan.md", PLAN + "\n## Placement\n\nNo candidate is recorded here.\n")
+                for board_name in boards:
+                    self.repo.write(f"orphan/{board_name}", board())
+                self.repo.commit(message="orphan: a plan with a placement section")
+                status, lines, document = self.run_all()
+                self.assertEqual(status, 2, "\n".join(lines))
+                self.assertEqual(document["result"], "REFUSED")
+                self.assertEqual([run["result"] for run in document["runs"]], ["REFUSED"])
+                run = document["runs"][0]
+                self.assertEqual(run["board"], "orphan/layout-plan.md")
+                self.assertIn(f"the folder tracks {len(boards)} .kicad_pcb files, not the one board", run["detail"])
+                self.assertEqual(run["refusals"][0]["what"], "orphan/layout-plan.md")
+                self.assertTrue(any(line.startswith("BOARD | orphan/layout-plan.md | - | REFUSED |") for line in lines), lines)
+                self.assertTrue(any(line.startswith("REFUSED | orphan/layout-plan.md |") for line in lines), lines)
+                self.assertTrue(lines[-1].startswith("RESULT | REFUSED |"), lines[-1])
+
+    def test_a_board_flag_beside_all_or_neither_is_a_usage_error(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
+        for args in (["--all", "--board", self.repo.board], ["--all", "--routed"], []):
+            with self.subTest(args=args), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as raised:
+                    board_history.main(args, out=io.StringIO())
+                self.assertEqual(raised.exception.code, 2)
 
 
 class Refusals(Base):

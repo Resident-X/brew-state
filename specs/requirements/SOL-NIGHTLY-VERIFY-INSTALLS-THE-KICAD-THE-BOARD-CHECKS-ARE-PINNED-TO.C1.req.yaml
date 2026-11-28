@@ -1,0 +1,12 @@
+id: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C1
+type: criterion
+title: A dispatched nightly run installs the KiCad version its workflow names, not older than the board check's minimum
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  A manual dispatch of the nightly workflow on the branch completes the KiCad install step, installs kicad, kicad-symbols and kicad-footprints at one exact version the archive offers, which is not older than the minimum the board check requires, and prints the version its command-line tool reports; a second dispatch installs the same version. Out of scope: the KiCad an author runs locally, and runners for other operating systems.
+links:
+  - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO
+    type: criterion-of

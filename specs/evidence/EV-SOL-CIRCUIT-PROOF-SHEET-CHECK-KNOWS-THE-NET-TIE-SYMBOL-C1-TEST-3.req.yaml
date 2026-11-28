@@ -1,0 +1,16 @@
+id: EV-SOL-CIRCUIT-PROOF-SHEET-CHECK-KNOWS-THE-NET-TIE-SYMBOL-C1-TEST-3
+type: evidence
+title: test evidence for SOL-CIRCUIT-PROOF-SHEET-CHECK-KNOWS-THE-NET-TIE-SYMBOL.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T09:53:56.226209Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_circuit_proof_e_sheet_check.py::test_a_part_with_an_unknown_symbol_is_refused_and_named
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-124edca08eb9de07
+links:
+  - target: SOL-CIRCUIT-PROOF-SHEET-CHECK-KNOWS-THE-NET-TIE-SYMBOL.C1
+    type: satisfies

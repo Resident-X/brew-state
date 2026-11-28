@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME-C3-TEST-2
+type: evidence
+title: test evidence for SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T09:54:49.040438Z"
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_history_placement.py::test_the_later_boards_own_placement_record_misordered_still_fails_after_an_earlier_design_used_the_folder
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-735c98993117c217
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3
+    type: satisfies

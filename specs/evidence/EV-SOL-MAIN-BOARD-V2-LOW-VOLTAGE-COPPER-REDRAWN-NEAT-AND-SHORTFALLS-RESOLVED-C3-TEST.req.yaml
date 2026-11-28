@@ -1,0 +1,18 @@
+id: EV-SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED-C3-TEST
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED.C3
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T13:53:54Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/46136364038 ; https://github.com/Resident-X/brew-state/actions/runs/46136374257 (step 'Run the complete verification, the sweep left out for its own jobs', gates hw:history:all and hw:verify); hardware/tools/board_check.py lines 9238 and 9340
+  artifact_version: 3c486bcd7fcbdc2efd767575118b6c67f61a570d
+text: |
+  This is a recorded execution of the committed placement-history command by the nightly verification on a hosted runner, not a local run. The nightly workflow (nightly-verify.yml, commit 3c486bcd7fcbdc2efd767575118b6c67f61a570d, dispatched on the branch), job 'Every gate but the sweep', step 'Run the complete verification, the sweep left out for its own jobs', ran 'verification: running hw:history:all (gate 9 of 9)' (task [hw:history:all] python3 hardware/tools/board_history.py --all). Its output in run A (https://github.com/Resident-X/brew-state/actions/runs/46136364038, job 140952456826, 2026-11-28T13:53:54Z) includes the lines 'BOARD | hardware/sunbeam-em7000/main-board/main-board.kicad_pcb | plain | PASS | all 22 checks passed' and 'BOARD | hardware/sunbeam-em7000/main-board/main-board.kicad_pcb | routed | PASS | all 22 checks passed', then 'RESULT | PASS | 6 runs, 6 passed' and 'verification: hw:history:all passed'. Run B (https://github.com/Resident-X/brew-state/actions/runs/46136374257, job 140952490171, 2026-11-28T14:08:48Z) prints the same two main-board lines and 'RESULT | PASS | 6 runs, 6 passed'. The same output holds no failing BOARD line. Design rule check clause: in the same step of run A the board check gate ran, 'verification: running hw:verify (gate 7 of 9)' (python3 hardware/tools/board_check.py --root . --kicad-cli kicad-cli, KiCad 10.0.8), and printed 'DESIGN | hardware/sunbeam-em7000/main-board/main-board.kicad_pro | PASS | 265 warnings', 'RESULT | PASS | all 7 designs passed' and 'verification: hw:verify passed' (11:26:42Z); run B printed the same main-board DESIGN line and the same RESULT line. The log does not print the design rule check's own command line. What the committed source at this commit states (hardware/tools/board_check.py): the check runs KiCad's 'pcb drc --severity-all --schematic-parity --refill-zones --save-board --all-track-errors' on the main board (run_report call, line 9238) and records every unconnected_items entry of the report, and every schematic_parity entry, as a violation (line 9340); a design with a violation is not reported PASS. The record therefore states: an unconnected item counts as a violation, the zones are refilled by that run, and the main board design passed. The 265 warnings are not violations of the criterion; the log's lines for the main board are WARNING and ACCEPTED lines only, and the output holds no ERROR line.
+links:
+  - target: SOL-MAIN-BOARD-V2-LOW-VOLTAGE-COPPER-REDRAWN-NEAT-AND-SHORTFALLS-RESOLVED.C3
+    type: satisfies

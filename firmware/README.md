@@ -261,7 +261,7 @@ Everything runs from the repository root through the task runner:
 ```sh
 task check:round   # a build round's gate: the host tier only if the branch changes what it reads, the emulation tier only if it changes what it reads, the board tier only if it changes a board design or what one reads, the sweep of the changed plant lines
 task check:daily  # the latest nightly verification of main: green, red, none or unknown, then the commit and the run's link (needs gh, signed in)
-task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the board check and its tooling tests, the arithmetic sweep
+task fw:verify     # the complete verification, run nightly: every environment, check, test and host build, the emulation tier, the board check and its tooling tests, the arithmetic sweep, the placement and critical routing history of every board that records a placement
 task fw:build      # the environments only
 task fw:check      # the build-time checks only
 task fw:test       # the control-logic and plant-model tests, and the tests covering the checks
@@ -368,7 +368,7 @@ problem or could not look. Its exit status is the verdict.
 
 The complete verification, `fw:verify`, runs nightly against `main`: every tier
 the round can skip, the emulation tier and the board check and its tooling tests
-unconditionally, and the full sweep of the plant model's arithmetic. It stays the single declaration of every gate, and
+unconditionally, the full sweep of the plant model's arithmetic, and, after it, the placement and critical routing history of every board whose tracked layout plan holds a placement section (`hw:history:all`, which needs the whole history and refuses a shallow clone; the round never runs it). It stays the single declaration of every gate, and
 the round hands the task runner the same tasks rather than copies of their
 commands. Unlike the round it does not stop at a failure: every gate runs to
 completion, the run fails naming every gate that failed, and its closing lines
@@ -446,7 +446,7 @@ real — that does not change between commits the way the checks' own results do
 Run it when a check is added or reworked.
 
 The second sweeps the plant model's arithmetic instead of the checks. It is the
-last step of `fw:verify` as well as being runnable alone, so the complete
+last gate of `fw:verify` but the board history gate, as well as being runnable alone, so the complete
 verification that runs nightly asks not only whether the checks pass but whether
 the tests would notice the model being wrong. A build round's gate runs it only
 restricted to the lines the branch changes, described above, and never in full:

@@ -9,8 +9,8 @@ that fails all three kinds of rule at once and asks what each pass was handed
 and what came of it.
 
 This is one of the files the check's KiCad tests are divided into by topic; the
-shared setup is in board_kicad_fixtures.py. None of these tests needs the
-seeded-fault proof's pooled outcomes, so none derives from Proved.
+shared setup is in board_kicad_fixtures.py. Only the last class needs the
+seeded-fault proof's pooled outcomes and so derives from Proved.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ sys.path.insert(0, TOOLS)
 import board_check  # noqa: E402
 import board_prove  # noqa: E402
 from board_kicad_fixtures import load_tests, setUpModule  # noqa: E402,F401
-from board_kicad_fixtures import Copy, KICAD_CLI  # noqa: E402
+from board_kicad_fixtures import Copy, KICAD_CLI, Proved  # noqa: E402
 
 #: The sensing track laid 2 mm beyond the Mains tracks' round ends: inside the signed 3 mm clearance and the signed 4 mm creepage
 #: of both, and far inside the 0.5 mm declared for sensing only against a noisy class outside Mains, so it is a sensing finding.
@@ -187,6 +187,16 @@ class TheCreepageShortfallIsReportedByTheCreepagePass(SensingCopy):
         self.assertTrue(run.violations("creepage"), run.lines)
         self.assertTrue(all(f"rule '{board_check.SIGNED_RULE}' creepage 4.0000 mm" in fields[4] for fields in run.violations("creepage")))
         self.assertEqual(run.status, 1)
+
+
+class TheCreepageHoleAndSensingFaultsAreStillCaught(Proved):
+    def test_the_creepage_the_mounting_hole_and_the_sensing_faults_are_each_caught_with_the_creepage_in_a_pass_of_its_own(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C4: The on-demand seeded-fault proof, run once on the change, reports every fault it seeds as caught, the mounting-hole, sensing and creepage faults included, with no fault missed and none newly failing. The main-board comparison of the two passes' findings, before and after the change, is a stated check of the delivered artefact and not part of this proof.
+        self.assertCaught(
+            "a stale fill hiding a creepage violation beside a mains pad",
+            "a mounting hole inside the signed distance of a Mains net",
+            "a sensing item closer to Power copper than the declared clearance",
+        )
 
 
 if __name__ == "__main__":

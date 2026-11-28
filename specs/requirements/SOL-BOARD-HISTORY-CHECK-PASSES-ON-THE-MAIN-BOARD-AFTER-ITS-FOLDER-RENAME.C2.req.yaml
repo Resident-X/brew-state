@@ -2,11 +2,11 @@ id: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2
 type: criterion
 title: A board folder renamed after an earlier pass is followed and a genuine fault still fails the history command
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
+  Tests on throwaway repositories built in a temporary folder outside the repository, using generic board and part names, show that a board committed in an earlier routing pass under one folder name and renamed by a later commit is read where each cited commit holds it, so the history command passes, in plain and in routed mode and in its text and JSON output. A pass whose only difference from its state before the router is the board's folder name at the judged commit, written where the board's present folder name stands, is treated as unchanged; a pass that differs in anything else, a number included, still fails the before-router check, so no number is tolerated and no exception is signed. The same repository with a record genuinely missing, or a pass out of order, still fails, naming the check, and a cited commit that is not in the repository's history still fails, so the rename is followed without excusing a real fault. A board never renamed is judged as before. Out of scope: the order rules the command enforces, which are unchanged.
 links:
   - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME
     type: criterion-of

@@ -18,7 +18,7 @@ STOCK_PINS = {
     "Device:R": 2, "Device:C": 2, "Device:FerriteBead_Small": 2, "Connector:TestPoint": 1,
     "Oscillator:ASE-xxxMHz": 4, "Connector_Generic:Conn_01x02": 2, "Connector_Generic:Conn_01x03": 3,
     "Connector_Generic:Conn_01x04": 4, "Connector_Generic:Conn_01x05": 5,
-    "Sensor_Temperature:MAX31865xTP": 21, "Analog_ADC:HX711": 16,
+    "Sensor_Temperature:MAX31865xTP": 21, "Analog_ADC:HX711": 16, "Device:NetTie_2": 2,
 }
 SI = {"k": 1e3, "K": 1e3, "Meg": 1e6, "M": 1e6, "n": 1e-9, "u": 1e-6, "p": 1e-12}
 

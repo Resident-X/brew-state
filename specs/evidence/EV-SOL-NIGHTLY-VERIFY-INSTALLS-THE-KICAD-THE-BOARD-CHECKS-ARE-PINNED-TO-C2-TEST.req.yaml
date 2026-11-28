@@ -1,0 +1,18 @@
+id: EV-SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO-C2-TEST
+type: evidence
+title: test evidence for SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T14:08:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_verify_gate.py::TheNightlyRunsTheSameDeclaration::test_the_kicad_install_step_has_a_time_limit_of_its_own_well_under_the_jobs_budget
+  artifact_version: 3c486bcd7fcbdc2efd767575118b6c67f61a570d
+text: |
+  The install step carries a time limit of its own: test_the_kicad_install_step_has_a_time_limit_of_its_own_well_under_the_jobs_budget finds exactly one step-level timeout-minutes in the install step, asserts it is greater than 0 and at most 15, and less than a quarter of the job's timeout-minutes. The round gate on d8ba5f9f (.stage0/gate.log in the build worktree) printed 'ok     test_verify_gate: 50 tests in 16.1s' and ended 'ROUND GATE PASSED: the host tier (fw:build, fw:check, fw:test, fw:run), the emulation tier (fw:emulate) and the board tier (hw:verify, hw:test:round) all ran and passed'; that gate line is per module, not per test. The test file and the workflow are unchanged between d8ba5f9f and the run commit. On the hosted runner, run A (https://github.com/Resident-X/brew-state/actions/runs/46136364038, step 'Run the complete verification, the sweep left out for its own jobs') printed 'ok     test_verify_gate: 50 tests in 2.1s' twice (10:47:01Z and 10:51:23Z) and run B (https://github.com/Resident-X/brew-state/actions/runs/46136374257) printed 'ok     test_verify_gate: 50 tests in 2.4s' twice (10:47:50Z, 10:53:26Z), at commit 3c486bcd7fcbdc2efd767575118b6c67f61a570d. Covers the clause 'the step carries a time limit of its own of at most fifteen minutes, well under the job's budget'. It does not measure the ten-minute failure time of a missing version; the test pins the step limit, which is at most fifteen minutes, and no test here times the check itself.
+links:
+  - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2
+    type: satisfies

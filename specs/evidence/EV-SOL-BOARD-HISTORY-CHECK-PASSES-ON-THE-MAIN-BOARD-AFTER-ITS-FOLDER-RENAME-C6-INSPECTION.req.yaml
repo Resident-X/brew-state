@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME-C6-INSPECTION
+type: evidence
+title: inspection evidence for SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C6
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T09:54:50.475836Z"
+artifact:
+  kind: external
+  reference: 'inspection of commit 74068807 (git show 74068807): it changes one file, hardware/sunbeam-em7000/main-board/layout-plan.md, one line, the BOARD-22 row of pass 1, from ''Of the 541 vias none lies inside a surface-mount pad, read from the pad outlines in the board file.'' to ''Of the 320 vias none lies inside a surface-mount pad, read from the pad outlines in the board file.'', which is the text the criterion names; it is a new commit rewriting no history; it adds no signed exception and no tolerance and changes no code, so board_history.py gains none from it. Whether 320 is the board''s true via count is out of scope.'
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-735c98993117c217
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C6
+    type: satisfies
