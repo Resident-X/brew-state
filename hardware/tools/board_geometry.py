@@ -937,30 +937,63 @@ def crosses(a: Point, b: Point, c: Point, d: Point) -> bool:
 #: How near a point may lie to a slot's wall and count as on it, in mm.
 ON_WALL = 1e-7
 
-#: How far from a point of a slot's outline the two sides of a line through it are probed, in mm.
-PROBE = 1e-6
-
-
 def on_outline(point: Point, ring: Sequence[Point]) -> bool:
     """Whether a point lies on the outline of a slot."""
     return min(distance_to_segment(point, c, d) for c, d in zip(ring, list(ring[1:]) + list(ring[:1]))) <= ON_WALL
 
 
+def sides_at(point: Point, ring: Sequence[Point], heading: float) -> Tuple[bool, bool]:
+    """Whether a slot's inside lies to the left and to the right of a line through `point` heading `heading` radians, close to `point` where the slot's outline passes through it.
+
+    The inside there is the sweep of directions between the outline's two arms at the point, taken
+    from the arm leaving it round to the arm arriving at it with the inside on the left of the way
+    the outline is drawn, so a slot drawn either way about gives the same.
+    """
+    points = list(ring)
+    turning = sum(a[0] * b[1] - b[0] * a[1] for a, b in zip(points, points[1:] + points[:1]))
+    here = next((index for index, corner in enumerate(points) if math.dist(corner, point) <= ON_WALL), None)
+    if here is not None:
+        before, after = points[here - 1], points[(here + 1) % len(points)]
+    else:
+        edge = next((index for index in range(len(points)) if distance_to_segment(point, points[index - 1], points[index]) <= ON_WALL), None)
+        if edge is None:
+            return False, False
+        before, after = points[edge - 1], points[edge]
+    if turning < 0:
+        before, after = after, before
+    start = math.atan2(after[1] - point[1], after[0] - point[0])
+    width = (math.atan2(before[1] - point[1], before[0] - point[0]) - start) % (2 * math.pi)
+    if here is None:
+        width = math.pi
+    begin = (start - heading) % (2 * math.pi)
+    left = begin < math.pi - SWEEP or begin + width > 2 * math.pi + SWEEP
+    right = (begin < 2 * math.pi - SWEEP and begin + width > math.pi + SWEEP) or begin + width > 3 * math.pi + SWEEP
+    return left, right
+
+
+#: How much of a sweep of directions, in radians, must lie in a half plane to count as lying in it.
+SWEEP = 1e-9
+
+
 def pinches(a: Point, b: Point, point: Point, rings: Sequence[Sequence[Point]]) -> bool:
     """Whether the straight line from a to b, passing through `point`, has one slot against it on one side there and another slot on the other, so it runs through the pinch between them."""
-    run = math.dist(a, b)
-    if run == 0:
+    if math.dist(a, b) == 0:
         return False
-    normal = (-(b[1] - a[1]) / run * PROBE, (b[0] - a[0]) / run * PROBE)
-    left = (point[0] + normal[0], point[1] + normal[1])
-    right = (point[0] - normal[0], point[1] - normal[1])
-    one = {index for index, ring in enumerate(rings) if within(left, ring)}
-    other = {index for index, ring in enumerate(rings) if within(right, ring)}
-    return any(first != second for first in one for second in other)
+    heading = math.atan2(b[1] - a[1], b[0] - a[0])
+    sides = [sides_at(point, ring, heading) for ring in rings]
+    return any(one[0] and other[1] for index, one in enumerate(sides) for other_index, other in enumerate(sides) if index != other_index)
 
 
-def piece_held(middle: Point, rings: Sequence[Sequence[Point]]) -> bool:
-    """Whether the middle of a piece of a line lies inside a slot, or on the walls of two slots at once, which is the wall they share."""
+#: How long a piece of a line must be, in mm, to run along a wall; a shorter one is a point.
+RUN_ALONG = 1e-6
+
+
+def piece_held(middle: Point, rings: Sequence[Sequence[Point]], length: float) -> bool:
+    """Whether the middle of a piece of a line, of the given length, lies inside a slot, or the piece runs along the walls of two slots at once, which is the wall they share.
+
+    A piece of no length is the point two cuts meet at, where two slots touch, and lies on both
+    their walls whichever sides of the line they are on; whether they pinch is asked apart.
+    """
     walls = 0
     for ring in rings:
         near = min(distance_to_segment(middle, c, d) for c, d in zip(ring, list(ring[1:]) + list(ring[:1])))
@@ -968,7 +1001,7 @@ def piece_held(middle: Point, rings: Sequence[Sequence[Point]]) -> bool:
             walls += 1
         elif within(middle, ring):
             return True
-    return walls > 1
+    return walls > 1 and length > RUN_ALONG
 
 
 def blocked(a: Point, b: Point, slots: Sequence[Sequence[Point]]) -> bool:
@@ -992,7 +1025,7 @@ def blocked(a: Point, b: Point, slots: Sequence[Sequence[Point]]) -> bool:
     cuts.sort()
     for before, after in zip(cuts, cuts[1:]):
         half = (before + after) / 2
-        if piece_held((a[0] + (b[0] - a[0]) * half, a[1] + (b[1] - a[1]) * half), rings):
+        if piece_held((a[0] + (b[0] - a[0]) * half, a[1] + (b[1] - a[1]) * half), rings, (after - before) * math.sqrt(run)):
             return True
     return any(pinches(a, b, (a[0] + (b[0] - a[0]) * along, a[1] + (b[1] - a[1]) * along), rings) for along in cuts[1:-1])
 
@@ -1099,7 +1132,7 @@ class Detours:
                     walled += 1
                 elif within(middle, ring):
                     return True
-            if walled > 1:
+            if walled > 1 and (after - before) * math.sqrt(run) > RUN_ALONG:
                 return True
         rings = [ring for ring, _ in reached]
         return len(rings) > 1 and any(

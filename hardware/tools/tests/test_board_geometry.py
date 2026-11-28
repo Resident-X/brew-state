@@ -394,6 +394,9 @@ class AWayRoundASlotIsExact(unittest.TestCase):
         rings = [self.BAR.points, self.ARM.points]
         self.assertTrue(board_geometry.blocked((3, 2), (7, 2), rings))
         self.assertTrue(board_geometry.Detours([self.BAR, self.ARM]).blocks((3, 2), (7, 2)))
+        self.assertTrue(board_geometry.blocked((4.5, 2), (5.5, 2), rings))
+        self.assertTrue(board_geometry.Detours([self.BAR, self.ARM]).blocks((4.5, 2), (5.5, 2)))
+        self.assertFalse(board_geometry.blocked((4.5, 2), (5.5, 2), [self.BAR.points]))
         self.assertFalse(board_geometry.blocked((0, 2), (4, 2), rings))
         self.assertFalse(board_geometry.Detours([self.BAR, self.ARM]).blocks((0, 2), (4, 2)))
         squares = [square(0, 0, 10, 10), square(10, 10, 20, 20)]
@@ -401,6 +404,31 @@ class AWayRoundASlotIsExact(unittest.TestCase):
         self.assertTrue(board_geometry.Detours([board_geometry.Loop(r, False) for r in squares]).blocks((12, 8), (8, 12)))
         self.assertFalse(board_geometry.blocked((12, 8), (13, 7), squares))
         self.assertFalse(board_geometry.blocked((11, 9), (9, 11), [square(0, 0, 10, 10)]))
+
+    TIP_A = [(10, 10), (4, 2), (6, 0)]
+    TIP_B = [(10, 10), (14, 0), (16, 2)]
+
+    def test_a_line_grazing_the_point_two_slots_touch_with_both_on_one_side_is_open(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1: On a synthetic board with a slot whose two arms meet at a corner, drawn once as one outline and drawn again as two outlines that touch (sharing an edge, and meeting at a single point), the creepage route length between two items either side of the junction is the length of the shortest path round the free end of an arm, not the length of a path through the junction or along the wall the two parts share, and the same pair on a slot with the arms apart (a gap between the outlines) is unchanged, its path through the gap kept. Out of scope is the rule's threshold.
+        rings = [self.TIP_A, self.TIP_B]
+        self.assertFalse(board_geometry.blocked((0, 10), (20, 10), rings))
+        self.assertFalse(board_geometry.blocked((0, 10), (20, 10), rings[::-1]))
+        for order in ([self.TIP_A, self.TIP_B], [self.TIP_B, self.TIP_A]):
+            loops = [board_geometry.Loop(ring, False) for ring in order]
+            self.assertFalse(board_geometry.Detours(loops).blocks((0, 10), (20, 10)))
+            tip = lambda x: board_geometry.Shape([[(x, 10), (x - 0.1, 9), (x + 0.1, 9)]])
+            for slots in (loops, board_geometry.Detours(loops)):
+                self.assertEqual(board_geometry.route_length(tip(2), tip(18), slots, 40), (16.0, 0))
+
+    def test_a_line_through_the_point_two_slots_touch_with_one_on_each_side_is_held(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1: On a synthetic board with a slot whose two arms meet at a corner, drawn once as one outline and drawn again as two outlines that touch (sharing an edge, and meeting at a single point), the creepage route length between two items either side of the junction is the length of the shortest path round the free end of an arm, not the length of a path through the junction or along the wall the two parts share, and the same pair on a slot with the arms apart (a gap between the outlines) is unchanged, its path through the gap kept. Out of scope is the rule's threshold.
+        above = [(10, 10), (4, 18), (6, 20)]
+        rings = [self.TIP_A, above]
+        for order in (rings, rings[::-1]):
+            self.assertTrue(board_geometry.blocked((0, 10), (20, 10), order))
+            self.assertTrue(board_geometry.Detours([board_geometry.Loop(ring, False) for ring in order]).blocks((0, 10), (20, 10)))
+        self.assertFalse(board_geometry.blocked((0, 10), (20, 10), [self.TIP_A]))
+        self.assertFalse(board_geometry.blocked((0, 10), (20, 10), [above]))
 
     def test_with_a_slot_in_reach_that_is_not_between_the_pieces_the_way_is_the_straight_line(self):
         # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C2: A synthetic pair of items with no slot between them returns the straight-line distance as its route length, and every existing route-length test of the check's geometry module passes unchanged. Out of scope is any figure the rule compares the length with.
