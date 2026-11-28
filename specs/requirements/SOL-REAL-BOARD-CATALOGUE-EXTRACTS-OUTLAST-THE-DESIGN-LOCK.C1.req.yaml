@@ -1,0 +1,12 @@
+id: SOL-REAL-BOARD-CATALOGUE-EXTRACTS-OUTLAST-THE-DESIGN-LOCK.C1
+type: criterion
+title: Each real board's catalogue extract states a window long enough that holding the design does not make its read stale
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The catalogue extract of the main board and the catalogue extract of the heater wall board each state a max_age_days of at least 3650, and each extract's header comment says that the window is not a claim of freshness and that the order's read re-dates the extract. Out of scope the proof designs' extracts and the age rules of the check.
+links:
+  - target: SOL-REAL-BOARD-CATALOGUE-EXTRACTS-OUTLAST-THE-DESIGN-LOCK
+    type: criterion-of

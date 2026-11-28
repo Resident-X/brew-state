@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL-C7-TEST
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T17:40:29.539842Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/case/tests/test_case_tray_fixing.py::test_c7_no_earlier_count_pilot_hole_screw_length_or_bar_length_remains_in_the_record_or_the_drawings
+  artifact_version: 0e210fdef76a9d79d5026bb2603d5ddc11659272
+attested_by: crun-a801f0d2ebe28256
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C7
+    type: satisfies

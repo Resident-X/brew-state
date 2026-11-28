@@ -1,0 +1,17 @@
+id: SOL-CASE-SKIN-FIT-STOPS-AT-A-STATED-BOUND
+type: deliverable
+category: solution
+title: The printed case's lid skin fit stops at a stated bound and says why, instead of running on
+status: active
+version: 1
+text: |
+  Corrects a defect in the printed case model's lid skin fit, found building the tray-fixing leaf (SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL): the edge land the fit derives from the streamline geometry (the flat land between a vent groove's edge and the lid's chamfer, nominally 3.77 mm) builds the skin in about 22 seconds, but a derived land of about 4.17 mm made one case build run for more than 11 minutes before it was stopped, with no message and no bound, so a test or a gate that builds the model hangs instead of failing. The fit is a search over the skin's streamline spacing; a land the search cannot satisfy keeps the search running.
+
+  Settled for the build: the skin fit takes a bound on its search, stated in the case's parameters, and a fit that reaches the bound stops the build with a refusal that names the skin, the edge land and the bound, as an outline that cannot hold the bar is refused at build. The nominal case builds within the bound. The bound is a figure the case's parameters carry with its source, not a constant in the code. Out of scope: choosing a different skin, the lid's flow area, and the case suite's split into routine and seeded-fault tests (SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY.C4).
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: OBL-VERIFICATION-DISCIPLINE-001.C7
+    type: targets
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: depends-on

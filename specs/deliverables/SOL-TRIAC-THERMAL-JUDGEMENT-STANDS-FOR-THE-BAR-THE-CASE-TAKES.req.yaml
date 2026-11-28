@@ -1,0 +1,17 @@
+id: SOL-TRIAC-THERMAL-JUDGEMENT-STANDS-FOR-THE-BAR-THE-CASE-TAKES
+type: deliverable
+category: solution
+title: The triacs' thermal judgement stands for the bar the case takes because its wall resistance is no greater than the judged length's
+status: active
+version: 1
+text: |
+  Records, as a checked claim, what the tray-fixing leaf (SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL) left in prose: the triacs' thermal judgement for the plate the case takes (SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C6, which re-runs it at the plate's height) was run on an 80 mm length of bar, and the bar is now 85 mm. Wall resistance falls as the bar lengthens, so the judgement stands for the longer bar and is not re-run; until now that rested on a sentence in the case record and a test constant, and no criterion required it.
+
+  Settled for the build: the case record's own test already pins the judged length and the recorded figures; this item adds the assertion that the bar the case takes has a wall resistance no greater than the judged length at both heat-transfer coefficients the judgement uses, and the criterion that requires it. Out of scope: re-running the margin script at the longer bar, which would only improve the recorded figures.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: depends-on
+  - target: REQ-ELECTRICAL-INSTALL-001.C13
+    type: targets

@@ -1,0 +1,16 @@
+id: EV-SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL-C4-TEST-3
+type: evidence
+title: test evidence for SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C4
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T17:40:29.150549Z"
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/case/tests/test_case_tray_fixing.py::test_c4_an_insert_axis_that_stands_under_the_board_s_copper_or_too_near_its_plane_is_refused_though_the_sphere_clears_it
+  artifact_version: 0e210fdef76a9d79d5026bb2603d5ddc11659272
+attested_by: crun-a801f0d2ebe28256
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C4
+    type: satisfies

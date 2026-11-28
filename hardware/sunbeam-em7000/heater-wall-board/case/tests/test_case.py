@@ -108,7 +108,7 @@ def test_c2_case_within_the_former_outline_and_opening(results):
     r = named(results, "c2.case_within_former_outline")
     assert r["passed"] and min(r["figures"]["margins_mm"].values()) >= 0.25
     o = named(results, "c2.wall_opening_stated")
-    assert o["passed"] and o["figures"]["opening_width_mm"] == pytest.approx(80.0 + 3.0)
+    assert o["passed"] and o["figures"]["opening_width_mm"] == pytest.approx(case.Params.load()("plate.length_mm") + 3.0)
 
 
 @pytest.mark.controls("c3_short_plate")
@@ -171,7 +171,7 @@ def test_c19_every_fixing_is_reached_from_below_or_the_plates_back(results):
         assert row["driver_from"] == f"out from the wall, {row['tilt_deg']:.1f} degrees below level" and row["needs_lid_off"]
         assert row["origin_direction"][1] > 0.9              # a near-horizontal reach out from the wall, not one from below
     assert "out from the wall" in r["summary"] and "both tab screws from below" not in r["summary"]
-    assert rows["tray-to-plate screws (4)"]["driver_from"] == "behind the plate"
+    assert rows["tray-to-plate screws (2)"]["driver_from"] == "behind the plate"
 
 
 @pytest.mark.controls("c5_no_barb")
@@ -240,7 +240,7 @@ def test_c7_screws_clear_of_mains_copper(results, basis):
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C7: Each screw or post of the case that meets the board, and the board's hole H1, keeps its pad and courtyard at the larger of the separation basis's signed clearance and creepage from mains copper, as the pre-order check's mounting_hole rule holds it, on every layer, so no safety property depends on a screw's material. The case drawing or model states each screw's centre and its distance from the nearest mains copper in the board's design. Out of scope: the position of the board's hole H1, which the layout fixed.
     r = named(results, "c7.screws_clear_of_mains_copper")
     kinds = {s["kind"] for s in r["figures"]["screws"]}
-    assert r["passed"] and kinds == {"tab", "h1", "tray_plate", "lid"}
+    assert r["passed"] and kinds == {"tab", "h1", "tray_plate", "insert", "lid"}
     for s in r["figures"]["screws"]:
         assert len(s["centre_uvz_mm"]) == 3 and set(s["per_layer_mm"]) == {"F.Cu", "B.Cu"} and s["distance_mm"] >= s["required_mm"]
         if s["kind"] == "lid":
@@ -394,9 +394,9 @@ def test_c13_the_far_end_block_mirrors_the_wide_bay_and_is_blind(model):
     assert all(block.distance(sh_box(*o)) > 0 for o in openings) and all(block.distance(LineString(v.points)) > 0 for v in model.info["vents"])
     assert not [o for o in model.openings if block.contains(Point(o["u"], o["v"]))]
     assert (P("case.z_lid_top_mm") - P("case.z_lid_under_mm")) - P.S("lines.groove_depth_mm") >= 1.0 - 1e-9
-    # the vents are the even, mirrored set: sixteen, four runs on each of four lines, with the inlet free area measured at 205.3 mm2
+    # the vents are the even, mirrored set: sixteen, four runs on each of four lines, with the inlet free area measured at 210.8 mm2
     from check import vent_areas
-    assert len(model.info["vents"]) == 16 and vent_areas(model)["lid_inlet_free_area_mm2"] == pytest.approx(205.3, abs=0.1)
+    assert len(model.info["vents"]) == 16 and vent_areas(model)["lid_inlet_free_area_mm2"] == pytest.approx(210.8, abs=0.1)
 
 
 def test_c13_the_far_end_block_is_omitted_with_a_reason_where_it_would_crowd_the_chamfer_the_collar_or_the_screw():
@@ -406,7 +406,10 @@ def test_c13_the_far_end_block_is_omitted_with_a_reason_where_it_would_crowd_the
         return m, m.info["far_end_block"]
     nominal, reason = built({})
     assert reason is None and len([g for g in nominal.info["grooves"] if g.square]) == 8
-    for overrides, word in (({"skins.flow.lines.edge_land_mm": 2.2}, "chamfer"), ({"skins.flow.block.clear_mm": 2.5}, "collar")):
+    # an edge land just wider than the distance the nominal block keeps to the chamfer crowds it, whatever that distance is at the lid's width (a land 0.5 mm wider sends the skin's streamline fit into a build that does not finish in ten minutes)
+    crowding_land = nominal.skin.block(nominal.core)["to_chamfer_mm"] + 0.1
+    assert crowding_land > nominal.P.S("lines.edge_land_mm")
+    for overrides, word in (({"skins.flow.lines.edge_land_mm": crowding_land}, "chamfer"), ({"skins.flow.block.clear_mm": 2.5}, "collar")):
         m, reason = built(overrides)
         assert reason and word in reason and not [g for g in m.info["grooves"] if g.square]
     # fewer than two bars leaves no block either, and the build still succeeds

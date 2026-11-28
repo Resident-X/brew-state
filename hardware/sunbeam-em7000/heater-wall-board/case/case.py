@@ -77,7 +77,7 @@ from shapely.ops import unary_union  # noqa: E402
 import board_geometry as bg  # noqa: E402
 import sexpr  # noqa: E402
 from solids import (box, ccw, chamfer_prism, chamfer_top, chamfered, cyl_v, cyl_z, fuse, offset_polygon, prism, prism_uz,  # noqa: E402,F401
-                    prism_vz, tear_v, to_mesh)
+                    prism_vz, tear_point_v, tear_v, to_mesh)
 from core import (Core, LOCATING_RIB_HALF, LOCATING_RIB_V, Outlet, OutlineRefused, Vent, aperture_boxes, boot_box, case_extent,  # noqa: E402,F401
                   gravity, lean_allowance, pilaster_u, pocket_profile, toe_profile, toe_u)
 
@@ -589,11 +589,10 @@ def tray_body(m: Model, spec: Any, zb: float, zt: float) -> Any:
     return body
 
 
-def pilot_solid(m: Model, u: float, z: float) -> Any:
-    """The tray-to-plate screw's pilot in a pilaster, a tear-drop hole from the end face to the depth the screw reaches."""
+def insert_hole_solid(m: Model, u: float, z: float) -> Any:
+    """The heat-set insert's hole in a pilaster, a tear-drop hole from the end face to the maker's depth."""
     P = m.P
-    depth = P("screws.tray_plate_length_mm") - P("plate.thickness_mm") + 0.5
-    return tear_v(u, z, m.v_end - 1, m.v_plate + depth, P("case.pilot_dia_mm") / 2)
+    return tear_point_v(u, z, m.v_end - 1, m.v_plate + P("case.insert_hole_depth_mm"), P("case.insert_hole_dia_mm") / 2)
 
 
 def head_solid(m: Model, u: float, z: float) -> Any:
@@ -692,13 +691,16 @@ def build_tray(m: Model) -> None:
     screw_r = P("screws.tray_plate_dia_mm") / 2
     for u in pu:
         for z in P("screws.tray_plate_z_mm"):
-            tray = tray - pilot_solid(m, u, z)
+            tray = tray - insert_hole_solid(m, u, z)
             v_back = m.v_plate - P("plate.thickness_mm")
             m.screws.append({"id": f"tray screw u{u:g} z{z:g}", "kind": "tray_plate", "u": u, "z": z, "axis": "v",
                              "v0": v_back, "v1": v_back + P("screws.tray_plate_length_mm"), "radius": screw_r,
                              "head_radius": P("screws.tray_plate_head_dia_mm") / 2, "head_v0": v_back,
                              "head_v1": v_back + P("screws.tray_plate_head_height_mm"), "touchable": False,
                              "shape": cyl_v(u, z, v_back, v_back + P("screws.tray_plate_length_mm"), screw_r)})
+            m.screws.append({"id": f"insert u{u:g} z{z:g}", "kind": "insert", "u": u, "z": z, "axis": "v", "v0": m.v_plate,
+                             "v1": m.v_plate + P("case.insert_hole_depth_mm"), "radius": P("case.insert_hole_dia_mm") / 2 + P("case.insert_wall_min_mm"),
+                             "touchable": False, "shape": insert_hole_solid(m, u, z)})
     # pocket under the hook, in each pilaster, for the lid's toe
     for u in toe_u(m):
         tray = tray - pocket_solid(m, u)
@@ -758,7 +760,7 @@ def build_tray(m: Model) -> None:
 def plate_geometry(m: Model) -> Dict[str, float]:
     """The plate's edges in the case frame: its length centres it on the case's extent, its lower edge is the ledge's height (the figure of
     `plate.lower_edge_z_mm` less the seating range's plate-edge offset) and its upper edge is that plus the bar's height. The former
-    outline, the 80 mm by `plate.former_height_mm` window centred on the case's extent, is kept apart as its own figure."""
+    outline, the `plate.length_mm` by `plate.former_height_mm` window centred on the case's extent, is kept apart as its own figure."""
     P = m.P
     e = case_extent(m)
     cu, cz = (e["u0"] + e["u1"]) / 2, (e["z0"] + e["z1"]) / 2
@@ -795,7 +797,7 @@ def build_plate(m: Model) -> None:
     T = P("plate.thickness_mm")
     plate = box(u0, u1, m.v_plate - T, m.v_plate, z0, z1)
     # countersunk holes for the tray screws from the back face
-    head_r = P("screws.tray_plate_head_dia_mm") / 2
+    head_r = P("screws.tray_plate_countersink_dia_mm") / 2
     r_clear = 1.7
     for u in pilaster_u(m):
         for z in P("screws.tray_plate_z_mm"):
@@ -1107,7 +1109,15 @@ def print_mesh(mesh: trimesh.Trimesh, name: str) -> trimesh.Trimesh:
     return trimesh.Trimesh(vertices=turned - turned.min(axis=0), faces=np.asarray(mesh.faces).copy(), process=False)
 
 
+class InsertRefused(ValueError):
+    """The heat-set insert's hole is outside what its maker publishes, or the seat fails its check, so nothing is exported."""
+
+
 def export_all(m: Model, out: str, forms: Sequence[str] = ("single", "two")) -> List[str]:
+    import check  # the check imports this module; the insert's seat is refused here, on every export path, as the check refuses it
+    seat = check.tray_insert_seat(m)
+    if not seat["passed"]:
+        raise InsertRefused(seat["summary"])
     os.makedirs(out, exist_ok=True)
     written = []
     meshes = {}
@@ -1271,7 +1281,8 @@ def plate_drawing_svg(m: Model, path: str) -> str:
         sheet.text(fx(x0 + bz / 2), fy(pl["z0"]) + 4, f"bolt zone {bz:.1f}", fill="#c60", size=1.9, anchor="middle")
     for u in pilaster_u(m):
         for z in P("screws.tray_plate_z_mm"):
-            sheet.circle((fx(u), fy(z)), P("screws.tray_plate_head_dia_mm") / 2, "fill:#fff;stroke:#000;stroke-width:0.2")
+            sheet.circle((fx(u), fy(z)), P("screws.tray_plate_countersink_dia_mm") / 2, "fill:#fff;stroke:#000;stroke-width:0.2")
+            sheet.circle((fx(u), fy(z)), P("screws.tray_plate_head_dia_mm") / 2, "fill:none;stroke:#000;stroke-width:0.12")
             sheet.circle((fx(u), fy(z)), 1.7, "fill:#9a9a9a;stroke:#000;stroke-width:0.12")
     seat = P.entry("seating.body_underside_mm")
     nominal = seat["value"] + P("triac.A_mm") - P("triac.L_mm")
@@ -1288,8 +1299,8 @@ def plate_drawing_svg(m: Model, path: str) -> str:
         "Red bar: the tab hole height range %.2f to %.2f above the board face (nominal %.2f). The tab holes stand %.2f to %.2f mm (nominal %.2f) above the bar's lower edge, the distance to mark and drill from the lower edge: M3 holes (tapping drill %.1f) drilled and tapped through the whole bar from this face; the screws are M3 x %.0f." % (
             lo, hi, nominal, lo - edge, hi - edge, nominal - edge, P("triac.plate_tap_drill_mm"), P("triac.tab_screw_length_mm")),
         "The range is unconfirmed: the owner measures the delivered board before marking the bar.",
-        "Four M3 countersunk holes, countersunk on the back face (the wall face, away from the viewer; head dia %.1f shown by its circle), take the tray screws at z %s above the board face (%s above the lower edge). They are marked from the printed tray with the bar seated on its ledge, then drilled and countersunk until each head sits flush with or below the back face; the back face lies on the machine wall. The two M3 tapped-through holes enter the inner face drawn here." % (
-            P("screws.tray_plate_head_dia_mm"), ", ".join(f"{z:g}" for z in P("screws.tray_plate_z_mm")), ", ".join(f"{z - edge:g}" for z in P("screws.tray_plate_z_mm"))),
+        "Two M3 countersunk holes, one for each pilaster's insert, countersunk on the back face (the wall face, away from the viewer; countersink %.1f across, for the %.1f mm head shown by the inner circle), take the tray screws at z %s above the board face (%s above the lower edge), the two %.1f mm or more apart. Set each M3 heat-set insert flush and square in its pilaster's end face before the bar is fitted: a proud insert holds the tray off the bar. The bar's two tray-screw holes are marked from the printed tray with the bar seated on its ledge, then drilled and countersunk until each head sits flush with or below the back face; the back face lies on the machine wall. The two M3 tapped-through holes enter the inner face drawn here." % (
+            P("screws.tray_plate_countersink_dia_mm"), P("screws.tray_plate_head_dia_mm"), ", ".join(f"{z:g}" for z in P("screws.tray_plate_z_mm")), ", ".join(f"{z - edge:g}" for z in P("screws.tray_plate_z_mm")), P("plate.min_head_to_head_mm")),
         "Wall bolts M4, one at the plate's mid-height (z %.2f) at each end, washer dia %.1f, standing in the %.1f mm end zones outside the case." % (pl["cz"], P("plate.bolt_washer_dia_mm"), bz),
         "Length arithmetic: case outer width at the plate %.2f + 2 x bolt zone %.1f = %.2f, not more than the plate length %.1f (margin %.2f)." % (
             e["u1"] - e["u0"], bz, e["u1"] - e["u0"] + 2 * bz, L, L - (e["u1"] - e["u0"] + 2 * bz)),
@@ -1427,7 +1438,7 @@ def case_drawings_svg(m: Model, path: str) -> str:
     legend = [
         "Board is held by: 11 pillars and the H1 boss and screw (seat plane tilted with the board's lean), the backing rib, the hold-down finger on the left wall and the locating ribs. The lid holds nothing.",
         "Lid: two toes under hooks on the pilasters at the plate end, one M3 x 10 countersunk screw from +z at the far end. It comes off by lifting the far end and drawing it out along the pilaster grooves.",
-        "Tray to plate: four M3 x 12 countersunk screws from the plate's back face into 2.6 pilot holes in the pilasters. Tab screws: M3 x 5 through the tab into the plate's tapped-through holes, reached with the lid off along the blue lines.",
+        "Tray to plate: two M3 x %.0f countersunk screws, one in each pilaster, from the plate's back face into an M3 heat-set insert set flush in the pilaster's end face; the inserts are set flush and square before the bar is fitted (a proud insert holds the tray off the bar), and the bar's two holes are marked from the printed tray with the bar seated on its ledge, each countersunk head sitting flush with or below the bar's back face. Tab screws: M3 x 5 through the tab into the plate's tapped-through holes, reached with the lid off along the blue lines." % P("screws.tray_plate_length_mm"),
         "No barrier: the plate's lower edge stands %.1f mm above the board face, resting on the tray's end-wall ledge, so no plate metal faces the board edge, the pads or the leads; the tray's printed end wall fills the volume the plate leaves, unfilled plastic with no creepage credit." % P("plate.lower_edge_z_mm"),
         "Opening in the plastic wall: the plate and the end wall together plus %.1f per side. Slot mouths keep %.1f mm of clear air to the right wall." % (op, 3.0),
     ]
@@ -1453,7 +1464,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     forms = ("single", "two") if args.form == "both" else (args.form,)
     model = build(parse_overrides(args.set), forms, args.skin)
-    for path in export_all(model, args.out, forms):
+    try:
+        written = export_all(model, args.out, forms)
+    except InsertRefused as exc:
+        print(f"refused: {exc}", file=sys.stderr)
+        return 1
+    for path in written:
         print(os.path.relpath(path, HERE))
     return 0
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="194.00mm" height="179.00mm" viewBox="0 0 194.000 179.000">
+<svg xmlns="http://www.w3.org/2000/svg" width="194.00mm" height="185.40mm" viewBox="0 0 194.000 185.400">
 <title>Case drawings: plan, side elevation and end elevation, 1:1, millimetres</title>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <g font-family="monospace" font-size="2.1" fill="#111">
@@ -7,7 +7,7 @@
 <text x="10.00" y="15.60" fill="#111" font-size="2.2" text-anchor="start">Millimetres, 1:1. Case frame: u across the board 0 to 45, v from the board's plate edge, z up from the board face; the plan is seen</text>
 <text x="10.00" y="19.20" fill="#111" font-size="2.2" text-anchor="start">from the lid side (the lid faces down when installed), so v runs down the sheet.</text>
 <text x="10.00" y="23.00" fill="#111" font-size="2.0" text-anchor="start">PLAN (seen from the lid side, looking at the board's component face, as the board's layout is drawn: plate at the top, u to the right)</text>
-<polygon points="11.999,41.929 11.849,57.756 11.799,73.654 11.849,89.551 12.000,105.442 12.033,106.188 12.033,106.188 12.033,106.188 12.048,106.323 12.115,106.930 12.115,106.930 12.115,106.930 12.245,107.666 12.422,108.391 12.422,108.391 12.422,108.391 12.493,108.618 12.646,109.104 12.646,109.104 12.646,109.104 12.916,109.800 12.916,109.800 12.916,109.800 13.167,110.341 13.225,110.466 13.225,110.466 13.230,110.477 13.587,111.131 13.588,111.133 13.588,111.133 13.588,111.133 13.872,111.582 13.987,111.764 13.987,111.764 13.987,111.764 14.427,112.368 14.427,112.368 14.427,112.368 14.666,112.655 14.905,112.942 14.905,112.942 14.905,112.942 15.419,113.483 15.419,113.483 15.419,113.483 15.471,113.532 15.967,113.991 15.967,113.991 15.967,113.991 16.547,114.461 16.547,114.461 16.547,114.461 17.156,114.893 17.792,115.285 18.452,115.634 18.452,115.634 18.452,115.634 19.134,115.940 19.134,115.940 19.134,115.940 19.833,116.201 19.833,116.201 19.833,116.201 20.282,116.336 20.549,116.416 20.549,116.416 20.549,116.416 21.276,116.584 22.013,116.704 23.155,116.845 23.487,116.892 23.874,116.934 24.534,117.016 25.398,117.102 27.060,117.284 28.080,117.369 29.084,117.468 30.331,117.555 31.578,117.658 33.606,117.781 33.606,117.781 33.606,117.781 33.606,117.781 33.606,117.781 35.675,117.879 36.530,117.905 37.159,117.931 37.911,117.946 38.683,117.970 39.583,117.980 40.207,117.993 40.741,117.994 41.261,118.000 41.869,117.996 42.747,117.998 43.499,117.985 44.271,117.980 45.171,117.957 45.794,117.947 46.321,117.928 46.849,117.915 47.481,117.887 48.372,117.856 49.248,117.810 49.855,117.783 50.375,117.751 50.908,117.723 51.530,117.679 52.429,117.623 53.198,117.560 53.949,117.507 54.498,117.455 55.428,117.380 56.523,117.263 57.995,117.124 59.238,116.975 59.975,116.896 60.516,116.821 61.487,116.704 62.224,116.584 62.951,116.416 62.951,116.416 62.951,116.416 63.667,116.201 64.366,115.940 64.366,115.940 64.366,115.940 65.048,115.634 65.048,115.634 65.048,115.634 65.518,115.385 65.708,115.285 65.708,115.285 65.708,115.285 66.344,114.893 66.344,114.893 66.344,114.893 66.670,114.662 66.953,114.461 66.953,114.461 66.953,114.461 67.120,114.326 67.533,113.991 67.533,113.991 67.533,113.991 68.081,113.483 68.595,112.942 68.595,112.942 68.595,112.942 68.817,112.675 69.073,112.368 69.073,112.368 69.073,112.368 69.386,111.938 69.513,111.764 69.513,111.764 69.513,111.764 69.912,111.133 69.912,111.133 69.912,111.133 70.270,110.477 70.584,109.800 70.584,109.800 70.584,109.800 70.854,109.104 70.854,109.104 71.078,108.391 71.255,107.666 71.385,106.930 71.467,106.188 71.520,103.852 71.629,92.724 71.664,84.016 71.700,75.236 71.660,59.338 71.501,41.929 71.501,28.499 12.000,28.499 11.999,41.929" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
+<polygon points="9.489,41.929 9.339,57.756 9.289,73.654 9.339,89.551 9.490,105.442 9.490,105.442 9.490,105.442 9.524,106.196 9.524,106.196 9.524,106.196 9.541,106.345 9.607,106.946 9.607,106.946 9.607,106.946 9.607,106.947 9.740,107.690 9.743,107.702 9.743,107.702 9.921,108.423 10.150,109.142 10.150,109.142 10.150,109.142 10.388,109.749 10.425,109.845 10.425,109.845 10.425,109.845 10.746,110.528 11.111,111.189 11.111,111.189 11.111,111.189 11.167,111.276 11.519,111.825 11.519,111.825 11.519,111.825 11.762,112.154 11.967,112.432 11.967,112.432 11.967,112.432 12.455,113.009 12.455,113.009 12.455,113.009 12.717,113.280 12.979,113.552 12.979,113.552 12.979,113.552 13.538,114.060 13.538,114.060 13.538,114.060 14.128,114.530 14.128,114.530 14.128,114.530 14.409,114.725 14.738,114.953 14.738,114.953 14.749,114.960 15.396,115.349 15.396,115.349 15.396,115.349 15.396,115.349 16.067,115.694 16.067,115.694 16.068,115.694 16.760,115.995 16.760,115.995 16.760,115.995 17.082,116.110 17.458,116.245 17.459,116.245 17.471,116.249 18.197,116.457 18.197,116.457 18.197,116.457 18.197,116.457 18.484,116.519 18.935,116.616 18.935,116.616 18.935,116.616 19.682,116.726 21.938,116.974 24.154,117.178 25.294,117.293 25.931,117.342 26.460,117.390 27.401,117.453 29.256,117.593 30.527,117.661 31.556,117.730 33.075,117.797 33.824,117.837 34.477,117.859 34.958,117.881 35.625,117.898 36.626,117.932 37.468,117.948 38.328,117.970 38.895,117.973 40.030,117.993 43.436,117.994 43.436,117.994 43.436,117.994 43.436,117.994 46.840,117.933 50.243,117.813 53.644,117.632 54.493,117.567 55.343,117.518 57.039,117.375 58.737,117.247 59.584,117.160 60.432,117.088 63.818,116.726 64.565,116.616 64.565,116.616 64.565,116.616 65.303,116.457 66.029,116.249 66.029,116.249 66.029,116.249 66.634,116.033 66.728,115.999 66.728,115.999 66.740,115.995 67.432,115.694 67.432,115.694 67.433,115.694 67.433,115.694 68.104,115.349 68.104,115.349 68.104,115.349 68.751,114.960 68.751,114.960 68.751,114.960 69.287,114.589 69.372,114.530 69.372,114.530 69.372,114.530 69.747,114.231 69.962,114.060 69.962,114.060 69.962,114.060 70.510,113.563 70.511,113.561 70.511,113.561 70.521,113.552 71.045,113.009 71.045,113.009 71.045,113.009 71.533,112.432 71.533,112.432 71.533,112.432 71.757,112.128 71.981,111.825 71.981,111.825 71.981,111.825 72.333,111.276 72.389,111.189 72.389,111.189 72.389,111.189 72.675,110.671 72.747,110.540 72.748,110.540 72.754,110.528 73.075,109.845 73.075,109.845 73.075,109.845 73.350,109.142 73.350,109.142 73.350,109.142 73.579,108.423 73.760,107.690 73.760,107.690 73.760,107.690 73.889,106.966 73.890,106.959 73.890,106.959 73.893,106.946 73.976,106.196 74.030,103.852 74.139,92.724 74.210,75.236 74.170,59.338 74.011,41.929 74.011,28.499 9.490,28.499 9.489,41.929" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
 <polygon points="18.000,34.000 18.000,109.000 63.000,109.000 63.000,79.960 49.750,79.960 49.583,79.941 49.425,79.886 49.282,79.796 49.164,79.678 49.074,79.535 49.019,79.377 49.000,79.210 49.019,79.043 49.074,78.885 49.164,78.742 49.282,78.624 49.425,78.534 49.583,78.479 49.750,78.460 63.000,78.460 63.000,63.940 49.750,63.940 49.583,63.921 49.425,63.866 49.282,63.776 49.164,63.658 49.074,63.515 49.019,63.357 49.000,63.190 49.019,63.023 49.074,62.865 49.164,62.722 49.282,62.604 49.425,62.514 49.583,62.459 49.750,62.440 63.000,62.440 63.000,34.000 18.000,34.000" style="fill:none;stroke:#080;stroke-width:0.15;stroke-dasharray:1 0.6"/>
 <line x1="10.000" y1="33.000" x2="74.000" y2="33.000" style="stroke:#555;stroke-width:0.8"/>
 <text x="11.00" y="31.50" fill="#555" font-size="1.8" text-anchor="start">plate inner face</text>
@@ -38,10 +38,8 @@
 <text x="67.50" y="79.91" fill="#c00" font-size="1.7" text-anchor="start">mouth 3.0 to wall (needs 2.0)</text>
 <circle cx="59.500" cy="105.500" r="1.500" style="fill:#000"/>
 <text x="63.00" y="106.20" fill="#111" font-size="1.7" text-anchor="start">H1 screw (41.50, 71.50)</text>
-<line x1="14.750" y1="28.000" x2="14.750" y2="40.000" style="stroke:#000;stroke-width:3.00;stroke-opacity:0.45"/>
-<line x1="14.750" y1="28.000" x2="14.750" y2="40.000" style="stroke:#000;stroke-width:3.00;stroke-opacity:0.45"/>
-<line x1="68.750" y1="28.000" x2="68.750" y2="40.000" style="stroke:#000;stroke-width:3.00;stroke-opacity:0.45"/>
-<line x1="68.750" y1="28.000" x2="68.750" y2="40.000" style="stroke:#000;stroke-width:3.00;stroke-opacity:0.45"/>
+<line x1="13.495" y1="28.000" x2="13.495" y2="38.000" style="stroke:#000;stroke-width:3.00;stroke-opacity:0.45"/>
+<line x1="70.005" y1="28.000" x2="70.005" y2="38.000" style="stroke:#000;stroke-width:3.00;stroke-opacity:0.45"/>
 <circle cx="41.750" cy="114.500" r="1.500" style="fill:#000"/>
 <text x="45.25" y="115.20" fill="#111" font-size="1.7" text-anchor="start">lid screw, driven from +z (23.75, 80.50)</text>
 <line x1="30.600" y1="36.720" x2="30.600" y2="118.000" style="stroke:#06c;stroke-width:0.4;stroke-dasharray:2 1"/>
@@ -51,7 +49,7 @@
 <line x1="17.500" y1="92.000" x2="19.000" y2="92.000" style="stroke:#080;stroke-width:1.4"/>
 <text x="19.60" y="92.70" fill="#080" font-size="1.7" text-anchor="start">hold-down finger</text>
 <text x="90.00" y="23.00" fill="#111" font-size="2.0" text-anchor="start">SIDE ELEVATION (seen from the low-u side, the hold-down finger's wall; plate at left, v to the right)</text>
-<polygon points="92.499,59.000 92.499,48.000 96.999,47.999 97.000,33.499 97.999,33.499 97.999,33.051 97.399,33.050 99.000,31.449 180.381,31.449 182.000,33.040 182.000,34.050 181.927,34.051 181.927,34.250 182.000,34.250 182.000,59.000 180.399,60.601 94.100,60.601 92.499,59.000" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
+<polygon points="92.499,59.000 92.499,48.000 96.999,47.999 97.000,33.499 97.999,33.499 97.999,33.051 97.399,33.050 99.000,31.449 180.384,31.449 182.001,33.040 182.001,34.050 181.942,34.051 181.942,34.250 182.001,34.250 182.001,59.000 180.400,60.601 94.100,60.601 92.499,59.000" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
 <polygon points="173.000,55.600 173.000,54.000 98.000,54.000 98.000,55.600 173.000,55.600" style="fill:#7fbf9a;stroke:#000;stroke-width:0.1"/>
 <polygon points="97.000,48.000 97.000,28.000 92.000,28.000 92.000,48.000 97.000,48.000" style="fill:#bfc7ca;stroke:#000;stroke-width:0.15"/>
 <polygon points="101.600,50.250 101.600,34.700 97.000,34.700 97.000,50.250 101.600,50.250" style="fill:#858a90;stroke:#000;stroke-width:0.1"/>
@@ -61,35 +59,35 @@
 <line x1="93.320" y1="37.500" x2="100.720" y2="37.500" style="stroke:#000;stroke-width:3.00"/>
 <line x1="93.320" y1="37.500" x2="100.720" y2="37.500" style="stroke:#000;stroke-width:3.00"/>
 <line x1="169.500" y1="59.000" x2="169.500" y2="51.600" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="44.500" x2="104.000" y2="44.500" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="40.000" x2="104.000" y2="40.000" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="44.500" x2="104.000" y2="44.500" style="stroke:#000;stroke-width:3.00"/>
-<line x1="92.000" y1="40.000" x2="104.000" y2="40.000" style="stroke:#000;stroke-width:3.00"/>
+<line x1="92.000" y1="42.350" x2="102.000" y2="42.350" style="stroke:#000;stroke-width:3.00"/>
+<line x1="97.000" y1="42.350" x2="103.700" y2="42.350" style="stroke:#000;stroke-width:8.01"/>
+<line x1="92.000" y1="42.350" x2="102.000" y2="42.350" style="stroke:#000;stroke-width:3.00"/>
+<line x1="97.000" y1="42.350" x2="103.700" y2="42.350" style="stroke:#000;stroke-width:8.01"/>
 <line x1="178.500" y1="41.450" x2="178.500" y2="31.450" style="stroke:#000;stroke-width:3.00"/>
 <line x1="100.720" y1="37.500" x2="180.720" y2="29.797" style="stroke:#06c;stroke-width:0.4;stroke-dasharray:2 1"/>
 <line x1="100.720" y1="37.500" x2="180.720" y2="29.797" style="stroke:#06c;stroke-width:0.4;stroke-dasharray:2 1"/>
 <text x="128.00" y="31.61" fill="#06c" font-size="1.7" text-anchor="start">driver approach to the tab screws, lid off</text>
 <text x="90.00" y="65.60" fill="#111" font-size="1.7" text-anchor="start">backing rib (v 69.0) under J911, J921, J941 carries the push-on load to the floor</text>
 <text x="90.00" y="89.60" fill="#111" font-size="2.0" text-anchor="start">END ELEVATION (seen from the far end, looking toward the wall; u to the right)</text>
-<polygon points="177.000,132.200 177.000,92.600 90.000,92.600 90.000,132.200 177.000,132.200" style="fill:none"/>
-<polygon points="173.500,116.100 173.500,96.100 93.500,96.100 93.500,116.100 173.500,116.100" style="fill:#dfe3e6;stroke:#444;stroke-width:0.15"/>
-<polygon points="175.000,130.200 175.000,94.600 92.000,94.600 92.000,130.200 175.000,130.200" style="fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1"/>
-<polygon points="105.149,128.701 103.549,127.100 103.549,105.850 103.749,105.849 103.749,105.400 103.549,105.400 103.549,101.150 105.150,99.549 161.849,99.549 163.450,101.150 163.449,105.401 163.251,105.401 163.251,105.849 163.450,105.850 163.450,127.100 161.850,128.701 105.149,128.701" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
-<circle cx="106.500" cy="112.600" r="1.500" style="fill:#000"/>
-<circle cx="106.500" cy="108.100" r="1.500" style="fill:#000"/>
-<circle cx="160.500" cy="112.600" r="1.500" style="fill:#000"/>
-<circle cx="160.500" cy="108.100" r="1.500" style="fill:#000"/>
-<circle cx="122.350" cy="105.600" r="1.500" style="fill:#000"/>
-<circle cx="146.950" cy="105.600" r="1.500" style="fill:#000"/>
+<polygon points="182.000,132.200 182.000,92.600 90.000,92.600 90.000,132.200 182.000,132.200" style="fill:none"/>
+<polygon points="178.500,116.100 178.500,96.100 93.500,96.100 93.500,116.100 178.500,116.100" style="fill:#dfe3e6;stroke:#444;stroke-width:0.15"/>
+<polygon points="180.000,130.200 180.000,94.600 92.000,94.600 92.000,130.200 180.000,130.200" style="fill:none;stroke:#c60;stroke-width:0.15;stroke-dasharray:3 1"/>
+<polygon points="105.139,128.701 103.539,127.100 103.539,105.850 103.739,105.849 103.739,105.400 103.539,105.400 103.539,101.150 105.140,99.549 166.859,99.549 168.460,101.150 168.459,105.401 168.261,105.401 168.261,105.849 168.460,105.850 168.460,127.100 166.860,128.701 105.139,128.701" style="fill:#eef0f2;stroke:#000;stroke-width:0.2"/>
+<circle cx="107.745" cy="110.450" r="1.500" style="fill:#000"/>
+<circle cx="164.255" cy="110.450" r="1.500" style="fill:#000"/>
+<circle cx="124.850" cy="105.600" r="1.500" style="fill:#000"/>
+<circle cx="149.450" cy="105.600" r="1.500" style="fill:#000"/>
 <text x="93.00" y="93.40" fill="#c60" font-size="1.7" text-anchor="start">wall opening = the plate and the end wall + 1.5 per side</text>
 <text x="10.00" y="140.20" fill="#111" font-size="1.8" text-anchor="start">Board is held by: 11 pillars and the H1 boss and screw (seat plane tilted with the board's lean), the backing rib, the hold-down finger on the left wall and the</text>
 <text x="10.00" y="143.40" fill="#111" font-size="1.8" text-anchor="start">locating ribs. The lid holds nothing.</text>
 <text x="10.00" y="146.60" fill="#111" font-size="1.8" text-anchor="start">Lid: two toes under hooks on the pilasters at the plate end, one M3 x 10 countersunk screw from +z at the far end. It comes off by lifting the far end and</text>
 <text x="10.00" y="149.80" fill="#111" font-size="1.8" text-anchor="start">drawing it out along the pilaster grooves.</text>
-<text x="10.00" y="153.00" fill="#111" font-size="1.8" text-anchor="start">Tray to plate: four M3 x 12 countersunk screws from the plate's back face into 2.6 pilot holes in the pilasters. Tab screws: M3 x 5 through the tab into the</text>
-<text x="10.00" y="156.20" fill="#111" font-size="1.8" text-anchor="start">plate's tapped-through holes, reached with the lid off along the blue lines.</text>
-<text x="10.00" y="159.40" fill="#111" font-size="1.8" text-anchor="start">No barrier: the plate's lower edge stands 6.0 mm above the board face, resting on the tray's end-wall ledge, so no plate metal faces the board edge, the pads or</text>
-<text x="10.00" y="162.60" fill="#111" font-size="1.8" text-anchor="start">the leads; the tray's printed end wall fills the volume the plate leaves, unfilled plastic with no creepage credit.</text>
-<text x="10.00" y="165.80" fill="#111" font-size="1.8" text-anchor="start">Opening in the plastic wall: the plate and the end wall together plus 1.5 per side. Slot mouths keep 3.0 mm of clear air to the right wall.</text>
+<text x="10.00" y="153.00" fill="#111" font-size="1.8" text-anchor="start">Tray to plate: two M3 x 10 countersunk screws, one in each pilaster, from the plate's back face into an M3 heat-set insert set flush in the pilaster's end face;</text>
+<text x="10.00" y="156.20" fill="#111" font-size="1.8" text-anchor="start">the inserts are set flush and square before the bar is fitted (a proud insert holds the tray off the bar), and the bar's two holes are marked from the printed</text>
+<text x="10.00" y="159.40" fill="#111" font-size="1.8" text-anchor="start">tray with the bar seated on its ledge, each countersunk head sitting flush with or below the bar's back face. Tab screws: M3 x 5 through the tab into the plate's</text>
+<text x="10.00" y="162.60" fill="#111" font-size="1.8" text-anchor="start">tapped-through holes, reached with the lid off along the blue lines.</text>
+<text x="10.00" y="165.80" fill="#111" font-size="1.8" text-anchor="start">No barrier: the plate's lower edge stands 6.0 mm above the board face, resting on the tray's end-wall ledge, so no plate metal faces the board edge, the pads or</text>
+<text x="10.00" y="169.00" fill="#111" font-size="1.8" text-anchor="start">the leads; the tray's printed end wall fills the volume the plate leaves, unfilled plastic with no creepage credit.</text>
+<text x="10.00" y="172.20" fill="#111" font-size="1.8" text-anchor="start">Opening in the plastic wall: the plate and the end wall together plus 1.5 per side. Slot mouths keep 3.0 mm of clear air to the right wall.</text>
 </g>
 </svg>

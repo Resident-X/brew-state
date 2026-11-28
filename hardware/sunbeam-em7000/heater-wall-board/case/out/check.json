@@ -210,7 +210,7 @@
    "criterion": "C1",
    "kind": "check",
    "passed": true,
-   "summary": "the plate's lower edge z 6.000 is the ledge's top, 12.600 mm above the tray floor's underside (63.00 layers of 0.2 mm): at the ledge the plate shares 0.000 mm3 with the tray, 0.05 mm lower 12.903 mm3, and at its former position, z -7.025, 2961.9 mm3, so a lower plate cannot be seated",
+   "summary": "the plate's lower edge z 6.000 is the ledge's top, 12.600 mm above the tray floor's underside (63.00 layers of 0.2 mm): at the ledge the plate shares 0.000 mm3 with the tray, 0.05 mm lower 14.032 mm3, and at its former position, z -7.025, 3324.8 mm3, so a lower plate cannot be seated",
    "figures": {
     "ledge_z_mm": 6.0,
     "plate_lower_edge_z_mm": 6.0,
@@ -218,9 +218,9 @@
     "layers_of_0.2_mm": 63.0,
     "shared_volume_at_ledge_mm3": 0.0,
     "step_below_mm": 0.05,
-    "shared_volume_below_ledge_mm3": 12.9025,
+    "shared_volume_below_ledge_mm3": 14.032,
     "former_lower_edge_z_mm": -7.025,
-    "shared_volume_at_former_position_mm3": 2961.8599,
+    "shared_volume_at_former_position_mm3": 3324.8454,
     "contact_v_mm": [
      -5.5,
      -1.2
@@ -266,32 +266,32 @@
    "criterion": "C2",
    "kind": "check",
    "passed": true,
-   "summary": "the case lies inside the plate's former 80.0 x 30.0 mm outline with 0.425 mm least margin (needs 0.25); the board, blades and parts lie inside it too",
+   "summary": "the case lies inside the plate's former 85.0 x 30.0 mm outline with 0.425 mm least margin (needs 0.25); the board, blades and parts lie inside it too",
    "figures": {
     "margins_mm": {
-     "left": 10.050000574011218,
-     "right": 10.050500574011217,
+     "left": 10.04000057401122,
+     "right": 10.040500574011212,
      "bottom": 0.425,
      "top": 0.425
     },
     "required_mm": 0.25,
     "case_extent_mm": {
-     "u0": -6.2,
-     "u1": 53.6995,
+     "u0": -8.71,
+     "u1": 56.2095,
      "z0": -6.6,
      "z1": 22.55,
      "v0": -5.5,
-     "v1": 83.9992
+     "v1": 84.0
     },
     "former_outline_mm": {
-     "u0": -16.25,
-     "u1": 63.75,
+     "u0": -18.75,
+     "u1": 66.25,
      "z0": -7.025,
      "z1": 22.975
     },
     "plate_extent_mm": {
-     "u0": -16.25,
-     "u1": 63.75,
+     "u0": -18.75,
+     "u1": 66.25,
      "z0": 6.0,
      "z1": 26.0
     },
@@ -304,16 +304,16 @@
    "criterion": "C2",
    "kind": "check",
    "passed": true,
-   "summary": "the opening in the plastic wall covers the plate and the end wall together plus 1.5 mm each side: u -17.75 to 65.25, z -8.10 to 27.50; the nearest side stands 1.500 mm outside the plate or the end wall; no larger opening is needed",
+   "summary": "the opening in the plastic wall covers the plate and the end wall together plus 1.5 mm each side: u -20.25 to 67.75, z -8.10 to 27.50; the nearest side stands 1.500 mm outside the plate or the end wall; no larger opening is needed",
    "figures": {
     "opening_mm": {
-     "u0": -17.75,
-     "u1": 65.25,
+     "u0": -20.25,
+     "u1": 67.75,
      "z0": -8.1,
      "z1": 27.5
     },
     "plate_clearance_mm": 1.5,
-    "opening_width_mm": 83.0,
+    "opening_width_mm": 88.0,
     "opening_height_mm": 35.6,
     "cable_exit_u_mm": 50.0,
     "outside_each_solid_mm": {
@@ -324,8 +324,8 @@
       "top": 1.5
      },
      "end wall": {
-      "left": 11.75,
-      "right": 11.75,
+      "left": 11.74,
+      "right": 11.74,
       "bottom": 1.5,
       "top": 21.5
      }
@@ -395,14 +395,14 @@
    "criterion": "C3",
    "kind": "check",
    "passed": true,
-   "summary": "plate length 80.00 >= case outer width at the plate 59.50 + 2 x bolt zone 10.0 = 79.50 (margin 0.50)",
+   "summary": "plate length 85.00 >= case outer width at the plate 64.52 + 2 x bolt zone 10.0 = 84.52 (margin 0.48)",
    "figures": {
-    "plate_length_mm": 80.0,
-    "case_outer_width_mm": 59.5,
+    "plate_length_mm": 85.0,
+    "case_outer_width_mm": 64.52,
     "bolt_zone_mm": 10.0,
-    "required_mm": 79.5,
-    "margin_mm": 0.5,
-    "arithmetic": "59.50 + 2 x 10.0 = 79.50 <= 80.00"
+    "required_mm": 84.52,
+    "margin_mm": 0.48,
+    "arithmetic": "64.52 + 2 x 10.0 = 84.52 <= 85.00"
    },
    "lines": []
   },
@@ -415,15 +415,15 @@
    "figures": {
     "bolts": [
      {
-      "bolt_u_mm": -11.25,
+      "bolt_u_mm": -13.75,
       "bolt_z_mm": 16.0,
-      "washer_clear_of_case_mm": 0.55,
+      "washer_clear_of_case_mm": 0.54,
       "washer_inside_plate_in_z_mm": 5.5
      },
      {
-      "bolt_u_mm": 58.75,
+      "bolt_u_mm": 61.25,
       "bolt_z_mm": 16.0,
-      "washer_clear_of_case_mm": 0.5505,
+      "washer_clear_of_case_mm": 0.5405,
       "washer_inside_plate_in_z_mm": 5.5
      }
     ]
@@ -435,74 +435,40 @@
    "criterion": "C3",
    "kind": "check",
    "passed": true,
-   "summary": "each of the 4 tray screws' countersunk heads stands at least 0.500 mm inside the plate's edges (needs 0.50) and its pilot and head at least 0.485 mm from the lid toe's pocket (needs 0.40), the pilot's top under the pilaster's top by the minimum wall",
+   "summary": "each of the 2 tray screws' countersinks stands at least 2.500 mm inside the plate's edges (needs 0.50) and its insert hole and head at least 2.251 mm from the lid toe's pocket (needs 0.40), the hole's top under the pilaster's top by the insert wall",
    "figures": {
     "screws": [
      {
-      "screw": "u -3.25 z 9.5",
+      "screw": "u -4.505 z 11.65",
       "edge_distances_mm": {
-       "lower": 0.5,
-       "upper": 13.5,
-       "left": 10.0,
-       "right": 64.0
+       "lower": 2.5,
+       "upper": 11.2,
+       "left": 11.095,
+       "right": 67.605
       },
-      "least_edge_mm": 0.5,
+      "least_edge_mm": 2.5,
       "to_pocket_mm": {
-       "pilot": 4.985,
-       "head": 6.1994
+       "hole": 2.2513,
+       "head": 4.9882
       },
-      "pilot_top_z_mm": 11.515,
+      "insert_hole_top_z_mm": 14.4855,
       "pilaster_top_z_mm": 20.5,
       "pass": true
      },
      {
-      "screw": "u -3.25 z 14",
+      "screw": "u 52.005 z 11.65",
       "edge_distances_mm": {
-       "lower": 5.0,
-       "upper": 9.0,
-       "left": 10.0,
-       "right": 64.0
+       "lower": 2.5,
+       "upper": 11.2,
+       "left": 67.605,
+       "right": 11.095
       },
-      "least_edge_mm": 5.0,
+      "least_edge_mm": 2.5,
       "to_pocket_mm": {
-       "pilot": 0.485,
-       "head": 4.1027
+       "hole": 2.2513,
+       "head": 4.9882
       },
-      "pilot_top_z_mm": 16.015,
-      "pilaster_top_z_mm": 20.5,
-      "pass": true
-     },
-     {
-      "screw": "u 50.75 z 9.5",
-      "edge_distances_mm": {
-       "lower": 0.5,
-       "upper": 13.5,
-       "left": 64.0,
-       "right": 10.0
-      },
-      "least_edge_mm": 0.5,
-      "to_pocket_mm": {
-       "pilot": 4.985,
-       "head": 6.1994
-      },
-      "pilot_top_z_mm": 11.515,
-      "pilaster_top_z_mm": 20.5,
-      "pass": true
-     },
-     {
-      "screw": "u 50.75 z 14",
-      "edge_distances_mm": {
-       "lower": 5.0,
-       "upper": 9.0,
-       "left": 64.0,
-       "right": 10.0
-      },
-      "least_edge_mm": 5.0,
-      "to_pocket_mm": {
-       "pilot": 0.485,
-       "head": 4.1027
-      },
-      "pilot_top_z_mm": 16.015,
+      "insert_hole_top_z_mm": 14.4855,
       "pilaster_top_z_mm": 20.5,
       "pass": true
      }
@@ -512,9 +478,90 @@
     "plate_edges_mm": {
      "z0": 6.0,
      "z1": 26.0,
-     "u0": -16.25,
-     "u1": 63.75
+     "u0": -18.75,
+     "u1": 66.25
     }
+   },
+   "lines": []
+  },
+  {
+   "name": "c3.tray_screw_heads_apart",
+   "criterion": "C3",
+   "kind": "check",
+   "passed": true,
+   "summary": "each of the 1 pairs of the 2 tray screws stands at least 56.51 mm apart on the axes (needs 6.8); the 5.5 mm heads and the 6.3 mm countersinks of the ISO 7046 M3 screw leave their gaps",
+   "figures": {
+    "pairs": [
+     {
+      "pair": [
+       0,
+       1
+      ],
+      "axes_mm": 56.51,
+      "head_gap_mm": 51.01,
+      "countersink_gap_mm": 50.21,
+      "pass": true
+     }
+    ],
+    "required_mm": 6.8,
+    "head_dia_mm": 5.5,
+    "countersink_dia_mm": 6.3,
+    "pass": true
+   },
+   "lines": []
+  },
+  {
+   "name": "c3.tray_insert_seat",
+   "criterion": "C3",
+   "kind": "check",
+   "passed": true,
+   "summary": "2 M3 heat-set inserts, one in each of 2 pilasters, in holes 4.01 mm across (the maker's range 4.01 to 4.09 mm) and 6.7 mm deep (the maker's least 6.5 mm) for the 5.7 mm insert with 1.0 mm of reservoir under it; the wall round each hole is at least 2.000 mm (needs 2.0); the M3 x 10 screw engages 5.0 mm of the insert (at least 3.0 mm, at most the insert's 5.7 mm) and stops 1.7 mm short of the hole's floor, so the head seats and the bar is clamped",
+   "figures": {
+    "inserts": [
+     {
+      "insert": "u -4.505 z 11.65",
+      "wall_mm": {
+       "outer_face_mm": 2.0,
+       "cavity_mm": 2.0,
+       "pocket_mm": 2.2513,
+       "top_mm": 6.0145
+      },
+      "least_wall_mm": 2.0,
+      "pass": true
+     },
+     {
+      "insert": "u 52.005 z 11.65",
+      "wall_mm": {
+       "outer_face_mm": 2.0,
+       "cavity_mm": 2.0,
+       "pocket_mm": 2.2513,
+       "top_mm": 6.0145
+      },
+      "least_wall_mm": 2.0,
+      "pass": true
+     }
+    ],
+    "inserts_counted": 2,
+    "screws_counted": 2,
+    "pilasters": 2,
+    "per_pilaster": 1,
+    "hole_dia_mm": 4.01,
+    "hole_dia_range_mm": [
+     4.01,
+     4.09
+    ],
+    "hole_in_maker_range": true,
+    "hole_depth_min_mm": 6.5,
+    "hole_depth_meets_maker_min": true,
+    "hole_depth_mm": 6.7,
+    "insert_length_mm": 5.7,
+    "reservoir_mm": 1.0,
+    "wall_required_mm": 2.0,
+    "screw_length_mm": 10.0,
+    "bar_thickness_mm": 5.0,
+    "engaged_length_mm": 5.0,
+    "minimum_thread_mm": 3.0,
+    "tip_to_hole_floor_mm": 1.7
    },
    "lines": []
   },
@@ -538,7 +585,7 @@
      "T921_body": 1.65,
      "T921_leads": 16.8562,
      "T911_body": 1.65,
-     "T911_leads": 16.7233,
+     "T911_leads": 16.8562,
      "RV911": 8.15,
      "RV921": 8.15,
      "U911": 14.0674,
@@ -569,10 +616,10 @@
      ],
      "lid_comes_off": "downward: the lid is on the underside",
      "tilt_deg": 3.0,
-     "drop_at_far_end_during_tilt_mm": 4.3407,
+     "drop_at_far_end_during_tilt_mm": 4.3408,
      "slide_to_free_the_toes_mm": 7.8,
-     "lowest_point_drop_when_toes_free_mm": 4.7489,
-     "clear_space_needed_below_the_case_mm": 4.7489,
+     "lowest_point_drop_when_toes_free_mm": 4.7491,
+     "clear_space_needed_below_the_case_mm": 4.7491,
      "slide_checked_to_mm": 90.0,
      "sequence": "tilt the far end down 3 deg about the plate-end toe line, draw the lid out away from the wall 7.8 mm to free the toes, then lower it away"
     },
@@ -596,10 +643,10 @@
     "slide 3.0 deg, slide 54            least clearance 0.300",
     "slide 3.0 deg, slide 60            least clearance 0.300",
     "slide 3.0 deg, slide 66            least clearance 0.336",
-    "slide 3.0 deg, slide 72            least clearance 0.714",
-    "slide 3.0 deg, slide 78            least clearance 2.107",
+    "slide 3.0 deg, slide 72            least clearance 2.547",
+    "slide 3.0 deg, slide 78            least clearance 3.066",
     "slide 3.0 deg, slide 84            least clearance 5.596",
-    "slide 3.0 deg, slide 90            least clearance 7.924",
+    "slide 3.0 deg, slide 90            least clearance 7.923",
     "installed frame (gravity along +z): the lid is on the underside and comes off downward; its far end drops 4.34 mm during the 3 deg tilt, so 4.75 mm of clear space is needed below the case; the toes are free after a slide of 7.8 mm (the sweep is checked to 90 mm)"
    ]
   },
@@ -661,8 +708,8 @@
      0.7352
     ],
     "toe_u_mm": [
-     -4.3,
-     51.8
+     -6.81,
+     54.31
     ]
    },
    "lines": []
@@ -680,8 +727,8 @@
      "lid screw"
     ],
     "toe_u_mm": [
-     -4.3,
-     51.8
+     -6.81,
+     54.31
     ]
    },
    "lines": []
@@ -796,7 +843,7 @@
    "criterion": "C5",
    "kind": "check",
    "passed": true,
-   "summary": "installed (plate vertical, component side down): the lid screw is reached from below, the board screw from below with the lid off, both tab screws from out from the wall, 5.5 degrees below level with the lid off (a near-horizontal reach along the plate's face, not a reach from below), the four tray screws from the plate's back",
+   "summary": "installed (plate vertical, component side down): the lid screw is reached from below, the board screw from below with the lid off, both tab screws from out from the wall, 5.5 degrees below level with the lid off (a near-horizontal reach along the plate's face, not a reach from below), the two tray screws from the plate's back",
    "figures": {
     "installed_frame": {
      "gravity": [
@@ -872,7 +919,7 @@
       ]
      },
      {
-      "fixing": "tray-to-plate screws (4)",
+      "fixing": "tray-to-plate screws (2)",
       "driver_from": "behind the plate",
       "origin_direction": [
        0.0,
@@ -889,7 +936,7 @@
     "board screw H1             driver from below, lid off",
     "tab screw T921             driver from out from the wall, 5.5 degrees below level, lid off",
     "tab screw T911             driver from out from the wall, 5.5 degrees below level, lid off",
-    "tray-to-plate screws (4)   driver from behind the plate"
+    "tray-to-plate screws (2)   driver from behind the plate"
    ]
   },
   {
@@ -1017,7 +1064,7 @@
    "criterion": "C9",
    "kind": "check",
    "passed": true,
-   "summary": "the backing rib touches the board under each blade; under 75.6 N the tray section (I = 21301 mm^4, span 70.0 mm) deflects 0.203 mm at the blades and 0.0059 mm at the triac end, against 0.05 mm allowed",
+   "summary": "the backing rib touches the board under each blade; under 75.6 N the tray section (I = 26471 mm^4, span 70.0 mm) deflects 0.164 mm at the blades and 0.0048 mm at the triac end, against 0.05 mm allowed",
    "figures": {
     "contact": [
      {
@@ -1063,13 +1110,13 @@
     "insertion_force_N": 75.6,
     "push_on_direction": "-z (into the board)",
     "section_at_v_mm": 56.0,
-    "section_area_mm2": 342.543,
-    "second_moment_mm4": 21301.3491,
-    "centroid_z_mm": 3.4062,
+    "section_area_mm2": 457.3215,
+    "second_moment_mm4": 26470.693,
+    "centroid_z_mm": 3.7608,
     "modulus_MPa": 2000.0,
     "span_mm": 70.04,
-    "deflection_at_blades_mm": 0.2032,
-    "deflection_at_triac_end_mm": 0.0059,
+    "deflection_at_blades_mm": 0.1635,
+    "deflection_at_triac_end_mm": 0.0048,
     "allowed_mm": 0.05,
     "basis": "a cantilever from the plate end, uniform section as at v 56 (conservative: the pilasters stiffen the root), tip load",
     "rib_section_mm": [
@@ -1088,39 +1135,51 @@
    "criterion": "C9",
    "kind": "check",
    "passed": true,
-   "summary": "at the tray screws' stance (z 9.5, 14, pivot at the plate's lower edge z 6.0) the 75.6 N push-on load pulls the top screw with 278 N against 330 N of printed pull-out (5.0 MPa over 7.0 mm), and the triac end moves 0.0095 mm against 0.05 mm allowed",
+   "summary": "at the inserts' stance (z 11.65, push-on pivot at the plate's lower edge z 6.0, pull-off pivot at the pilaster's top z 20.5) the 75.6 N load loads each insert with 469 N pushing on and 299 N pulling off against 680 N of assumed pull-out, and the triac end moves 0.0126 mm pushing on and 0.0079 mm pulling off against 0.05 mm allowed",
    "figures": {
     "pivot_z_mm": 6.0,
+    "pull_off_pivot_z_mm": 20.5,
     "screw_z_mm": [
-     9.5,
-     14.0
+     11.65
     ],
     "levers_mm": [
-     3.5,
-     8.0
+     5.65
     ],
-    "screws_per_pilaster": 2,
+    "pull_off_levers_mm": [
+     8.85
+    ],
+    "screws_per_pilaster": 1,
     "pilasters": 2,
     "moment_Nmm": 5295.0241,
     "tension_per_screw_N": {
-     "z 9.5": 121.5251,
-     "z 14": 277.7718
+     "z 11.65": 468.5862
     },
-    "tension_max_N": 277.7718,
-    "engaged_length_mm": 7.0,
-    "pullout_allowance_MPa": 5.0,
-    "pullout_capacity_N": 329.8672,
-    "utilisation": 0.8421,
-    "pilot_shear_displacement_mm": 0.0028,
-    "root_rotation_rad": 0.0004,
-    "root_motion_at_triac_end_mm": 0.0036,
-    "tray_flexure_at_triac_end_mm": 0.0059,
-    "triac_end_motion_mm": 0.0095,
+    "tension_max_N": 468.5862,
+    "pull_off_tension_per_screw_N": {
+     "z 11.65": 299.1539
+    },
+    "pull_off_tension_max_N": 299.1539,
+    "engaged_length_mm": 5.7,
+    "insert_hole_dia_mm": 4.01,
+    "pullout_allowance_N": 680.0,
+    "pullout_capacity_N": 680.0,
+    "utilisation": 0.6891,
+    "pull_off_utilisation": 0.4399,
+    "proof_factor": 2.0,
+    "proof_load_N": 151.2,
+    "proof_tension_max_N": 937.1724,
+    "pilot_shear_displacement_mm": 0.0044,
+    "root_rotation_rad": 0.0008,
+    "root_motion_at_triac_end_mm": 0.0078,
+    "pull_off_root_motion_at_triac_end_mm": 0.0032,
+    "tray_flexure_at_triac_end_mm": 0.0048,
+    "triac_end_motion_mm": 0.0126,
+    "pull_off_triac_end_motion_mm": 0.0079,
     "span_mm": 70.04,
     "x_mm": 10.0,
     "insertion_force_N": 75.6,
     "allowed_motion_mm": 0.05,
-    "basis": "moment of the push-on force about the plate's lower edge shared among the tray screws in proportion to their height over it; pull-out as shear on the major-diameter cylinder"
+    "basis": "moment of the load about the pivot shared among the inserts in proportion to their distance from it; pull-out is the stated allowance for one insert; the shear displacement is on the insert's hole cylinder"
    },
    "lines": []
   },
@@ -1187,75 +1246,83 @@
       "pass": true
      },
      {
-      "screw": "tray screw u-3.25 z9.5",
+      "screw": "tray screw u-4.505 z11.65",
       "kind": "tray_plate",
       "centre_uvz_mm": [
-       -3.25,
-       0.0,
-       9.5
+       -4.505,
+       -1.0,
+       11.65
       ],
-      "distance_mm": 9.1213,
+      "distance_mm": 11.6194,
       "layer": "F.Cu",
       "nearest_item": "zone RET_F0 fill",
       "per_layer_mm": {
-       "F.Cu": 9.1213,
-       "B.Cu": 10.5736
+       "F.Cu": 11.6194,
+       "B.Cu": 13.0588
       },
       "required_mm": 3.0,
       "pass": true
      },
      {
-      "screw": "tray screw u-3.25 z14",
-      "kind": "tray_plate",
+      "screw": "insert u-4.505 z11.65",
+      "kind": "insert",
       "centre_uvz_mm": [
-       -3.25,
-       0.0,
-       14.0
+       -4.505,
+       2.35,
+       11.65
       ],
-      "distance_mm": 13.2839,
+      "distance_mm": 9.1016,
       "layer": "F.Cu",
       "nearest_item": "zone RET_F0 fill",
       "per_layer_mm": {
-       "F.Cu": 13.2839,
-       "B.Cu": 14.8071
+       "F.Cu": 9.1016,
+       "B.Cu": 10.5423
+      },
+      "required_mm": 2.6,
+      "copper_below_axis_mm": 11.65,
+      "copper_below_axis_required_mm": 4.8355,
+      "tear_drop_roof_mm": 2.8355,
+      "copper_below_axis_pass": true,
+      "pass": true
+     },
+     {
+      "screw": "tray screw u52.005 z11.65",
+      "kind": "tray_plate",
+      "centre_uvz_mm": [
+       52.005,
+       -1.0,
+       11.65
+      ],
+      "distance_mm": 13.3992,
+      "layer": "F.Cu",
+      "nearest_item": "pad 2 of R912",
+      "per_layer_mm": {
+       "F.Cu": 13.3992,
+       "B.Cu": 15.5503
       },
       "required_mm": 3.0,
       "pass": true
      },
      {
-      "screw": "tray screw u50.75 z9.5",
-      "kind": "tray_plate",
+      "screw": "insert u52.005 z11.65",
+      "kind": "insert",
       "centre_uvz_mm": [
-       50.75,
-       0.0,
-       9.5
+       52.005,
+       2.35,
+       11.65
       ],
-      "distance_mm": 10.8396,
+      "distance_mm": 10.7964,
       "layer": "F.Cu",
       "nearest_item": "pad 2 of R912",
       "per_layer_mm": {
-       "F.Cu": 10.8396,
-       "B.Cu": 12.6481
+       "F.Cu": 10.7964,
+       "B.Cu": 12.6289
       },
-      "required_mm": 3.0,
-      "pass": true
-     },
-     {
-      "screw": "tray screw u50.75 z14",
-      "kind": "tray_plate",
-      "centre_uvz_mm": [
-       50.75,
-       0.0,
-       14.0
-      ],
-      "distance_mm": 14.5629,
-      "layer": "F.Cu",
-      "nearest_item": "pad 2 of R912",
-      "per_layer_mm": {
-       "F.Cu": 14.5629,
-       "B.Cu": 16.3975
-      },
-      "required_mm": 3.0,
+      "required_mm": 2.6,
+      "copper_below_axis_mm": 11.65,
+      "copper_below_axis_required_mm": 4.8355,
+      "tear_drop_roof_mm": 2.8355,
+      "copper_below_axis_pass": true,
       "pass": true
      },
      {
@@ -1280,16 +1347,16 @@
     "basis_distance_mm": 2.6,
     "tray_to_plate_design_mm": 3.0,
     "lid_mm": 10.0,
-    "metal_model": "each screw is swept as spheres of its shaft or head radius along its axis"
+    "metal_model": "each screw is swept as spheres of its shaft or head radius along its axis; an insert is swept as spheres of its hole's radius plus the wall, which is exact toward the board only while the axis stands above the board's higher copper plane by at least the tear-drop roof (the hole's radius times sqrt 2, the roof standing above the axis, away from the board) plus the wall, the copper_below_axis_mm figure of its row"
    },
    "lines": [
     "tab screw T921             centre (  12.60,   -0.98,  16.50) nearest pad 2 of T921 on F.Cu at 13.70 mm (needs 1.5)",
     "tab screw T911             centre (  37.20,   -0.98,  16.50) nearest pad 2 of T911 on F.Cu at 13.70 mm (needs 1.5)",
     "H1 screw                   centre (  41.50,   71.50,  -1.30) nearest track 6 on /Steam heater switch/OUT_S on F.Cu at 11.46 mm (needs 2.6)",
-    "tray screw u-3.25 z9.5     centre (  -3.25,    0.00,   9.50) nearest zone RET_F0 fill on F.Cu at 9.12 mm (needs 3.0)",
-    "tray screw u-3.25 z14      centre (  -3.25,    0.00,  14.00) nearest zone RET_F0 fill on F.Cu at 13.28 mm (needs 3.0)",
-    "tray screw u50.75 z9.5     centre (  50.75,    0.00,   9.50) nearest pad 2 of R912 on F.Cu at 10.84 mm (needs 3.0)",
-    "tray screw u50.75 z14      centre (  50.75,    0.00,  14.00) nearest pad 2 of R912 on F.Cu at 14.56 mm (needs 3.0)",
+    "tray screw u-4.505 z11.65  centre (  -4.50,   -1.00,  11.65) nearest zone RET_F0 fill on F.Cu at 11.62 mm (needs 3.0)",
+    "insert u-4.505 z11.65      centre (  -4.50,    2.35,  11.65) nearest zone RET_F0 fill on F.Cu at 9.10 mm (needs 2.6)",
+    "tray screw u52.005 z11.65  centre (  52.01,   -1.00,  11.65) nearest pad 2 of R912 on F.Cu at 13.40 mm (needs 3.0)",
+    "insert u52.005 z11.65      centre (  52.01,    2.35,  11.65) nearest pad 2 of R912 on F.Cu at 10.80 mm (needs 2.6)",
     "lid screw                  centre (  23.75,   80.50,  17.55) nearest zone OUT_C_F1 fill on F.Cu at 13.07 mm (needs 10.0)"
    ]
   },
@@ -1361,7 +1428,7 @@
    "passed": true,
    "summary": "the two lids are one geometry: the two-colour form differs only in which layers of each part print in the second colour, so no inlay part exists and the lid and the tray are one geometry in both forms; the swap layers are the parts lid_swap and tray_swap, each its part cut to its band",
    "figures": {
-    "lid_volume_mm3": 10398.6068,
+    "lid_volume_mm3": 12476.9025,
     "geometry_identical": true,
     "swap_parts": {
      "lid": {
@@ -1373,9 +1440,9 @@
        21.55,
        22.15
       ],
-      "swap_volume_mm3": 2262.8473,
+      "swap_volume_mm3": 2507.3363,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 10398.6068
+      "part_volume_mm3": 12476.9025
      },
      "tray": {
       "band_z_mm": [
@@ -1386,9 +1453,9 @@
        -6.2,
        -5.6
       ],
-      "swap_volume_mm3": 2991.748,
+      "swap_volume_mm3": 3254.6082,
       "swap_outside_its_part_mm3": 0.0,
-      "part_volume_mm3": 37644.6431
+      "part_volume_mm3": 47239.0118
      }
     },
     "inlay_part_present": false,
@@ -1405,7 +1472,7 @@
    "criterion": "C13",
    "kind": "check",
    "passed": true,
-   "summary": "the logo's 2546 sample points on the lid top agree with the engraving (grooves 0.4 mm deep, flush outside, the relief grooves 0.6 mm deep); it lies at u 14.8 to 32.7, v 15.0 to 45.0, 30.7 mm clear of the lid screw head, 14.8 mm of the bays, 4.1 mm of the vents",
+   "summary": "the logo's 2546 sample points on the lid top agree with the engraving (grooves 0.4 mm deep, flush outside, the relief grooves 0.6 mm deep); it lies at u 14.8 to 32.7, v 15.0 to 45.0, 30.7 mm clear of the lid screw head, 14.8 mm of the bays, 2.1 mm of the vents",
    "figures": {
     "mismatched_samples": 0,
     "samples": 2546,
@@ -1421,7 +1488,7 @@
      "edge_of_flat_top_mm": 12.2,
      "lid_screw_head_mm": 30.7,
      "aperture_mm": 14.7964,
-     "vent_mm": 4.0789
+     "vent_mm": 2.0979
     },
     "required_clearance_mm": 1.0
    },
@@ -1436,9 +1503,9 @@
    "figures": {
     "lid_height_mm": 29.0,
     "tray_height_mm": 48.0,
-    "tray_logo_clear_of_chamfer_mm": 10.9131,
+    "tray_logo_clear_of_chamfer_mm": 10.9522,
     "tray_logo_off_face_centre_mm": 4.8,
-    "tray_face_shorter_dimension_mm": 56.6995,
+    "tray_face_shorter_dimension_mm": 61.7195,
     "tray_expected_height_mm": 48.0,
     "samples": {
      "lid": 1360,
@@ -1526,8 +1593,8 @@
       "in_band": 2672
      },
      "streamline grooves": {
-      "samples": 88,
-      "in_band": 88
+      "samples": 124,
+      "in_band": 124
      },
      "far-end block bars": {
       "samples": 56,
@@ -1581,8 +1648,8 @@
      {
       "part": "tray",
       "size_mm": [
-       59.8995,
-       89.4992,
+       64.9195,
+       89.5,
        27.1
       ],
       "orientation": "outer top face down on the bed (floor down, as modelled)",
@@ -1592,8 +1659,8 @@
      {
       "part": "lid_single",
       "size_mm": [
-       59.8995,
-       84.5992,
+       64.9195,
+       84.6,
        5.85
       ],
       "orientation": "face down on the bed (turned 180 degrees about u)",
@@ -1603,8 +1670,8 @@
      {
       "part": "lid_two",
       "size_mm": [
-       59.8995,
-       84.5992,
+       64.9195,
+       84.6,
        5.85
       ],
       "orientation": "face down on the bed (turned 180 degrees about u)",
@@ -1614,9 +1681,9 @@
     ]
    },
    "lines": [
-    "tray          59.9 x   89.5 x   27.1 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 30 bridged; critical faces support-free True",
-    "lid_single    59.9 x   84.6 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True",
-    "lid_two       59.9 x   84.6 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True"
+    "tray          64.9 x   89.5 x   27.1 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 30 bridged; critical faces support-free True",
+    "lid_single    64.9 x   84.6 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True",
+    "lid_two       64.9 x   84.6 x    5.9 mm, bed 220 x 220 x 250: fits True; 0 overhang cluster(s) beyond a 3.5 mm bridge; 19 bridged; critical faces support-free True"
    ]
   },
   {
@@ -1634,8 +1701,8 @@
       "orientation": "outer top face down on the bed (floor down, as modelled)",
       "installed_orientation": "on top, its outer top face up, holding the board's bare back above the parts",
       "size_mm": [
-       59.8995,
-       89.4992,
+       64.9195,
+       89.5,
        27.1
       ],
       "fits_bed": true,
@@ -1643,157 +1710,157 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 10.9996,
+        "area_mm2": 16.0196,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          75.6,
          6.3
         ]
        },
        {
-        "area_mm2": 11.1008,
+        "area_mm2": 16.1208,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          71.4,
          6.3
         ]
        },
        {
-        "area_mm2": 11.1875,
+        "area_mm2": 16.2075,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          67.2,
          6.3
         ]
        },
        {
-        "area_mm2": 11.2578,
+        "area_mm2": 16.2778,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          63.0,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3137,
+        "area_mm2": 16.3337,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          58.8,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3552,
+        "area_mm2": 16.3752,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          54.6,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3784,
+        "area_mm2": 16.3984,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          50.4,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3965,
+        "area_mm2": 16.4165,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          46.2,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3919,
+        "area_mm2": 16.4119,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          42.0,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3824,
+        "area_mm2": 16.4024,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          37.8,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3495,
+        "area_mm2": 16.3695,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          33.6,
          6.3
         ]
        },
        {
-        "area_mm2": 11.3117,
+        "area_mm2": 16.3317,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          29.4,
          6.3
         ]
        },
        {
-        "area_mm2": 11.2512,
+        "area_mm2": 16.2712,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          25.2,
          6.3
         ]
        },
        {
-        "area_mm2": 11.1856,
+        "area_mm2": 16.2056,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          21.0,
          6.3
         ]
        },
        {
-        "area_mm2": 11.1017,
+        "area_mm2": 16.1217,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
-         54.2,
+         56.71,
          16.8,
          6.3
         ]
        },
        {
-        "area_mm2": 11.0523,
+        "area_mm2": 16.0723,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1803,7 +1870,7 @@
         ]
        },
        {
-        "area_mm2": 11.1451,
+        "area_mm2": 16.1651,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1813,7 +1880,7 @@
         ]
        },
        {
-        "area_mm2": 11.3313,
+        "area_mm2": 16.3513,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1823,7 +1890,7 @@
         ]
        },
        {
-        "area_mm2": 11.3705,
+        "area_mm2": 16.3905,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1833,7 +1900,7 @@
         ]
        },
        {
-        "area_mm2": 11.3984,
+        "area_mm2": 16.4184,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1843,7 +1910,7 @@
         ]
        },
        {
-        "area_mm2": 11.3866,
+        "area_mm2": 16.4066,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1853,7 +1920,7 @@
         ]
        },
        {
-        "area_mm2": 11.3697,
+        "area_mm2": 16.3897,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1863,7 +1930,7 @@
         ]
        },
        {
-        "area_mm2": 11.3303,
+        "area_mm2": 16.3503,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1873,7 +1940,7 @@
         ]
        },
        {
-        "area_mm2": 11.2845,
+        "area_mm2": 16.3045,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1883,7 +1950,7 @@
         ]
        },
        {
-        "area_mm2": 11.2181,
+        "area_mm2": 16.2381,
         "span_mm": 2.004,
         "z_mm": 6.3,
         "lo": [
@@ -1897,8 +1964,8 @@
         "span_mm": 2.6976,
         "z_mm": 0.4,
         "lo": [
-         15.499,
-         17.0176,
+         18.009,
+         17.0568,
          0.4
         ]
        },
@@ -1907,8 +1974,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         18.2407,
-         51.1087,
+         20.7507,
+         51.1478,
          0.4
         ]
        },
@@ -1917,8 +1984,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         20.7517,
-         46.7051,
+         23.2617,
+         46.7442,
          0.4
         ]
        },
@@ -1927,8 +1994,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         24.1863,
-         48.6026,
+         26.6963,
+         48.6417,
          0.4
         ]
        },
@@ -1937,106 +2004,106 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         21.1418,
-         50.4354,
+         23.6518,
+         50.4745,
          0.4
         ]
        }
       ],
       "critical_faces": {
        "plate-end faces": 1,
-       "screw seats": 6,
+       "screw seats": 4,
        "slot-rule faces": 1,
        "lid-fit faces": 3
       },
       "critical_face_overhangs": [
        {
         "face": "slot-rule faces",
-        "area_mm2": 10.9996,
+        "area_mm2": 16.0196,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.1008,
+        "area_mm2": 16.1208,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.1875,
+        "area_mm2": 16.2075,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.2578,
+        "area_mm2": 16.2778,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3137,
+        "area_mm2": 16.3337,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3552,
+        "area_mm2": 16.3752,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3784,
+        "area_mm2": 16.3984,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3965,
+        "area_mm2": 16.4165,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3919,
+        "area_mm2": 16.4119,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3824,
+        "area_mm2": 16.4024,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3495,
+        "area_mm2": 16.3695,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.3117,
+        "area_mm2": 16.3317,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.2512,
+        "area_mm2": 16.2712,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.1856,
+        "area_mm2": 16.2056,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        },
        {
         "face": "slot-rule faces",
-        "area_mm2": 11.1017,
+        "area_mm2": 16.1217,
         "bridge_span_mm": 2.004,
         "bridgeable": true
        }
@@ -2048,8 +2115,8 @@
       "orientation": "face down on the bed (turned 180 degrees about u)",
       "installed_orientation": "on the underside, its face down, coming off downward",
       "size_mm": [
-       59.8995,
-       84.5992,
+       64.9195,
+       84.6,
        5.85
       ],
       "fits_bed": true,
@@ -2057,42 +2124,42 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 89.207,
-        "span_mm": 1.5627,
+        "area_mm2": 89.1414,
+        "span_mm": 1.5618,
         "z_mm": 0.6,
         "lo": [
-         5.505,
-         24.7245,
+         6.0027,
+         24.725,
          0.6
         ]
        },
        {
-        "area_mm2": 45.7667,
+        "area_mm2": 90.4009,
         "span_mm": 1.5602,
         "z_mm": 0.6,
         "lo": [
-         8.0772,
-         24.7244,
+         9.0508,
+         24.725,
          0.6
         ]
        },
        {
-        "area_mm2": 47.0364,
-        "span_mm": 1.5567,
+        "area_mm2": 46.6015,
+        "span_mm": 1.5538,
         "z_mm": 0.6,
         "lo": [
-         10.6249,
-         24.726,
+         12.0605,
+         24.7266,
          0.6
         ]
        },
        {
-        "area_mm2": 96.1058,
-        "span_mm": 1.5623,
+        "area_mm2": 48.5239,
+        "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         13.1574,
-         24.7264,
+         15.0318,
+         24.7284,
          0.6
         ]
        },
@@ -2101,48 +2168,48 @@
         "span_mm": 2.3557,
         "z_mm": 0.4,
         "lo": [
-         21.0211,
-         39.0038,
+         23.5311,
+         39.0046,
          0.4
         ]
        },
        {
-        "area_mm2": 96.099,
-        "span_mm": 1.5614,
+        "area_mm2": 48.5263,
+        "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         36.3352,
-         24.7264,
+         39.5262,
+         24.7284,
          0.6
         ]
        },
        {
-        "area_mm2": 47.0786,
+        "area_mm2": 46.6614,
+        "span_mm": 1.5666,
+        "z_mm": 0.6,
+        "lo": [
+         44.7532,
+         24.7266,
+         0.6
+        ]
+       },
+       {
+        "area_mm2": 90.3941,
         "span_mm": 1.5625,
         "z_mm": 0.6,
         "lo": [
-         41.1068,
-         24.726,
+         49.9805,
+         24.725,
          0.6
         ]
        },
        {
-        "area_mm2": 45.7694,
-        "span_mm": 1.5599,
+        "area_mm2": 89.152,
+        "span_mm": 1.5653,
         "z_mm": 0.6,
         "lo": [
-         45.8797,
-         24.7244,
-         0.6
-        ]
-       },
-       {
-        "area_mm2": 89.1784,
-        "span_mm": 1.563,
-        "z_mm": 0.6,
-        "lo": [
-         50.6526,
-         24.7245,
+         55.2078,
+         24.725,
          0.6
         ]
        },
@@ -2151,8 +2218,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         37.15,
-         7.5156,
+         39.66,
+         7.5164,
          0.6
         ]
        },
@@ -2161,8 +2228,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         39.3571,
-         7.5156,
+         41.8671,
+         7.5164,
          0.6
         ]
        },
@@ -2171,8 +2238,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         41.5643,
-         7.5156,
+         44.0743,
+         7.5164,
          0.6
         ]
        },
@@ -2181,8 +2248,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         43.7714,
-         7.5156,
+         46.2814,
+         7.5164,
          0.6
         ]
        },
@@ -2191,8 +2258,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         45.9786,
-         7.5156,
+         48.4886,
+         7.5164,
          0.6
         ]
        },
@@ -2201,8 +2268,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         48.1857,
-         7.5156,
+         50.6957,
+         7.5164,
          0.6
         ]
        },
@@ -2211,8 +2278,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         50.3929,
-         7.5156,
+         52.9029,
+         7.5164,
          0.6
         ]
        },
@@ -2221,8 +2288,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         52.6,
-         7.5156,
+         55.11,
+         7.5164,
          0.6
         ]
        },
@@ -2231,8 +2298,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         25.2706,
-         59.601,
+         27.7806,
+         59.6018,
          0.4
         ]
        },
@@ -2241,8 +2308,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         24.3548,
-         57.1555,
+         26.8648,
+         57.1562,
          0.4
         ]
        }
@@ -2259,8 +2326,8 @@
       "orientation": "face down on the bed (turned 180 degrees about u)",
       "installed_orientation": "on the underside, its face down, coming off downward",
       "size_mm": [
-       59.8995,
-       84.5992,
+       64.9195,
+       84.6,
        5.85
       ],
       "fits_bed": true,
@@ -2268,42 +2335,42 @@
       "non_bridgeable_clusters": [],
       "bridged_clusters": [
        {
-        "area_mm2": 89.207,
-        "span_mm": 1.5627,
+        "area_mm2": 89.1414,
+        "span_mm": 1.5618,
         "z_mm": 0.6,
         "lo": [
-         5.505,
-         24.7245,
+         6.0027,
+         24.725,
          0.6
         ]
        },
        {
-        "area_mm2": 45.7667,
+        "area_mm2": 90.4009,
         "span_mm": 1.5602,
         "z_mm": 0.6,
         "lo": [
-         8.0772,
-         24.7244,
+         9.0508,
+         24.725,
          0.6
         ]
        },
        {
-        "area_mm2": 47.0364,
-        "span_mm": 1.5567,
+        "area_mm2": 46.6015,
+        "span_mm": 1.5538,
         "z_mm": 0.6,
         "lo": [
-         10.6249,
-         24.726,
+         12.0605,
+         24.7266,
          0.6
         ]
        },
        {
-        "area_mm2": 96.1058,
-        "span_mm": 1.5623,
+        "area_mm2": 48.5239,
+        "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         13.1574,
-         24.7264,
+         15.0318,
+         24.7284,
          0.6
         ]
        },
@@ -2312,48 +2379,48 @@
         "span_mm": 2.3557,
         "z_mm": 0.4,
         "lo": [
-         21.0211,
-         39.0038,
+         23.5311,
+         39.0046,
          0.4
         ]
        },
        {
-        "area_mm2": 96.099,
-        "span_mm": 1.5614,
+        "area_mm2": 48.5263,
+        "span_mm": 1.5606,
         "z_mm": 0.6,
         "lo": [
-         36.3352,
-         24.7264,
+         39.5262,
+         24.7284,
          0.6
         ]
        },
        {
-        "area_mm2": 47.0786,
+        "area_mm2": 46.6614,
+        "span_mm": 1.5666,
+        "z_mm": 0.6,
+        "lo": [
+         44.7532,
+         24.7266,
+         0.6
+        ]
+       },
+       {
+        "area_mm2": 90.3941,
         "span_mm": 1.5625,
         "z_mm": 0.6,
         "lo": [
-         41.1068,
-         24.726,
+         49.9805,
+         24.725,
          0.6
         ]
        },
        {
-        "area_mm2": 45.7694,
-        "span_mm": 1.5599,
+        "area_mm2": 89.152,
+        "span_mm": 1.5653,
         "z_mm": 0.6,
         "lo": [
-         45.8797,
-         24.7244,
-         0.6
-        ]
-       },
-       {
-        "area_mm2": 89.1784,
-        "span_mm": 1.563,
-        "z_mm": 0.6,
-        "lo": [
-         50.6526,
-         24.7245,
+         55.2078,
+         24.725,
          0.6
         ]
        },
@@ -2362,8 +2429,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         37.15,
-         7.5156,
+         39.66,
+         7.5164,
          0.6
         ]
        },
@@ -2372,8 +2439,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         39.3571,
-         7.5156,
+         41.8671,
+         7.5164,
          0.6
         ]
        },
@@ -2382,8 +2449,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         41.5643,
-         7.5156,
+         44.0743,
+         7.5164,
          0.6
         ]
        },
@@ -2392,8 +2459,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         43.7714,
-         7.5156,
+         46.2814,
+         7.5164,
          0.6
         ]
        },
@@ -2402,8 +2469,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         45.9786,
-         7.5156,
+         48.4886,
+         7.5164,
          0.6
         ]
        },
@@ -2412,8 +2479,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         48.1857,
-         7.5156,
+         50.6957,
+         7.5164,
          0.6
         ]
        },
@@ -2422,8 +2489,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         50.3929,
-         7.5156,
+         52.9029,
+         7.5164,
          0.6
         ]
        },
@@ -2432,8 +2499,8 @@
         "span_mm": 1.554,
         "z_mm": 0.6,
         "lo": [
-         52.6,
-         7.5156,
+         55.11,
+         7.5164,
          0.6
         ]
        },
@@ -2442,8 +2509,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         25.2706,
-         59.601,
+         27.7806,
+         59.6018,
          0.4
         ]
        },
@@ -2452,8 +2519,8 @@
         "span_mm": 0.804,
         "z_mm": 0.4,
         "lo": [
-         24.3548,
-         57.1555,
+         26.8648,
+         57.1562,
          0.4
         ]
        }
@@ -2483,7 +2550,7 @@
       "opening": "vent 1",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.2021,
+      "larger_dimension_mm": 10.4442,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2494,7 +2561,7 @@
       "opening": "vent 2",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7087,
+      "larger_dimension_mm": 12.8774,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2505,7 +2572,7 @@
       "opening": "vent 3",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8868,
+      "larger_dimension_mm": 13.0147,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2516,51 +2583,7 @@
       "opening": "vent 4",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.4604,
-      "admits": "nothing",
-      "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "zone RET_F0 fill",
-      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
-     },
-     {
-      "opening": "vent 5",
-      "kind": "louvre",
-      "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5817,
-      "admits": "nothing",
-      "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "zone RET_F0 fill",
-      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
-     },
-     {
-      "opening": "vent 6",
-      "kind": "louvre",
-      "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.6792,
-      "admits": "nothing",
-      "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "zone RET_F0 fill",
-      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
-     },
-     {
-      "opening": "vent 7",
-      "kind": "louvre",
-      "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7979,
-      "admits": "nothing",
-      "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "zone RET_F0 fill",
-      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
-     },
-     {
-      "opening": "vent 8",
-      "kind": "louvre",
-      "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.988,
+      "larger_dimension_mm": 10.9214,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2568,10 +2591,54 @@
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
+      "opening": "vent 5",
+      "kind": "louvre",
+      "smaller_dimension_mm": 1.1,
+      "larger_dimension_mm": 11.1438,
+      "admits": "nothing",
+      "depth_mm": 0.0,
+      "remaining_to_mains_copper_mm": 20.3954,
+      "nearest": "zone OUT_S_F1 fill",
+      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
+     },
+     {
+      "opening": "vent 6",
+      "kind": "louvre",
+      "smaller_dimension_mm": 1.1,
+      "larger_dimension_mm": 12.6488,
+      "admits": "nothing",
+      "depth_mm": 0.0,
+      "remaining_to_mains_copper_mm": 20.4291,
+      "nearest": "zone OUT_S_F1 fill",
+      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
+     },
+     {
+      "opening": "vent 7",
+      "kind": "louvre",
+      "smaller_dimension_mm": 1.1,
+      "larger_dimension_mm": 12.9245,
+      "admits": "nothing",
+      "depth_mm": 0.0,
+      "remaining_to_mains_copper_mm": 20.3985,
+      "nearest": "zone OUT_S_F1 fill",
+      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
+     },
+     {
+      "opening": "vent 8",
+      "kind": "louvre",
+      "smaller_dimension_mm": 1.1,
+      "larger_dimension_mm": 11.8523,
+      "admits": "nothing",
+      "depth_mm": 0.0,
+      "remaining_to_mains_copper_mm": 20.3954,
+      "nearest": "track 6 on /Steam heater switch/OUT_S",
+      "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
+     },
+     {
       "opening": "vent 9",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5817,
+      "larger_dimension_mm": 11.1438,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
@@ -2582,77 +2649,77 @@
       "opening": "vent 10",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.6792,
+      "larger_dimension_mm": 12.6488,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "pad 5 of U911",
+      "nearest": "pad 6 of U911",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
       "opening": "vent 11",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7979,
+      "larger_dimension_mm": 12.9245,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 21.2154,
-      "nearest": "pad 5 of U921",
+      "remaining_to_mains_copper_mm": 20.7784,
+      "nearest": "pad 4 of U921",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
       "opening": "vent 12",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.988,
+      "larger_dimension_mm": 11.8523,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "pad 4 of U921",
+      "nearest": "track 6 on /Steam heater switch/OUT_S",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
       "opening": "vent 13",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.2021,
+      "larger_dimension_mm": 10.4442,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "track 3 on /Coffee heater switch/HEAT_C_GATE_R",
+      "remaining_to_mains_copper_mm": 20.3959,
+      "nearest": "pad 2 of R911",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
       "opening": "vent 14",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7087,
+      "larger_dimension_mm": 12.8774,
       "admits": "nothing",
       "depth_mm": 0.0,
       "remaining_to_mains_copper_mm": 20.3954,
-      "nearest": "track 2 on /Coffee heater switch/HEAT_C_OPTO_MT",
+      "nearest": "pad 1 of R911",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
       "opening": "vent 15",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8868,
+      "larger_dimension_mm": 13.0147,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 21.2017,
-      "nearest": "pad 6 of U921",
+      "remaining_to_mains_copper_mm": 20.7655,
+      "nearest": "pad 5 of U921",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
       "opening": "vent 16",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.4604,
+      "larger_dimension_mm": 10.9214,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 20.3958,
-      "nearest": "pad 5 of U921",
+      "remaining_to_mains_copper_mm": 20.3954,
+      "nearest": "track 6 on /Steam heater switch/OUT_S",
       "path": "a 4.0 mm tip cannot enter a 1.10 mm opening"
      },
      {
@@ -3068,7 +3135,7 @@
       "larger_dimension_mm": 40.0,
       "admits": "nothing",
       "depth_mm": 0.0,
-      "remaining_to_mains_copper_mm": 21.1978,
+      "remaining_to_mains_copper_mm": 21.5143,
       "nearest": "zone RET_F0 fill",
       "path": "a 4.0 mm tip cannot enter a 0.20 mm opening"
      },
@@ -3117,16 +3184,16 @@
     "finger vent 3                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 4                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 5                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
-    "finger vent 6                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
+    "finger vent 6                   louvre           1.10 mm: nothing; remaining to Mains copper 20.43 mm",
     "finger vent 7                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 8                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 9                   louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 10                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
-    "finger vent 11                  louvre           1.10 mm: nothing; remaining to Mains copper 21.22 mm",
+    "finger vent 11                  louvre           1.10 mm: nothing; remaining to Mains copper 20.78 mm",
     "finger vent 12                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 13                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger vent 14                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
-    "finger vent 15                  louvre           1.10 mm: nothing; remaining to Mains copper 21.20 mm",
+    "finger vent 15                  louvre           1.10 mm: nothing; remaining to Mains copper 20.77 mm",
     "finger vent 16                  louvre           1.10 mm: nothing; remaining to Mains copper 20.40 mm",
     "finger outlet right 1           outlet slit      2.00 mm: nothing; remaining to Mains copper 6.50 mm",
     "finger outlet right 2           outlet slit      2.00 mm: nothing; remaining to Mains copper 6.15 mm",
@@ -3160,7 +3227,7 @@
     "finger left wall top seam       seam             0.20 mm: nothing; remaining to Mains copper 20.82 mm",
     "finger right wall top seam      seam             0.20 mm: nothing; remaining to Mains copper 21.21 mm",
     "finger far wall top seam        seam             0.20 mm: nothing; remaining to Mains copper 21.17 mm",
-    "finger pilaster top seam        seam             0.20 mm: nothing; remaining to Mains copper 21.20 mm",
+    "finger pilaster top seam        seam             0.20 mm: nothing; remaining to Mains copper 21.51 mm",
     "finger finger slit below        finger slit      0.80 mm: nothing; remaining to Mains copper 3.00 mm",
     "finger finger slit above        finger slit      0.80 mm: nothing; remaining to Mains copper 3.00 mm",
     "finger lip seam                 seam             0.45 mm: nothing; remaining to Mains copper 17.16 mm"
@@ -3201,7 +3268,7 @@
      {
       "opening": "vent 3",
       "kind": "louvre",
-      "points_cast": 1350,
+      "points_cast": 800,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3209,7 +3276,7 @@
      {
       "opening": "vent 4",
       "kind": "louvre",
-      "points_cast": 1125,
+      "points_cast": 1350,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3217,7 +3284,7 @@
      {
       "opening": "vent 5",
       "kind": "louvre",
-      "points_cast": 1125,
+      "points_cast": 1350,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3233,7 +3300,7 @@
      {
       "opening": "vent 7",
       "kind": "louvre",
-      "points_cast": 1350,
+      "points_cast": 800,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3249,7 +3316,7 @@
      {
       "opening": "vent 9",
       "kind": "louvre",
-      "points_cast": 1125,
+      "points_cast": 1350,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3265,7 +3332,7 @@
      {
       "opening": "vent 11",
       "kind": "louvre",
-      "points_cast": 1350,
+      "points_cast": 800,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3297,7 +3364,7 @@
      {
       "opening": "vent 15",
       "kind": "louvre",
-      "points_cast": 1350,
+      "points_cast": 800,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3305,7 +3372,7 @@
      {
       "opening": "vent 16",
       "kind": "louvre",
-      "points_cast": 1125,
+      "points_cast": 1350,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -3593,7 +3660,7 @@
      {
       "opening": "lip seam",
       "kind": "seam",
-      "points_cast": 1475,
+      "points_cast": 775,
       "reachable_from_outside": 0,
       "reaches_mains_copper": false,
       "example": null
@@ -6467,20 +6534,20 @@
    "lines": [
     "drip vent 1                   louvre       :    0 of 1125 cone lines open to the outside, reaches Mains copper no",
     "drip vent 2                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 3                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 4                   louvre       :    0 of 1125 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 5                   louvre       :    0 of 1125 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 3                   louvre       :    0 of  800 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 4                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 5                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
     "drip vent 6                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 7                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 7                   louvre       :    0 of  800 cone lines open to the outside, reaches Mains copper no",
     "drip vent 8                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 9                   louvre       :    0 of 1125 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 9                   louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
     "drip vent 10                  louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 11                  louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 11                  louvre       :    0 of  800 cone lines open to the outside, reaches Mains copper no",
     "drip vent 12                  louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
     "drip vent 13                  louvre       :    0 of 1125 cone lines open to the outside, reaches Mains copper no",
     "drip vent 14                  louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 15                  louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
-    "drip vent 16                  louvre       :    0 of 1125 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 15                  louvre       :    0 of  800 cone lines open to the outside, reaches Mains copper no",
+    "drip vent 16                  louvre       :    0 of 1350 cone lines open to the outside, reaches Mains copper no",
     "drip outlet right 1           outlet slit  :    0 of  375 cone lines open to the outside, reaches Mains copper no",
     "drip outlet right 2           outlet slit  :    0 of  375 cone lines open to the outside, reaches Mains copper no",
     "drip outlet right 3           outlet slit  :    0 of  375 cone lines open to the outside, reaches Mains copper no",
@@ -6516,7 +6583,7 @@
     "drip pilaster top seam        seam         :    0 of  100 cone lines open to the outside, reaches Mains copper no",
     "drip finger slit below        finger slit  :    0 of  100 cone lines open to the outside, reaches Mains copper no",
     "drip finger slit above        finger slit  :    0 of  100 cone lines open to the outside, reaches Mains copper no",
-    "drip lip seam                 seam         :    0 of 1475 cone lines open to the outside, reaches Mains copper no"
+    "drip lip seam                 seam         :    0 of  775 cone lines open to the outside, reaches Mains copper no"
    ]
   },
   {
@@ -6524,7 +6591,7 @@
    "criterion": "C15",
    "kind": "check",
    "passed": true,
-   "summary": "52 openings are enumerated: blade aperture, cable notch, finger slit, louvre, outlet slit, seam; every vent stands in the lid's thickened field, clear of the bays and the lid screw, 0.8 mm or more of lid between neighbours, with an opening 1.56 mm wide; 25 outlet slits stand in the core's zone of the long walls, none wider than 3.5 mm; lid inlet free area 205 mm2, side outlet free area 225 mm2; driver access: none with the lid on",
+   "summary": "52 openings are enumerated: blade aperture, cable notch, finger slit, louvre, outlet slit, seam; every vent stands in the lid's thickened field, clear of the bays and the lid screw, 0.8 mm or more of lid between neighbours, with an opening 1.56 mm wide; 25 outlet slits stand in the core's zone of the long walls, none wider than 3.5 mm; lid inlet free area 211 mm2, side outlet free area 225 mm2; driver access: none with the lid on",
    "figures": {
     "vent_rule_faults": {},
     "outlet_rule_faults": {},
@@ -6540,10 +6607,10 @@
      "separation": 2.4
     },
     "open_areas": {
-     "lid_inlet_free_area_mm2": 205.2709,
-     "lid_inlet_face_opening_area_mm2": 290.2969,
+     "lid_inlet_free_area_mm2": 210.8195,
+     "lid_inlet_face_opening_area_mm2": 298.1438,
      "lid_inlet_slot_count": 16,
-     "lid_inlet_total_slot_length_mm": 186.6099,
+     "lid_inlet_total_slot_length_mm": 191.6541,
      "side_outlet_free_area_mm2": 225.0,
      "side_outlet_area_by_wall_mm2": {
       "left": 90.0,
@@ -6551,120 +6618,120 @@
      },
      "side_outlet_slit_count": 25,
      "blade_bays_open_area_mm2": 397.4889,
-     "outlet_to_inlet_ratio": 1.0961
+     "outlet_to_inlet_ratio": 1.0673
     },
     "openings": [
      {
       "id": "vent 1",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.2021,
+      "larger_dimension_mm": 10.4442,
       "sample_points": 45
      },
      {
       "id": "vent 2",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7087,
+      "larger_dimension_mm": 12.8774,
       "sample_points": 54
      },
      {
       "id": "vent 3",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8868,
-      "sample_points": 54
+      "larger_dimension_mm": 13.0147,
+      "sample_points": 63
      },
      {
       "id": "vent 4",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.4604,
-      "sample_points": 45
+      "larger_dimension_mm": 10.9214,
+      "sample_points": 54
      },
      {
       "id": "vent 5",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5817,
-      "sample_points": 45
+      "larger_dimension_mm": 11.1438,
+      "sample_points": 54
      },
      {
       "id": "vent 6",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.6792,
+      "larger_dimension_mm": 12.6488,
       "sample_points": 54
      },
      {
       "id": "vent 7",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7979,
-      "sample_points": 54
+      "larger_dimension_mm": 12.9245,
+      "sample_points": 63
      },
      {
       "id": "vent 8",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.988,
+      "larger_dimension_mm": 11.8523,
       "sample_points": 54
      },
      {
       "id": "vent 9",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.5817,
-      "sample_points": 45
+      "larger_dimension_mm": 11.1438,
+      "sample_points": 54
      },
      {
       "id": "vent 10",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.6792,
+      "larger_dimension_mm": 12.6488,
       "sample_points": 54
      },
      {
       "id": "vent 11",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7979,
-      "sample_points": 54
+      "larger_dimension_mm": 12.9245,
+      "sample_points": 63
      },
      {
       "id": "vent 12",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.988,
+      "larger_dimension_mm": 11.8523,
       "sample_points": 54
      },
      {
       "id": "vent 13",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.2021,
+      "larger_dimension_mm": 10.4442,
       "sample_points": 45
      },
      {
       "id": "vent 14",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.7087,
+      "larger_dimension_mm": 12.8774,
       "sample_points": 54
      },
      {
       "id": "vent 15",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 12.8868,
-      "sample_points": 54
+      "larger_dimension_mm": 13.0147,
+      "sample_points": 63
      },
      {
       "id": "vent 16",
       "kind": "louvre",
       "smaller_dimension_mm": 1.1,
-      "larger_dimension_mm": 10.4604,
-      "sample_points": 45
+      "larger_dimension_mm": 10.9214,
+      "sample_points": 54
      },
      {
       "id": "outlet right 1",
@@ -6916,7 +6983,7 @@
       "kind": "seam",
       "smaller_dimension_mm": 0.45,
       "larger_dimension_mm": 200.0,
-      "sample_points": 59
+      "sample_points": 62
      }
     ],
     "driver_access_with_lid_on": "none"
