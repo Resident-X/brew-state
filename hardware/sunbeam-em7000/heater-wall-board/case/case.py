@@ -1456,6 +1456,11 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     forms = ("single", "two") if args.form == "both" else (args.form,)
     model = build(parse_overrides(args.set), forms, args.skin)
+    import check  # the insert's hole is refused on the export path as it is by the check: a producer that exports without running the check ships no hole outside the maker's range
+    seat = check.tray_insert_seat(model)
+    if not seat["passed"]:
+        print(f"refused: {seat['summary']}", file=sys.stderr)
+        return 1
     for path in export_all(model, args.out, forms):
         print(os.path.relpath(path, HERE))
     return 0

@@ -160,6 +160,14 @@ def test_c2_a_thin_wall_a_screw_too_long_or_short_and_a_shallow_hole_are_each_re
     assert not pocket["passed"]
 
 
+def test_c2_the_export_refuses_a_hole_outside_the_makers_range_or_too_shallow_and_writes_nothing(tmp_path, capsys):
+    # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2: The case model refuses a hole outside that range or shallower than that depth
+    for key, value in (("case.insert_hole_dia_mm", 3.2), ("case.insert_hole_depth_mm", 5.9)):
+        out = tmp_path / key
+        assert case.main(["--out", str(out), "--form", "single", "--set", f"{key}={value}"]) == 1, key
+        assert "refused" in capsys.readouterr().err and not out.exists(), "a refused hole leaves no export behind"
+
+
 @pytest.mark.controls("c2_undersized_hole", "c2_oversized_hole", "c2_depth_below_maker_minimum")
 def test_c2_a_hole_outside_the_makers_range_or_shallower_than_the_makers_minimum_is_refused(controls, results, params):
     # SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2: The case model places one M3 heat-set insert in each pilaster's end face, in a hole of the size and depth the insert's maker states, with the wall round the hole held at the record's minimum, and a short M3 countersunk screw through the bar threads into it. The record names the insert's size and the maker's published hole range and minimum depth with their source and the date they were read, and the case model refuses a hole outside that range or shallower than that depth. Out of scope: which maker's insert the owner buys, provided its published hole range and depth are those the record states.
@@ -377,7 +385,7 @@ EARLIER_FIXING = (
     (r"M3 x 12", "the earlier screw length"),
     (r"z 9\.5 and 14\.0|9\.5 and 14\.0 mm", "the earlier stance"),
     (r"two (tray )?screws in each pilaster|two in each pilaster", "two screws in a pilaster"),
-    (r"bar is 80(\.0)? mm long|opening is 83\.0 mm|four (m3 )?(countersunk )?(screw )?holes", "the earlier bar length, opening or hole count"),
+    (r"bar( is)? 80(\.0)? mm long|20 mm by 80(\.0)? mm bar|aluminium bar 80\b|opening is 83\.0 mm|four (m3 )?(countersunk )?(screw )?holes", "the earlier bar length, opening or hole count"),
     (r"cut(s)? (it )?to 80 mm|80\.0 mm long, 20 mm wide|at least 79\.5|83\.0 x 35\.6|59\.50 mm wide", "the earlier bar length, width or opening"),
 )
 
@@ -408,6 +416,7 @@ def test_c7_no_earlier_count_pilot_hole_screw_length_or_bar_length_remains_in_th
     assert "the earlier bar length, width or opening" in earlier_fixing_problems(parameters.replace("5 mm thick (its length is plate.length_mm)", "5 mm thick and cut to 80 mm"))
     assert "85 mm" in figures and any("the 80.0 mm bar stated" in why for why in earlier_fixing_problems(figures.replace("the bar the case now takes is 85 mm long", "the bar the case now takes is long")))
     # the searches find what they are for
+    assert earlier_fixing_problems("a standard flat aluminium bar 80 mm long, 20 mm wide") and earlier_fixing_problems("the plate being the 20 mm by 80.0 mm bar"), "the two statements a later search found are found"
     assert earlier_fixing_problems("Four M3 countersunk holes in the tray") and earlier_fixing_problems("The bar is 80 mm long") and earlier_fixing_problems("the opening is 83.0 mm wide"), "the searches do not depend on the case of the words"
     assert earlier_fixing_problems("The tray is fixed with four M3 x 12 countersunk screws into the pilots") == ["the earlier count of four tray screws", "the earlier screw length"]
     assert "the pilot hole of the earlier fixing" in earlier_fixing_problems("marks the holes through the pilot holes of the tray screws")
