@@ -442,7 +442,7 @@ def restated_problems(text):
                         ("one M3 heat-set insert in each pilaster", "the insert is not stated"), ("85 mm in place of 80 mm", "the 85 mm bar in place of the 80 mm cut is not stated"),
                         ("88.0 mm long in place of 83.0 mm", "the wider opening is not stated"), ("two tray-screw holes", "the two holes are not stated"),
                         ("\"I could probably mount an 80 x 30-35 mm spreader\"", "the owner's recorded statement is not set beside the bar"), ("5 mm longer than the 80 mm he said he could probably mount", "the 85 mm is not set beside his 80 mm"),
-                        ("quotes no word of his beyond the one already recorded", "the entry does not say whose words it quotes")):
+                        ("quotes no word of his beyond the sentence about an 80 x 30-35 mm spreader already recorded", "the entry does not say whose words it quotes")):
         if needle not in e:
             problems.append(why)
     behalf, carried = text.index("## Signed on behalf"), text.index("## Carried to named later steps")

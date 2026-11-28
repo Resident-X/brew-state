@@ -760,7 +760,7 @@ def build_tray(m: Model) -> None:
 def plate_geometry(m: Model) -> Dict[str, float]:
     """The plate's edges in the case frame: its length centres it on the case's extent, its lower edge is the ledge's height (the figure of
     `plate.lower_edge_z_mm` less the seating range's plate-edge offset) and its upper edge is that plus the bar's height. The former
-    outline, the 80 mm by `plate.former_height_mm` window centred on the case's extent, is kept apart as its own figure."""
+    outline, the `plate.length_mm` by `plate.former_height_mm` window centred on the case's extent, is kept apart as its own figure."""
     P = m.P
     e = case_extent(m)
     cu, cz = (e["u0"] + e["u1"]) / 2, (e["z0"] + e["z1"]) / 2

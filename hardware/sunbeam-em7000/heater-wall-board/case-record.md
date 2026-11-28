@@ -54,7 +54,7 @@ The opening in the machine's plastic wall covers the plate and the tray's end wa
 
 | Clause | Shown by | Result |
 |---|---|---|
-| the case lies within the plate's former outline (80 by 30 mm, the owner's provisional cut, not the bar's length) in both directions across the wall | `c2.case_within_former_outline`, margins 10.04, 10.04, 0.425 and 0.425 mm | held |
+| the case lies within the plate's former outline (85 by 30 mm, the bar's length by the former height; the owner's 80 by 30 mm steel window is a separate figure) in both directions across the wall | `c2.case_within_former_outline`, margins 10.04, 10.04, 0.425 and 0.425 mm | held |
 | the opening covers the plate and the end wall plus the stated clearance each side and lies within the unit's opening in the plastic wall | `c2.wall_opening_stated`, 1.5 mm per side; `c2.wall_opening_within_unit_opening`, z -8.10 to 27.50 within -10.0 to 35.0; the drawing's end elevation | stated, held |
 | the case's checks hold at the least and the greatest plate height, and the record states both heights and the standard bar sizes between them | `c2.plate_covers_case_top`; `c16.plate_height_range` (16.8 and 27.5 mm); the paragraph *The plate-height range* | held; 16.8 and 27.5 mm, 20 and 25 mm stock |
 | no printed part comes within 0.5 mm of the machine wall's plane, so only the plate touches the wall | `c2.only_plate_touches_wall`, 0.500 mm | held |
