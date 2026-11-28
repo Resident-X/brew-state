@@ -166,6 +166,10 @@ def test_c2_the_export_refuses_a_hole_outside_the_makers_range_or_too_shallow_an
         out = tmp_path / key
         assert case.main(["--out", str(out), "--form", "single", "--set", f"{key}={value}"]) == 1, key
         assert "refused" in capsys.readouterr().err and not out.exists(), "a refused hole leaves no export behind"
+    model = case.build({"case.insert_hole_dia_mm": 3.2}, ("single",))
+    with pytest.raises(case.InsertRefused):
+        case.export_all(model, str(tmp_path / "library"), ("single",))
+    assert not (tmp_path / "library").exists(), "a library caller is refused as the command line is"
 
 
 @pytest.mark.controls("c2_undersized_hole", "c2_oversized_hole", "c2_depth_below_maker_minimum")

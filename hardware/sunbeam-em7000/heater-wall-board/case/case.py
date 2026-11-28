@@ -1109,7 +1109,15 @@ def print_mesh(mesh: trimesh.Trimesh, name: str) -> trimesh.Trimesh:
     return trimesh.Trimesh(vertices=turned - turned.min(axis=0), faces=np.asarray(mesh.faces).copy(), process=False)
 
 
+class InsertRefused(ValueError):
+    """The heat-set insert's hole is outside what its maker publishes, or the seat fails its check, so nothing is exported."""
+
+
 def export_all(m: Model, out: str, forms: Sequence[str] = ("single", "two")) -> List[str]:
+    import check  # the check imports this module; the insert's seat is refused here, on every export path, as the check refuses it
+    seat = check.tray_insert_seat(m)
+    if not seat["passed"]:
+        raise InsertRefused(seat["summary"])
     os.makedirs(out, exist_ok=True)
     written = []
     meshes = {}
@@ -1456,12 +1464,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parser.parse_args(argv)
     forms = ("single", "two") if args.form == "both" else (args.form,)
     model = build(parse_overrides(args.set), forms, args.skin)
-    import check  # the insert's hole is refused on the export path as it is by the check: a producer that exports without running the check ships no hole outside the maker's range
-    seat = check.tray_insert_seat(model)
-    if not seat["passed"]:
-        print(f"refused: {seat['summary']}", file=sys.stderr)
+    try:
+        written = export_all(model, args.out, forms)
+    except InsertRefused as exc:
+        print(f"refused: {exc}", file=sys.stderr)
         return 1
-    for path in export_all(model, args.out, forms):
+    for path in written:
         print(os.path.relpath(path, HERE))
     return 0
 
