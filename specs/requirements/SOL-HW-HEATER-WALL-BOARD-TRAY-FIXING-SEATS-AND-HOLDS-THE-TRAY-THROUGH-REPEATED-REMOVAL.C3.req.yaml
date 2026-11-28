@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C3
+type: criterion
+title: The tray root holds the push-on and pull-off loads on a stated insert allowance through repeated removal
+status: active
+version: 1
+measurement_type: binary
+verification: analysis
+text: |
+  The case record states the insert's pull-out allowance with its source, marking the figure for printed ASA in this layer direction as an assumption, and re-judges the tray root's tension and the triac end's motion at the new fixing in both the push-on and the pull-off direction against the limits the record already states, so that the fixing holds through repeated removal of the tray. The record gives the owner's proof load with home kit: twice the design load, pulled at the blade end in both directions with the bar clamped and the tray fitted. Out of scope: the printed plastic's measured strength.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
+    type: criterion-of

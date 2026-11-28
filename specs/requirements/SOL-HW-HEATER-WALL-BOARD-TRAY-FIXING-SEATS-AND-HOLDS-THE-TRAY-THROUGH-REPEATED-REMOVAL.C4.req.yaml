@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C4
+type: criterion
+title: The insert's hole keeps the mounting-hole distance from mains copper
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The case model states the distance from each insert hole and its wall to the nearest mains copper in the board's design, and it is at least the larger of the separation basis's signed clearance and creepage, whatever the screw is made of. Out of scope: the position of the board's own mounting holes.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
+    type: criterion-of

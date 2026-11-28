@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C5
+type: criterion
+title: The bar, the wall bolts and the wall opening follow the pilaster width
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. Out of scope: the owner's wall cut and signing of the sign-off lines.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
+    type: criterion-of

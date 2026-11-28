@@ -1,0 +1,27 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
+type: deliverable
+category: solution
+title: The wall board's tray is fixed to the plate by an insert in each pilaster whose screws seat apart and hold through repeated removal
+status: active
+version: 1
+text: |
+  Corrects the printed case's tray-to-plate fixing, which the plate-clearance solution it depends on left with two M3 countersunk screws in each pilaster at the same position along the plate, 4.5 mm apart in height. An M3 countersunk head is 5.5 mm across as made, so the two heads in a pilaster collide by about 1.0 mm and the countersinks in the bar's back face, about 6.3 mm across, merge by about 1.8 mm; the model draws the head at 6.0 mm, which is neither figure. The two cannot be moved apart: the lower is held by the plate's lower edge and the upper by the lid toe's pocket, so the pair can stand at most about 4.6 mm apart where clean countersinks need about 6.8 mm, and the pilaster is 5.5 mm wide, so there is no room to stagger them sideways. No check compares one head with another, so the case's checks passed a bar that cannot be assembled.
+
+  The form the owner chose on 2026-11-28 after the homework below: one heat-set M3 insert melted into each pilaster's end face, and one short M3 countersunk screw through the bar into it, with the pilasters widened to carry the insert's wall. The tray is expected to come off the bar more than a few times, and a thread-forming screw in printed ASA wears and strips with each removal and then needs the tray reprinted, where an insert's brass thread does not wear that way. The insert is about 5.7 mm long in a 4.0 mm hole, which with about 1.6 to 2.0 mm of wall round it needs a solid about 7.2 to 8.0 mm wide, against 5.5 mm now. The case's shell follows the pilaster width along its whole length, so the tray and lid grow by the same amount at every position; the cavity, the board seat, the triac tab holes, the blade bays, the lid screw, every height, the 4.5 mm end wall, the stand-off and the ledge do not change. The bar's wall-bolt zones stay 10 mm at each end, so the bar lengthens by the case's growth and the opening in the machine's plastic wall by the same, from the 80 mm bar and 83.0 mm opening to about 85 mm and 88.0 mm for 2.0 mm of wall round the insert.
+
+  Homework done before the choice, 2026-11-28: a heat-set M3 insert's maker pull-out is 680 to 730 N and its torque-out 1.6 N m in moulded ABS, higher in nylon; printed-part tests give about 1,170 to 1,775 N in PLA and PETG and show a good insert holding 3 to 4 N m against about 1 N m for a screw driven straight into the print. No maker publishes a figure for printed ASA, for a hole lying in the layer plane as this one does, or for the 70 degC enclosure air, so the printed pull-out stays an assumption the record states and the owner's proof load closes: the bar clamped with the tray fitted, and 15 kg, twice the design load, pulled at the blade end in both directions on a luggage scale. The load is the record's 75.6 N push-on at 70 mm, a 5.3 N m moment at the tray root, and the pull-off direction reverses it about the pilaster top; a single fixing midway between the two pivots carries about 365 N in both directions. A single direct M3 x 16 screw with a 4 mm step low on each pilaster, which keeps the width and the bar, was the alternative with the same load margin and was set aside for the wear on removal. An M4 screw or insert needs a wider pilaster still and a 9.4 mm countersink 1.5 mm from the wall-bolt hole.
+
+  This item corrects the behaviour of the shipped fixing and does not change the plate-clearance solution's criteria, which hold for the clearance and creepage they state; its counts of four tray holes and its stance figures are replaced by this solution's figures where the record states them. The owner's sign-off lines on the plate and the opening are re-read against the new figures; the owner signs them.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE
+    type: depends-on
+  - target: REQ-ELECTRICAL-INSTALL-001.C5
+    type: targets
+  - target: REQ-ELECTRICAL-INSTALL-001.C1
+    type: targets
+  - target: DEC-HEATER-WALL-BOARD-TRAY-IS-FIXED-TO-THE-PLATE-BY-A-HEAT-SET-INSERT-IN-EACH-PILASTER
+    type: justified-by
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON
+    type: depends-on
