@@ -33,3 +33,7 @@ links:
     type: justified-by
   - target: SOL-PRE-ORDER-CHECK-KICAD-RUN-LIMIT-FITS-A-POURED-BOARD
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 brief reviewer
+  fingerprint: 01cb6efbdfab7cb49156eb1dadef7d4beb594fac8c06da878197810a88363c43
+  gating_profile: ""
