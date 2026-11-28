@@ -1,0 +1,16 @@
+id: EV-SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME-C5-TEST-5
+type: evidence
+title: test evidence for SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T09:54:50.112704Z"
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_verify_gate.py::test_the_complete_verification_runs_the_history_command_on_every_board_with_a_placement_section_and_the_round_does_not
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-735c98993117c217
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5
+    type: satisfies

@@ -1,0 +1,17 @@
+id: EV-SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-11-28T09:54:48.039673Z"
+artifact:
+  kind: inline
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-735c98993117c217
+text: |-
+  Demonstration performed before this submission, on committed state: commit b6546483 holds the last change to hardware/tools/board_history.py, and the working tree was clean (git status empty). Command, run twice from the repository root: python3 hardware/tools/board_history.py --board hardware/sunbeam-em7000/main-board/main-board.kicad_pcb (plain) and the same with --routed. Result: both runs exited 0 and printed 'RESULT | PASS | all 22 checks passed' (22 checks in each mode). No history was rewritten. Controls: none beyond the command's own checks; this demonstration does not judge whether a recorded verdict is right (out of scope). NOT YET PERFORMED: the nightly run's record of the same command on main; that later demonstration is owed and is not claimed here.
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C1
+    type: satisfies
