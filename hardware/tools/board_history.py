@@ -67,8 +67,9 @@ The board is read in each commit at the path it has there. Its history is the
 chain of paths from the board's path at HEAD backward through the renames git
 detects at its default similarity, judged for each commit against each parent;
 it begins at the commit that adds the chain's file, a file deleted and added at
-one path in one commit being the same board, and a commit before it or off the
-chain holds no board, so an earlier design that used the same folder name is not
+one path in one commit being the same board, and a commit before it, off the
+chain, or not descending from it, as an earlier design's commits a merge brings
+in at the same path are not, holds no board, so an earlier design that used the same folder name is not
 the board's history. A commit whose lines of history give the board two paths
 fails. The layout plan is read in the folder the board is in at that commit,
 and its own renames are never followed. A pass differing from its state before
@@ -187,6 +188,7 @@ class History:
         wanted: Dict[str, set] = {self.order[-1]: {board}}
         paths: Dict[str, str] = {}
         conflicts: Dict[str, List[str]] = {}
+        starts: List[str] = []
         for commit in reversed(self.order):
             found = wanted.get(commit)
             if not found:
@@ -205,7 +207,19 @@ class History:
                     given.add(source)
             if len(given) > 1:
                 conflicts[commit] = sorted(given | set(conflicts.get(commit, [])))
-        return paths, conflicts
+            if not given:
+                starts.append(commit)
+        # A merge can bring an earlier design in at the board's own path, as a parent holding a file there. The board is
+        # what descends from where it was added: of the commits that add it, those another one's descendants do not
+        # reach, and the earlier design's commits are not their descendants.
+        latest = [start for start in starts
+                  if not any(other != start and self.is_ancestor(start, other) for other in starts)]
+        kept = set()
+        for start in latest:
+            kept.add(start)
+            kept.update(self.ancestry(start, self.order[-1]))
+        return ({commit: path for commit, path in paths.items() if commit in kept},
+                {commit: found for commit, found in conflicts.items() if commit in kept})
 
     def renamed_from(self, parent: str, commit: str, path: str, suffix: str) -> Optional[str]:
         """The path `parent` holds the file `commit` holds at `path` at, when git detects `commit` renames it there."""

@@ -670,6 +670,31 @@ class BoardPathChain(Base):
                               "\n".join(lines))
                 self.assertFalse([check for check in document["checks"] if check["verdict"] != "PASS"])
 
+    def test_an_earlier_design_a_merge_brings_in_at_the_boards_own_path_is_not_its_history(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: an earlier design that reused a board's folder name is not that board's history, whichever line of history carries it
+        self.repo.placed()
+        self.repo.routed()
+        self.repo.git("checkout", "-q", "-b", "later-design")
+        self.repo.remove()
+        self.repo.restart("seed")
+        self.repo.placed()
+        judged = self.repo.routed()
+        hand = self.repo.git("rev-parse", "HEAD~1")
+        self.repo.through_router(judged)
+        self.repo.rename("b")
+        self.repo.git("checkout", "-q", "main")
+        self.repo.write("docs/notes.md", "an unrelated change on the line holding the earlier design\n")
+        self.repo.git("add", "-A")
+        self.repo.git("commit", "-q", "-m", "docs: an unrelated change on main")
+        self.repo.git("checkout", "-q", "later-design")
+        self.repo.git("merge", "-q", "--no-ff", "-m", "merge main, which still holds the earlier design at the path", "main")
+        for extra in ((), ("--routed",)):
+            with self.subTest(extra=extra):
+                lines, document = self.assertPasses(*extra)
+                self.assertIn(f"CHECK | first track | PASS | {hand[:12]} is the first commit carrying a track",
+                              "\n".join(lines))
+                self.assertFalse(document["checks"][0]["check"] == "board path")
+
     def test_a_commit_whose_parents_give_the_board_two_paths_fails_naming_it_and_judges_nothing_else(self):
         # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: a commit whose parents give conflicting board paths fails as a fault, naming it
         self.repo.placed()
