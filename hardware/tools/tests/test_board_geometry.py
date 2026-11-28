@@ -309,6 +309,7 @@ class AWayRoundASlotIsExact(unittest.TestCase):
     SLOT = board_geometry.Loop(square(30, 5, 31, 15), False)
 
     def test_with_no_slot_in_reach_the_way_is_the_straight_line(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C2: A synthetic pair of items with no slot between them returns the straight-line distance as its route length, and every existing route-length test of the check's geometry module passes unchanged. Out of scope is any figure the rule compares the length with.
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2: On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.
         one, other = board_geometry.Shape([square(0, 0, 1, 1)]), board_geometry.Shape([square(3, 0, 4, 1)])
         self.assertEqual(board_geometry.route_length(one, other, [], 10), (2.0, 0))
@@ -353,6 +354,60 @@ class AWayRoundASlotIsExact(unittest.TestCase):
         one, other = board_geometry.Shape([[(14, 10), (15, 10), (15, 9)]]), board_geometry.Shape([[(10, 14), (9, 14), (9, 15)]])
         for slots in ([self.POCKET], board_geometry.Detours([self.POCKET])):
             self.assertEqual(board_geometry.route_length(one, other, slots, 40), (math.hypot(4, 4), 0))
+
+    # Figures below are those of the code before the junction fix: the one-outline T, the arms apart, and the corner gap.
+    BAR = board_geometry.Loop(square(0, 0, 10, 2), False)
+    ARM = board_geometry.Loop(square(4, 2, 6, 12), False)
+    T_ONE_LOOP = board_geometry.Loop([(0, 0), (10, 0), (10, 2), (6, 2), (6, 12), (4, 12), (4, 2), (0, 2)], False)
+    LEFT = board_geometry.Shape([square(1, 2.5, 2, 3.5)])
+    RIGHT = board_geometry.Shape([square(8, 2.5, 9, 3.5)])
+
+    def test_two_outlines_sharing_an_edge_give_the_way_the_one_outline_gives(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1: On a synthetic board with a slot whose two arms meet at a corner, drawn once as one outline and drawn again as two outlines that touch (sharing an edge, and meeting at a single point), the creepage route length between two items either side of the junction is the length of the shortest path round the free end of an arm, not the length of a path through the junction or along the wall the two parts share, and the same pair on a slot with the arms apart (a gap between the outlines) is unchanged, its path through the gap kept. Out of scope is the rule's threshold.
+        for slots in ([self.T_ONE_LOOP], [self.BAR, self.ARM], board_geometry.Detours([self.BAR, self.ARM]), board_geometry.Detours([self.ARM, self.BAR])):
+            length, rounds = board_geometry.route_length(self.LEFT, self.RIGHT, slots, 30)
+            self.assertAlmostEqual(length, 16.23606797749979, places=9)
+            self.assertEqual(rounds, 1)
+
+    def test_two_outlines_meeting_at_a_point_leave_no_way_through_the_pinch(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1: On a synthetic board with a slot whose two arms meet at a corner, drawn once as one outline and drawn again as two outlines that touch (sharing an edge, and meeting at a single point), the creepage route length between two items either side of the junction is the length of the shortest path round the free end of an arm, not the length of a path through the junction or along the wall the two parts share, and the same pair on a slot with the arms apart (a gap between the outlines) is unchanged, its path through the gap kept. Out of scope is the rule's threshold.
+        a, b = board_geometry.Loop(square(0, 0, 10, 10), False), board_geometry.Loop(square(10, 10, 20, 20), False)
+        one, other = board_geometry.Shape([square(12.5, 6.5, 13.5, 7.5)]), board_geometry.Shape([square(6.5, 12.5, 7.5, 13.5)])
+        for slots in ([a, b], [b, a], board_geometry.Detours([a, b])):
+            length, rounds = board_geometry.route_length(one, other, slots, 40)
+            self.assertAlmostEqual(length, 2 * math.hypot(2.5, 6.5) + 20.0, places=9)
+            self.assertEqual(rounds, 1)
+
+    def test_a_gap_between_outlines_keeps_its_way_through(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1: On a synthetic board with a slot whose two arms meet at a corner, drawn once as one outline and drawn again as two outlines that touch (sharing an edge, and meeting at a single point), the creepage route length between two items either side of the junction is the length of the shortest path round the free end of an arm, not the length of a path through the junction or along the wall the two parts share, and the same pair on a slot with the arms apart (a gap between the outlines) is unchanged, its path through the gap kept. Out of scope is the rule's threshold.
+        gapped = board_geometry.Loop(square(4, 2.1, 6, 12.1), False)
+        for slots in ([self.BAR, gapped], board_geometry.Detours([self.BAR, gapped])):
+            length, rounds = board_geometry.route_length(self.LEFT, self.RIGHT, slots, 30)
+            self.assertAlmostEqual(length, 6.079215610874229, places=9)
+            self.assertEqual(rounds, 1)
+        a, b = board_geometry.Loop(square(0, 0, 10, 10), False), board_geometry.Loop(square(10.1, 10.1, 20, 20), False)
+        one, other = board_geometry.Shape([square(12.5, 6.5, 13.5, 7.5)]), board_geometry.Shape([square(6.5, 12.5, 7.5, 13.5)])
+        self.assertEqual(board_geometry.route_length(one, other, [a, b], 40), (math.hypot(5, 5), 0))
+
+    def test_a_line_along_a_shared_wall_or_through_a_pinch_is_blocked_and_one_along_a_single_wall_is_not(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1: On a synthetic board with a slot whose two arms meet at a corner, drawn once as one outline and drawn again as two outlines that touch (sharing an edge, and meeting at a single point), the creepage route length between two items either side of the junction is the length of the shortest path round the free end of an arm, not the length of a path through the junction or along the wall the two parts share, and the same pair on a slot with the arms apart (a gap between the outlines) is unchanged, its path through the gap kept. Out of scope is the rule's threshold.
+        rings = [self.BAR.points, self.ARM.points]
+        self.assertTrue(board_geometry.blocked((3, 2), (7, 2), rings))
+        self.assertTrue(board_geometry.Detours([self.BAR, self.ARM]).blocks((3, 2), (7, 2)))
+        self.assertFalse(board_geometry.blocked((0, 2), (4, 2), rings))
+        self.assertFalse(board_geometry.Detours([self.BAR, self.ARM]).blocks((0, 2), (4, 2)))
+        squares = [square(0, 0, 10, 10), square(10, 10, 20, 20)]
+        self.assertTrue(board_geometry.blocked((12, 8), (8, 12), squares))
+        self.assertTrue(board_geometry.Detours([board_geometry.Loop(r, False) for r in squares]).blocks((12, 8), (8, 12)))
+        self.assertFalse(board_geometry.blocked((12, 8), (13, 7), squares))
+        self.assertFalse(board_geometry.blocked((11, 9), (9, 11), [square(0, 0, 10, 10)]))
+
+    def test_with_a_slot_in_reach_that_is_not_between_the_pieces_the_way_is_the_straight_line(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C2: A synthetic pair of items with no slot between them returns the straight-line distance as its route length, and every existing route-length test of the check's geometry module passes unchanged. Out of scope is any figure the rule compares the length with.
+        one, other = board_geometry.Shape([square(0, 0, 1, 1)]), board_geometry.Shape([square(3, 0, 4, 1)])
+        beside = board_geometry.Loop(square(0, 5, 4, 6), False)
+        for slots in ([beside], board_geometry.Detours([beside])):
+            self.assertEqual(board_geometry.route_length(one, other, slots, 10), (2.0, 0))
 
     def test_a_way_not_under_the_reach_is_not_worked_out(self):
         # SOL-PRE-ORDER-CHECK-HOLDS-MAINS-APART-FROM-LOW-VOLTAGE-COPPER-ON-EVERY-LAYER.C2: On a throwaway copy of a proof design with a barrier slot between a Mains-class item and a low-voltage item on different layers, the shortest plan-view path between them that does not cross the slot, going round its ends, is compared with creepage_mm; a pair whose path is shorter fails as mains_layer_separation naming the items, the layers and the path length, and a pair whose path is at least the figure passes even where its straight-line distance is under it. Out of scope is any path through the thickness of the board.

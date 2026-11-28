@@ -934,16 +934,67 @@ def crosses(a: Point, b: Point, c: Point, d: Point) -> bool:
         (third > STRAIGHT and fourth < -STRAIGHT) or (third < -STRAIGHT and fourth > STRAIGHT))
 
 
+#: How near a point may lie to a slot's wall and count as on it, in mm.
+ON_WALL = 1e-7
+
+#: How far from a point of a slot's outline the two sides of a line through it are probed, in mm.
+PROBE = 1e-6
+
+
+def on_outline(point: Point, ring: Sequence[Point]) -> bool:
+    """Whether a point lies on the outline of a slot."""
+    return min(distance_to_segment(point, c, d) for c, d in zip(ring, list(ring[1:]) + list(ring[:1]))) <= ON_WALL
+
+
+def pinches(a: Point, b: Point, point: Point, rings: Sequence[Sequence[Point]]) -> bool:
+    """Whether the straight line from a to b, passing through `point`, has one slot against it on one side there and another slot on the other, so it runs through the pinch between them."""
+    run = math.dist(a, b)
+    if run == 0:
+        return False
+    normal = (-(b[1] - a[1]) / run * PROBE, (b[0] - a[0]) / run * PROBE)
+    left = (point[0] + normal[0], point[1] + normal[1])
+    right = (point[0] - normal[0], point[1] - normal[1])
+    one = {index for index, ring in enumerate(rings) if within(left, ring)}
+    other = {index for index, ring in enumerate(rings) if within(right, ring)}
+    return any(first != second for first in one for second in other)
+
+
+def piece_held(middle: Point, rings: Sequence[Sequence[Point]]) -> bool:
+    """Whether the middle of a piece of a line lies inside a slot, or on the walls of two slots at once, which is the wall they share."""
+    walls = 0
+    for ring in rings:
+        near = min(distance_to_segment(middle, c, d) for c, d in zip(ring, list(ring[1:]) + list(ring[:1])))
+        if near <= ON_WALL:
+            walls += 1
+        elif within(middle, ring):
+            return True
+    return walls > 1
+
+
 def blocked(a: Point, b: Point, slots: Sequence[Sequence[Point]]) -> bool:
-    """Whether the straight line from a to b passes through the inside of any slot, running along or touching a wall being open."""
-    middle = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
-    for slot in slots:
-        ring = list(zip(slot, slot[1:] + slot[:1]))
-        if any(crosses(a, b, c, d) for c, d in ring):
+    """Whether the straight line from a to b passes through the inside of any slot, running along or touching a wall being open.
+
+    A line along the wall two slots share, or through the point where two slots
+    touch with one either side of the line, is held: the slots together leave no
+    way there.
+    """
+    rings = [list(slot) for slot in slots]
+    if any(crosses(a, b, c, d) for ring in rings for c, d in zip(ring, ring[1:] + ring[:1])):
+        return True
+    run = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2
+    cuts = [0.0, 1.0]
+    for ring in rings:
+        for corner in ring:
+            if run > 0 and abs(orientation(a, b, corner)) <= STRAIGHT:
+                along = ((corner[0] - a[0]) * (b[0] - a[0]) + (corner[1] - a[1]) * (b[1] - a[1])) / run
+                if 0.0 < along < 1.0:
+                    cuts.append(along)
+    cuts.sort()
+    for before, after in zip(cuts, cuts[1:]):
+        half = (before + after) / 2
+        if piece_held((a[0] + (b[0] - a[0]) * half, a[1] + (b[1] - a[1]) * half), rings):
             return True
-        if within(middle, slot) and min(distance_to_segment(middle, c, d) for c, d in ring) > 1e-7:
-            return True
-    return False
+    return any(pinches(a, b, (a[0] + (b[0] - a[0]) * along, a[1] + (b[1] - a[1]) * along), rings) for along in cuts[1:-1])
 
 
 class Detours:
@@ -962,6 +1013,10 @@ class Detours:
         self.walls = [[(c, d, (min(c[0], d[0]), min(c[1], d[1]), max(c[0], d[0]), max(c[1], d[1])))
                        for c, d in zip(ring, ring[1:] + ring[:1])] for ring in self.rings]
         self.recent: List[Tuple[Point, Point]] = []
+        self.joined: Set[int] = {position for position, (index, corner) in enumerate(self.corners)
+                                 if any(other != index and self.slots[other].bounds[0] - ON_WALL <= corner[0] <= self.slots[other].bounds[2] + ON_WALL
+                                        and self.slots[other].bounds[1] - ON_WALL <= corner[1] <= self.slots[other].bounds[3] + ON_WALL
+                                        and on_outline(corner, self.rings[other]) for other in range(len(self.slots)))}
 
     def sees(self, one: int, other: int) -> bool:
         key = (one, other) if one < other else (other, one)
@@ -1003,8 +1058,9 @@ class Detours:
     def blocks(self, a: Point, b: Point) -> bool:
         """Whether the straight line from a to b passes through the inside of any slot, running along or touching a wall being open.
 
-        A line that meets a slot's corner exactly crosses no wall properly there, so it is cut at every corner it meets and
-        the middle of each piece is asked about, and a line that enters a slot at one corner and leaves at another is held.
+        A line that meets a slot's corner exactly crosses no wall properly there, so it is cut at every corner it meets of any
+        slot and the middle of each piece is asked about, and a line that enters a slot at one corner and leaves at another is held,
+        as is one that runs along a wall two slots share or through a point where two slots touch with one on either side of it.
         The few walls that last stopped a line are tried first, since the lines
         asked about one after another run alike and are stopped by the same walls.
         """
@@ -1014,10 +1070,12 @@ class Detours:
                 return True
         low_x, high_x, low_y, high_y = min(a[0], b[0]), max(a[0], b[0]), min(a[1], b[1]), max(a[1], b[1])
         run = (b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2
-        for slot, ring, walls in zip(self.slots, self.rings, self.walls):
+        cuts = [0.0, 1.0]
+        reached = []
+        for ring, slot, walls in zip(self.rings, self.slots, self.walls):
             if slot.bounds[0] > high_x or slot.bounds[2] < low_x or slot.bounds[1] > high_y or slot.bounds[3] < low_y:
                 continue
-            cuts = [0.0]
+            reached.append((ring, walls))
             for c, d, box in walls:
                 if box[0] <= high_x and box[2] >= low_x and box[1] <= high_y and box[3] >= low_y:
                     if crosses(a, b, c, d):
@@ -1028,14 +1086,24 @@ class Detours:
                             along = ((corner[0] - a[0]) * (b[0] - a[0]) + (corner[1] - a[1]) * (b[1] - a[1])) / run
                             if 0.0 < along < 1.0:
                                 cuts.append(along)
-            cuts.append(1.0)
-            cuts.sort()
-            for before, after in zip(cuts, cuts[1:]):
-                half = (before + after) / 2
-                middle = (a[0] + (b[0] - a[0]) * half, a[1] + (b[1] - a[1]) * half)
-                if within(middle, ring) and min(distance_to_segment(middle, c, d) for c, d, _ in walls) > 1e-7:
+        if not reached:
+            return False
+        cuts.sort()
+        for before, after in zip(cuts, cuts[1:]):
+            half = (before + after) / 2
+            middle = (a[0] + (b[0] - a[0]) * half, a[1] + (b[1] - a[1]) * half)
+            walled = 0
+            for ring, walls in reached:
+                if any(box[0] - ON_WALL <= middle[0] <= box[2] + ON_WALL and box[1] - ON_WALL <= middle[1] <= box[3] + ON_WALL
+                       and distance_to_segment(middle, c, d) <= ON_WALL for c, d, box in walls):
+                    walled += 1
+                elif within(middle, ring):
                     return True
-        return False
+            if walled > 1:
+                return True
+        rings = [ring for ring, _ in reached]
+        return len(rings) > 1 and any(
+            pinches(a, b, (a[0] + (b[0] - a[0]) * along, a[1] + (b[1] - a[1]) * along), rings) for along in cuts[1:-1])
 
 
 def route_length(first: Shape, second: Shape, slots, reach: float, straight: Optional[float] = None) -> Tuple[float, int]:
@@ -1044,7 +1112,7 @@ def route_length(first: Shape, second: Shape, slots, reach: float, straight: Opt
     A way is a run of straight lines, each clear of every slot's inside, that
     bends only at a corner of a slot; the ends are the nearest points of the
     two pieces the first and last lines meet, so a slot corner is the only
-    place a way can turn. Where no slot lies within `reach` of the pieces the
+    place a way can turn, except a corner that lies on the outline of another slot, where two slots touch and no way turns. Where no slot lies within `reach` of the pieces the
     way is the straight line between them. The length is exact for the polygons
     given, not gridded. The count is of the slots a corner of which the way
     turns at. `straight` is the distance between the pieces where that is
@@ -1067,7 +1135,7 @@ def route_length(first: Shape, second: Shape, slots, reach: float, straight: Opt
             break
     if best <= straight + ROUTE_SAME:
         return best, 0
-    nodes = [position for position, (index, _) in enumerate(detours.corners) if index in near]
+    nodes = [position for position, (index, _) in enumerate(detours.corners) if index in near and position not in detours.joined]
 
     def reaching(shape: Shape, corner: Point) -> float:
         for distance, foot in shape.hull().sides_nearest(corner, min(best, reach) + shape.margin):
