@@ -1,0 +1,12 @@
+id: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC.C3
+type: criterion
+title: The layout-chain tests run when KICAD_CLI is a bare tool name
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The layout-chain tests run and do not report that they cannot run when the board test task gives the command-line tool's name as the bare name found on the search path, and still refuse a name that resolves to nothing. Out of scope is any path other than the tool's.
+links:
+  - target: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC
+    type: criterion-of

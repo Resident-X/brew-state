@@ -1,0 +1,26 @@
+id: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC
+type: deliverable
+category: solution
+title: Three board tooling tests pass on the hosted runner and not only on the owner's Mac
+status: active
+version: 1
+text: |
+  Makes three of the board tooling's tests independent of the owner's Mac, so the nightly's board tests pass on the hosted Ubuntu runner where KiCad is installed by the workflow. The first nightly runs in which the KiCad install worked (dispatched on the build branch, runs 46136364038 and 46136374257 at commit 3c486bcd) showed three failures that pass on the owner's Mac. None is caused by the branch; the scheduled nightlies of main never reached them. The hosted-runner leaf that made the earlier board tests pass there (SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER) covers the view renderer, the seeded review folder and the check task's whole-repository test; these three are others, and each rests on an assumption the Mac satisfies.
+
+  Root causes and locus, each in its own test file under hardware/tools/tests:
+  - The scripting-environment test (test_kicad_scripting_environment, about line 94) asserts that the layout tools (the zone refill, the fill comparison and the chain runner) cannot run under the interpreter that runs the tests, because it cannot import KiCad's board module. On the runner that interpreter is /usr/bin/python3 and KiCad's apt package puts the board module in it (the nightly workflow asserts exactly that), so the tools really ran and the test saw exit status 0 where it expects 2.
+  - The full-check test of the committed main board (test_main_board_clamp_and_side, the class FullCheck, test_the_full_pre_order_check_of_the_committed_main_board_has_no_violation_line_beyond_its_accepted_ones, about line 851) calls the check's design function directly and so skips the check's own entry point, which isolates KiCad's user configuration into a temporary folder holding library tables. On the runner the user configuration is empty, so 1195 lines say the design does not include a footprint library such as Capacitor_THT; the board check task passed on the same board in the same job because it goes through the entry point.
+  - The layout-chain tests (test_main_board_layout_chain, the module setup about lines 49 to 55) demand that KICAD_CLI be a file path. The task file defaults KICAD_CLI to the bare name kicad-cli and the board test task passes that to the tests, so the module reports it cannot run. The sibling helper in test_main_board_clamp_and_side resolves the name on the search path.
+
+  Settled for the build, one branch and one gate:
+  - Each fix is in its test, not in the workflow or the tool. (1) The test hands the tools an interpreter that cannot import the module, a stub interpreter that exits non-zero or one without it, so the assertion no longer depends on the interpreter running the tests. Rejected: relying on the Mac's interpreter, and removing the installed module from the runner, which breaks the check task that needs it. (2) The test prepares the isolated KiCad configuration the way the check's entry point does (requires KiCad, isolates the configuration into a temporary folder, sets it for the run and restores it after). Rejected: calling the entry point, which changes what the test asserts; and installing global library tables on the runner, which hides the same assumption on the next machine. (3) The module setup resolves a bare tool name on the search path. Rejected: exporting a full path as KICAD_CLI in the workflow, which leaves the test unrunnable by the task's own default.
+  - Other tests that call the check's design function directly, or other layout-chain helpers, may share these assumptions; the root-cause probe found only these three. The build greps for them and fixes any it finds in the same way, or states the grep found none.
+  - Planning notes. The board tier of the round gate runs when hardware tooling or tests change; the demonstration needs a dispatch of the nightly workflow on the branch, whose board part runs about as long as the board gate. KiCad is installed by the nightly's own step and is not available to a local run without the owner's Mac install.
+  - Out of scope: runners for other operating systems, the sweep (the sibling item for the mutation toolchain), and the tests that already pass on the runner.
+rationale: |-
+  Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1 asks: a design passes its verification before it is ordered, and the nightly's board tests are part of that verification. A test that passes only on the machine of the person who wrote it does not verify the board on the machine that checks main.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets

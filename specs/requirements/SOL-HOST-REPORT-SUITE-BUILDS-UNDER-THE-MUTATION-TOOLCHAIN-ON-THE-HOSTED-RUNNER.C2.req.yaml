@@ -1,0 +1,12 @@
+id: SOL-HOST-REPORT-SUITE-BUILDS-UNDER-THE-MUTATION-TOOLCHAIN-ON-THE-HOSTED-RUNNER.C2
+type: criterion
+title: The full sweep's judging job runs and judges the combined population
+status: active
+version: 1
+measurement_type: binary
+verification: demonstration
+text: |-
+  In the same dispatched run the judging job of the full mutation sweep is not skipped, runs to the end and reports a verdict on the combined mutant population. Out of scope is what the verdict is: survivors it reports are judged by the sweep's own route.
+links:
+  - target: SOL-HOST-REPORT-SUITE-BUILDS-UNDER-THE-MUTATION-TOOLCHAIN-ON-THE-HOSTED-RUNNER
+    type: criterion-of

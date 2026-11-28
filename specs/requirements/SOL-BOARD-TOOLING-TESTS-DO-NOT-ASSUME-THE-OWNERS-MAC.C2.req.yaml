@@ -1,0 +1,12 @@
+id: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC.C2
+type: criterion
+title: The full check of the committed main board in the test passes on a host with no user library tables
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The test that runs the full pre-order check on the committed main board reports no footprint or symbol library lines beyond the board's accepted ones on a host whose layout editor user configuration is empty, because the test prepares the same isolated configuration the check's own run prepares and restores the environment after. Out of scope are the board's accepted lines and any other check.
+links:
+  - target: SOL-BOARD-TOOLING-TESTS-DO-NOT-ASSUME-THE-OWNERS-MAC
+    type: criterion-of
