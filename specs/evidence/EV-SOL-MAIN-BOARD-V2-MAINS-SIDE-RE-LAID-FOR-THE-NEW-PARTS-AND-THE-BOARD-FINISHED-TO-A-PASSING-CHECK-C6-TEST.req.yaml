@@ -1,0 +1,18 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C6-TEST
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T03:19:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: Reproducible by `python3 hardware/tools/board_check.py --root . --kicad-cli <path to KiCad 10.0.7 kicad-cli>` run in a clean tree at commit f897c2f2b4e4b5df00395743ac8faf79e22c4ec6 (the check needs KiCad 10.0 or newer; set the path with --kicad-cli), whose last line is "RESULT | PASS | all 7 designs passed"; and by reading hardware/sunbeam-em7000/separation-basis.yaml.
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |
+  At f897c2f2: the signed separation basis record holds accepted_exceptions with 42 entries. Its accepted_by is "David Baker (owner), accepted in session 2026-11-18, words \"I accept the separation basis record as signed.\"" with accepted_on 2026-11-18, and every one of the 42 entries carries that same accepted_by and accepted_on (read with PyYAML). The check output the claim rests on: the line "DESIGN | hardware/sunbeam-em7000/main-board/main-board.kicad_pro | PASS | 265 warnings", the final line "RESULT | PASS | all 7 designs passed", and ACCEPTED lines of the form "ACCEPTED | hardware/sunbeam-em7000/main-board/main-board.kicad_pro | spacing_exception | hardware/sunbeam-em7000/separation-basis.yaml accepted_exceptions[N] | ..." which, for the main board, name 42 distinct indices N, [0] to [41] (64 such lines in all, some entries used by more than one measured line). The check fails an entry that covers no shortfall as stale and a shortfall with no entry as a violation, so each entry covers a shortfall the layout shows and none is left without one. Out of scope: the owner's confirmation of the entries signed on his behalf.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C6
+    type: satisfies

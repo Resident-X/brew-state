@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:20:01Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion in the three places it names. C606: schematic E1 sheet 1n 0402B102K500NT C1523 footprint Capacitor_SMD:C_0402_1005Metric, board footprint C_0402_1005Metric, placement file row "C606","1n","C_0402_1005Metric". U520: schematic 52-flow-pressure-and-spare-analogue-inputs SN74LVC1G17 MPN SN74LVC1G17DCKR(UMW) C7394034, board footprint manufacturer UMW with the same MPN, placement file row "U520","SN74LVC1G17","SOT-353_SC-70-5". J622, J623, J627 and J628: schematic (E3 sheet), board and placement file all carry the PinHeader_1x02_P2.54mm_Vertical footprint, and the schematic, the board and the parts list carry the 1x2 part number "PZ254V-11-02P + 2.54 Short Circuit Cap Closed" (C492401). J862: schematic symbol has in_bom no and no LCSC number; the board footprint is main-board:REED_PADS_P20.00mm; the placement file written by `kicad-cli pcb export pos` holds no J862 row (355 lines, 0 hits) and the production parts list holds none; hardware/sunbeam-em7000/main-board/parts-specification.yaml lists J862 fitted_by owner and not in the bill or the position file, and hardware/sunbeam-em7000/main-board/fabrication-notes.md section "Tank reed J862, fitted by hand" carries the fitting note: lead diameter to measure against the 1.0 mm drill (a lead over 0.8 mm leaves no soldering gap), leads formed to the 20.0 mm pitch and the spacing checked after forming. The note lives in the fabrication notes, not in the three artefacts themselves; the criterion''s "in the schematic, the parts list and the placement file alike" is read as the three agreeing that J862 is not a placed or listed part, with the fitting note as the record for the hand fit. Out of scope: mains parts and supplier stock.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C2
+    type: satisfies

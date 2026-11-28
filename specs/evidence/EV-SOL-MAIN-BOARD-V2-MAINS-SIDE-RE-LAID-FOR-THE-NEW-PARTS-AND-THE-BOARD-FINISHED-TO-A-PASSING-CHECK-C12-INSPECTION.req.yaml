@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C12-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C12
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:20:02Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion with KiCad 10.0.7''s pcbnew over hardware/sunbeam-em7000/main-board/main-board.kicad_pcb. The branch fuse holders are F701, F711 and F731 (main-board:FUSEHOLDER_5x20_XC_BLX-A; hardware/sunbeam-em7000/main-board/owner-sign-off.md S-9). Holder outline taken as the footprint''s fabrication body F.Fab: F701 x 15.05 to 40.55, y 26.30 to 35.90; F711 x 15.05 to 40.55, y 15.70 to 25.30; F731 x 15.05 to 40.55, y 36.40 to 46.00 (the holders are 10.6 mm apart centre to centre in y, so the bodies do not overlap). Designators on F.Silkscreen: F701 x 25.79 to 29.76, y 29.42 to 31.12; F711 y 18.82 to 20.52; F731 y 39.50 to 41.19, each inside its own body. Ratings, board text on F.Silkscreen: ''T800mA 250V'' x 22.53 to 33.07, y 31.18 to 32.87 (inside F701); ''T500mA 250V'' y 20.57 to 22.27 (inside F711); ''T400mA 250V'' y 41.30 to 43.00 (inside F731). No designator or rating box meets another holder''s body, none is missing, and each rating matches its holder''s value field (0.8A, 0.5A, 0.4A). Out of scope: designators left on the fabrication layer.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C12
+    type: satisfies

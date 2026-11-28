@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:20:00Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion in the three places it names. Schematic (hardware/sunbeam-em7000/main-board/*.kicad_sch symbol fields): K201 value and MPN HF115F-I/005-1HS3A, LCSC C2976795, footprint main-board:Relay_HF115F-I_1HS3A (102-interlock); F101 SCT520PT10A250V, C22447834, footprint Fuse_SETfuse_SCT520PT_Axial_P28.0mm (101-mains-entry-and-load-feed); tabs J101, J102, J103 and J106 to J110 MPN 63849-1, C86469, footprint Tab_TE_63849-1; RV101 14D471K, C8852, footprint RV_Disc_14D471K_P7.5mm; D701 and D711 SMCJ400CA, C151285, footprint D_SMC (700-pump-drives); R706, C701, R716 and C711 appear on no sheet. Parts list: the production parts list written by `python3 hardware/tools/production_files.py parts-list` from the committed schematic, board, parts-specification.yaml and catalogue-extract.yaml holds the TE 63849-1 line for J101, J102, J103, J106 to J110 (C86469) and lines for D701 and D711, and no snubber position. Footprints (main-board.kicad_pcb read with pcbnew from KiCad 10.0.7): K201 Relay_HF115F-I_1HS3A with MPN HF115F-I/005-1HS3A; F101 the SETfuse SCT520PT axial pigtail, a soldered fuse; the tabs Tab_TE_63849-1; RV101 the 14D471K disc footprint (the comparison of its pad pair with the maker''s disc drawing is the record hardware/sunbeam-em7000/main-board/varistor-footprint-record.md and the footprint fix of commits 0cc89e51 and bcb756c2, read, not re-measured here); D701 pad 1 on /Pump drives/PUMP_C_MT2 and pad 2 on /NEUTRAL, D711 pad 1 on /Pump drives/PUMP_S_MT2 and pad 2 on /NEUTRAL, which is from each pump triac''s main terminal 2 to neutral; footprints R706, C701, R716 and C711 are absent from the board, and so are their nets. The three places agree on every part named. Out of scope: low-voltage parts and the part numbers of the other mains parts.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C1
+    type: satisfies

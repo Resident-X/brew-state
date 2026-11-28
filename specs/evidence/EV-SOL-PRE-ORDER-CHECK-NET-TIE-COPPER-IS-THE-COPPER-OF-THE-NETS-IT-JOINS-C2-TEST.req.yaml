@@ -1,0 +1,18 @@
+id: EV-SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS-C2-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T03:05:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_net_tie_layer_separation.py::ATieThatJoinsNoMainsNetIsHeldAsLowVoltage
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |-
+  Three tests pass: a tie between low-voltage nets is held to the signed figures from mains on another layer; a tie of a Mains-class net to one outside the class is held as mains copper against low voltage; a group naming a pad the footprint lacks ties nothing and leaves the graphic low voltage.
+links:
+  - target: SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS.C2
+    type: satisfies

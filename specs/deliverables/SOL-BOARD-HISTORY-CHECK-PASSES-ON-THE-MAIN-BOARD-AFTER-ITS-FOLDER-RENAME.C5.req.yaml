@@ -1,0 +1,12 @@
+id: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5
+type: criterion
+title: The nightly complete verification runs the history command and a shallow clone is refused, not passed
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on the committed main board and on every other board design that records a placement history, so a later commit that moves a board or breaks a record the command judges fails that run and is seen. When the run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate, and how the hosted runner obtains the full history.
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME
+    type: criterion-of

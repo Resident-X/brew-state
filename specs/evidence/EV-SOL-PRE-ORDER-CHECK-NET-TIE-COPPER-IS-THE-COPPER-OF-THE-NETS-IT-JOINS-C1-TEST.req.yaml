@@ -1,0 +1,18 @@
+id: EV-SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS-C1-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS.C1
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T03:05:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_net_tie_layer_separation.py::ANetTiesGraphicIsTheCopperOfTheNetsItJoins
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |-
+  Two tests pass (python3 -m unittest in hardware/tools): test_the_graphic_of_a_tie_between_mains_class_nets_is_held_against_no_mains_item and test_a_tie_that_joins_only_mains_class_nets_gives_no_finding_whichever_of_its_nets_is_the_pours. A synthetic layout with a Mains-class pour on an inner layer and a net tie between two Mains-class nets yields no mains_layer_separation finding for the tie graphic.
+links:
+  - target: SOL-PRE-ORDER-CHECK-NET-TIE-COPPER-IS-THE-COPPER-OF-THE-NETS-IT-JOINS.C1
+    type: satisfies

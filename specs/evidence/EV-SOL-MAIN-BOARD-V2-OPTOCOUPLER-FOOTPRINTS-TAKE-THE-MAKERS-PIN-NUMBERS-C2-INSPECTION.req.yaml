@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:20:04Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion: pad numbers and nets of U701, U711 and U602 read with KiCad 10.0.7''s pcbnew from hardware/sunbeam-em7000/main-board/main-board.kicad_pcb. U701: pad 1 /Pump drives/PUMP_C_LED_A (LED anode, supply-side net), pad 2 PUMP_C_LED_K (cathode, switch net), pad 3 unconnected-(U701-NC-Pad3) (no connection), pad 4 PUMP_C_OPTO_MT (the main terminal on the net through the series resistors), pad 5 unconnected-(U701-NC-Pad5), pad 6 PUMP_C_TRIAC_G (the other main terminal, on the triac gate net). U711: pad 1 PUMP_S_LED_A, 2 PUMP_S_LED_K, 3 unconnected-(U711-NC-Pad3), 4 PUMP_S_OPTO_MT, 5 unconnected-(U711-NC-Pad5), 6 PUMP_S_TRIAC_G. U602: pad 1 /NEUTRAL, pad 2 /Zero-crossing detector/ZC_LED_A, pad 3 GND (emitter), pad 4 /ZC_IN (collector). The names "unconnected-(...)" are KiCad''s automatic nets for a pad that no other pad shares, so pins 3 and 5 carry no net. The schematic''s sheet record hardware/sunbeam-em7000/main-board/sheets/E2-zero-crossing-detector.yaml draws LINE through R630 and R631 to U602 pin 2 and pin 1 to NEUTRAL, pins 3 and 4 on GND and ZC_IN, which agrees. No pad is on another net and no pin 3 or 5 has a net. Out of scope: component values.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+links:
+  - target: SOL-MAIN-BOARD-V2-OPTOCOUPLER-FOOTPRINTS-TAKE-THE-MAKERS-PIN-NUMBERS.C2
+    type: satisfies
