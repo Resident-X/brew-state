@@ -1,0 +1,39 @@
+id: DEC-HEATER-WALL-BOARD-TRAY-IS-FIXED-TO-THE-PLATE-BY-A-HEAT-SET-INSERT-IN-EACH-PILASTER
+type: decision
+category: tactical
+title: The tray is fixed to the plate by a heat-set insert in each pilaster, and the case widens to carry it
+status: active
+version: 1
+rationale: |
+  Context: the tray screws were two M3 countersunk screws per pilaster at one position along the plate, 4.5 mm apart in height. Their 5.5 mm heads collide, the countersinks in the bar merge, and the pair cannot be moved apart, since the plate's lower edge holds the lower and the lid toe's pocket the upper, and the 5.5 mm pilaster has no room to stagger them. The owner expects the tray to come off the bar more than a few times, which a thread-forming screw in a printed ASA pilot does not survive without wearing or stripping the thread and forcing a reprint of the tray.
+
+  Decision: one heat-set M3 insert melted into each pilaster's end face, with a short M3 countersunk screw through the bar into it, and the pilasters widened to carry the insert's wall, so the bar and the wall opening lengthen with the case. The brass thread does not wear on removal; the screw can be replaced; and no pilaster step is needed.
+
+  Trade-offs: the insert's maker pull-out, 680 to 730 N in moulded ABS, is not a figure for printed ASA in this layer direction, so the record carries an assumed allowance and the owner's proof load closes it; the insert gives no more pull-out than a direct M3 x 16 screw on the record's own allowance, so the gain is the thread's life, not strength. The cost is a wider case and tray and lid over their whole length, a longer bar and a wider opening in the machine's plastic wall, and an insert the owner sets by hand flush with an iron, where a direct screw needs none of that. One M4 screw or insert needs a wider pilaster still and a larger countersink 1.5 mm from the wall-bolt hole.
+
+  Reversibility: moderate cost; the direct M3 x 16 screw with a 4 mm low step stays the fallback and keeps the bar at 80 mm, but a case printed to the wider shell must be reprinted and the bar and the opening cut again.
+
+  Consequences: the tray's fixing, the bar's length and holes, the wall opening and the wall-bolt positions change in the record and the drawings; a check compares every pair of heads; the insert's hole keeps the mounting-hole distance from mains copper; the owner re-reads the sign-off lines on the plate and the opening.
+options_considered:
+  - option: One M3 heat-set insert in each pilaster and a short M3 countersunk screw through the bar, with the pilasters widened
+    reason_rejected: ""
+  - option: Two M3 x 12 countersunk screws per pilaster as built
+    reason_rejected: the heads collide by about 1.0 mm and the countersinks merge, and the pair cannot be moved apart or staggered in a 5.5 mm pilaster
+  - option: One M3 x 16 countersunk screw per pilaster, thread-forming, with a 4 mm step low on each pilaster
+    reason_rejected: keeps the bar at 80 mm but the thread wears and strips on repeated removal and the tray is then reprinted, which the owner expects to need often
+  - option: Two M2.5 x 12 countersunk screws per pilaster
+    reason_rejected: loads 99 percent of the assumed allowance with no margin, four small holes with touching countersinks and a second screw size
+  - option: One M4 screw or insert per pilaster
+    reason_rejected: a direct M4 leaves 1.0 mm of wall beside its pilot and an M4 insert needs a pilaster about 9 mm wide, with a countersink 1.5 mm from the wall-bolt hole
+  - option: Two M3 x 12 screws per pilaster staggered, pilasters 3 mm wider
+    reason_rejected: the most change for the lowest load per screw and still a thread-forming screw that wears
+chosen: One M3 heat-set insert in each pilaster and a short M3 countersunk screw through the bar, with the pilasters widened
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C1
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C3
+    type: addresses
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C5
+    type: addresses

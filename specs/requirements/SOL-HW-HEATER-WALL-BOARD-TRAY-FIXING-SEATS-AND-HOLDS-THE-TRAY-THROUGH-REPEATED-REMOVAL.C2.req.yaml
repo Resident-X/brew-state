@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C2
+type: criterion
+title: One heat-set M3 insert in each pilaster takes the tray screw
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The case model places one M3 heat-set insert in each pilaster's end face, in a hole of the size and depth the insert's maker states, with the wall round the hole held at the record's minimum, and a short M3 countersunk screw through the bar threads into it; the record names the insert's size, hole and depth. Out of scope: the insert maker's brand.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
+    type: criterion-of
