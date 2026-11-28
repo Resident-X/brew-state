@@ -150,9 +150,11 @@ CRITICAL_ROWS = ["| WORK-1 | judgement | quality | pass | net-A, whole board | |
                  "| GROUND-1 | judgement | function | not applicable | | the plan marks it no |"]
 
 
-def critical_pass(number, judged, rows=None):
+def critical_pass(number, judged, rows=None, folder=None):
+    """A pass; with `folder`, its Views command names the board in that folder, as a pass written for a board there does."""
+    where = f"{folder}/b.kicad_pcb" if folder else "b.kicad_pcb"
     lines = [f"### Pass {number}", "", f"- **Board judged**: `{judged}`",
-             "- **Views**: `task hw:views -- --board b.kicad_pcb --project b.kicad_pro --class Power --out /tmp/v`; "
+             f"- **Views**: `task hw:views -- --board {where} --project b.kicad_pro --class Power --out /tmp/v`; "
              "the placement view was not rendered", "",
              "| Item | Kind | Severity | Verdict | Rests on | Why |", "|---|---|---|---|---|---|"]
     lines += CRITICAL_ROWS if rows is None else rows
@@ -172,6 +174,7 @@ class Repo:
         self.root = tempfile.mkdtemp(prefix="board-history-test-")
         test.addCleanup(shutil.rmtree, self.root, True)
         self.path = os.path.join(self.root, "repo")
+        self.folder = "b"
         os.makedirs(os.path.join(self.path, "b"))
         os.makedirs(os.path.join(self.path, "docs"))
         self.git("init", "-q", "-b", "main")
@@ -183,7 +186,7 @@ class Repo:
 
     @property
     def board(self):
-        return os.path.join(self.path, "b", "b.kicad_pcb")
+        return os.path.join(self.path, self.folder, "b.kicad_pcb")
 
     def git(self, *args):
         return subprocess.run(["git", *args], cwd=self.path, capture_output=True, text=True,
@@ -196,16 +199,38 @@ class Repo:
     def plan(self, **sections):
         """Write the layout plan with these sections, by name, below the plan, keeping those not given."""
         self.sections.update(sections)
-        self.write("b/layout-plan.md", self.base + "".join(f"\n{text}" for text in self.sections.values() if text))
+        self.write(f"{self.folder}/layout-plan.md", self.base + "".join(f"\n{text}" for text in self.sections.values() if text))
 
     def commit(self, board_text=None, message="step", **sections):
         if board_text is not None:
-            self.write("b/b.kicad_pcb", board_text)
-        if sections or not os.path.exists(os.path.join(self.path, "b", "layout-plan.md")):
+            self.write(f"{self.folder}/b.kicad_pcb", board_text)
+        if sections or not os.path.exists(os.path.join(self.path, self.folder, "layout-plan.md")):
             self.plan(**sections)
         self.git("add", "-A")
         self.git("commit", "-q", "--allow-empty", "-m", message)
         return self.git("rev-parse", "HEAD")
+
+    def rename(self, folder, message="b: the board's folder is renamed"):
+        """The board's folder renamed to `folder` in a commit of its own, the plan's text left as it is; the commit."""
+        self.git("mv", self.folder, folder)
+        self.folder = folder
+        self.git("commit", "-q", "-m", message)
+        return self.git("rev-parse", "HEAD")
+
+    def remove(self, message="b: the design is removed"):
+        """The board's folder removed in a commit of its own, as an earlier design is retired; the commit."""
+        self.git("rm", "-q", "-r", self.folder)
+        self.git("commit", "-q", "-m", message)
+        return self.git("rev-parse", "HEAD")
+
+    def restart(self, folder=None):
+        """A new design begun in the board's folder, or in `folder`, after the earlier one was removed: the plan and
+        the method's records are written afresh, so the earlier design's sections no longer stand."""
+        self.folder = folder or self.folder
+        os.makedirs(os.path.join(self.path, self.folder), exist_ok=True)
+        self.sections = {}
+        self.base = PLAN
+        self.plan()
 
     def run(self, *extra, board=None):
         """The command's exit status, its report's lines and its JSON document."""

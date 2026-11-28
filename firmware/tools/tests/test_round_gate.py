@@ -39,6 +39,7 @@ import task_gate  # noqa: E402
 HOST = ["fw:build", "fw:check", "fw:test", "fw:run"]
 EMULATION = ["fw:emulate"]
 BOARD = ["hw:verify", "hw:test:round"]
+HISTORY = "hw:history:all"
 BOARD_READS = "hw:reads"
 #: What the gate asks the task runner for before anything else when no changed path is
 #: one the board tier reads by its name: which files the board designs read.
@@ -2262,7 +2263,7 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
         self.assertEqual(
             [
                 name for name in self.verify
-                if name not in ("fw:host-closure", "fw:emulate", "fw:sweep") + tuple(BOARD)
+                if name not in ("fw:host-closure", "fw:emulate", "fw:sweep", HISTORY) + tuple(BOARD)
             ],
             self.tasks_given("--host"),
         )
@@ -2273,7 +2274,10 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
         # The same two tasks, in the same order, and the tooling tests are the
         # ones without the seeded-fault proof, which neither hands over.
         self.assertEqual(BOARD, self.tasks_given("--board"))
-        self.assertEqual([name for name in self.verify if name.startswith("hw:")], self.tasks_given("--board"))
+        # The history gate is the nightly's alone: the round never hands it over.
+        self.assertEqual([name for name in self.verify if name.startswith("hw:") and name != HISTORY],
+                         self.tasks_given("--board"))
+        self.assertNotIn(HISTORY, self.round_arguments())
         self.assertEqual([BOARD_READS], self.tasks_given("--board-reads"))
         self.assertNotIn("hw:prove", self.round_arguments() + self.verify)
         self.assertNotIn("hw:test", self.round_arguments() + self.verify)
@@ -2333,7 +2337,7 @@ class TheTaskRunnerDeclaresTheRound(unittest.TestCase):
         self.assertEqual(
             [
                 "fw:build", "fw:check", "fw:test", "fw:run", "fw:host-closure", "fw:emulate",
-                "hw:verify", "hw:test:round", "fw:sweep",
+                "hw:verify", "hw:test:round", "fw:sweep", "hw:history:all",
             ],
             self.verify,
         )

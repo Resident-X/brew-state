@@ -37,7 +37,7 @@ GATES = ["fw:build", "fw:check", "fw:test", "fw:run", "fw:emulate", "fw:sweep"]
 #: What the Taskfile's declaration of the complete verification lists, in order.
 DECLARED = [
     "fw:build", "fw:check", "fw:test", "fw:run", "fw:host-closure", "fw:emulate", "hw:verify",
-    "hw:test:round", "fw:sweep",
+    "hw:test:round", "fw:sweep", "hw:history:all",
 ]
 
 
@@ -263,7 +263,7 @@ class OnlyAGateLeftOutMayBePassedOn(unittest.TestCase):
         # SOL-VERIFY-NIGHTLY-FULL-ON-MAIN.C1: The daily verification runs every gate to completion and reports every failure
         result, asked, _ = self.run_declared(["--leave-out", "fw:sweep"], {"fw:check": 1})
         self.assertEqual(1, result.returncode, result.stdout + result.stderr)
-        self.assertEqual(DECLARED[:-1], asked)
+        self.assertEqual([name for name in DECLARED if name != "fw:sweep"], asked)
         account = closing(result)
         self.assertIn("failed: fw:check (exit status 1).", account)
         self.assertIn("Gates left out: fw:sweep.", account)
@@ -301,6 +301,25 @@ class OnlyAGateLeftOutMayBePassedOn(unittest.TestCase):
 def read(path: str) -> str:
     with open(os.path.join(REPOSITORY, path), encoding="utf-8") as handle:
         return handle.read()
+
+
+def one_run_limit_seconds(board_check_source: str) -> int:
+    """KICAD_TIMEOUT_S as the board check assigns it at module level, read without importing it."""
+    for node in ast.parse(board_check_source).body:
+        if (
+            isinstance(node, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == "KICAD_TIMEOUT_S" for t in node.targets)
+            and isinstance(node.value, ast.Constant)
+            and isinstance(node.value.value, int)
+        ):
+            return node.value.value
+    raise AssertionError("board_check.py assigns no module-level integer KICAD_TIMEOUT_S")
+
+
+def budget_meets_floor(nightly_text: str, board_check_source: str) -> bool:
+    """Whether the gates job's timeout-minutes is at least the one-run limit in minutes plus 60."""
+    budget, _ = workflow_declarations.find(nightly_text, "jobs", "gates", "timeout-minutes")
+    return int(budget) >= one_run_limit_seconds(board_check_source) / 60 + 60
 
 
 class TheTaskRunnerDeclaresTheCompleteVerification(unittest.TestCase):
@@ -386,7 +405,9 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
     def test_the_nightly_leaves_out_no_board_gate_so_the_declaration_runs_them_on_main(self):
         # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
         gates = declared_gates(read("Taskfile.yml"))
-        self.assertEqual(["hw:verify", "hw:test:round"], [name for name in gates if name.startswith("hw:")])
+        self.assertEqual(["hw:verify", "hw:test:round", "hw:history:all"],
+                         [name for name in gates if name.startswith("hw:")])
+        self.assertEqual(["hw:verify", "hw:test:round"], [name for name in gates if name.startswith("hw:") and name != "hw:history:all"])
         self.assertNotIn("hw:prove", gates)
         self.assertNotIn("hw:test", gates)
         (script,) = [
@@ -412,6 +433,41 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertEqual(["fw:sweep"], re.findall(r"--leave-out (\S+)", " ".join(script)))
         self.assertNotIn("host-closure", " ".join(script))
         self.assertIn(".github/workflows/", round_gate.HOST_READS)
+
+    def test_the_complete_verification_runs_the_history_command_on_every_board_with_a_placement_section_and_the_round_does_not(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The nightly complete verification runs the history command, and the build round's gate is stated not to run it
+        taskfile = read("Taskfile.yml")
+        self.assertIn("hw:history:all", declared_gates(taskfile))
+        (command,) = task_commands(taskfile, "hw:history:all")
+        self.assertRegex(command, r'board_history\.py"? --all')
+        self.assertNotIn("--board", command)
+        round_text = " ".join(task_commands(taskfile, "check:round"))
+        self.assertNotIn("hw:history", round_text)
+        lines = taskfile.splitlines()
+        start = lines.index("  check:round:")
+        description = next(line for line in lines[start + 1:] if line.strip().startswith("desc:"))
+        self.assertIn("The round never runs the placement and critical routing history command", description)
+        self.assertIn("the nightly runs it (hw:history:all)", description)
+
+    def test_the_gates_job_checks_out_the_whole_history_with_the_actions_commit_pin_kept(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there
+        job = self.job_text("gates")
+        (checkout,) = re.findall(r"(?ms)^      - uses: actions/checkout@(\S+)(.*?)(?=^      - name:|\Z)", job)
+        self.assertRegex(checkout[0], r"^[0-9a-f]{40}$", "the checkout is pinned to a commit")
+        self.assertRegex(checkout[1], r"(?m)^          fetch-depth: 0\s*$")
+        self.assertRegex(checkout[1], r"(?m)^          persist-credentials: false\s*$")
+
+    def test_the_project_instructions_and_the_hardware_notes_say_the_nightly_runs_the_history_command_and_the_round_does_not(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The build round's gate is stated not to run it, in the places that state when the board check runs
+        text = read("CLAUDE.md")
+        gates = text[text.index("**Gates.**"): text.index("**Generated records pin their inputs.**")]
+        round_part, nightly_part = gates.split("**Nightly.**")
+        self.assertIn("`hw:history:all`", nightly_part)
+        self.assertIn("never runs `hw:history:all`", round_part)
+        notes = read("hardware/README.md")
+        section = notes[notes.index("## When the board check runs"): notes.index("## The locked-copper check")]
+        self.assertIn("`task hw:history:all`", section)
+        self.assertIn("The round does not run it", section)
 
     def test_the_hosted_runner_installs_the_board_tools_before_it_runs_the_verification(self):
         # SOL-HW-GATE-IN-ROUND-AND-NIGHTLY.C2: The nightly full verification runs the board check against main
@@ -443,6 +499,122 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertIn("signed-by=", installing)
         self.assertRegex(installing, r'apt-get install -y --no-install-recommends\s+"kicad=\$\{KICAD_VERSION\}"')
         self.assertLess(installing.index("KICAD_PPA_KEY}\" ]"), installing.index("apt-get install"))
+
+    def install_step(self) -> str:
+        """The KiCad install step alone, from its name line to the next step's."""
+        job = self.job_text("gates")
+        start = job.index("      - name: Install KiCad")
+        return job[start: job.index("      - name:", start + 1)]
+
+    def offer_check(self) -> str:
+        """The install step's pre-install check of what the archive offers, as the script text it runs:
+        the loop over the three packages that comes before the install command."""
+        (script,) = [
+            lines for lines in workflow_declarations.scripts(self.install_step())
+            if any("apt-cache madison" in line for line in lines)
+        ]
+        first = next(i for i, line in enumerate(script) if line.startswith("for package in kicad kicad-symbols kicad-footprints; do"))
+        last = next(i for i in range(first, len(script)) if script[i] == "done")
+        self.assertLess(last, next(i for i, line in enumerate(script) if "apt-get install" in line))
+        return "\n".join(["set -euo pipefail"] + script[first: last + 1]) + "\n"
+
+    def run_offer_check(self, listings: dict[str, str], version: str = "10.0.8~ubuntu24.04.1"):
+        """Run the check with a stand-in `apt-cache` that prints each package's given `madison` listing."""
+        archive = "kicad/kicad-10.0-releases"
+        with tempfile.TemporaryDirectory() as root:
+            bin_dir = os.path.join(root, "bin")
+            os.mkdir(bin_dir)
+            for package, text in listings.items():
+                with open(os.path.join(root, package), "w", encoding="utf-8") as handle:
+                    handle.write(text)
+            stand_in = os.path.join(bin_dir, "apt-cache")
+            with open(stand_in, "w", encoding="utf-8") as handle:
+                handle.write(
+                    "#!/bin/sh\n"
+                    f'[ "$1" = madison ] || {{ echo "unexpected apt-cache $*" >&2; exit 64; }}\n'
+                    f'[ -f "{root}/$2" ] && cat "{root}/$2"\n'
+                    "exit 0\n"
+                )
+            os.chmod(stand_in, os.stat(stand_in).st_mode | stat.S_IXUSR)
+            env = dict(os.environ, PATH=bin_dir + os.pathsep + os.environ["PATH"], KICAD_PPA=archive, KICAD_VERSION=version)
+            return subprocess.run(["bash", "-c", self.offer_check()], env=env, capture_output=True, text=True, timeout=60)
+
+    @staticmethod
+    def madison(package: str, *rows: tuple[str, str]) -> str:
+        """An `apt-cache madison` listing: padded name and version columns and the source, as apt prints them."""
+        return "".join(f"{package:>16} | {version:<22} | {source} Packages\n" for version, source in rows)
+
+    PPA = "https://ppa.launchpadcontent.net/kicad/kicad-10.0-releases/ubuntu noble/main amd64"
+    UBUNTU = "http://archive.ubuntu.com/ubuntu noble/universe amd64"
+
+    def test_the_kicad_install_step_has_a_time_limit_of_its_own_well_under_the_jobs_budget(self):
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        limit = re.findall(r"(?m)^        timeout-minutes: (\d+)\s*$", self.install_step())
+        self.assertEqual(1, len(limit), "the install step does not carry exactly one time limit of its own")
+        budget, _ = workflow_declarations.find(self.nightly, "jobs", "gates", "timeout-minutes")
+        self.assertLessEqual(int(limit[0]), 15)
+        self.assertGreater(int(limit[0]), 0)
+        self.assertLess(int(limit[0]), int(budget) / 4, "the step's limit is not well under the job's budget")
+
+    def test_a_version_the_archive_does_not_offer_fails_the_check_naming_the_package_the_version_the_versions_on_offer_and_the_archive(self):
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        wanted = "10.0.8~ubuntu24.04.1"
+        offered = ("10.0.9~ubuntu24.04.1", self.PPA), ("10.0.6~ubuntu24.04.1", self.PPA)
+        listings = {name: self.madison(name, *offered) for name in ("kicad", "kicad-symbols", "kicad-footprints")}
+        result = self.run_offer_check(listings)
+        self.assertNotEqual(0, result.returncode, result.stderr)
+        for named in ("kicad", wanted, "10.0.9~ubuntu24.04.1", "10.0.6~ubuntu24.04.1", "kicad/kicad-10.0-releases"):
+            self.assertIn(named, result.stderr)
+        # Only the package that lacks the version is named as the failure, the first one checked that does.
+        listings["kicad"] = self.madison("kicad", (wanted, self.PPA))
+        listings["kicad-symbols"] = self.madison("kicad-symbols", (wanted, self.PPA))
+        result = self.run_offer_check(listings)
+        self.assertNotEqual(0, result.returncode)
+        self.assertTrue(result.stderr.startswith(f"kicad-footprints {wanted} is not offered"), result.stderr)
+        self.assertNotIn("kicad-symbols", result.stderr)
+
+    def test_a_listing_with_the_version_only_from_another_archive_or_no_listing_at_all_fails_the_check(self):
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        wanted = "10.0.8~ubuntu24.04.1"
+        names = ("kicad", "kicad-symbols", "kicad-footprints")
+        # The version is on offer, but from a different archive: the pin is held to the project's own.
+        elsewhere = {name: self.madison(name, (wanted, self.UBUNTU)) for name in names}
+        result = self.run_offer_check(elsewhere)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("kicad/kicad-10.0-releases", result.stderr)
+        # An empty listing is the archive offering nothing: the message says so and the check still fails.
+        empty = {name: "" for name in names}
+        result = self.run_offer_check(empty)
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn(f"kicad {wanted} is not offered by the archive kicad/kicad-10.0-releases", result.stderr)
+        # A package apt knows nothing about prints nothing at all; that fails the same way.
+        result = self.run_offer_check({})
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("kicad", result.stderr)
+
+    def test_a_version_the_archive_offers_passes_the_check_silently_among_other_versions(self):
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        wanted = "10.0.8~ubuntu24.04.1"
+        rows = ((wanted, self.PPA), ("8.0.4+dfsg-1build1", self.UBUNTU), ("10.0.8~ubuntu24.04.10", self.PPA))
+        listings = {name: self.madison(name, *rows) for name in ("kicad", "kicad-symbols", "kicad-footprints")}
+        result = self.run_offer_check(listings)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertEqual("", result.stderr)
+        # A version that merely contains the wanted one is not the wanted one.
+        prefix = {name: self.madison(name, ("10.0.8~ubuntu24.04.10", self.PPA)) for name in listings}
+        self.assertNotEqual(0, self.run_offer_check(prefix).returncode)
+
+    def test_the_pinned_kicad_version_is_the_one_the_check_is_run_with_and_not_older_than_the_minimum(self):
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C1: A dispatched nightly run installs the KiCad version its workflow names, not older than the board check's minimum
+        # The run itself is the demonstration; what a file can hold is that the one
+        # version the step names reaches the check, the install and the read-back.
+        version = self.pinned("KICAD_VERSION")
+        self.assertGreaterEqual(tuple(int(n) for n in version.split("~")[0].split(".")[:2]), self.minimum("hardware/tools/board_check.py", "MIN_KICAD"))
+        step = self.install_step()
+        self.assertEqual(1, len(re.findall(r"(?m)^\s+KICAD_VERSION: ", step)))
+        self.assertNotRegex(re.sub(r"(?m)^\s+KICAD_VERSION: .*$", "", step), r"\d+\.\d+\.\d+~ubuntu")
+        self.assertIn('[ "${installed}" != "${KICAD_VERSION}" ]', step)
+        self.assertIn("kicad-cli version", step)
 
     def test_the_standard_libraries_are_named_at_the_kicad_pin_and_asserted_present_without_recommended_packages(self):
         # SOL-BOARD-GATES-PASS-ON-HOSTED-RUNNER.C1: The board design check, run by the nightly verification on a hosted Ubuntu runner with the KiCad that workflow installs, passes every design the repository tracks, including the review proof design, which today reports library-configuration violations there for the standard symbol and footprint libraries. The workflow installs whatever the check needs from a free, named source at a pinned version, so no library comes from state present only on the author's machine.
@@ -598,6 +770,43 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         match = re.fullmatch(r"macos-(\d+)", macos)
         self.assertIsNotNone(match, f"the macOS job's runner is not a fixed, plain image: {macos!r}")
         self.assertGreaterEqual(int(match.group(1)), 14, "the first macOS image on arm64 is 14")
+
+    def test_the_gates_job_budget_outlasts_the_board_checks_one_run_limit_by_an_hour(self):
+        # SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C1: The timeout-minutes of the gates job in .github/workflows/nightly-verify.yml is at least the board check's one-run limit, KICAD_TIMEOUT_S in hardware/tools/board_check.py, divided by 60 and raised by 60, so a hung KiCad run reaches its own limit and fails the design before the job is cancelled
+        # SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C3: A test reads the gates job's timeout-minutes from the workflow file and the one-run limit from the board check, without KiCad, and fails both when the limit is raised without the budget and when the budget is lowered below the floor
+        # The test reads both figures from the files and does not import the
+        # board check, which this module may not. It also shows itself able to
+        # fail: the same texts with the limit raised and the budget unchanged,
+        # and with the budget lowered below the floor, must not meet it.
+        board_check = read("hardware/tools/board_check.py")
+        limit = one_run_limit_seconds(board_check)
+        self.assertGreater(limit, 0)
+        self.assertTrue(
+            budget_meets_floor(self.nightly, board_check),
+            "the gates job's timeout-minutes is below the one-run limit in minutes plus 60",
+        )
+        raised = re.sub(
+            r"(?m)^(KICAD_TIMEOUT_S = )\d+", lambda m: f"{m.group(1)}14400", board_check, count=1
+        )
+        self.assertEqual(14400, one_run_limit_seconds(raised))
+        self.assertFalse(
+            budget_meets_floor(self.nightly, raised),
+            "raising the one-run limit to 14400 s with the budget unchanged must fail the floor",
+        )
+        lowered = re.sub(
+            r"(?m)^(    timeout-minutes: )\d+", lambda m: f"{m.group(1)}{limit // 60 + 59}",
+            self.nightly, count=1,
+        )
+        self.assertNotEqual(self.nightly, lowered)
+        self.assertFalse(
+            budget_meets_floor(lowered, board_check),
+            "a budget one minute under the floor must fail it",
+        )
+        at_floor = re.sub(
+            r"(?m)^(    timeout-minutes: )\d+", lambda m: f"{m.group(1)}{limit // 60 + 60}",
+            self.nightly, count=1,
+        )
+        self.assertTrue(budget_meets_floor(at_floor, board_check), "the floor itself is met")
 
     def test_the_macos_job_ends_on_the_bare_build_task_that_builds_every_host_environment(self):
         # SOL-PLANT-FIXTURES-BUILD-CLEAN-UNDER-GCC.C2: A verification run builds the host tier with each supported host's default compiler

@@ -644,3 +644,56 @@ class PlanAndCopperFails(Base):
         self.assertIn(f"in the commit before it, {planned[:12]}", text,
                       "the plan is judged in the commit before the first placement")
         self.assertIn("CHECK | plan before placement | PASS | the floorplan in HEAD", text)
+
+
+class BoardPathChain(Base):
+    """The path the board is at in each commit, and the layout plan read in the board's folder at that commit."""
+
+    def test_a_plan_renamed_out_of_an_earlier_designs_folder_is_not_followed_back_into_it(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: the layout plan is read at the board's folder at each commit and the plan's own renames are not followed
+        self.repo.placed()
+        self.repo.routed()
+        self.repo.git("rm", "-q", "b/b.kicad_pcb")
+        os.makedirs(os.path.join(self.repo.path, "n"))
+        self.repo.git("mv", "b/layout-plan.md", "n/layout-plan.md")
+        self.repo.git("commit", "-q", "-m", "n: the plan moves out of the earlier design's folder, its board retired")
+        self.repo.folder = "n"
+        self.repo.restart()
+        self.repo.placed()
+        judged = self.repo.routed()
+        hand = self.repo.git("rev-parse", "HEAD~1")
+        self.repo.through_router(judged)
+        for extra in ((), ("--routed",)):
+            with self.subTest(extra=extra):
+                lines, document = self.assertPasses(*extra)
+                self.assertIn(f"CHECK | first track | PASS | {hand[:12]} is the first commit carrying a track",
+                              "\n".join(lines))
+                self.assertFalse([check for check in document["checks"] if check["verdict"] != "PASS"])
+
+    def test_a_commit_whose_parents_give_the_board_two_paths_fails_naming_it_and_judges_nothing_else(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: a commit whose parents give conflicting board paths fails as a fault, naming it
+        self.repo.placed()
+        self.repo.git("checkout", "-q", "-b", "renamer")
+        self.repo.rename("renamed", "b: the folder is renamed on a branch")
+        self.repo.git("checkout", "-q", "main")
+        self.repo.folder = "b"
+        self.repo.commit(board(PLACES[1], copper=[HAND]), "b: route A by hand, on main")
+        self.repo.git("merge", "-q", "--no-ff", "-m", "merge the rename", "renamer")
+        merge = self.repo.git("rev-parse", "HEAD")
+        self.repo.folder = "renamed"
+        failed = self.assertFails("give the board the paths", check="board path")
+        self.assertTrue(any(merge[:12] in line for line in failed), failed)
+        status, lines, document = self.repo.run("--routed")
+        self.assertEqual([check["check"] for check in document["checks"]], ["board path"])
+
+    def test_a_merge_whose_parents_give_the_board_one_path_is_followed_through_both(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: the control for the conflicting paths: the same merge, with no rename on either line, judges
+        self.repo.placed()
+        self.repo.git("checkout", "-q", "-b", "side")
+        self.repo.commit(message="b: a commit on the side line")
+        self.repo.git("checkout", "-q", "main")
+        self.repo.commit(board(PLACES[1], copper=[HAND]), "b: route A by hand, on main")
+        self.repo.git("merge", "-q", "--no-ff", "-m", "merge the side line", "side")
+        judged = self.repo.commit(board(copper=[LOCKED]), "b: lock A")
+        self.repo.through_router(judged)
+        self.assertPasses()

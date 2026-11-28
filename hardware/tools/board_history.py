@@ -63,6 +63,19 @@ reachable from HEAD, and judges each section as it stood in the commit before:
   bearing on no critical net, and every fail has a later verdict with a
   commit putting it right before the router ran.
 
+The board is read in each commit at the path it has there. Its history is the
+chain of paths from the board's path at HEAD backward through the renames git
+detects at its default similarity, judged for each commit against each parent;
+it begins at the commit that adds the chain's file, a file deleted and added at
+one path in one commit being the same board, and a commit before it or off the
+chain holds no board, so an earlier design that used the same folder name is not
+the board's history. A commit whose lines of history give the board two paths
+fails. The layout plan is read in the folder the board is in at that commit,
+and its own renames are never followed. A pass differing from its state before
+the router only by the board's folder name at that commit, written as its
+present name, is unchanged; no other difference is excused. The practice
+catalogue is read as it stood in the commit before the router's.
+
 A commit a record cites that a squash, rebase or force-push left out of the
 history is reported as not in it, so the check fails closed on a rewritten
 branch. It needs git and Python only. It reads the board and its layout plan as
@@ -70,6 +83,12 @@ HEAD holds them, and refuses a board or plan that differs from HEAD, a shallow
 clone, and a board it cannot read.
 
     board_history.py --board B.kicad_pcb [--routed] [--json]
+    board_history.py --all [--json]
+
+With --all, run from inside the repository, the command judges in plain mode and
+in routed mode the board of every layout-plan.md the repository tracks that holds
+a `## Placement` heading, so a board that adds such a plan is judged without
+another edit, and exits with the worst status; it refuses when it finds none.
 
 Every check is one line, CHECK | <check> | PASS or FAIL | <detail>, a result
 line comes last, and the exit status is the verdict: 0 when every check
@@ -143,12 +162,84 @@ def field(name: str):
 class History:
     """The commits reachable from HEAD, and the files they hold, read through git."""
 
-    def __init__(self, git: str, root: str, work: str):
+    def __init__(self, git: str, root: str, work: str, board: Optional[str] = None, plan: Optional[str] = None):
         self.git, self.root, self.work = git, root, work
         self.layouts: Dict[str, list] = {}
         listed = self.run("rev-list", "--topo-order", "--reverse", "--parents", "HEAD").split("\n")
         self.order = [line.split()[0] for line in listed if line]
         self.parents = {line.split()[0]: line.split()[1:] for line in listed if line}
+        self.board, self.plan = board, plan
+        #: The board's path in each commit that holds it, which `blobs`, `text`, `file`, `layout` and `copper` read in
+        #: place of the path they are given; None reads every path as given. A commit off the chain holds no board.
+        self.paths: Optional[Dict[str, str]] = None
+        #: Each commit whose parents, or the commits after it, give the board more than one path, with the paths.
+        self.conflicts: Dict[str, List[str]] = {}
+        if board is not None:
+            self.paths, self.conflicts = self.follow(board)
+
+    def follow(self, board: str) -> Tuple[Dict[str, str], Dict[str, List[str]]]:
+        """The board's path in every commit it is in: the chain of paths from `board` as HEAD holds it, backward through
+        the renames git detects at its default similarity, judged for each commit against each parent, the rename
+        destination being the path the later commit holds. The chain ends at the commit that adds the file, and a
+        commit where the parent holds the path as well is the same board changed in place, a deletion and an addition
+        at the path in one commit included. Commits before the end and commits off the chain hold no board."""
+        suffix = os.path.splitext(board)[1]
+        wanted: Dict[str, set] = {self.order[-1]: {board}}
+        paths: Dict[str, str] = {}
+        conflicts: Dict[str, List[str]] = {}
+        for commit in reversed(self.order):
+            found = wanted.get(commit)
+            if not found:
+                continue
+            path = sorted(found)[0]
+            paths[commit] = path
+            if len(found) > 1:
+                conflicts[commit] = sorted(found)
+            parents = self.parents[commit]
+            held = self.raw_blobs(parents, path)
+            given = set()
+            for parent in parents:
+                source = path if held[parent] is not None else self.renamed_from(parent, commit, path, suffix)
+                if source is not None:
+                    wanted.setdefault(parent, set()).add(source)
+                    given.add(source)
+            if len(given) > 1:
+                conflicts[commit] = sorted(given | set(conflicts.get(commit, [])))
+        return paths, conflicts
+
+    def renamed_from(self, parent: str, commit: str, path: str, suffix: str) -> Optional[str]:
+        """The path `parent` holds the file `commit` holds at `path` at, when git detects `commit` renames it there."""
+        tokens = self.run("diff-tree", "-r", "-M", "--name-status", "-z", "--no-commit-id", parent, commit, "--",
+                          f"*{suffix}").split("\0")
+        index = 0
+        while index < len(tokens) and tokens[index]:
+            status = tokens[index]
+            width = 3 if status[0] in "RC" else 2
+            names = tokens[index + 1:index + width]
+            if status[0] == "R" and len(names) == 2 and names[1] == path:
+                return names[0]
+            index += width
+        return None
+
+    def locate(self, commit: str, path: str) -> Optional[str]:
+        """The path `commit` holds what `path` names at, None where it holds none. The board is read at the path the
+        chain gives it, and the layout plan at the folder that board is in, the plan's own renames never followed; a
+        commit with no board holds the plan in the folder of the board's first commit."""
+        if self.paths is None:
+            return path
+        if path == self.board:
+            return self.paths.get(commit)
+        if path == self.plan:
+            board = self.paths.get(commit)
+            if board is None:
+                board = next(self.paths[held] for held in self.order if held in self.paths)
+            return os.path.join(os.path.dirname(board), os.path.basename(self.plan))
+        return path
+
+    def folder(self, commit: str) -> Optional[str]:
+        """The name of the folder the board is in at `commit`, None where it holds no board."""
+        where = self.locate(commit, self.board) if self.board is not None else None
+        return os.path.basename(os.path.dirname(where)) if where else None
 
     def run(self, *args: str, stdin: Optional[str] = None) -> str:
         result = subprocess.run([self.git, "-C", self.root, *args], input=stdin, capture_output=True, text=True)
@@ -170,14 +261,31 @@ class History:
         return [line for line in self.run("rev-list", "--topo-order", "--reverse", "--ancestry-path",
                                           f"{older}..{newer}").split() if line]
 
-    def blobs(self, commits: Sequence[str], path: str) -> Dict[str, Optional[str]]:
-        """The object each commit holds at `path`, or None where it holds none."""
+    def raw_blobs(self, commits: Sequence[str], path: str) -> Dict[str, Optional[str]]:
+        """The object each commit holds at exactly `path`, or None where it holds none."""
+        if not commits:
+            return {}
         out = self.run("cat-file", "--batch-check=%(objectname) %(objecttype)",
                        stdin="".join(f"{commit}:{path}\n" for commit in commits)).splitlines()
         return {commit: (line.split()[0] if line.endswith(" blob") else None) for commit, line in zip(commits, out)}
 
+    def blobs(self, commits: Sequence[str], path: str) -> Dict[str, Optional[str]]:
+        """The object each commit holds at `path`, or None where it holds none."""
+        where = {commit: self.locate(commit, path) for commit in commits}
+        found: Dict[str, Optional[str]] = {commit: None for commit in commits}
+        asked = [commit for commit in commits if where[commit] is not None]
+        if asked:
+            out = self.run("cat-file", "--batch-check=%(objectname) %(objecttype)",
+                           stdin="".join(f"{commit}:{where[commit]}\n" for commit in asked)).splitlines()
+            found.update({commit: (line.split()[0] if line.endswith(" blob") else None)
+                          for commit, line in zip(asked, out)})
+        return found
+
     def text(self, commit: str, path: str) -> Optional[str]:
-        result = subprocess.run([self.git, "-C", self.root, "cat-file", "blob", f"{commit}:{path}"], capture_output=True)
+        where = self.locate(commit, path)
+        if where is None:
+            return None
+        result = subprocess.run([self.git, "-C", self.root, "cat-file", "blob", f"{commit}:{where}"], capture_output=True)
         if result.returncode != 0:
             return None
         try:
@@ -190,7 +298,7 @@ class History:
         text = self.text(commit, path)
         if text is None:
             return None
-        local = os.path.join(self.work, commit, path)
+        local = os.path.join(self.work, commit, self.locate(commit, path) or path)
         os.makedirs(os.path.dirname(local), exist_ok=True)
         with open(local, "w", encoding="utf-8") as handle:
             handle.write(text)
@@ -814,6 +922,15 @@ def judge_placement(history: History, board: str, plan: str, first: Optional[str
                f"every footprint at {short(against)} is where the chosen candidate put it")
 
 
+def in_present_folder(lines: List[str], was: Optional[str], now: Optional[str]) -> List[str]:
+    """`lines` with the board's folder name at the judged commit, `was`, written as its present name, `now`, wherever it
+    stands as a whole name; nothing else is changed, so no number is tolerated."""
+    if not was or not now or was == now:
+        return lines
+    name = re.compile(r"(?<![\w.-])" + re.escape(was) + r"(?![\w.-])")
+    return [name.sub(now, line) for line in lines]
+
+
 def difference(old: List[str], new: List[str]) -> str:
     """The first line of `new` that `old` does not hold in its place, or the first line one holds beyond the other."""
     for was, now in zip(old, new):
@@ -941,9 +1058,11 @@ def judge_critical(history: History, board: str, plan: str, tracked: bool, route
             if number not in then:
                 faults.append(f"{name} is not in {plan} in the commit before the router's, {short(router)}^, so it "
                               "was not recorded before the router ran")
-            elif then[number] != text:
-                faults.append(f"{name} now differs from the pass in the commit before the router's, "
-                              f"{short(router)}^, first at '{clean(difference(then[number], text))}'")
+            else:
+                stood_text = in_present_folder(then[number], history.folder(stood), history.folder(head))
+                if stood_text != text:
+                    faults.append(f"{name} now differs from the pass in the commit before the router's, "
+                                  f"{short(router)}^, first at '{clean(difference(stood_text, text))}'")
             report.add(f"{name} before router", faults, f"the pass is as it stood before the router's commit "
                                                         f"{short(router)}")
         else:
@@ -1040,7 +1159,12 @@ def judge(git: str, board: str, routed: bool = False) -> Tuple[str, Report, List
     plan = os.path.join(os.path.dirname(rel), board_placement.PLAN)
     with tempfile.TemporaryDirectory(prefix="board-history-") as work:
         try:
-            history = History(git, root, work)
+            history = History(git, root, work, rel, plan)
+            if history.conflicts:
+                report.add("board path", [f"the lines of history through {short(commit)} give the board the paths "
+                                          f"{' and '.join(paths)}, so there is no one board whose history can be "
+                                          "judged" for commit, paths in sorted(history.conflicts.items())], "")
+                return rel, report, []
             tracked, first = first_track(history, rel, report)
             if tracked and first is None:
                 return rel, report, []
@@ -1055,24 +1179,105 @@ def judge(git: str, board: str, routed: bool = False) -> Tuple[str, Report, List
     return rel, report, []
 
 
+def verdict(report: Report, refused: List[Tuple[str, str]]) -> Tuple[str, int, str]:
+    """The result word, the exit status and the detail of one judged board."""
+    if refused:
+        return "REFUSED", 2, "the history was not judged"
+    if report.failed():
+        return "FAIL", 1, f"{report.failed()} of {len(report.checks)} checks failed"
+    return "PASS", 0, f"all {len(report.checks)} checks passed"
+
+
+def with_placement(git: str, root: str) -> Tuple[List[str], List[Tuple[str, str]]]:
+    """The board of every layout plan the repository tracks that holds a `## Placement` heading, as paths from the
+    root, and why a plan that holds one names no board: the one tracked `.kicad_pcb` file in the plan's own folder."""
+    tracked = subprocess.run([git, "-C", root, "ls-files", "-z"], capture_output=True, text=True, check=True)
+    files = [name for name in tracked.stdout.split("\0") if name]
+    boards, unresolved = [], []
+    for name in sorted(files):
+        if os.path.basename(name) != board_placement.PLAN:
+            continue
+        try:
+            with open(os.path.join(root, name), encoding="utf-8") as handle:
+                holds = any(line.rstrip() == f"## {PLACEMENT}" for line in handle.read().splitlines())
+        except (OSError, UnicodeDecodeError):
+            holds = False
+        if not holds:
+            continue
+        folder = os.path.dirname(name)
+        found = [other for other in files if other.endswith(".kicad_pcb") and os.path.dirname(other) == folder]
+        if len(found) == 1:
+            boards.append(found[0])
+        else:
+            unresolved.append((name, f"holds a `## {PLACEMENT}` heading and the folder tracks {len(found)} .kicad_pcb "
+                                     "files, not the one board the history is judged for"))
+    return boards, unresolved
+
+
+def run_all(git: str) -> Tuple[int, str, str, List[dict]]:
+    """Every board whose tracked layout plan holds a placement section, judged in plain mode and in routed mode, from the
+    work tree this runs in: the worst exit status, 2 when no such board is found or one cannot be judged, its result
+    word, its detail and every run."""
+    try:
+        root = os.path.realpath(board_check.require_git(git, os.getcwd()))
+        boards, unresolved = with_placement(git, root)
+    except CannotRun as error:
+        boards, unresolved, root = [], [("git", str(error))], os.getcwd()
+    runs = []
+    for what, why in unresolved:
+        runs.append({"board": what, "mode": "-", "result": "REFUSED", "detail": why, "checks": [],
+                     "refusals": [{"what": what, "why": why}], "status": 2})
+    if not boards and not unresolved:
+        runs.append({"board": "-", "mode": "-", "result": "REFUSED", "checks": [], "status": 2,
+                     "detail": f"no tracked {board_placement.PLAN} holds a `## {PLACEMENT}` heading, so there is no board "
+                               "whose history is judged",
+                     "refusals": [{"what": root, "why": f"no tracked {board_placement.PLAN} holds a `## {PLACEMENT}` "
+                                                        "heading"}]})
+    for board in boards:
+        for routed in (False, True):
+            judged, report, refused = judge(git, os.path.join(root, board), routed)
+            result, status, detail = verdict(report, refused)
+            runs.append({"board": board, "mode": "routed" if routed else "plain", "result": result,
+                         "detail": "; ".join([detail] + report.notes), "checks": report.checks, "status": status,
+                         "refusals": [{"what": what, "why": why} for what, why in refused]})
+    status = max(run["status"] for run in runs)
+    overall = {0: "PASS", 1: "FAIL", 2: "REFUSED"}[status]
+    detail = f"{len(runs)} run{'s' if len(runs) != 1 else ''}, {sum(1 for run in runs if run['status'] == 0)} passed"
+    return status, overall, detail, runs
+
+
 def main(argv: Optional[List[str]] = None, out=sys.stdout) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--git", default="git", help="git (default: git on the search path)")
-    parser.add_argument("--board", required=True, help="the layout file (.kicad_pcb), with its layout-plan.md beside it")
+    parser.add_argument("--board", help="the layout file (.kicad_pcb), with its layout-plan.md beside it")
+    parser.add_argument("--all", action="store_true",
+                        help="judge, in plain mode and in routed mode, the board of every layout-plan.md the repository "
+                             "this runs in tracks that holds a `## Placement` heading, instead of one --board")
     parser.add_argument("--routed", action="store_true",
                         help="the router has run: a last pass with no router commit, or no critical routing section, "
                              "fails")
     parser.add_argument("--json", action="store_true", help="print the verdicts as one JSON document")
     args = parser.parse_args(argv)
+    if args.all == (args.board is not None) or (args.all and args.routed):
+        parser.error("give --board for one board, or --all, which judges both modes, alone")
+    if args.all:
+        status, result, detail, runs = run_all(args.git)
+        if args.json:
+            json.dump({"result": result, "detail": detail, "runs": [
+                {key: value for key, value in run.items() if key != "status"} for run in runs]}, out, indent=1)
+            out.write("\n")
+            return status
+        for run in runs:
+            print(f"BOARD | {clean(run['board'])} | {run['mode']} | {run['result']} | {clean(run['detail'])}", file=out)
+            for what_why in run["refusals"]:
+                print(f"REFUSED | {clean(what_why['what'])} | {clean(what_why['why'])}", file=out)
+            for check in run["checks"]:
+                if check["verdict"] != "PASS":
+                    print(f"CHECK | {clean(check['check'])} | {check['verdict']} | {clean(check['detail'])}", file=out)
+        print(f"RESULT | {result} | {clean(detail)}", file=out)
+        return status
     board, report, refused = judge(args.git, args.board, args.routed)
-    if refused:
-        result, status, detail = "REFUSED", 2, "the history was not judged"
-    elif report.failed():
-        result, status = "FAIL", 1
-        detail = f"{report.failed()} of {len(report.checks)} checks failed"
-    else:
-        result, status = "PASS", 0
-        detail = f"all {len(report.checks)} checks passed"
+    result, status, detail = verdict(report, refused)
     detail = "; ".join([detail] + report.notes)
     if args.json:
         json.dump({"board": board, "result": result, "detail": detail, "checks": report.checks,

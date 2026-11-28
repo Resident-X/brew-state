@@ -15,7 +15,7 @@ sys.path.insert(0, TOOLS)
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import board_history  # noqa: E402
-from board_history_fixtures import Base, CRITICAL_ROWS, HAND, LOCKED, MEASURES, METHOD, PLACEMENT_ROWS, PLACES, PLAN, board, candidate, critical, critical_pass, placement, track  # noqa: E402,F401
+from board_history_fixtures import Base, CRITICAL_ROWS, HAND, LOCKED, MEASURES, METHOD, PLACEMENT_ROWS, PLACES, PLAN, ROUTED, Repo, board, candidate, critical, critical_pass, placement, track  # noqa: E402,F401
 
 
 class Passes(Base):
@@ -304,3 +304,69 @@ class PlacementFails(Base):
         self.assertFails(f"pass 1's Board judged commit {ghost} is not in this repository", check="pass 1 board judged")
         self.assertFails(f"pass 1 cites {ghost} for WORK-1, which is not in this repository's history from HEAD",
                          check="pass 1 verdicts")
+
+
+class BoardHistoryStart(Base):
+    """Where a board's history starts: the commit that adds the file the chain of renames from HEAD ends in."""
+
+    def test_an_earlier_design_that_used_the_folder_name_is_not_the_boards_history_in_either_mode_or_format(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: the history command judges the later board from the commit that first holds that board and not from the earlier design's commits, and the earlier design's copper does not stand as the later board's first copper
+        self.repo.placed()
+        self.repo.routed()
+        self.repo.remove()
+        self.repo.restart()
+        self.repo.placed()
+        judged = self.repo.routed()
+        hand = self.repo.git("rev-parse", "HEAD~1")
+        self.repo.through_router(judged)
+        for extra in ((), ("--routed",)):
+            with self.subTest(extra=extra):
+                lines, document = self.assertPasses(*extra)
+                self.assertIn(f"CHECK | first track | PASS | {hand[:12]} is the first commit carrying a track", "\n".join(lines))
+                first = [check for check in document["checks"] if check["check"] == "first track"]
+                self.assertTrue(first[0]["detail"].startswith(hand[:12]), first)
+
+    def test_the_later_boards_own_placement_record_misordered_still_fails_after_an_earlier_design_used_the_folder(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: The same repository with the later board's own placement record misordered still fails
+        self.repo.placed()
+        self.repo.routed()
+        self.repo.remove()
+        self.repo.restart()
+        self.repo.planned()
+        one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
+        two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
+        self.repo.commit(board(PLACES[1], copper=[HAND]), "b: route A by hand")
+        self.repo.commit(message="b: placement chosen, after the first track",
+                         placement=placement([candidate(1, one), candidate(2, two)], 1))
+        self.assertFails("so the placement was not recorded before the first track", check="placement section")
+
+    def test_a_board_replaced_in_place_in_one_commit_is_the_same_board(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3: A board deleted and added again at the same path in one commit is the same board
+        self.repo.placed()
+        judged = self.repo.routed()
+        hand = self.repo.git("rev-parse", "HEAD~1")
+        self.repo.commit(message="b: critical routing pass 1", critical=critical([critical_pass(1, judged)]))
+        self.repo.git("rm", "-q", "b/b.kicad_pcb")
+        self.repo.commit(board(copper=[LOCKED, ROUTED]), "b: router, the board deleted and added again")
+        for extra in ((), ("--routed",)):
+            lines, document = self.assertPasses(*extra)
+            self.assertIn(f"CHECK | first track | PASS | {hand[:12]} is the first commit carrying a track", "\n".join(lines))
+
+    def test_a_board_renamed_between_its_placement_and_its_first_track_passes_and_a_wrong_measure_still_fails(self):
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C2: each cited commit is read where it holds the board, and a genuine fault still fails
+        for wrong in (False, True):
+            with self.subTest(wrong=wrong):
+                self.repo = Repo(self)
+                self.repo.planned()
+                one = self.repo.commit(board(PLACES[1]), "b: placement candidate 1")
+                two = self.repo.commit(board(PLACES[2]), "b: placement candidate 2")
+                measures = {1: MEASURES[1], 2: ["LENGTH | total | 41 mm", "CROSSINGS | total | 0", "OUTSIDE | total | 0"]}
+                self.repo.commit(board(PLACES[1]), "b: placement chosen", placement=placement(
+                    [candidate(1, one), candidate(2, two, measures[2] if wrong else None)], 1))
+                self.repo.rename("renamed")
+                self.repo.through_router(self.repo.routed())
+                if wrong:
+                    self.assertFails("candidate 2 does not record 'LENGTH | total | 40 mm'", check="candidate 2 measures")
+                else:
+                    self.assertPasses()
+                    self.assertPasses("--routed")
