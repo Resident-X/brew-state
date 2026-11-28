@@ -564,8 +564,7 @@ def insert_wall(m: case.Model, u: float, z: float) -> Dict[str, float]:
     P = m.P
     e = case.case_extent(m)
     r = P("case.insert_hole_dia_mm") / 2
-    board_width = float(m.board.outline.bounds[2])
-    left_in, right_in = -P("case.interior_left_mm"), board_width + P("case.interior_right_mm")
+    left_in, right_in = float(m.board.outline.bounds[0]) - P("case.interior_left_mm"), float(m.board.outline.bounds[2]) + P("case.interior_right_mm")
     outer, inner = (u - r - e["u0"], left_in - (u + r)) if u < (e["u0"] + e["u1"]) / 2 else (e["u1"] - (u + r), (u - r) - right_in)
     hole = case.insert_hole_solid(m, u, z)
     pocket = min(float(hole.distance_to(case.pocket_solid(m, tu))) for tu in m.info["toe_u"])

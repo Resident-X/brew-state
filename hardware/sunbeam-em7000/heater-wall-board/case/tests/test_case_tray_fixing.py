@@ -296,7 +296,7 @@ def test_c5_the_bar_the_wall_bolts_and_the_opening_follow_the_pilaster_width(res
     plate = drawing_text("plate-drawing.svg")
     assert "cut to 85 mm long" in plate and "case outer width at the plate %.2f + 2 x bolt zone 10.0 = %.2f" % (width, width + 20.0) in plate and "88.0 x 35.6" in plate and "margin %.2f" % length["margin_mm"] in plate
     division = flat(read(DIVISION))
-    assert "**88.0 mm long**" in division and "its span along the wall is set by the case" in division and "85 mm bar" in division
+    assert "**88.0 mm long**" in division and "its span along the wall is set by the case" in division and "85 mm bar" in division and "from 5.5 to 8.01 mm" in division and "grows by 5.02 mm" in division
     assert model.info["plate"]["u1"] - model.info["plate"]["u0"] == pytest.approx(85.0)
 
 
@@ -415,7 +415,7 @@ def test_c7_no_earlier_count_pilot_hole_screw_length_or_bar_length_remains_in_th
     assert "two M3 x 10 countersunk screws, one in each pilaster" in drawings and "heat-set insert" in drawings
     # the division record's opening carries the new length and says its span along the wall is set by the case
     division = flat(read(DIVISION))
-    assert "**88.0 mm long**" in division and "its span along the wall is set by the case" in division and "retired bracket's mounting ears" in division
+    assert "**88.0 mm long**" in division and "its span along the wall is set by the case" in division and "retired bracket's mounting ears" in division and "from 5.5 to 8.01 mm" in division and "grows by 5.02 mm" in division
     # the model builds no pilot for the tray screws: the only hole it cuts in a pilaster along v is the insert's
     assert not hasattr(case, "pilot_solid") and hasattr(case, "insert_hole_solid")
 
@@ -424,10 +424,11 @@ def test_c7_no_earlier_count_pilot_hole_screw_length_or_bar_length_remains_in_th
 
 def restated_problems(text):
     problems = []
-    entry = re.search(r"^- W-19, restated.*$", text, re.M)
+    entry = re.search(r"^- W-19\. The plate's form.*Amended 2026-11-28.*$", text, re.M)
     if not entry:
         return ["no restated W-19 entry"]
     e = entry.group(0)
+    e = e[e.index("Amended 2026-11-28"):]        # the restatement alone: the entry's first part carries its own signature and date
     for needle, why in (("accepted_by: Claude, on behalf of David Baker (owner), under his standing instruction of 2026-11-07", "not signed on his behalf"), ("accepted_on: 2026-11-28", "not dated 2026-11-28"),
                         ("one M3 heat-set insert in each pilaster", "the insert is not stated"), ("85 mm in place of 80 mm", "the 85 mm bar in place of the 80 mm cut is not stated"),
                         ("88.0 mm long in place of 83.0 mm", "the wider opening is not stated"), ("two tray-screw holes", "the two holes are not stated"),
@@ -436,10 +437,10 @@ def restated_problems(text):
         if needle not in e:
             problems.append(why)
     behalf, carried = text.index("## Signed on behalf"), text.index("## Carried to named later steps")
-    if not behalf < text.index("- W-19, restated") < carried:
+    if not behalf < text.index("Amended 2026-11-28") < carried:
         problems.append("the restated entry is not in the signed-on-behalf section")
-    if "- W-19. The plate's form" not in text:
-        problems.append("the first W-19 entry is gone")
+    if not re.search(r"^- W-19, restated", text, re.M) is None:
+        problems.append("the restatement stands as a second W-19 entry, which the record's entry counts do not allow")
     if "Restated 2026-11-28" not in text.split("## For David to sign or confirm at the end of the work")[1]:
         problems.append("the end-of-work item does not carry the restatement")
     return problems
@@ -458,3 +459,4 @@ def test_c8_the_sign_off_record_states_w19_again_at_the_new_fixing_and_the_longe
         assert old in text and any(expect in p for p in restated_problems(text.replace(old, new, 1))), expect
     # the earlier entry and its counts are untouched
     assert re.search(r"^- W-19\. The plate's form", text, re.M) and "There are 22 entries, W-1 to W-19" in text
+    assert "## Signed on behalf (5 entries" in text and "These 5 entries" in text      # one entry per W-number: the board tools' counts hold
