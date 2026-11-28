@@ -2,11 +2,11 @@ id: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C3
 type: criterion
 title: An earlier design that reused a board's folder name is not that board's history
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |
-  A test on a throwaway repository, using generic names, shows that when an earlier design's commits on the branch's line of history hold a board at a folder name that a later board then reuses, the history command judges the later board from the commit that first holds that board and not from the earlier design's commits, in plain and in routed mode and in its text and JSON output, and that the earlier design's copper does not stand as the later board's first copper. The same repository with the later board's own placement record misordered still fails. Out of scope: judging the earlier design.
+  Tests on throwaway repositories, using generic names, show where a board's history starts: the board is the chain of paths from the head commit's board path backward through the renames git detects, its history begins at the commit where that chain's file is added, and commits before it or off the chain hold no board. So when an earlier design's commits on the branch's line of history hold a board at a folder name that a later board then reuses, the history command judges the later board from the commit that first holds that board and not from the earlier design's commits, in plain and in routed mode and in its text and JSON output, and the earlier design's copper does not stand as the later board's first copper. A board deleted and added again at the same path in one commit is the same board; a commit whose parents give conflicting board paths fails as a fault, naming it; and the layout plan is read at the board's folder at each commit and the plan's own renames are not followed. The same repository with the later board's own placement record misordered still fails. Out of scope: judging the earlier design.
 links:
   - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME
     type: criterion-of

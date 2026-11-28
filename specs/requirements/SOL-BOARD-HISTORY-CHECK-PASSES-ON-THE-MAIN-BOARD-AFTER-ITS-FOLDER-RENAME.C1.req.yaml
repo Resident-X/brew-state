@@ -2,11 +2,11 @@ id: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C1
 type: criterion
 title: The history command passes on the committed main board in plain and routed mode
 status: active
-version: 1
+version: 2
 measurement_type: binary
-verification: test
+verification: demonstration
 text: |
-  Run on the committed main board in plain mode and again in routed mode against the repository's present history, the placement and critical routing history command passes every one of its checks and exits as a pass. Nothing in the history is rewritten to bring this about. Out of scope: judging whether a recorded verdict is right.
+  Run on the committed main board in plain mode and again in routed mode against the repository's present history, the placement and critical routing history command passes every one of its checks, 22 in each mode, and exits as a pass. The run on the real board is recorded in the nightly run's record, not in the build round's tests, because the command refuses when the working tree differs from the last commit. Nothing in the history is rewritten to bring this about. Out of scope: judging whether a recorded verdict is right.
 links:
   - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME
     type: criterion-of
