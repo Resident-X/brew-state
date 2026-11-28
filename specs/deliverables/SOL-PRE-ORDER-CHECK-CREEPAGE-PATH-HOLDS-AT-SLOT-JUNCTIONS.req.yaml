@@ -3,14 +3,21 @@ type: deliverable
 category: solution
 title: The pre-order check's creepage path search never passes through the junction of a slot's arms
 status: active
-version: 1
+version: 2
 text: |
   Corrects the creepage path length the pre-order check's cross-layer separation rule computes. The path search lets a path pass through the junction corner where two arms of a barrier slot meet, so for a pair whose true surface path runs round the end of an arm it reports a length near 9.2 mm where the true path is about 15.5 mm. The error is over-conservative: the rule reports a shorter creepage than exists and hides no breach, and the creepage test of KiCad's own design rule check agrees with the true figure. It is still a wrong figure in a check whose findings the owner reads.
 
+  Locus: Detours.blocks (about line 1003) and the corner set that route_length searches (about line 1062) in hardware/tools/board_geometry.py; the module-level blocked() (line 937) is what the test's brute-force reference uses. Tests are in hardware/tools/tests/test_board_geometry.py (class AWayRoundASlotIsExact, line 308). Callers, all of which gain the fix with no change of contract: board_check.py lines 1572 and 1589 (plated hole), 6015-6048 (layer separation) and 6733-6759 (creepage pour guard).
+
+  State of the defect. The commit 24ca97a5 (criterion C3) already fixed the case where a slot is drawn as one outline with a junction corner: the board's U601 pads 10 and 9 against D205 pad 3 on the board as of 5 November went from 9.179 and 9.773 mm to 15.534 and 16.021 mm. What remains, and what C1 requires, is a slot drawn as two outlines that touch: two loops sharing an edge (a T drawn as bar and arm, sharing x = 61.9, y 90.3 to 91.5) give 11.959 mm where the same slot drawn as one loop gives 22.083 mm, the path running along the shared wall; two squares touching only at a corner give a path through the pinch point. Arms 0.1 mm apart leave a real path through the gap, which stays as it is. No tracked board has touching slot loops today (the main board has two slots, none touching; the other boards have none), so no pre-order verdict changes.
+
   Settled for the build:
-  - The search treats every part of the slot outline, corners and arm junctions included, as closed, so a path never passes between two slot parts that touch.
-  - A path that crosses no slot is unchanged, and the figures of the existing slot tests are unchanged.
-  - Out of scope: the rule's thresholds, the figures it compares with, and any board's records.
+  - The search treats every part of the slot outline, corners and arm junctions included, as closed, so a path never passes between two slot parts that touch, whether the slot is drawn as one outline or as two outlines that share an edge or a point; a gap between outlines is open.
+  - Placement extends the existing seam. In Detours.blocks, a line is cut at the corners of every nearby slot, not slot by slot; a piece whose middle is inside any slot, or lies on the walls of two different slots (a shared wall), is held, and a line through a point on two slots' outlines is held when the two slots lie on opposite sides of the line there (a pinch). In route_length, a slot corner that lies on another slot's outline is not a turning point. The test's brute-force reference uses the same blocking rule so the two cannot drift.
+  - Rejected: merging touching outlines into one polygon where the slots are read, because the module is standard-library only with no polygon library, and merging changes the slot count and the inner-layer slot-wall measure for every caller. Also rejected: fixing it in board_check.py alone, because route_length is the shared seam.
+  - A path that crosses no slot is unchanged, and the figures of the existing slot tests are unchanged. C2 is verified by the existing test that a far slot leaves the straight line and by a new one with a slot within reach that does not lie between the two items, run with both a list of slots and a Detours.
+  - The two records that state the defect as present, hardware/sunbeam-em7000/main-board/pre-order-check-result.md (line 100) and docs/board-design-lessons.md (line 152), gain a "fixed in" clause naming 24ca97a5 and the commit of this solution, and the first states that route_length now gives 15.534 and 16.021 mm for those pairs. No figure, threshold or finding of any record changes.
+  - Out of scope: the rule's thresholds and the figures it compares with.
 rationale: |
   Restores the behaviour of the cross-layer rule's path comparison, which holds that separation covers the paths taken between conductors and not only the points where each ends (REQ-ELECTRICAL-INSTALL-001.C1). A path measured through a slot junction is not a path round the slot, so the figure the finding states is not the separation the board has.
 links:

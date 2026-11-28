@@ -3,11 +3,17 @@ type: deliverable
 category: solution
 title: The proof script for the measurement and high-side sheets knows the net-tie symbol and exits clean on the committed sheets
 status: active
-version: 1
+version: 2
 text: |
   Corrects the proof script that cross-checks the main board's sheet records for the measurement and high-side sheets (circuit-proof/E_check_sheets.py) against the netlist. Run on the committed main board it exits 1 with 'unknown pin count for Device:NetTie_2' and reports NT601.1 and NT601.2 as pins that do not exist: the script's table of symbol pin counts has no entry for the two-pin net tie the board draws to join the high-side ground to neutral at one point, so the check stops at a part it does not know and the whole sheet group is reported as failing although the drawing is right. Found when the schematic leaf's circuit-practice clause was checked on 2026-11-18; the script sits in no gate, so nothing reported it.
 
   Scope: the proof script and a test that runs it on the committed sheets. It changes no sheet record, no schematic and no board.
+
+  Locus: the STOCK_PINS table in hardware/sunbeam-em7000/main-board/circuit-proof/E_check_sheets.py (lines 17-22). NT601 is the only net tie in the E sheets (sheets/E1 line 46; nets NEUTRAL and AMC_HGND).
+
+  Settled decisions. Placement extends the existing table with one entry, "Device:NetTie_2": 2, which keeps the script's structure. Reading pin counts from KiCad's libraries or the schematic is rejected: it needs KiCad or a parser and is a larger change than the criterion asks for. The test goes in a new file, hardware/tools/tests/test_circuit_proof_e_sheet_check.py, not appended to test_circuit_proof_sheet_generator.py, whose docstring scopes it to the generator; it reuses that file's pattern of running the script under `python -I` against a scratch copy of circuit-proof/ and sheets/ in the same layout (the script finds its sheets relative to its own path), by importing its scratch_copy and run helpers, so no new seam is added. It has three cases: the committed copy exits 0 with no NT601 error and the output holds "all sheets consistent"; a copy whose E1 sheet adds NT601.3 to a net exits non-zero and names NT601 as naming a pin that does not exist; a copy whose sheet gives one part a symbol the script does not know exits non-zero and names that part with "unknown pin count". The committed board is the subject the criterion names, as in the generator test; the altered copies live in a temporary directory. Placing the test under hardware/tools/tests puts the script in the board tooling's round gate and in the nightly, which ends the cause that nothing ran it.
+
+  Derived statement to correct in the same change: hardware/sunbeam-em7000/main-board/traceability.md line 92 says E_check_sheets.py at HEAD prints 3 errors, all NT601; after the fix it prints none, so that sentence is brought to the script's result. The dated records of the earlier failing run (the evidence of the schematic-proven leaf and pre-order-check-result.md) stay as the history they are.
 rationale: |
   Restores the behaviour REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C3 asks of the circuit practice: every net and part is judged, and a check that stops at a part it does not know judges nothing after it. A maintenance item, because the script was written for the schematic review and the board's net tie came later. Authored on 2026-11-18 during the whole-board closure so the defect is in the graph and not only in a pull request.
 links:

@@ -3,11 +3,15 @@ type: deliverable
 category: solution
 title: The pin-coverage proof's test counts the faults the proof seeds as they stand
 status: active
-version: 1
+version: 2
 text: |
   Corrects the on-demand seeded-fault proof's pin-coverage test, which fails on main. The proof in hardware/tools/board_prove.py seeds two pin-coverage faults (a connected pin of a listed integrated circuit left out of its entry, and the same beside pins on no net), and the test in hardware/tools/tests/test_board_check_kicad_records.py that checks them asserts there is exactly one, so the on-demand proof's test run fails with 2 != 1 while the rule itself still catches both faults. The test is brought to the faults the proof holds. The proof runs in neither gate, which is why the failure has stood on main unnoticed; it appeared here when the board tooling's tests were run for a change to a signed record.
 
-  Locus: hardware/tools/tests/test_board_check_kicad_records.py and hardware/tools/board_prove.py.
+  Locus: the test class PinCoverageProof in hardware/tools/tests/test_board_check_kicad_records.py (the assertion that the pin-coverage faults number one is at lines 232-233). The two faults are the entries of board_prove.FAULTS whose name begins "pin coverage:" (board_prove.py lines 2268 and 2272): the first is "left out of its entry" (rule pin_limit, target KEYS_TARGET, spare "U1 pin 2"), the second is "left out beside pins on no net" (rule pin_limit, target REVIEW_DESIGN and REVIEW_NAME, spare "U4 pin 5"). Neighbouring tests PinCoverageSparesUnconnectedPins (line 248) and PinCoverageSparesListedPins (line 272) already hold up and stay as they are; the second selects the first fault in order, which does not change.
+
+  Settled decisions. The faults the test requires are identified by name: the test selects each by its name, requires the set of pin-coverage fault names the proof holds to equal exactly the two above, and requires each to be caught by the rule it names, meaning the rule name pin_limit appears in the check's evidence for that fault, as the neighbouring tests already do. A count-only correction (requiring two) is rejected because the criterion asks the test to name each fault. Changing the proof to seed one fault is rejected because it would weaken the proof; board_prove.py is not changed. Placement extends the existing class in the existing test file; no new seam. The test names already cited by evidence of the finished pin-listing work stay stable, and if a test is added or renamed its line is added to hardware/tools/tests/fixtures/board_check_kicad_test_ids.txt, which the division test enforces. hardware/tools/tests/board_kicad_fixtures.py is not touched.
+
+  Out of scope: a further test that checks the fault names without running the proof, so that the round and not only the on-demand proof would catch drift; that is a different check from the one this correction restores.
 links:
   - target: DEL-MAINTENANCE.C1
     type: derives-from
