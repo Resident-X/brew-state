@@ -242,6 +242,7 @@ def test_c4_each_insert_hole_and_its_wall_keeps_the_larger_of_the_signed_clearan
     for s in inserts:
         assert s["tear_drop_roof_mm"] == pytest.approx(roof) and s["copper_below_axis_required_mm"] == pytest.approx(roof + params("case.insert_wall_min_mm"))
         assert s["copper_below_axis_pass"] and s["copper_below_axis_mm"] >= s["copper_below_axis_required_mm"]
+        assert s["modelled_radius_pass"] and s["modelled_radius_mm"] == pytest.approx(params("case.insert_hole_dia_mm") / 2 + params("case.insert_wall_min_mm"))
     assert "tear-drop roof" in check7["figures"]["metal_model"] and "away from the board" in check7["figures"]["metal_model"]
     for s in inserts:
         assert ("insert (u %g, z %g)" % (s["centre_uvz_mm"][0], s["centre_uvz_mm"][2])) in record and ("%.2f mm" % s["distance_mm"]) in record
@@ -270,6 +271,9 @@ def test_c4_an_insert_axis_that_stands_under_the_board_s_copper_or_too_near_its_
         assert row["distance_mm"] >= need, "the sphere alone clears the copper by the signed distance, so only the plane guard can refuse it"
         assert row["copper_below_axis_mm"] == pytest.approx(axis_z) and axis_z < roof_and_wall and row["copper_below_axis_pass"] is False and row["pass"] is False
     assert got["rows"]["insert z-6"]["copper_below_axis_mm"] < 0.0, "a copper plane above the axis is a negative figure"
+    thin = got["rows"]["insert thin"]
+    assert thin["distance_mm"] >= need and thin["modelled_radius_pass"] is False and thin["pass"] is False, "a row that models less metal than the hole and its wall is refused though its sphere clears the copper"
+    assert got["rows"][got["base"]]["modelled_radius_pass"] and got["rows"][got["base"]]["modelled_radius_mm"] == pytest.approx(params("case.insert_hole_dia_mm") / 2 + params("case.insert_wall_min_mm"))
 
 
 # ---------------------------------------------------------------- C5: the bar, the bolts and the opening follow the pilasters
@@ -373,6 +377,7 @@ EARLIER_FIXING = (
     (r"M3 x 12", "the earlier screw length"),
     (r"z 9\.5 and 14\.0|9\.5 and 14\.0 mm", "the earlier stance"),
     (r"two (tray )?screws in each pilaster|two in each pilaster", "two screws in a pilaster"),
+    (r"bar is 80(\.0)? mm long|opening is 83\.0 mm|four (m3 )?(countersunk )?(screw )?holes", "the earlier bar length, opening or hole count"),
     (r"cut(s)? (it )?to 80 mm|80\.0 mm long, 20 mm wide|at least 79\.5|83\.0 x 35\.6|59\.50 mm wide", "the earlier bar length, width or opening"),
 )
 
@@ -382,9 +387,9 @@ EARLIER_BAR_STATEMENT = r"the plate the case takes[^|]{0,120}80\.0 mm long"
 
 
 def earlier_fixing_problems(text):
-    found = [why for pattern, why in EARLIER_FIXING if re.search(pattern, text)]
+    found = [why for pattern, why in EARLIER_FIXING if re.search(pattern, text, re.IGNORECASE)]
     # a figures-table row that still says the case takes an 80.0 mm bar and does not state the 85 mm bar
-    if any(re.search(EARLIER_BAR_STATEMENT, line) and "85 mm" not in line for line in text.splitlines()):
+    if any(re.search(EARLIER_BAR_STATEMENT, line, re.IGNORECASE) and "85 mm" not in line for line in text.splitlines()):
         found.append("the 80.0 mm bar stated as the plate the case takes, with no 85 mm amendment")
     return found
 
@@ -394,12 +399,16 @@ def test_c7_no_earlier_count_pilot_hole_screw_length_or_bar_length_remains_in_th
     plate, drawings = drawing_text("plate-drawing.svg"), drawing_text("case-drawings.svg")
     figures = read(os.path.join(BOARD_DIR, "constraints-figures.md"))
     parameters = read(os.path.join(CASE_DIR, "params.yaml"))
+    others = [(n, read(os.path.join(BOARD_DIR, n))) for n in ("fabrication-notes.md", "open-items.md", "circuit-proof.md")]
+    for name, text in others:
+        assert earlier_fixing_problems(text) == [], name
     for name, text in (("the case record", record), ("the plate drawing", plate), ("the case drawings", drawings), ("the figures record", figures), ("the parameter sources", parameters)):
         assert earlier_fixing_problems(text) == [], name
     # the searches reach the two files the first search missed: each carried one earlier statement of the bar, and each is found when it is put back
     assert "the earlier bar length, width or opening" in earlier_fixing_problems(parameters.replace("5 mm thick (its length is plate.length_mm)", "5 mm thick and cut to 80 mm"))
     assert "85 mm" in figures and any("the 80.0 mm bar stated" in why for why in earlier_fixing_problems(figures.replace("the bar the case now takes is 85 mm long", "the bar the case now takes is long")))
     # the searches find what they are for
+    assert earlier_fixing_problems("Four M3 countersunk holes in the tray") and earlier_fixing_problems("The bar is 80 mm long") and earlier_fixing_problems("the opening is 83.0 mm wide"), "the searches do not depend on the case of the words"
     assert earlier_fixing_problems("The tray is fixed with four M3 x 12 countersunk screws into the pilots") == ["the earlier count of four tray screws", "the earlier screw length"]
     assert "the pilot hole of the earlier fixing" in earlier_fixing_problems("marks the holes through the pilot holes of the tray screws")
     assert "the pilot hole of the earlier fixing" in earlier_fixing_problems("two M3 screws into the screw pilots")

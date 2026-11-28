@@ -131,6 +131,7 @@ def insert_axis_at(zs):
     base = next(s for s in m.screws if s["kind"] == "insert")
     for z in zs:
         m.screws.append(dict(base, id=f"insert z{z:g}", z=z))
+    m.screws.append(dict(base, id="insert thin", radius=base["radius"] - 1.0))
     check._SCENES.clear()
     got = check.check_c7(m)[0]
     return {"passed": got["passed"], "rows": {r["screw"]: r for r in got["figures"]["screws"]}, "base": base["id"], "metal_model": got["figures"]["metal_model"]}

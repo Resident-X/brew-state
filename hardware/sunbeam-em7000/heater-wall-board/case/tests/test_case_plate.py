@@ -376,9 +376,15 @@ def test_c8_the_sign_off_record_carries_a_dated_entry_for_the_narrower_plate_and
     text = read(os.path.join(BOARD_DIR, "owner-sign-off.md"))
     assert w19_problems(text) == []
     assert "Signed on behalf (5 entries: W-5a, W-5b, W-5d, W-18, W-19;" in text and "There are 22 entries, W-1 to W-19" in text
-    for broken, expect in ((text.replace("accepted_on: 2026-11-27", "accepted_on: 2026-11-26", 1), "not dated"),
-                           (text.replace("tapped M3 through the whole plate", "tapped M3 blind", 1), "tapped-through"),
-                           (text.replace("accepted_by: Claude, on behalf of David Baker (owner), under his standing instruction of 2026-11-07. accepted_on: 2026-11-27", "accepted_by: David Baker (owner). accepted_on: 2026-11-27", 1), "his behalf"),
+    w19 = re.search(r"^- W-19\..*$", text, re.M).group(0)
+
+    def in_w19(old, new, count=1):
+        # the change is made inside the W-19 entry alone: an earlier entry carries the same wording, and a replacement there would leave W-19 untouched
+        assert old in w19
+        return text.replace(w19, w19.replace(old, new, count), 1)
+    for broken, expect in ((in_w19("accepted_on: 2026-11-27", "accepted_on: 2026-11-26"), "not dated"),
+                           (in_w19("tapped M3 through the whole plate", "tapped M3 blind"), "tapped-through"),
+                           (in_w19("accepted_by: Claude, on behalf of David Baker (owner), under his standing instruction of 2026-11-07", "accepted_by: David Baker (owner)", 99), "his behalf"),
                            (text.replace("There are 22 entries", "There are 21 entries", 1), "counts")):
         assert broken != text and any(expect in p for p in w19_problems(broken)), expect
 
@@ -673,7 +679,7 @@ def test_c17_the_record_states_the_installation_order_with_tools_access_and_the_
     tab = named(results, "c11.tab_screw_driver_reached")["figures"]["drivers"]
     assert all("rising" in d["line"] for d in tab.values()) and "0.39 mm" in body and "5.0 to 9.0 degrees" in body
     wall = named(results, "c3.wall_bolts_outside_case")["figures"]["bolts"]
-    assert [round(b["bolt_u_mm"], 2) for b in wall] == [-13.75, 61.25] and "u -13.75 and 61.25" in body and "5.05 mm" in body and "0.55 mm clear" in body
+    assert [round(b["bolt_u_mm"], 2) for b in wall] == [-13.75, 61.25] and "u -13.75 and 61.25" in body and "5.05 mm" in body and "0.54 mm clear" in body
     assert named(results, "c5.lid_screw_reached")["passed"] and "81.5 mm from the wall plane" in body
     # a missing owner mark, tool, access, step or silent failure is found
     for old, new, expect in (("3. **Owner**: buys", "3. Buys", "step 3 does not mark"), ("Tools: a drill, a 2.5 mm bit, an M3 tap and wrench, calipers.", "", "step 4 states no tool"),

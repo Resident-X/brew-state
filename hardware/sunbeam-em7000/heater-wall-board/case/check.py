@@ -1110,7 +1110,11 @@ def check_c7(m: case.Model) -> List[Dict[str, Any]]:
             roof = P("case.insert_hole_dia_mm") / 2 * math.sqrt(2.0)
             below = {"copper_below_axis_mm": above, "copper_below_axis_required_mm": roof + P("case.insert_wall_min_mm"), "tear_drop_roof_mm": roof,
                      "copper_below_axis_pass": above >= roof + P("case.insert_wall_min_mm") - 1e-9}
-            passed &= below["copper_below_axis_pass"]
+            modelled = P("case.insert_hole_dia_mm") / 2 + P("case.insert_wall_min_mm")
+            below["modelled_radius_mm"] = float(s["radius"])
+            below["modelled_radius_required_mm"] = modelled
+            below["modelled_radius_pass"] = float(s["radius"]) >= modelled - 1e-9
+            passed &= below["copper_below_axis_pass"] and below["modelled_radius_pass"]
         ok &= passed
         centre = (s["u"], s["v"] if "v" in s else (s["v0"] + s["v1"]) / 2, s["z"] if "z" in s else (s["z0"] + s["z1"]) / 2)
         rows.append({"screw": s["id"], "kind": s["kind"], "centre_uvz_mm": [round(c, 3) for c in centre], "distance_mm": d, "layer": nearest_layer,
