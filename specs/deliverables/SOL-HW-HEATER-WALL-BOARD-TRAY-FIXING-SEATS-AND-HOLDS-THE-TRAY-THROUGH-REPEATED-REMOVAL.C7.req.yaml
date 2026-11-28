@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  The case record and the plate drawing state the tray's fixing once, as this solution gives it: the number of screws and inserts, their stance, the bar's length and the wall opening, and no earlier count, stance or length of the fixing remains stated in them. The division record's opening carries the new length and says its span along the wall is set by the case. Out of scope: the owner's sign-off lines, which the next criterion covers.
+  The case record and every drawing the case model emits, the plate drawing and the case drawings among them, state the tray's fixing once, as this solution gives it: the number of screws and inserts, their stance, the bar's length and the wall opening, and no earlier count, stance or length of the fixing remains stated in them, which the test shows by searching each for the earlier count, the pilot hole and the earlier screw length. The division record's opening carries the new length and says its span along the wall is set by the case. Out of scope: the owner's sign-off lines, which the next criterion covers.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
     type: criterion-of
