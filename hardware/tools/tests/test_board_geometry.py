@@ -11,6 +11,7 @@ answer worked by hand.
 from __future__ import annotations
 
 import heapq
+import itertools
 import math
 import os
 import random
@@ -429,6 +430,41 @@ class AWayRoundASlotIsExact(unittest.TestCase):
             self.assertTrue(board_geometry.Detours([board_geometry.Loop(ring, False) for ring in order]).blocks((0, 10), (20, 10)))
         self.assertFalse(board_geometry.blocked((0, 10), (20, 10), [self.TIP_A]))
         self.assertFalse(board_geometry.blocked((0, 10), (20, 10), [above]))
+
+    @staticmethod
+    def windings(*rings):
+        """Every way of drawing the rings, each as given or reversed, in both orders."""
+        for flips in itertools.product((False, True), repeat=len(rings)):
+            drawn = [list(reversed(ring)) if flip else list(ring) for ring, flip in zip(rings, flips)]
+            yield drawn
+            yield drawn[::-1]
+
+    def test_the_way_a_slot_is_drawn_round_does_not_change_whether_a_line_is_held(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C1: On a synthetic board with a slot whose two arms meet at a corner, drawn once as one outline and drawn again as two outlines that touch (sharing an edge, and meeting at a single point), the creepage route length between two items either side of the junction is the length of the shortest path round the free end of an arm, not the length of a path through the junction or along the wall the two parts share, and the same pair on a slot with the arms apart (a gap between the outlines) is unchanged, its path through the gap kept. Out of scope is the rule's threshold.
+        above = [(10, 10), (4, 18), (6, 20)]
+        tip = lambda x: board_geometry.Shape([[(x, 10), (x - 0.1, 9), (x + 0.1, 9)]])
+        for drawn in self.windings(self.TIP_A, self.TIP_B):
+            loops = [board_geometry.Loop(ring, False) for ring in drawn]
+            self.assertFalse(board_geometry.blocked((0, 10), (20, 10), drawn))
+            self.assertFalse(board_geometry.Detours(loops).blocks((0, 10), (20, 10)))
+            for slots in (loops, board_geometry.Detours(loops)):
+                self.assertEqual(board_geometry.route_length(tip(2), tip(18), slots, 40), (16.0, 0))
+        square_a, square_b = square(0, 0, 10, 10), square(10, 10, 20, 20)
+        one, other = board_geometry.Shape([square(12.5, 6.5, 13.5, 7.5)]), board_geometry.Shape([square(6.5, 12.5, 7.5, 13.5)])
+        for rings, line in (((self.TIP_A, above), ((0, 10), (20, 10))), ((self.BAR.points, self.ARM.points), ((4.5, 2), (5.5, 2))),
+                            ((self.BAR.points, self.ARM.points), ((3, 2), (7, 2))), ((square_a, square_b), ((12, 8), (8, 12)))):
+            for drawn in self.windings(*rings):
+                self.assertTrue(board_geometry.blocked(line[0], line[1], drawn))
+                self.assertTrue(board_geometry.Detours([board_geometry.Loop(ring, False) for ring in drawn]).blocks(line[0], line[1]))
+        for drawn in self.windings(square_a, square_b):
+            loops = [board_geometry.Loop(ring, False) for ring in drawn]
+            for slots in (loops, board_geometry.Detours(loops)):
+                length, _ = board_geometry.route_length(one, other, slots, 40)
+                self.assertAlmostEqual(length, 2 * math.hypot(2.5, 6.5) + 20.0, places=9)
+        for drawn in self.windings(self.BAR.points, self.ARM.points):
+            loops = [board_geometry.Loop(ring, False) for ring in drawn]
+            for slots in (loops, board_geometry.Detours(loops)):
+                self.assertAlmostEqual(board_geometry.route_length(self.LEFT, self.RIGHT, slots, 30)[0], 16.23606797749979, places=9)
 
     def test_with_a_slot_in_reach_that_is_not_between_the_pieces_the_way_is_the_straight_line(self):
         # SOL-PRE-ORDER-CHECK-CREEPAGE-PATH-HOLDS-AT-SLOT-JUNCTIONS.C2: A synthetic pair of items with no slot between them returns the straight-line distance as its route length, and every existing route-length test of the check's geometry module passes unchanged. Out of scope is any figure the rule compares the length with.
