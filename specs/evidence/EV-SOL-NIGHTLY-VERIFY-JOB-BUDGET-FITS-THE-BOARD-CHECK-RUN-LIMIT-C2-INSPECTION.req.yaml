@@ -1,0 +1,16 @@
+id: EV-SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT-C2-INSPECTION
+type: evidence
+title: inspection evidence for SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C2
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T09:54:30.536579Z"
+artifact:
+  kind: external
+  reference: 'inspection of .github/workflows/nightly-verify.yml and hardware/README.md at HEAD d8ba5f9f: (1) the comment beside the gates job''s timeout-minutes names the board gates (''the whole declaration, board gates included'') and the one-run limit (KICAD_TIMEOUT_S in hardware/tools/board_check.py) and states the floor (''the limit in minutes plus an hour''; ''a larger limit needs a larger budget''); (2) the hardware/README.md paragraph that states the one-run limit (7200 s) says, in the same paragraph, that the nightly gates job''s timeout-minutes is held above it by a floor of the limit in minutes plus 60 and that a larger limit needs a larger budget'
+  artifact_version: d8ba5f9f00042e0101919599872dd39568655b09
+attested_by: crun-372494d21547b0ce
+links:
+  - target: SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C2
+    type: satisfies
