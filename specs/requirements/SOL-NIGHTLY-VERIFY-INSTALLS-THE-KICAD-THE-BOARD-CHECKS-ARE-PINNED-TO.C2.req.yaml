@@ -2,11 +2,11 @@ id: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2
 type: criterion
 title: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
-text: |-
-  When the exact version the workflow names for kicad, kicad-symbols or kicad-footprints is not among the versions the archive offers, the install step exits non-zero within ten minutes and its message names the package, the version it wanted, the versions on offer and the archive, and the job is not left to its own time limit. A test drives the step's check with stand-in package commands that report the version missing, present, and absent from an empty listing, in each case without network or KiCad. Out of scope: the job's time budget and the other tools the step installs.
+text: |
+  When the exact version the workflow names for kicad, kicad-symbols or kicad-footprints is not among the versions the archive offers, the install step exits non-zero within ten minutes and its message names the package, the version it wanted, the versions on offer and the archive, and the job is not left to its own time limit. The step carries a time limit of its own of at most fifteen minutes, well under the job's budget, so that a wait inside the step, from whatever cause, ends as a failure of that step and not as a cancelled job. A test pins the step's time limit and drives the step's check with stand-in package commands that report the version missing, present, and absent from an empty listing, in each case without network or KiCad. Out of scope: the job's time budget, the other tools the step installs, and finding why the run of 2026-11-23 waited two hours.
 links:
   - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO
     type: criterion-of

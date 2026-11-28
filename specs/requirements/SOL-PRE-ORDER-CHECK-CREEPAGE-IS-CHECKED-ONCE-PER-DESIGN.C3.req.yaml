@@ -2,11 +2,11 @@ id: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C3
 type: criterion
 title: A seeded design gives the same hole and sensing findings with the creepage taken out of their passes as with it left in
 status: active
-version: 1
+version: 2
 measurement_type: binary
 verification: test
 text: |-
-  A test runs the check, with the rule engine, on a copy of the throwaway proof design carrying a creepage shortfall, a mounting hole inside the signed distance of Mains and a sensing item inside the signed clearance, once as built and once with the function replaced by one that returns its text unchanged, and requires the mounting-hole findings, the sensing findings and the creepage findings to be the same in both, as text lines; it requires too that a the rule engine report crowded with creepage entries trips neither the assertion cut-off nor the clearance bound of the sensing pass, and that replacing the function makes the test for C2 fail. Taking the function out of the first pass is out of scope.
+  A test runs the check, with the rule engine, on a copy of the throwaway proof design carrying a creepage shortfall, a mounting hole inside the signed distance of Mains and a sensing item inside the signed clearance, once as built and once with the function replaced by one that returns its text unchanged, and requires the mounting-hole findings, the sensing findings and the creepage findings to be the same in both, as text lines; it requires too that a rule engine report crowded with creepage entries trips neither the assertion cut-off nor the clearance bound of the sensing pass, and that replacing the function makes the test for C2 fail. Taking the function out of the first pass is out of scope.
 links:
   - target: SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN
     type: criterion-of
