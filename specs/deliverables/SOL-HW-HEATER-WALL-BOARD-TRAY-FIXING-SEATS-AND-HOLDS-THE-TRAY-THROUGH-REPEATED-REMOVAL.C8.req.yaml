@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C8
+type: criterion
+title: The owner's sign-off record states W-19 again at the new fixing and the longer bar
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |
+  The owner's sign-off record states its W-19 entry again at the new fixing, the 85 mm bar and the wider opening in place of the 80 mm cut, as a dated entry signed on the owner's behalf under his standing instruction. Out of scope: the owner's reasons, which the entry records as said.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
+    type: criterion-of

@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: analysis
 text: |
-  The case record states the insert's pull-out allowance with its source, marking the figure for printed ASA in this layer direction as an assumption, and re-judges the tray root's tension and the triac end's motion at the new fixing in both the push-on and the pull-off direction against the limits the record already states, so that the fixing holds through repeated removal of the tray. The record gives the owner's proof load with home kit: twice the design load, pulled at the blade end in both directions with the bar clamped and the tray fitted. Out of scope: the printed plastic's measured strength.
+  The case record states the insert's pull-out allowance as 680 N with its source, the maker's lower moulded-ABS figure, marking the figure for printed ASA in this layer direction as an assumption, and states the insert's height as inside the window the pocket floor, the countersink and the allowance leave. It re-judges the tray root's tension and the triac end's motion at the new fixing in both the push-on and the pull-off direction against the limits the record already states, so that the fixing holds through repeated removal of the tray. The record gives the owner's proof load with home kit: twice the design load, pulled at the blade end in both directions with the bar clamped and the tray fitted, states that it tests beyond the allowance, and names the direct M3 x 16 screw with a 4 mm step as the fallback a failed proof takes. Out of scope: the printed plastic's measured strength.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
     type: criterion-of
