@@ -179,6 +179,7 @@ class TheSeededFaultProof(Proved):
     """SOL-HW-BOARD-RULE-CHECK-GATE.C5: Each check this leaf enforces is shown to fail on a fault seeded for it in a throwaway design."""
 
     def test_the_clean_design_passes_and_every_fault_is_caught_without_touching_the_tree(self):
+        # SOL-PRE-ORDER-CHECK-CREEPAGE-IS-CHECKED-ONCE-PER-DESIGN.C4: The on-demand seeded-fault proof, run once on the change, reports every fault it seeds as caught, the mounting-hole, sensing and creepage faults included, with no fault missed and none newly failing. The main-board comparison of the two passes' findings, before and after the change, is a stated check of the delivered artefact and not part of this proof.
         before = tree_digest(os.path.join(board_prove.REPO, board_prove.DESIGN))
         out = io.StringIO()
         sys_stdout, sys.stdout = sys.stdout, out
