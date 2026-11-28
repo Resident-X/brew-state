@@ -1,0 +1,18 @@
+id: EV-SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO-C3-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C3
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-11-28T13:53:54Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/46136364038 (job 140952456826, step 'Run the complete verification, the sweep left out for its own jobs') ; https://github.com/Resident-X/brew-state/actions/runs/46136374257 (job 140952490171)
+  artifact_version: 3c486bcd7fcbdc2efd767575118b6c67f61a570d
+text: |
+  In run A (https://github.com/Resident-X/brew-state/actions/runs/46136364038, commit 3c486bcd7fcbdc2efd767575118b6c67f61a570d, job 'Every gate but the sweep') the step 'Run the complete verification, the sweep left out for its own jobs' started 2026-11-28T10:42:55Z, after the KiCad install step had succeeded. It declared its gates: 'verification: the complete verification declares 10 gate(s): fw:build, fw:check, fw:test, fw:run, fw:host-closure, fw:emulate, hw:verify, hw:test:round, fw:sweep, hw:history:...'. The board check started: 'verification: running hw:verify (gate 7 of 9)' at 11:13:36Z, then 'task: [hw:verify] python3 hardware/tools/board_check.py --root . --kicad-cli "kicad-cli"', with the banner 'Checking board designs under /home/runner/work/brew-state/brew-state with KiCad 10.0.8'. Its verdict: 'RESULT | PASS | all 7 designs passed' and 'verification: hw:verify passed' at 11:26:42Z. The board tooling's tests started: 'verification: running hw:test:round (gate 8 of 9)' at 11:26:42Z, then 'task: [hw:test:round] python3 firmware/tools/run_tool_tests.py --tests hardware/tools/tests --cwd . --worker-cap 4'. Its verdict was a FAILURE: 'run_tool_tests: FAILED: 129 modules, 3828 tests, 3 failed, 8614.9s on 4 workers: test_kicad_scripting_environment, test_main_board_clamp_and_side, test_main_board_layout_chain', then 'verification: hw:test:round FAILED with exit status 201'; one failure's message reads 'board_check.CannotRun: KICAD_CLI must name kicad-cli; it is ''kicad-cli''', and the other two show assertions 'AssertionError: 0 != 2'. The run's closing line is 'VERIFICATION FAILED: 1 of the 9 gate(s) that ran failed: hw:test:round (exit status 201).' with 'Gates that ran: fw:build (passed), fw:check (passed), fw:test (passed), fw:run (passed), fw:host-closure (passed), fw:emulate (passed), hw:verify (passed), hw:test:round (FAILED), hw:history:all (passed).' Run B (https://github.com/Resident-X/brew-state/actions/runs/46136374257, same commit, job 140952490171) shows the same: hw:verify started 11:22:14Z and passed ('RESULT | PASS | all 7 designs passed'), hw:test:round started 11:33:29Z and failed ('run_tool_tests: FAILED: 129 modules, 3828 tests, 3 failed, 9052.0s on 4 workers'). The criterion asks only that a dispatched run gets past the install and starts hw:verify and hw:test:round whether or not any gate failed, and leaves their verdicts out of scope; the record states the hw:test:round failure and does not claim that gate passed. The cause of those three failures is not established by this record.
+links:
+  - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C3
+    type: satisfies

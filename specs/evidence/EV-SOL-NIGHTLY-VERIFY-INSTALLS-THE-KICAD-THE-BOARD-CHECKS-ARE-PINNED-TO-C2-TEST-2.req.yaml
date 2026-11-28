@@ -1,0 +1,18 @@
+id: EV-SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO-C2-TEST-2
+type: evidence
+title: test evidence for SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2 (version missing, empty listing)
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T14:08:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: firmware/tools/tests/test_verify_gate.py::TheNightlyRunsTheSameDeclaration::test_a_version_the_archive_does_not_offer_fails_the_check_naming_the_package_the_version_the_versions_on_offer_and_the_archive ; firmware/tools/tests/test_verify_gate.py::TheNightlyRunsTheSameDeclaration::test_a_listing_with_the_version_only_from_another_archive_or_no_listing_at_all_fails_the_check
+  artifact_version: 3c486bcd7fcbdc2efd767575118b6c67f61a570d
+text: |
+  Two tests drive the install step's pre-install check with stand-in apt commands and no network or KiCad. test_a_version_the_archive_does_not_offer_fails_the_check_naming_the_package_the_version_the_versions_on_offer_and_the_archive offers 10.0.9 and 10.0.6 while 10.0.8~ubuntu24.04.1 is wanted: the check exits non-zero and its stderr names 'kicad', the wanted version, both versions on offer and 'kicad/kicad-10.0-releases'; with kicad and kicad-symbols offering the version, the failure starts 'kicad-footprints 10.0.8~ubuntu24.04.1 is not offered' and does not name kicad-symbols. test_a_listing_with_the_version_only_from_another_archive_or_no_listing_at_all_fails_the_check: the version offered only by the Ubuntu archive fails and names the project archive; an empty listing fails with 'kicad 10.0.8~ubuntu24.04.1 is not offered by the archive kicad/kicad-10.0-releases'; no listing at all fails. The round gate on d8ba5f9f (.stage0/gate.log in the build worktree) printed 'ok     test_verify_gate: 50 tests in 16.1s' and ended 'ROUND GATE PASSED: the host tier (fw:build, fw:check, fw:test, fw:run), the emulation tier (fw:emulate) and the board tier (hw:verify, hw:test:round) all ran and passed'; that gate line is per module, not per test. The test file and the workflow are unchanged between d8ba5f9f and the run commit. On the hosted runner, run A (https://github.com/Resident-X/brew-state/actions/runs/46136364038, step 'Run the complete verification, the sweep left out for its own jobs') printed 'ok     test_verify_gate: 50 tests in 2.1s' twice (10:47:01Z and 10:51:23Z) and run B (https://github.com/Resident-X/brew-state/actions/runs/46136374257) printed 'ok     test_verify_gate: 50 tests in 2.4s' twice (10:47:50Z, 10:53:26Z), at commit 3c486bcd7fcbdc2efd767575118b6c67f61a570d. Covers the clauses 'exits non-zero ... names the package, the version it wanted, the versions on offer and the archive' for the version missing and for an empty listing. The hosted runs did not exercise the failing path (the pinned version was on offer in both).
+links:
+  - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2
+    type: satisfies

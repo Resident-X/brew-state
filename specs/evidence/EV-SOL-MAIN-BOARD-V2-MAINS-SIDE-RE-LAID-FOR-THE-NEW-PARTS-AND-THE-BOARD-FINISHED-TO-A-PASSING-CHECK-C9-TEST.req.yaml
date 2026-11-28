@@ -1,0 +1,18 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C9-TEST
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C9
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T13:53:54Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/46136364038 ; https://github.com/Resident-X/brew-state/actions/runs/46136374257 (step 'Run the complete verification, the sweep left out for its own jobs', gate hw:history:all)
+  artifact_version: 3c486bcd7fcbdc2efd767575118b6c67f61a570d
+text: |
+  This is a recorded execution of the committed placement-history command by the nightly verification on a hosted runner, not a local run. The nightly workflow (nightly-verify.yml, commit 3c486bcd7fcbdc2efd767575118b6c67f61a570d, dispatched on the branch), job 'Every gate but the sweep', step 'Run the complete verification, the sweep left out for its own jobs', ran 'verification: running hw:history:all (gate 9 of 9)' (task [hw:history:all] python3 hardware/tools/board_history.py --all). Its output in run A (https://github.com/Resident-X/brew-state/actions/runs/46136364038, job 140952456826, 2026-11-28T13:53:54Z) includes the lines 'BOARD | hardware/sunbeam-em7000/main-board/main-board.kicad_pcb | plain | PASS | all 22 checks passed' and 'BOARD | hardware/sunbeam-em7000/main-board/main-board.kicad_pcb | routed | PASS | all 22 checks passed', then 'RESULT | PASS | 6 runs, 6 passed' and 'verification: hw:history:all passed'. Run B (https://github.com/Resident-X/brew-state/actions/runs/46136374257, job 140952490171, 2026-11-28T14:08:48Z) prints the same two main-board lines and 'RESULT | PASS | 6 runs, 6 passed'. The same output holds no failing BOARD line. The criterion's finished main board is the board at this commit; the lines cover the board file as committed, in plain mode and in routed mode, 22 checks each.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C9
+    type: satisfies

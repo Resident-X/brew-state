@@ -1,0 +1,18 @@
+id: EV-SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO-C1-DEMONSTRATION
+type: evidence
+title: demonstration evidence for SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C1
+status: active
+version: 1
+result: pass
+method: demonstration
+observed_at: "2026-11-28T14:08:48Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: https://github.com/Resident-X/brew-state/actions/runs/46136364038 ; https://github.com/Resident-X/brew-state/actions/runs/46136374257 (job 'Every gate but the sweep', step 'Install KiCad with its standard libraries, a monospaced font and the YAML reader')
+  artifact_version: 3c486bcd7fcbdc2efd767575118b6c67f61a570d
+text: |
+  Two manual dispatches of nightly-verify.yml on the branch, both at commit 3c486bcd7fcbdc2efd767575118b6c67f61a570d, each ran the job 'Every gate but the sweep' and its step 'Install KiCad with its standard libraries, a monospaced font and the YAML reader', which completed with conclusion success in both. Run A (https://github.com/Resident-X/brew-state/actions/runs/46136364038, job 140952456826): step started 2026-11-28T10:42:09Z, completed 2026-11-28T10:42:44Z. Run B (https://github.com/Resident-X/brew-state/actions/runs/46136374257, job 140952490171): started 2026-11-28T10:42:12Z, completed 2026-11-28T10:42:39Z. The step's environment in both logs names 'KICAD_VERSION: 10.0.8~ubuntu24.04.1' and 'KICAD_PPA: kicad/kicad-10.0-releases'. Packages installed at that one version, in both logs: 'Setting up kicad-footprints (10.0.8~ubuntu24.04.1) ...', 'Setting up kicad-symbols (10.0.8~ubuntu24.04.1) ...', 'Setting up kicad (10.0.8~ubuntu24.04.1) ...' (run A at 10:42:35, 10:42:35, 10:42:42; run B at 10:42:34, 10:42:34, 10:42:37). The step's own check then compares each installed package's version to KICAD_VERSION and exits non-zero on a difference; the step completed, so none differed. The step ends with 'kicad-cli version', whose output in both logs is the line '10.0.8' (run A 10:42:44, run B 10:42:39). Both runs therefore installed the same version, 10.0.8, and it is not older than the minimum KiCad 10.0 the board check requires (the board check's own banner in run A reads 'Checking board designs under /home/runner/work/brew-state/brew-state with KiCad 10.0.8'). The job's overall conclusion was failure in both runs, from a later step (hw:test:round), not from the install; that is outside this criterion.
+links:
+  - target: SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C1
+    type: satisfies
