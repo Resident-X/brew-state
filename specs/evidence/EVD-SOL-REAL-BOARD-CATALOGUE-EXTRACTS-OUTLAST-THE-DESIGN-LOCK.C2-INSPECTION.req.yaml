@@ -1,0 +1,15 @@
+id: EVD-SOL-REAL-BOARD-CATALOGUE-EXTRACTS-OUTLAST-THE-DESIGN-LOCK.C2-INSPECTION
+type: evidence
+title: The README's catalogue-extract paragraph states that the design task declares the window and the order re-reads and re-dates it, names the ordering criterion, and the old keep-current sentence is gone; the test asserts all three
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T16:25:31Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/README.md@bf55159787b039fcc38362eeaf454893dafbb47c
+links:
+  - target: SOL-REAL-BOARD-CATALOGUE-EXTRACTS-OUTLAST-THE-DESIGN-LOCK.C2
+    type: satisfies
