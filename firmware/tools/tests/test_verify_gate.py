@@ -548,7 +548,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
     UBUNTU = "http://archive.ubuntu.com/ubuntu noble/universe amd64"
 
     def test_the_kicad_install_step_has_a_time_limit_of_its_own_well_under_the_jobs_budget(self):
-        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: When the exact version the workflow names for kicad, kicad-symbols or kicad-footprints is not among the versions the archive offers, the install step exits non-zero within ten minutes and its message names the package, the version it wanted, the versions on offer and the archive, and the job is not left to its own time limit. The step carries a time limit of its own of at most fifteen minutes, well under the job's budget, so that a wait inside the step, from whatever cause, ends as a failure of that step and not as a cancelled job. A test pins the step's time limit and drives the step's check with stand-in package commands that report the version missing, present, and absent from an empty listing, in each case without network or KiCad. Out of scope: the job's time budget, the other tools the step installs, and finding why the run of 2026-11-23 waited two hours.
         limit = re.findall(r"(?m)^        timeout-minutes: (\d+)\s*$", self.install_step())
         self.assertEqual(1, len(limit), "the install step does not carry exactly one time limit of its own")
         budget, _ = workflow_declarations.find(self.nightly, "jobs", "gates", "timeout-minutes")
@@ -557,7 +557,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertLess(int(limit[0]), int(budget) / 4, "the step's limit is not well under the job's budget")
 
     def test_a_version_the_archive_does_not_offer_fails_the_check_naming_the_package_the_version_the_versions_on_offer_and_the_archive(self):
-        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: When the exact version the workflow names for kicad, kicad-symbols or kicad-footprints is not among the versions the archive offers, the install step exits non-zero within ten minutes and its message names the package, the version it wanted, the versions on offer and the archive, and the job is not left to its own time limit. The step carries a time limit of its own of at most fifteen minutes, well under the job's budget, so that a wait inside the step, from whatever cause, ends as a failure of that step and not as a cancelled job. A test pins the step's time limit and drives the step's check with stand-in package commands that report the version missing, present, and absent from an empty listing, in each case without network or KiCad. Out of scope: the job's time budget, the other tools the step installs, and finding why the run of 2026-11-23 waited two hours.
         wanted = "10.0.8~ubuntu24.04.1"
         offered = ("10.0.9~ubuntu24.04.1", self.PPA), ("10.0.6~ubuntu24.04.1", self.PPA)
         listings = {name: self.madison(name, *offered) for name in ("kicad", "kicad-symbols", "kicad-footprints")}
@@ -574,7 +574,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertNotIn("kicad-symbols", result.stderr)
 
     def test_a_listing_with_the_version_only_from_another_archive_or_no_listing_at_all_fails_the_check(self):
-        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: When the exact version the workflow names for kicad, kicad-symbols or kicad-footprints is not among the versions the archive offers, the install step exits non-zero within ten minutes and its message names the package, the version it wanted, the versions on offer and the archive, and the job is not left to its own time limit. The step carries a time limit of its own of at most fifteen minutes, well under the job's budget, so that a wait inside the step, from whatever cause, ends as a failure of that step and not as a cancelled job. A test pins the step's time limit and drives the step's check with stand-in package commands that report the version missing, present, and absent from an empty listing, in each case without network or KiCad. Out of scope: the job's time budget, the other tools the step installs, and finding why the run of 2026-11-23 waited two hours.
         wanted = "10.0.8~ubuntu24.04.1"
         names = ("kicad", "kicad-symbols", "kicad-footprints")
         # The version is on offer, but from a different archive: the pin is held to the project's own.
@@ -593,7 +593,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertIn("kicad", result.stderr)
 
     def test_a_version_the_archive_offers_passes_the_check_silently_among_other_versions(self):
-        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: A KiCad version the archive does not offer fails the nightly's install step quickly, naming the package, the version and the archive
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C2: When the exact version the workflow names for kicad, kicad-symbols or kicad-footprints is not among the versions the archive offers, the install step exits non-zero within ten minutes and its message names the package, the version it wanted, the versions on offer and the archive, and the job is not left to its own time limit. The step carries a time limit of its own of at most fifteen minutes, well under the job's budget, so that a wait inside the step, from whatever cause, ends as a failure of that step and not as a cancelled job. A test pins the step's time limit and drives the step's check with stand-in package commands that report the version missing, present, and absent from an empty listing, in each case without network or KiCad. Out of scope: the job's time budget, the other tools the step installs, and finding why the run of 2026-11-23 waited two hours.
         wanted = "10.0.8~ubuntu24.04.1"
         rows = ((wanted, self.PPA), ("8.0.4+dfsg-1build1", self.UBUNTU), ("10.0.8~ubuntu24.04.10", self.PPA))
         listings = {name: self.madison(name, *rows) for name in ("kicad", "kicad-symbols", "kicad-footprints")}
@@ -605,7 +605,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertNotEqual(0, self.run_offer_check(prefix).returncode)
 
     def test_the_pinned_kicad_version_is_the_one_the_check_is_run_with_and_not_older_than_the_minimum(self):
-        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C1: A dispatched nightly run installs the KiCad version its workflow names, not older than the board check's minimum
+        # SOL-NIGHTLY-VERIFY-INSTALLS-THE-KICAD-THE-BOARD-CHECKS-ARE-PINNED-TO.C1: A manual dispatch of the nightly workflow on the branch completes the KiCad install step, installs kicad, kicad-symbols and kicad-footprints at one exact version the archive offers, which is not older than the minimum the board check requires, and prints the version its command-line tool reports; a second dispatch installs the same version. Out of scope: the KiCad an author runs locally, and runners for other operating systems.
         # The run itself is the demonstration; what a file can hold is that the one
         # version the step names reaches the check, the install and the read-back.
         version = self.pinned("KICAD_VERSION")
@@ -772,8 +772,8 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertGreaterEqual(int(match.group(1)), 14, "the first macOS image on arm64 is 14")
 
     def test_the_gates_job_budget_outlasts_the_board_checks_one_run_limit_by_an_hour(self):
-        # SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C1: The timeout-minutes of the gates job in .github/workflows/nightly-verify.yml is at least the board check's one-run limit, KICAD_TIMEOUT_S in hardware/tools/board_check.py, divided by 60 and raised by 60, so a hung KiCad run reaches its own limit and fails the design before the job is cancelled
-        # SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C3: A test reads the gates job's timeout-minutes from the workflow file and the one-run limit from the board check, without KiCad, and fails both when the limit is raised without the budget and when the budget is lowered below the floor
+        # SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C1: The timeout-minutes of the gates job in .github/workflows/nightly-verify.yml is at least the board check's one-run limit, KICAD_TIMEOUT_S in hardware/tools/board_check.py, divided by 60 and raised by 60, so a hung KiCad run reaches its own limit and fails the design before the job is cancelled. The other jobs' budgets and the figure of the one-run limit are out of scope.
+        # SOL-NIGHTLY-VERIFY-JOB-BUDGET-FITS-THE-BOARD-CHECK-RUN-LIMIT.C3: A test reads the gates job's timeout-minutes from the workflow file and the one-run limit from the board check, without KiCad, and fails both when the limit is raised without the budget and when the budget is lowered below the floor. Timing a real KiCad run is out of scope.
         # The test reads both figures from the files and does not import the
         # board check, which this module may not. It also shows itself able to
         # fail: the same texts with the limit raised and the budget unchanged,
