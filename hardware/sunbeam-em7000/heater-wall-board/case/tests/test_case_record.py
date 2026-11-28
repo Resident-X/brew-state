@@ -226,7 +226,7 @@ def test_c3_the_plate_length_arithmetic_is_the_models_wherever_the_record_states
     # SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-DESIGNED-TO-THE-REQUIREMENTS-THE-BOARD-RELIES-ON.C3: The plate drawing states a length not less than the case drawing's outer width plus a bolt zone at each end for the wall bolts, with the arithmetic shown. The plate's size is provisional until the owner cuts and measures the wall, and the criterion holds at the figure then recorded. Making the plate is out of scope.
     c3 = named(results, "c3.plate_length")["figures"]
     assert c3["arithmetic"] == "%.2f + 2 x %.1f = %.2f <= %.2f" % (c3["case_outer_width_mm"], c3["bolt_zone_mm"], c3["required_mm"], c3["plate_length_mm"])
-    assert (c3["case_outer_width_mm"], c3["bolt_zone_mm"], c3["plate_length_mm"]) == (59.5, params["plate"]["bolt_zone_mm"]["value"], params["plate"]["length_mm"]["value"])
+    assert (c3["case_outer_width_mm"], c3["bolt_zone_mm"], c3["plate_length_mm"]) == (45.0 + params["case"]["interior_left_mm"]["value"] + params["case"]["interior_right_mm"]["value"] + 2 * (params["case"]["wall_mm"]["value"] + params["case"]["pilaster_out_mm"]["value"]), params["plate"]["bolt_zone_mm"]["value"], params["plate"]["length_mm"]["value"])
     assert c3["required_mm"] == pytest.approx(c3["case_outer_width_mm"] + 2 * c3["bolt_zone_mm"]) and c3["margin_mm"] == pytest.approx(0.5)
     stated = "%.2f + 2 x %.1f = %.2f <= %.1f" % (c3["case_outer_width_mm"], c3["bolt_zone_mm"], c3["required_mm"], c3["plate_length_mm"])
     margin = "margin %.2f mm" % c3["margin_mm"]
@@ -409,7 +409,7 @@ def test_c9_the_backing_rib_the_force_and_the_deflection_arithmetic(record, resu
     assert "%.1f x %.2f^3 / (3 x %d x %d) = %.3f mm" % (force, span, young, round(inertia), deflection) in body
     assert num(body, r"triac end against the plate, which is (\d\.\d+) mm\. That is compared with (\d\.\d+) mm, a design figure") == pytest.approx(fig["deflection_at_triac_end_mm"], abs=0.0005)
     assert num(body, r"compared with (\d\.\d+) mm, a design figure") == pytest.approx(fig["allowed_mm"])
-    assert fig["deflection_at_triac_end_mm"] < fig["allowed_mm"] and "0.006 mm at the triac end against 0.05 mm, a design allowance with no external source" in body
+    assert fig["deflection_at_triac_end_mm"] < fig["allowed_mm"] and "%.3f mm at the triac end against 0.05 mm, a design allowance with no external source" % fig["deflection_at_triac_end_mm"] in body
     assert "`material.allowed_board_motion_mm`" in body and "not compared with anything" in body and fig["allowed_mm"] == params["material"]["allowed_board_motion_mm"]["value"]
     assert "ASA sheet's 2010 MPa rounded down" in body and "delivered-board leaf" in body
     assert "from below when installed" in body and "along `-z`, into the board" in body
@@ -489,18 +489,18 @@ def test_c12_the_plate_is_flat_with_only_the_listed_holes_and_the_sizes_are_the_
     m = re.search(r"\*\*(\d+\.\d) mm long, (\d+) mm wide \(its height installed\) and (\d+\.\d) mm thick\*\*", body)
     assert m and tuple(float(x) for x in m.groups()) == pytest.approx((plate["length_mm"]["value"], height, plate["thickness_mm"]["value"])) and height == plate["height_mm"]["value"]
     assert info["u1"] - info["u0"] == pytest.approx(plate["length_mm"]["value"]) and info["z0"] == plate["lower_edge_z_mm"]["value"] == 6.0
-    assert "nothing cut from it" in body and "eight holes" in body
+    assert "nothing cut from it" in body and "six holes" in body
     tap, tray_screws, bolts = 2, params["screws"]["tray_plate_count_per_pilaster"]["value"] * 2, len(info["bolt_zs"]) * 2
-    assert tap + tray_screws + bolts == 8 and len(info["bolt_zs"]) == 1
-    assert "two M3 holes tapped through the whole plate from the triac side" in body and "four M3 countersunk holes" in body and "two 4.5 mm holes for the M4 wall bolts" in body
+    assert tap + tray_screws + bolts == 6 and len(info["bolt_zs"]) == 1
+    assert "two M3 holes tapped through the whole plate from the triac side" in body and "two M3 countersunk holes" in body and "two 4.5 mm holes for the M4 wall bolts" in body
     assert num(body, r"\((\d\.\d) mm tapping drill") == pytest.approx(params["triac"]["plate_tap_drill_mm"]["value"])
     assert num(body, r"tapping drill, (\d\.\d) mm deep") == pytest.approx(plate["thickness_mm"]["value"]), "tapped through the whole plate"
     assert params["plate"]["bolt_dia_mm"]["value"] + 0.5 == pytest.approx(4.5)
     assert num(body, r"head diameter (\d\.\d) mm") == pytest.approx(params["screws"]["tray_plate_head_dia_mm"]["value"])
-    assert "standard 20 x %d mm flat aluminium bar and cuts it to 80 mm" % plate["thickness_mm"]["value"] in body
+    assert "standard 20 x %d mm flat aluminium bar and cuts it to %d mm" % (plate["thickness_mm"]["value"], plate["length_mm"]["value"]) in body
     assert "not in the catalogue and is not priced" in body
     assert num(body, r"bar is at least (\d+\.\d) mm long") == pytest.approx(named(results, "c3.plate_length")["figures"]["required_mm"])
-    assert "59.50 + 2 x 10.0 = 79.50)" in body and "%.0f mm wide, a standard stock width" % height in body
+    assert "64.50 + 2 x 10.0 = 84.50)" in body and "%.0f mm wide, a standard stock width" % height in body
 
 
 def test_c12_the_departure_from_the_owners_slot_words_interface_depth_and_what_it_replaces_are_stated(record, params, model, results, rng):
@@ -841,7 +841,7 @@ def test_c14_geometry_check_of_overhangs_critical_faces_screws_and_no_machining(
     assert "no critical face needs support" in body and "each slit's roof is a 2.0 mm bridge" in body
     assert tray["bridged_clusters"][0]["span_mm"] == pytest.approx(params["skins"]["flow"]["outlets"]["width_mm"]["value"], abs=0.01)
     fixing = body.split("**Fixings.**")[1].split("**Honest grade.**")[0]
-    assert "M3 x %.0f countersunk (four, tray to plate)" % params["screws"]["tray_plate_length_mm"]["value"] in fixing
+    assert "M3 x %.0f countersunk (two, tray to plate, into heat-set inserts)" % params["screws"]["tray_plate_length_mm"]["value"] in fixing
     assert "M3 x %.0f pan head (H1)" % params["screws"]["h1_length_mm"]["value"] in fixing
     assert "M3 x 10 countersunk (lid)" in fixing and "M3 x 5 pan head through the tab holes (two)" in fixing and "M4 wall bolts (two)" in fixing
     assert "No part needs post-print machining" in fixing
@@ -849,7 +849,7 @@ def test_c14_geometry_check_of_overhangs_critical_faces_screws_and_no_machining(
         assert where in body
     for why in ("exactly 45 degrees", "bridged", "first-layer patches"):
         assert why in body
-    r10 = wall_resistance(10, params["plate"]["height_mm"]["value"] / 1000.0, params["plate"]["length_mm"]["value"] / 1000.0)
+    r10 = wall_resistance(10, params["plate"]["height_mm"]["value"] / 1000.0, JUDGED_BAR_LENGTH_M)
     nominal, hot = 25 + 9.09 * (r10 + 1), 40 + 9.09 * (r10 + 3)
     assert "nominal plate temperature of %.1f degC and a bound of %.1f degC" % (nominal, hot) in body
 
@@ -1023,6 +1023,9 @@ def test_c16_range_with_sources_unconfirmed_and_the_32_extremes_result(record, p
 
 # ---------------------------------------------------------------- C17
 
+JUDGED_BAR_LENGTH_M = 0.080
+
+
 def wall_resistance(h, height_m, length_m, t_m=0.0025, k=110.0):
     perimeter = 2 * (height_m + length_m)
     return 1.0 / (h * height_m * length_m + perimeter * math.sqrt(h * k * t_m))
@@ -1036,7 +1039,8 @@ def test_c17_plate_temperatures_are_recomputed_from_the_thermal_figures_and_grad
     assert "T_air + 9.09 x (R_wall" in proof and "2.572 K/W at h = 10, and 3.704 K/W at h = 5" in proof, "the former plate's section is unchanged"
     watts = 9.09
     height = params["plate"]["height_mm"]["value"] / 1000.0
-    length = params["plate"]["length_mm"]["value"] / 1000.0
+    length = JUDGED_BAR_LENGTH_M          # the thermal judgement stands at the 80 mm bar: the longer bar the case now takes has the smaller wall resistance
+    assert params["plate"]["length_mm"]["value"] / 1000.0 >= length and "not re-run for the 85 mm bar" in body
     r10, r5 = wall_resistance(10, height, length), wall_resistance(5, height, length)
     assert "%.3f K/W at h = 10 and %.3f K/W at h = 5" % (r10, r5) in narrower
     assert "R_wall = %.3f K/W at h = 10 and %.3f K/W at h = 5" % (r10, r5) in body
@@ -1064,7 +1068,7 @@ def test_c17_plate_temperatures_are_recomputed_from_the_thermal_figures_and_grad
     assert "wall resistance of %.3f and %.3f K/W" % tuple(stainless) in body
     for t in (25 + watts * (stainless[0] + 1), 40 + watts * (stainless[0] + 3), 40 + watts * (stainless[1] + 3)):
         assert "%.1f" % t in body
-    assert "pilaster end faces, the screw pilots and the end wall's ledge" in body
+    assert "pilaster end faces, the inserts and the end wall's ledge" in body
     assert "continuous full power on both triacs" in body and "no film on it" in body
     assert "film" not in params
     # the plate is narrower than the one the earlier figures were drawn for, so every temperature is higher
@@ -1141,7 +1145,7 @@ def test_c18_no_dimension_another_criterion_fixes_was_reduced(record, results, b
     slot = min(s["least_mm"] for s in named(results, "c8.slot_mouths_clear")["figures"]["slots"])
     assert num(body, r"slot-mouth clearance \((\d\.\d) mm against") == pytest.approx(slot)
     assert num(body, r"case-to-plate margin \((\d\.\d+) mm against") == pytest.approx(min(named(results, "c2.case_within_former_outline")["figures"]["margins_mm"].values()), abs=0.001)
-    assert "79.50 against 80.0" in body
+    assert "84.50 against 85.0" in body
     bay = named(results, "c11.blade_terminals_reachable_lid_on")["figures"]["blades"][0]["aperture_mm"]
     assert "to %.1f x %.2f mm" % tuple(bay) in body
     for name in ("c1.creepage_pad_to_plate", "c1.creepage_bare_lead_to_plate", "c8.slot_mouths_clear", "c2.case_within_former_outline", "c3.plate_length", "c18.boot_clearance"):
@@ -1174,9 +1178,9 @@ def test_c19_installed_orientation_is_the_owners_and_each_judgement_is_stated_fo
     assert num(body, r"to a (\d+) mm slide") == pytest.approx(frame["slide_checked_to_mm"])
     assert "Reach of every fixing and each receptacle" in body and "Test finger and drip paths of every opening" in body
     fix = named(results, "c5.fixings_reached_installed")["figures"]["fixings"]
-    assert {f["fixing"] for f in fix} == {"lid screw", "board screw H1", "tab screw T921", "tab screw T911", "tray-to-plate screws (4)"}
+    assert {f["fixing"] for f in fix} == {"lid screw", "board screw H1", "tab screw T921", "tab screw T911", "tray-to-plate screws (2)"}
     reach = {r[0]: r for r in table_rows(body, "Fixing")}
-    assert len(reach) == 5 and any(k.startswith("lid screw") for k in reach) and any(k.startswith("four tray screws") for k in reach)
+    assert len(reach) == 5 and any(k.startswith("lid screw") for k in reach) and any(k.startswith("two tray screws") for k in reach)
     lid_row = next(v for k, v in reach.items() if k.startswith("lid screw"))
     screw = named(results, "c5.lid_screw_reached")["figures"]
     assert num(lid_row[1], r"(\d+\.\d) mm from the wall plane") == pytest.approx(screw["distance_to_wall_plane_mm"])

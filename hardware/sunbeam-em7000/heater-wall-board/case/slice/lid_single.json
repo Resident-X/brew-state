@@ -4,12 +4,12 @@
  "printer": "generic open-frame 220 x 220 x 250, 0.4 mm nozzle, 0.2 mm layers, ASA 245/100, brim, draft shield",
  "slicer": "PrusaSlicer-2.9.7 based on Slic3r (with GUI support)",
  "inputs": {
-  "params.yaml": "31c6850dba31ba0595a22b2ca81426473a5e27306bf2ea445b35b92965c6053d",
-  "case.py": "d8c72018a552276a4df58f0d8806c8ffce7a56de98d4d027b366dc85d72ec1ad",
-  "check.py": "5b39560275bd6b91d920b386a6e9ea9b2d9b865e4d77b8799c53aae09c049d46",
+  "params.yaml": "ec5a43a552d2716620b31496165e2126ffc1f2d7424b8bd362dc0d526b573cdd",
+  "case.py": "8975bc4e701635a30d8b3a0115c264393bd31d5a327a5a718298121025c1cf9e",
+  "check.py": "f1f829b6ef8f2170f8943a9c8ebe14f4822c50dc87b4345a93b71e3fb3c2012b",
   "core.py": "8e8c7e2f66186df1f979a442bc65df133484b8ab4e941e57b9f31bee1748af9c",
   "skins.py": "2528371038564f8b980d15ea12bc3a6bd8e78781bab21285d55272437f709231",
-  "solids.py": "44e5546024c274dbe5c78c3902ea8e91ee9aa1719c146a8a57b7cb471ec335ac",
+  "solids.py": "57eca12ae70ef6c220dd384f584cf9cdcc7fae55d6c329e742b52793e87cd7ba",
   "streamlines.py": "49472c0790a33ef1b132b12933a060ad0c9606e55a7bde9b33528245ebdd681b",
   "logo.py": "b2a1e19eb5545f634f2cda4b9eb9927b14924916f3aeb2b0f696505d737b4385",
   "staircase-logo.svg": "c15d6497ba90370fb6d58125ae2580c2a114b3695a209b5048fe5724c0ac9e84",
@@ -17,10 +17,10 @@
   "support-auto.ini": "8aef9296943b4973f2f562b51374641fa93b9d37187a16896606b2e3862576ae",
   "../heater-wall-board.kicad_pcb": "eaa97a923541316a8c52efe0794d9d4b45073db59cab9ed6e9283c95a858e8a4",
   "../heater-wall-board.kicad_pro": "207bfcc77e0c403d14c644cc127cde262be84595aa1d5f19c08ab764cdcbb1d5",
-  "../separation-basis.yaml": "100f1baae70ddfef596e30faf732b21336ee373603f42d5a9dfe4904711f40bf",
+  "../separation-basis.yaml": "e5d0f2e1895c13a226676d826831f63b907a172cf2d36aa5c21a3b31b3d7ddf9",
   "../../../tools/board_geometry.py": "58a4d843a495fb85fa747ddf1935ed33ec549bce1d3befa2fce59e8b882e1c82",
   "../../../tools/sexpr.py": "f74f214bd330c46ffecc896c0879ca114e6d84db3788d7bf262ae127b33482a0",
-  "out/lid_single.print.stl": "f079b1be030fb290051a4856f8c43671a1766ce372e1162a18180d0fceeb6d62"
+  "out/lid_single.print.stl": "328dd439e73480454089ddb4834d8bea39e759ef6f05b487af5df743d815c585"
  },
  "support_frame": "support_clusters are in print coordinates (the G-code's: x, y on the bed, z up); each carries model_frame, the same box in the case's own frame (u, v, z) that case.py's regions use",
  "limits": {
@@ -31,30 +31,30 @@
   "first_layer_mm": 0.2
  },
  "supports_off": {
-  "filament_mm": 4722.61,
-  "filament_cm3": 11.36,
-  "filament_g": 12.15,
-  "print_time_text": "1h 42m 57s",
-  "print_time_s": 6177.0,
+  "filament_mm": 5386.83,
+  "filament_cm3": 12.96,
+  "filament_g": 13.86,
+  "print_time_text": "1h 55m 39s",
+  "print_time_s": 6939.0,
   "layers": 29,
   "bounding_box_mm": {
    "min": [
-    75.92,
-    63.57,
+    73.42,
+    63.56,
     0.2
    ],
    "max": [
-    144.08,
+    146.58,
     156.43,
     5.8
    ],
    "size": [
-    68.17,
-    92.86,
+    73.17,
+    92.87,
     5.6
    ]
   },
-  "extruded_mm": 4722.6,
+  "extruded_mm": 5386.8,
   "support_generated": false,
   "support_filament_mm": 0.0,
   "support_volume_mm3": 0.0,
@@ -62,38 +62,38 @@
   "gcode": "lid_single.supports-off.gcode"
  },
  "supports_auto": {
-  "filament_mm": 4986.44,
-  "filament_cm3": 11.99,
-  "filament_g": 12.83,
-  "print_time_text": "1h 47m 48s",
-  "print_time_s": 6468.0,
+  "filament_mm": 5639.16,
+  "filament_cm3": 13.56,
+  "filament_g": 14.51,
+  "print_time_text": "2h 0m 23s",
+  "print_time_s": 7223.0,
   "layers": 31,
   "bounding_box_mm": {
    "min": [
-    72.42,
-    63.57,
+    69.56,
+    63.56,
     0.2
    ],
    "max": [
-    147.59,
+    150.44,
     159.01,
     5.8
    ],
    "size": [
-    75.17,
+    80.88,
     95.45,
     5.6
    ]
   },
-  "extruded_mm": 4986.4,
+  "extruded_mm": 5639.2,
   "support_generated": true,
-  "support_filament_mm": 231.7,
-  "support_volume_mm3": 557.2,
+  "support_filament_mm": 221.7,
+  "support_volume_mm3": 533.3,
   "support_clusters": [
    {
     "x_mm": [
-     75.59,
-     144.41
+     72.74,
+     147.26
     ],
     "y_mm": [
      67.14,
@@ -103,12 +103,12 @@
      0.2,
      2.38
     ],
-    "filament_mm": 231.7,
-    "segments": 2653,
+    "filament_mm": 221.7,
+    "segments": 2685,
     "model_frame": {
      "u_mm": [
-      -10.66,
-      58.16
+      -13.51,
+      61.01
      ],
      "v_mm": [
       -1.16,
@@ -124,7 +124,7 @@
   "gcode": "lid_single.supports-auto.gcode",
   "regions": [
    {
-    "filament_mm": 38.6,
+    "filament_mm": 38.9,
     "print_z_mm": [
      0.4,
      1.2
@@ -135,8 +135,45 @@
     ],
     "model_frame": {
      "u_mm": [
-      -7.7,
-      55.2
+      -10.5,
+      23.7
+     ],
+     "v_mm": [
+      -1.2,
+      65.3
+     ],
+     "z_mm": [
+      21.45,
+      22.25
+     ]
+    },
+    "kind": "bed_side_roll_in",
+    "feature": "rounded bed-side edge of the outline (8 layers of roll-in), left",
+    "supported_face_area_mm2": 234.1,
+    "flatter_than_limit_mm2": 0.0,
+    "roofs": [],
+    "sloped_face_angle_deg": [
+     45.0,
+     45.0
+    ],
+    "problems": [],
+    "accepted": true,
+    "id": 1
+   },
+   {
+    "filament_mm": 34.4,
+    "print_z_mm": [
+     0.4,
+     1.2
+    ],
+    "layers": [
+     2,
+     6
+    ],
+    "model_frame": {
+     "u_mm": [
+      -10.5,
+      58.0
      ],
      "v_mm": [
       65.4,
@@ -149,7 +186,7 @@
     },
     "kind": "bed_side_roll_in",
     "feature": "rounded bed-side edge of the outline (8 layers of roll-in), far",
-    "supported_face_area_mm2": 167.1,
+    "supported_face_area_mm2": 176.2,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [],
     "sloped_face_angle_deg": [
@@ -158,47 +195,10 @@
     ],
     "problems": [],
     "accepted": true,
-    "id": 1
-   },
-   {
-    "filament_mm": 37.8,
-    "print_z_mm": [
-     0.4,
-     1.2
-    ],
-    "layers": [
-     2,
-     6
-    ],
-    "model_frame": {
-     "u_mm": [
-      -7.7,
-      23.7
-     ],
-     "v_mm": [
-      -1.2,
-      65.4
-     ],
-     "z_mm": [
-      21.45,
-      22.25
-     ]
-    },
-    "kind": "bed_side_roll_in",
-    "feature": "rounded bed-side edge of the outline (8 layers of roll-in), left",
-    "supported_face_area_mm2": 228.5,
-    "flatter_than_limit_mm2": 0.0,
-    "roofs": [],
-    "sloped_face_angle_deg": [
-     45.0,
-     45.0
-    ],
-    "problems": [],
-    "accepted": true,
     "id": 2
    },
    {
-    "filament_mm": 33.8,
+    "filament_mm": 33.1,
     "print_z_mm": [
      0.4,
      1.2
@@ -209,8 +209,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      24.0,
-      55.2
+      23.9,
+      58.0
      ],
      "v_mm": [
       -1.2,
@@ -223,7 +223,7 @@
     },
     "kind": "bed_side_roll_in",
     "feature": "rounded bed-side edge of the outline (8 layers of roll-in), right",
-    "supported_face_area_mm2": 281.2,
+    "supported_face_area_mm2": 296.1,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [],
     "sloped_face_angle_deg": [
@@ -235,7 +235,7 @@
     "id": 3
    },
    {
-    "filament_mm": 27.0,
+    "filament_mm": 25.9,
     "print_z_mm": [
      0.2,
      2.38
@@ -246,12 +246,12 @@
     ],
     "model_frame": {
      "u_mm": [
-      2.5,
-      8.2
+      30.7,
+      40.7
      ],
      "v_mm": [
       2.2,
-      58.9
+      58.8
      ],
      "z_mm": [
       20.27,
@@ -260,19 +260,19 @@
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 64.6,
+    "supported_face_area_mm2": 74.0,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
-      "span_mm": 1.55,
+      "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 5.94,
-      "area_mm2": 45.8,
+      "short_mm": 10.36,
+      "area_mm2": 48.5,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       6.9,
-       2.8
+       33.3,
+       5.0
       ]
      }
     ],
@@ -285,7 +285,7 @@
     "id": 4
    },
    {
-    "filament_mm": 26.6,
+    "filament_mm": 25.5,
     "print_z_mm": [
      0.2,
      2.38
@@ -296,8 +296,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      35.4,
-      42.5
+      6.8,
+      16.8
      ],
      "v_mm": [
       2.2,
@@ -310,19 +310,19 @@
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 62.0,
+    "supported_face_area_mm2": 76.8,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 8.17,
-      "area_mm2": 47.1,
+      "short_mm": 10.36,
+      "area_mm2": 48.5,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       36.5,
-       3.7
+       15.4,
+       3.3
       ]
      }
     ],
@@ -335,7 +335,7 @@
     "id": 5
    },
    {
-    "filament_mm": 26.3,
+    "filament_mm": 24.8,
     "print_z_mm": [
      0.2,
      2.38
@@ -346,8 +346,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      5.0,
-      12.1
+      36.1,
+      43.6
      ],
      "v_mm": [
       2.2,
@@ -360,19 +360,19 @@
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 64.1,
+    "supported_face_area_mm2": 68.8,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
-      "span_mm": 1.55,
+      "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 8.17,
-      "area_mm2": 47.0,
+      "short_mm": 8.1,
+      "area_mm2": 46.7,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       9.5,
-       6.2
+       37.6,
+       3.7
       ]
      }
     ],
@@ -385,7 +385,7 @@
     "id": 6
    },
    {
-    "filament_mm": 26.1,
+    "filament_mm": 24.6,
     "print_z_mm": [
      0.2,
      2.38
@@ -396,8 +396,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      39.3,
-      45.0
+      3.9,
+      11.4
      ],
      "v_mm": [
       2.2,
@@ -410,19 +410,19 @@
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 66.9,
+    "supported_face_area_mm2": 67.8,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
-      "span_mm": 1.56,
+      "span_mm": 1.55,
       "long_mm": 57.55,
-      "short_mm": 5.94,
-      "area_mm2": 45.8,
+      "short_mm": 8.11,
+      "area_mm2": 46.6,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       40.7,
-       2.9
+       9.3,
+       4.7
       ]
      }
     ],
@@ -435,7 +435,7 @@
     "id": 7
    },
    {
-    "filament_mm": 6.0,
+    "filament_mm": 12.5,
     "print_z_mm": [
      0.2,
      0.2
@@ -446,11 +446,11 @@
     ],
     "model_frame": {
      "u_mm": [
-      -10.7,
-      58.2
+      -13.5,
+      61.0
      ],
      "v_mm": [
-      -0.9,
+      4.4,
       87.5
      ],
      "z_mm": [
@@ -469,7 +469,7 @@
     "id": 8
    },
    {
-    "filament_mm": 4.3,
+    "filament_mm": 0.5,
     "print_z_mm": [
      0.2,
      0.2
@@ -480,12 +480,12 @@
     ],
     "model_frame": {
      "u_mm": [
-      7.5,
-      16.9
+      -1.1,
+      0.6
      ],
      "v_mm": [
       2.2,
-      58.8
+      7.5
      ],
      "z_mm": [
       22.45,
@@ -493,20 +493,20 @@
      ]
     },
     "kind": "flat_roof",
-    "feature": "flat roof of a void, 10.41 wide by 57.55 long",
-    "supported_face_area_mm2": 92.2,
+    "feature": "flat roof of a void, 3.71 wide by 57.55 long",
+    "supported_face_area_mm2": 8.7,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 10.41,
-      "area_mm2": 96.1,
+      "short_mm": 3.71,
+      "area_mm2": 89.1,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       8.2,
-       17.5
+       -0.9,
+       8.9
       ]
      }
     ],
@@ -516,7 +516,7 @@
     "id": 9
    },
    {
-    "filament_mm": 4.3,
+    "filament_mm": 0.5,
     "print_z_mm": [
      0.2,
      0.2
@@ -527,12 +527,12 @@
     ],
     "model_frame": {
      "u_mm": [
-      30.6,
-      40.0
+      3.2,
+      5.8
      ],
      "v_mm": [
       2.2,
-      58.8
+      7.5
      ],
      "z_mm": [
       22.45,
@@ -540,20 +540,20 @@
      ]
     },
     "kind": "flat_roof",
-    "feature": "flat roof of a void, 10.41 wide by 57.55 long",
-    "supported_face_area_mm2": 91.9,
+    "feature": "flat roof of a void, 5.89 wide by 57.55 long",
+    "supported_face_area_mm2": 9.1,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 10.41,
-      "area_mm2": 96.1,
+      "short_mm": 5.89,
+      "area_mm2": 90.4,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       32.5,
-       5.0
+       2.1,
+       13.5
       ]
      }
     ],
@@ -574,8 +574,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      0.9,
-      2.6
+      41.7,
+      44.3
      ],
      "v_mm": [
       2.2,
@@ -587,20 +587,20 @@
      ]
     },
     "kind": "flat_roof",
-    "feature": "flat roof of a void, 3.74 wide by 57.55 long",
-    "supported_face_area_mm2": 8.6,
+    "feature": "flat roof of a void, 5.89 wide by 57.55 long",
+    "supported_face_area_mm2": 9.9,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 3.74,
-      "area_mm2": 89.2,
+      "short_mm": 5.89,
+      "area_mm2": 90.4,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       0.1,
-       34.4
+       45.0,
+       49.1
       ]
      }
     ],
@@ -621,8 +621,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      44.9,
-      46.6
+      46.9,
+      48.6
      ],
      "v_mm": [
       2.2,
@@ -634,20 +634,20 @@
      ]
     },
     "kind": "flat_roof",
-    "feature": "flat roof of a void, 3.74 wide by 57.55 long",
-    "supported_face_area_mm2": 8.8,
+    "feature": "flat roof of a void, 3.71 wide by 57.55 long",
+    "supported_face_area_mm2": 9.1,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 3.74,
+      "short_mm": 3.71,
       "area_mm2": 89.2,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       47.4,
-       28.0
+       47.6,
+       3.9
       ]
      }
     ],
@@ -658,14 +658,14 @@
    }
   ],
   "support_by_kind_mm": {
-   "bed_side_roll_in": 110.2,
-   "sloped_faces_and_flat_roofs": 106.0,
-   "first_layer_patch": 6.0,
-   "flat_roof": 9.6
+   "bed_side_roll_in": 106.4,
+   "sloped_faces_and_flat_roofs": 100.8,
+   "first_layer_patch": 12.5,
+   "flat_roof": 2.0
   },
   "supported_faces_that_are_critical": [
    {
-    "region": 1,
+    "region": 2,
     "critical_feature": "screw seat",
     "facet_area_mm2": 0.54,
     "angle_deg": [
@@ -687,38 +687,38 @@
   "flush_to_critical_plane": []
  },
  "supports_auto_threshold_0": {
-  "filament_mm": 4793.24,
-  "filament_cm3": 11.53,
-  "filament_g": 12.34,
-  "print_time_text": "1h 44m 50s",
-  "print_time_s": 6290.0,
+  "filament_mm": 5452.58,
+  "filament_cm3": 13.11,
+  "filament_g": 14.03,
+  "print_time_text": "1h 57m 24s",
+  "print_time_s": 7044.0,
   "layers": 29,
   "bounding_box_mm": {
    "min": [
-    75.58,
-    63.57,
+    72.72,
+    63.56,
     0.2
    ],
    "max": [
-    144.42,
+    147.28,
     156.43,
     5.8
    ],
    "size": [
-    68.85,
-    92.86,
+    74.56,
+    92.87,
     5.6
    ]
   },
-  "extruded_mm": 4793.2,
+  "extruded_mm": 5452.6,
   "support_generated": true,
-  "support_filament_mm": 65.5,
-  "support_volume_mm3": 157.5,
+  "support_filament_mm": 59.5,
+  "support_volume_mm3": 143.1,
   "support_clusters": [
    {
     "x_mm": [
-     78.76,
-     103.19
+     75.9,
+     102.48
     ],
     "y_mm": [
      67.14,
@@ -728,12 +728,12 @@
      0.2,
      1.2
     ],
-    "filament_mm": 29.5,
-    "segments": 440,
+    "filament_mm": 26.5,
+    "segments": 487,
     "model_frame": {
      "u_mm": [
-      -7.49,
-      16.94
+      -10.35,
+      16.23
      ],
      "v_mm": [
       -1.16,
@@ -747,8 +747,8 @@
    },
    {
     "x_mm": [
-     116.81,
-     132.85
+     117.52,
+     134.83
     ],
     "y_mm": [
      70.45,
@@ -758,12 +758,12 @@
      0.2,
      0.4
     ],
-    "filament_mm": 26.2,
-    "segments": 347,
+    "filament_mm": 22.3,
+    "segments": 377,
     "model_frame": {
      "u_mm": [
-      30.56,
-      46.6
+      31.27,
+      48.58
      ],
      "v_mm": [
       2.15,
@@ -777,8 +777,8 @@
    },
    {
     "x_mm": [
-     135.74,
-     141.24
+     138.59,
+     144.1
     ],
     "y_mm": [
      67.14,
@@ -788,12 +788,12 @@
      0.4,
      1.2
     ],
-    "filament_mm": 3.5,
-    "segments": 83,
+    "filament_mm": 4.4,
+    "segments": 116,
     "model_frame": {
      "u_mm": [
-      49.49,
-      54.99
+      52.34,
+      57.85
      ],
      "v_mm": [
       -1.16,
@@ -807,90 +807,90 @@
    },
    {
     "x_mm": [
-     90.54,
-     97.68
+     120.89,
+     128.75
     ],
     "y_mm": [
-     105.14,
-     125.01
+     75.82,
+     99.48
     ],
     "z_mm": [
      0.8,
-     1.0
+     0.8
     ],
     "filament_mm": 1.6,
-    "segments": 18,
+    "segments": 17,
     "model_frame": {
      "u_mm": [
-      4.29,
-      11.43
+      34.64,
+      42.5
      ],
      "v_mm": [
-      36.84,
-      56.71
+      7.52,
+      31.18
      ],
      "z_mm": [
-      21.55,
+      21.75,
       21.75
      ]
     }
    },
    {
     "x_mm": [
-     122.32,
-     129.82
+     91.25,
+     100.54
     ],
     "y_mm": [
-     103.45,
-     124.79
+     104.58,
+     123.23
     ],
     "z_mm": [
      0.8,
-     1.0
+     0.8
     ],
-    "filament_mm": 1.6,
+    "filament_mm": 1.4,
+    "segments": 15,
+    "model_frame": {
+     "u_mm": [
+      5.0,
+      14.29
+     ],
+     "v_mm": [
+      36.28,
+      54.93
+     ],
+     "z_mm": [
+      21.75,
+      21.75
+     ]
+    }
+   },
+   {
+    "x_mm": [
+     118.39,
+     128.75
+    ],
+    "y_mm": [
+     105.08,
+     124.82
+    ],
+    "z_mm": [
+     0.8,
+     0.8
+    ],
+    "filament_mm": 1.3,
     "segments": 21,
     "model_frame": {
      "u_mm": [
-      36.07,
-      43.57
+      32.14,
+      42.5
      ],
      "v_mm": [
-      35.15,
-      56.49
+      36.78,
+      56.52
      ],
      "z_mm": [
-      21.55,
-      21.75
-     ]
-    }
-   },
-   {
-    "x_mm": [
-     90.54,
-     95.18
-    ],
-    "y_mm": [
-     76.62,
-     93.61
-    ],
-    "z_mm": [
-     0.8,
-     1.0
-    ],
-    "filament_mm": 1.2,
-    "segments": 14,
-    "model_frame": {
-     "u_mm": [
-      4.29,
-      8.93
-     ],
-     "v_mm": [
-      8.32,
-      25.31
-     ],
-     "z_mm": [
-      21.55,
+      21.75,
       21.75
      ]
     }
@@ -927,30 +927,30 @@
    },
    {
     "x_mm": [
-     124.46,
-     129.46
+     91.25,
+     99.11
     ],
     "y_mm": [
-     76.03,
-     90.05
+     76.08,
+     91.19
     ],
     "z_mm": [
      0.8,
-     1.0
+     0.8
     ],
-    "filament_mm": 1.0,
-    "segments": 16,
+    "filament_mm": 0.8,
+    "segments": 18,
     "model_frame": {
      "u_mm": [
-      38.21,
-      43.21
+      5.0,
+      12.86
      ],
      "v_mm": [
-      7.73,
-      21.75
+      7.78,
+      22.89
      ],
      "z_mm": [
-      21.55,
+      21.75,
       21.75
      ]
     }
@@ -959,44 +959,44 @@
   "gcode": "lid_single.supports-auto-threshold-0.gcode",
   "regions": [
    {
-    "filament_mm": 12.5,
+    "filament_mm": 12.7,
     "print_z_mm": [
      0.2,
-     1.0
+     0.8
     ],
     "layers": [
      1,
-     5
+     4
     ],
     "model_frame": {
      "u_mm": [
-      5.0,
-      12.1
+      31.3,
+      40.7
      ],
      "v_mm": [
       2.2,
       58.8
      ],
      "z_mm": [
-      21.65,
+      21.85,
       22.45
      ]
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 54.9,
+    "supported_face_area_mm2": 55.9,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
-      "span_mm": 1.55,
+      "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 8.17,
-      "area_mm2": 47.0,
+      "short_mm": 10.36,
+      "area_mm2": 48.5,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       9.5,
-       6.2
+       33.3,
+       5.0
       ]
      }
     ],
@@ -1009,44 +1009,44 @@
     "id": 1
    },
    {
-    "filament_mm": 12.2,
+    "filament_mm": 12.0,
     "print_z_mm": [
      0.2,
-     1.0
+     0.8
     ],
     "layers": [
      1,
-     5
+     4
     ],
     "model_frame": {
      "u_mm": [
-      35.4,
-      42.5
+      6.8,
+      16.2
      ],
      "v_mm": [
       2.2,
       58.8
      ],
      "z_mm": [
-      21.65,
+      21.85,
       22.45
      ]
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 56.7,
+    "supported_face_area_mm2": 58.0,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 8.17,
-      "area_mm2": 47.1,
+      "short_mm": 10.36,
+      "area_mm2": 48.5,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       36.5,
-       3.7
+       15.4,
+       3.3
       ]
      }
     ],
@@ -1059,7 +1059,7 @@
     "id": 2
    },
    {
-    "filament_mm": 10.6,
+    "filament_mm": 11.6,
     "print_z_mm": [
      0.2,
      0.8
@@ -1070,12 +1070,12 @@
     ],
     "model_frame": {
      "u_mm": [
-      40.2,
-      45.0
+      36.5,
+      43.6
      ],
      "v_mm": [
       2.2,
-      58.9
+      58.8
      ],
      "z_mm": [
       21.85,
@@ -1084,19 +1084,19 @@
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 52.6,
+    "supported_face_area_mm2": 52.9,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 5.94,
-      "area_mm2": 45.8,
+      "short_mm": 8.1,
+      "area_mm2": 46.7,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       40.7,
-       2.9
+       37.6,
+       3.7
       ]
      }
     ],
@@ -1109,7 +1109,7 @@
     "id": 3
    },
    {
-    "filament_mm": 10.3,
+    "filament_mm": 11.3,
     "print_z_mm": [
      0.2,
      0.8
@@ -1120,8 +1120,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      2.5,
-      7.4
+      3.9,
+      11.0
      ],
      "v_mm": [
       2.2,
@@ -1134,19 +1134,19 @@
     },
     "kind": "sloped_faces_and_flat_roofs",
     "feature": "sloped walls with the flat roofs of shallow recesses beside them",
-    "supported_face_area_mm2": 46.1,
+    "supported_face_area_mm2": 49.7,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.55,
       "long_mm": 57.55,
-      "short_mm": 5.94,
-      "area_mm2": 45.8,
+      "short_mm": 8.11,
+      "area_mm2": 46.6,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       6.9,
-       2.8
+       9.3,
+       4.7
       ]
      }
     ],
@@ -1159,101 +1159,7 @@
     "id": 4
    },
    {
-    "filament_mm": 5.5,
-    "print_z_mm": [
-     0.2,
-     0.2
-    ],
-    "layers": [
-     1,
-     1
-    ],
-    "model_frame": {
-     "u_mm": [
-      7.5,
-      16.9
-     ],
-     "v_mm": [
-      2.2,
-      58.8
-     ],
-     "z_mm": [
-      22.45,
-      22.45
-     ]
-    },
-    "kind": "flat_roof",
-    "feature": "flat roof of a void, 10.41 wide by 57.55 long",
-    "supported_face_area_mm2": 94.6,
-    "flatter_than_limit_mm2": 0.0,
-    "roofs": [
-     {
-      "span_mm": 1.56,
-      "long_mm": 57.55,
-      "short_mm": 10.41,
-      "area_mm2": 96.1,
-      "print_z_mm": 0.6,
-      "anchored_both_ends_of_span": true,
-      "model_frame_uv": [
-       8.2,
-       17.5
-      ]
-     }
-    ],
-    "sloped_face_angle_deg": null,
-    "problems": [],
-    "accepted": true,
-    "id": 5
-   },
-   {
-    "filament_mm": 5.4,
-    "print_z_mm": [
-     0.2,
-     0.2
-    ],
-    "layers": [
-     1,
-     1
-    ],
-    "model_frame": {
-     "u_mm": [
-      30.6,
-      40.0
-     ],
-     "v_mm": [
-      2.2,
-      58.8
-     ],
-     "z_mm": [
-      22.45,
-      22.45
-     ]
-    },
-    "kind": "flat_roof",
-    "feature": "flat roof of a void, 10.41 wide by 57.55 long",
-    "supported_face_area_mm2": 93.9,
-    "flatter_than_limit_mm2": 0.0,
-    "roofs": [
-     {
-      "span_mm": 1.56,
-      "long_mm": 57.55,
-      "short_mm": 10.41,
-      "area_mm2": 96.1,
-      "print_z_mm": 0.6,
-      "anchored_both_ends_of_span": true,
-      "model_frame_uv": [
-       32.5,
-       5.0
-      ]
-     }
-    ],
-    "sloped_face_angle_deg": null,
-    "problems": [],
-    "accepted": true,
-    "id": 6
-   },
-   {
-    "filament_mm": 3.5,
+    "filament_mm": 4.4,
     "print_z_mm": [
      0.4,
      1.2
@@ -1264,8 +1170,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      -7.5,
-      -2.0
+      -10.4,
+      -4.8
      ],
      "v_mm": [
       -1.2,
@@ -1278,7 +1184,7 @@
     },
     "kind": "bed_side_roll_in",
     "feature": "rounded bed-side edge of the outline (8 layers of roll-in), left",
-    "supported_face_area_mm2": 77.0,
+    "supported_face_area_mm2": 82.6,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [],
     "sloped_face_angle_deg": [
@@ -1287,10 +1193,10 @@
     ],
     "problems": [],
     "accepted": true,
-    "id": 7
+    "id": 5
    },
    {
-    "filament_mm": 3.5,
+    "filament_mm": 4.4,
     "print_z_mm": [
      0.4,
      1.2
@@ -1301,8 +1207,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      49.5,
-      55.0
+      52.3,
+      57.9
      ],
      "v_mm": [
       -1.2,
@@ -1315,7 +1221,7 @@
     },
     "kind": "bed_side_roll_in",
     "feature": "rounded bed-side edge of the outline (8 layers of roll-in), right",
-    "supported_face_area_mm2": 73.3,
+    "supported_face_area_mm2": 79.0,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [],
     "sloped_face_angle_deg": [
@@ -1324,7 +1230,7 @@
     ],
     "problems": [],
     "accepted": true,
-    "id": 8
+    "id": 6
    },
    {
     "filament_mm": 1.1,
@@ -1350,15 +1256,109 @@
       22.25
      ]
     },
-    "kind": "bed_side_roll_in",
-    "feature": "rounded bed-side edge of the outline (8 layers of roll-in), far",
-    "supported_face_area_mm2": 9.1,
+    "kind": "sloped_face",
+    "feature": "sloped face",
+    "supported_face_area_mm2": 7.6,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [],
     "sloped_face_angle_deg": [
      45.0,
      45.2
     ],
+    "problems": [],
+    "accepted": true,
+    "id": 7
+   },
+   {
+    "filament_mm": 0.5,
+    "print_z_mm": [
+     0.2,
+     0.2
+    ],
+    "layers": [
+     1,
+     1
+    ],
+    "model_frame": {
+     "u_mm": [
+      -1.1,
+      0.6
+     ],
+     "v_mm": [
+      2.2,
+      7.5
+     ],
+     "z_mm": [
+      22.45,
+      22.45
+     ]
+    },
+    "kind": "flat_roof",
+    "feature": "flat roof of a void, 3.71 wide by 57.55 long",
+    "supported_face_area_mm2": 8.7,
+    "flatter_than_limit_mm2": 0.0,
+    "roofs": [
+     {
+      "span_mm": 1.56,
+      "long_mm": 57.55,
+      "short_mm": 3.71,
+      "area_mm2": 89.1,
+      "print_z_mm": 0.6,
+      "anchored_both_ends_of_span": true,
+      "model_frame_uv": [
+       -0.9,
+       8.9
+      ]
+     }
+    ],
+    "sloped_face_angle_deg": null,
+    "problems": [],
+    "accepted": true,
+    "id": 8
+   },
+   {
+    "filament_mm": 0.5,
+    "print_z_mm": [
+     0.2,
+     0.2
+    ],
+    "layers": [
+     1,
+     1
+    ],
+    "model_frame": {
+     "u_mm": [
+      3.2,
+      5.8
+     ],
+     "v_mm": [
+      2.2,
+      7.5
+     ],
+     "z_mm": [
+      22.45,
+      22.45
+     ]
+    },
+    "kind": "flat_roof",
+    "feature": "flat roof of a void, 5.89 wide by 57.55 long",
+    "supported_face_area_mm2": 9.1,
+    "flatter_than_limit_mm2": 0.0,
+    "roofs": [
+     {
+      "span_mm": 1.56,
+      "long_mm": 57.55,
+      "short_mm": 5.89,
+      "area_mm2": 90.4,
+      "print_z_mm": 0.6,
+      "anchored_both_ends_of_span": true,
+      "model_frame_uv": [
+       2.1,
+       13.5
+      ]
+     }
+    ],
+    "sloped_face_angle_deg": null,
     "problems": [],
     "accepted": true,
     "id": 9
@@ -1375,8 +1375,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      0.9,
-      2.6
+      41.7,
+      44.3
      ],
      "v_mm": [
       2.2,
@@ -1388,20 +1388,20 @@
      ]
     },
     "kind": "flat_roof",
-    "feature": "flat roof of a void, 3.74 wide by 57.55 long",
-    "supported_face_area_mm2": 8.6,
+    "feature": "flat roof of a void, 5.89 wide by 57.55 long",
+    "supported_face_area_mm2": 9.9,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 3.74,
-      "area_mm2": 89.2,
+      "short_mm": 5.89,
+      "area_mm2": 90.4,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       0.1,
-       34.4
+       45.0,
+       49.1
       ]
      }
     ],
@@ -1422,8 +1422,8 @@
     ],
     "model_frame": {
      "u_mm": [
-      44.9,
-      46.6
+      46.9,
+      48.6
      ],
      "v_mm": [
       2.2,
@@ -1435,20 +1435,20 @@
      ]
     },
     "kind": "flat_roof",
-    "feature": "flat roof of a void, 3.74 wide by 57.55 long",
-    "supported_face_area_mm2": 8.8,
+    "feature": "flat roof of a void, 3.71 wide by 57.55 long",
+    "supported_face_area_mm2": 9.1,
     "flatter_than_limit_mm2": 0.0,
     "roofs": [
      {
       "span_mm": 1.56,
       "long_mm": 57.55,
-      "short_mm": 3.74,
+      "short_mm": 3.71,
       "area_mm2": 89.2,
       "print_z_mm": 0.6,
       "anchored_both_ends_of_span": true,
       "model_frame_uv": [
-       47.4,
-       28.0
+       47.6,
+       3.9
       ]
      }
     ],
@@ -1459,13 +1459,14 @@
    }
   ],
   "support_by_kind_mm": {
-   "sloped_faces_and_flat_roofs": 45.6,
-   "flat_roof": 11.9,
-   "bed_side_roll_in": 8.1
+   "sloped_faces_and_flat_roofs": 47.6,
+   "bed_side_roll_in": 8.8,
+   "sloped_face": 1.1,
+   "flat_roof": 2.0
   },
   "supported_faces_that_are_critical": [
    {
-    "region": 9,
+    "region": 7,
     "critical_feature": "screw seat",
     "facet_area_mm2": 0.51,
     "angle_deg": [
@@ -1486,6 +1487,6 @@
   ],
   "flush_to_critical_plane": []
  },
- "diagnostic_note": "Diagnostic only: the stated print has no support. If a slicer's automatic support were turned on, at the record's threshold (232 mm in all): 0.4 mm of support under 0.54 mm2 of the screw seat (facets at 45.0 to 45.2 deg, print z 0.65 to 1.31, none a flat roof); at the slicer's own detection (66 mm in all): 0.2 mm of support under 0.51 mm2 of the screw seat (facets at 45.0 to 45.2 deg, print z 0.65 to 1.31, none a flat roof).",
+ "diagnostic_note": "Diagnostic only: the stated print has no support. If a slicer's automatic support were turned on, at the record's threshold (222 mm in all): 0.4 mm of support under 0.54 mm2 of the screw seat (facets at 45.0 to 45.2 deg, print z 0.65 to 1.31, none a flat roof); at the slicer's own detection (60 mm in all): 0.2 mm of support under 0.51 mm2 of the screw seat (facets at 45.0 to 45.2 deg, print z 0.65 to 1.31, none a flat roof).",
  "support_free": false
 }

@@ -495,19 +495,21 @@ def check_c2_c3(m: case.Model) -> List[Dict[str, Any]]:
         for bz in pl["bolt_zs"]:
             inside_z = min(bz - washer / 2 - pb[0][2], pb[1][2] - (bz + washer / 2))
             figures.append({"bolt_u_mm": cx, "bolt_z_mm": bz, "washer_clear_of_case_mm": outside, "washer_inside_plate_in_z_mm": float(inside_z)})
-            zones_ok &= outside >= 0 and (cx - washer / 2) >= pb[0][0] - 1e-9 and (cx + washer / 2) <= pb[1][0] + 1e-9 and inside_z >= 0.0
+            zones_ok &= outside >= P("plate.washer_to_case_clearance_mm") - 1e-9 and (cx - washer / 2) >= pb[0][0] - 1e-9 and (cx + washer / 2) <= pb[1][0] + 1e-9 and inside_z >= 0.0
     out.append(result("c3.wall_bolts_outside_case", "C3", zones_ok,
                       f"each of the {len(figures)} wall bolts and its {washer:.0f} mm washer stands in the plate's end zone, outside the case and inside the plate's height, so the plate, case and board leave the wall as one unit",
                       {"bolts": figures}))
     out.append(tray_screws_fit_plate(m))
+    out.append(tray_screw_heads_apart(m))
+    out.append(tray_insert_seat(m))
     return out
 
 
 def tray_screws_fit_plate(m: case.Model) -> Dict[str, Any]:
-    """Each tray screw's countersunk head keeps the edge distance from the plate's four edges, and its pilot and head stand clear of the lid toe's pocket."""
+    """Each tray screw's countersunk head keeps the edge distance from the plate's four edges, and its insert hole and head stand clear of the lid toe's pocket."""
     P = m.P
     pl = m.info["plate"]
-    head_r = P("screws.tray_plate_head_dia_mm") / 2
+    cs_r = P("screws.tray_plate_countersink_dia_mm") / 2
     edge_need = P("plate.screw_edge_distance_mm")
     pocket_need = P("plate.min_pilot_to_pocket_mm")
     rows = []
@@ -515,23 +517,87 @@ def tray_screws_fit_plate(m: case.Model) -> Dict[str, Any]:
     pockets = {u: case.pocket_solid(m, u) for u in m.info["toe_u"]}
     for u in m.info["tray_pilaster_u"]:
         for z in P("screws.tray_plate_z_mm"):
-            edges = {"lower": z - head_r - pl["z0"], "upper": pl["z1"] - (z + head_r), "left": u - head_r - pl["u0"], "right": pl["u1"] - (u + head_r)}
-            pilot = case.pilot_solid(m, u, z)
+            edges = {"lower": z - cs_r - pl["z0"], "upper": pl["z1"] - (z + cs_r), "left": u - cs_r - pl["u0"], "right": pl["u1"] - (u + cs_r)}
+            hole = case.insert_hole_solid(m, u, z)
             head = case.head_solid(m, u, z)
-            to_pocket = {"pilot": min(float(pilot.distance_to(p)) for p in pockets.values()), "head": min(float(head.distance_to(p)) for p in pockets.values())}
-            pilot_top = float(pilot.bounding_box().max.Z)
+            to_pocket = {"hole": min(float(hole.distance_to(p)) for p in pockets.values()), "head": min(float(head.distance_to(p)) for p in pockets.values())}
+            hole_top = float(hole.bounding_box().max.Z)
             row = {"screw": f"u {u:g} z {z:g}", "edge_distances_mm": edges, "least_edge_mm": min(edges.values()), "to_pocket_mm": to_pocket,
-                   "pilot_top_z_mm": pilot_top, "pilaster_top_z_mm": P("case.z_wall_top_mm")}
+                   "insert_hole_top_z_mm": hole_top, "pilaster_top_z_mm": P("case.z_wall_top_mm")}
             row["pass"] = (min(edges.values()) >= edge_need - 1e-9 and min(to_pocket.values()) >= pocket_need - 1e-9
-                           and pilot_top <= P("case.z_wall_top_mm") - P("envelope.min_wall_mm"))
+                           and hole_top <= P("case.z_wall_top_mm") - P("case.insert_wall_min_mm"))
             ok &= row["pass"]
             rows.append(row)
     least_edge = min(r["least_edge_mm"] for r in rows)
     least_pocket = min(min(r["to_pocket_mm"].values()) for r in rows)
     return result("c3.tray_screws_fit_plate", "C3", ok,
-                  f"each of the {len(rows)} tray screws' countersunk heads stands at least {least_edge:.3f} mm inside the plate's edges (needs {edge_need:.2f}) and its pilot and head at least {least_pocket:.3f} mm from the lid toe's pocket (needs {pocket_need:.2f}), the pilot's top under the pilaster's top by the minimum wall",
+                  f"each of the {len(rows)} tray screws' countersinks stands at least {least_edge:.3f} mm inside the plate's edges (needs {edge_need:.2f}) and its insert hole and head at least {least_pocket:.3f} mm from the lid toe's pocket (needs {pocket_need:.2f}), the hole's top under the pilaster's top by the insert wall",
                   {"screws": rows, "edge_distance_required_mm": edge_need, "pocket_distance_required_mm": pocket_need,
                    "plate_edges_mm": {"z0": pl["z0"], "z1": pl["z1"], "u0": pl["u0"], "u1": pl["u1"]}})
+
+
+def heads_apart(positions: Sequence[Tuple[float, float]], P: Any) -> Dict[str, Any]:
+    """Every pair of tray screws, by their (u, z) axes: the distance between the axes against the record's head-to-head distance, and the
+    gaps left between the heads and between the countersinks, whose diameters are the standard's."""
+    need = P("plate.min_head_to_head_mm")
+    head, sink = P("screws.tray_plate_head_dia_mm"), P("screws.tray_plate_countersink_dia_mm")
+    pairs = []
+    for (i, a), (j, b) in itertools.combinations(enumerate(positions), 2):
+        d = math.hypot(a[0] - b[0], a[1] - b[1])
+        pairs.append({"pair": [i, j], "axes_mm": d, "head_gap_mm": d - head, "countersink_gap_mm": d - sink, "pass": d >= need - 1e-9 and d - sink > 0.0})
+    return {"pairs": pairs, "required_mm": need, "head_dia_mm": head, "countersink_dia_mm": sink,
+            "pass": all(p["pass"] for p in pairs) and need >= sink > head}
+
+
+def tray_screw_heads_apart(m: case.Model) -> Dict[str, Any]:
+    """No two tray screws have their heads or their countersinks in the bar's back face closer than the record's head-to-head distance."""
+    positions = [(s["u"], s["z"]) for s in m.screws if s["kind"] == "tray_plate"]
+    f = heads_apart(positions, m.P)
+    least = min((p["axes_mm"] for p in f["pairs"]), default=float("inf"))
+    return result("c3.tray_screw_heads_apart", "C3", f["pass"] and len(positions) >= 2,
+                  f"each of the {len(f['pairs'])} pairs of the {len(positions)} tray screws stands at least {least:.2f} mm apart on the axes (needs {f['required_mm']:.1f}); the {f['head_dia_mm']:.1f} mm heads and the {f['countersink_dia_mm']:.1f} mm countersinks of the ISO 7046 M3 screw leave their gaps",
+                  f)
+
+
+def insert_wall(m: case.Model, u: float, z: float) -> Dict[str, float]:
+    """The printed wall round one insert hole, measured to the pilaster's outer face, to the cavity, to the lid toe's pocket and to the pilaster's top."""
+    P = m.P
+    e = case.case_extent(m)
+    r = P("case.insert_hole_dia_mm") / 2
+    left_in, right_in = -P("case.interior_left_mm"), 45.0 + P("case.interior_right_mm")
+    outer, inner = (u - r - e["u0"], left_in - (u + r)) if u < 22.0 else (e["u1"] - (u + r), (u - r) - right_in)
+    hole = case.insert_hole_solid(m, u, z)
+    pocket = min(float(hole.distance_to(case.pocket_solid(m, tu))) for tu in m.info["toe_u"])
+    top = P("case.z_wall_top_mm") - float(hole.bounding_box().max.Z)
+    return {"outer_face_mm": outer, "cavity_mm": inner, "pocket_mm": pocket, "top_mm": top}
+
+
+def tray_insert_seat(m: case.Model) -> Dict[str, Any]:
+    """One heat-set insert's hole in each pilaster at the maker's size and depth, the wall round it at the record's minimum, and the short screw's engaged length inside the insert and short of the hole's floor."""
+    P = m.P
+    pilasters = len(m.info["tray_pilaster_u"])
+    per = int(P("screws.tray_plate_count_per_pilaster"))
+    wall_need = P("case.insert_wall_min_mm")
+    depth, length = P("case.insert_hole_depth_mm"), P("case.insert_length_mm")
+    engaged = P("screws.tray_plate_length_mm") - P("plate.thickness_mm")
+    min_thread = 6 * P("screws.tray_insert_shear_layer_mm")
+    reservoir = depth - length
+    rows = []
+    for u in m.info["tray_pilaster_u"]:
+        for z in P("screws.tray_plate_z_mm"):
+            w = insert_wall(m, u, z)
+            rows.append({"insert": f"u {u:g} z {z:g}", "wall_mm": w, "least_wall_mm": min(w.values()), "pass": min(w.values()) >= wall_need - 1e-9})
+    n_inserts = sum(1 for s in m.screws if s["kind"] == "insert")
+    n_screws = sum(1 for s in m.screws if s["kind"] == "tray_plate")
+    tip_to_floor = depth - engaged
+    ok = (all(r["pass"] for r in rows) and n_inserts == n_screws == pilasters * per == len(rows)
+          and 0.0 < engaged <= length + 1e-9 and tip_to_floor > 0.0 and reservoir >= 0.5 - 1e-9 and engaged >= min_thread - 1e-9)
+    return result("c3.tray_insert_seat", "C3", ok,
+                  f"{n_inserts} M3 heat-set inserts, one in each of {pilasters} pilasters, in holes {P('case.insert_hole_dia_mm'):.1f} mm across and {depth:.1f} mm deep for the {length:.1f} mm insert with {reservoir:.1f} mm of reservoir under it; the wall round each hole is at least {min(r['least_wall_mm'] for r in rows):.3f} mm (needs {wall_need:.1f}); "
+                  f"the M3 x {P('screws.tray_plate_length_mm'):.0f} screw engages {engaged:.1f} mm of the insert (at least {min_thread:.1f} mm, at most the insert's {length:.1f} mm) and stops {tip_to_floor:.1f} mm short of the hole's floor, so the head seats and the bar is clamped",
+                  {"inserts": rows, "inserts_counted": n_inserts, "screws_counted": n_screws, "pilasters": pilasters, "per_pilaster": per, "hole_dia_mm": P("case.insert_hole_dia_mm"),
+                   "hole_depth_mm": depth, "insert_length_mm": length, "reservoir_mm": reservoir, "wall_required_mm": wall_need, "screw_length_mm": P("screws.tray_plate_length_mm"),
+                   "bar_thickness_mm": P("plate.thickness_mm"), "engaged_length_mm": engaged, "minimum_thread_mm": min_thread, "tip_to_hole_floor_mm": tip_to_floor})
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -828,14 +894,14 @@ def check_fixings(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
         ok &= float(origin @ g) >= 0.0
     # the tray-to-plate screws, from the plate's back face before the plate goes on the wall
     origin = np.array([0.0, -1.0, 0.0])
-    rows.append({"fixing": "tray-to-plate screws (4)", "driver_from": side(origin), "origin_direction": origin.tolist(), "needs_lid_off": False,
+    rows.append({"fixing": "tray-to-plate screws (2)", "driver_from": side(origin), "origin_direction": origin.tolist(), "needs_lid_off": False,
                  "note": "put in from the plate's back face with the plate off the wall; the lid and the board need not be off"})
     ok &= float(origin @ back) > 0.5
     lines = [f"{r['fixing']:26s} driver from {r['driver_from']}{', lid off' if r['needs_lid_off'] else ''}" for r in rows]
     return [result("c5.fixings_reached_installed", "C5", ok,
                    "installed (plate vertical, component side down): the lid screw is reached from below, the board screw from below with the lid off, "
                    + "both tab screws from out from the wall, " + " and ".join(sorted({r["driver_from"].split(", ", 1)[1] for r in rows if r["fixing"].startswith("tab screw")}))
-                   + " with the lid off (a near-horizontal reach along the plate's face, not a reach from below), the four tray screws from the plate's back",
+                   + " with the lid off (a near-horizontal reach along the plate's face, not a reach from below), the two tray screws from the plate's back",
                    {"installed_frame": {"gravity": g.tolist()}, "fixings": rows}, lines)]
 
 
@@ -949,46 +1015,60 @@ def check_c6_c9(m: case.Model, form: str = "single") -> List[Dict[str, Any]]:
 
 
 def root_figures(m: case.Model, force: float, span: float, x: float, flex_triac: float) -> Dict[str, Any]:
-    """The tray root's tension under the push-on load and the triac end's motion at the tray screws' stance.
+    """The tray root's tension under the push-on and the pull-off load and the triac end's motion at the inserts' stance.
 
     The push-on force acts along z at the blades, a lever `span` from the plate end, so the root carries a moment and a shear. The tray's
-    end face bears on the plate down to the plate's lower edge, which is the pivot; every tray screw above it is pulled out of its printed
-    pilot in proportion to its height over the pivot. The pilots' pull-out is taken as a shear stress on the screw's major-diameter
-    cylinder over the length engaged in the pilaster. The root's rotation, from the pilots' shear displacement, moves the board's triac end
-    on top of the tray's own flexure."""
+    end face bears on the plate down to the plate's lower edge, which is the pivot of the push-on; every insert above it is pulled out of its
+    pilaster in proportion to its height over the pivot. The pull-off direction reverses the load and turns the root about the pilaster's top,
+    where the lid's hooks bear, so each insert is then pushed in or pulled by its depth under that top. The inserts' pull-out is the stated
+    allowance, one figure for each insert. The root's rotation, from the plastic shearing about the insert's knurled cylinder, moves the
+    board's triac end on top of the tray's own flexure."""
     P = m.P
     pivot = m.info["plate"]["z0"]
+    top = P("case.z_wall_top_mm")
     zs = [float(z) for z in P("screws.tray_plate_z_mm")]
     n_pil = int(P("screws.tray_plate_count_per_pilaster"))
     levers = [z - pivot for z in zs]
+    levers_off = [top - z for z in zs]
     sides = len(m.info["tray_pilaster_u"])
     moment = force * span
     k = moment / (sides * sum(a * a for a in levers))               # N per mm of height over the pivot
     tension = {f"z {z:g}": k * a for z, a in zip(zs, levers)}
     t_max = k * max(levers)
-    d = P("screws.tray_plate_dia_mm")
-    engaged = P("screws.tray_plate_length_mm") - P("plate.thickness_mm")
-    allowance = P("screws.tray_pilot_pullout_MPa")
-    capacity = allowance * math.pi * d * engaged
+    k_off = moment / (sides * sum(a * a for a in levers_off))
+    tension_off = {f"z {z:g}": k_off * a for z, a in zip(zs, levers_off)}
+    t_off = k_off * max(levers_off)
+    d = P("case.insert_hole_dia_mm")
+    engaged = P("case.insert_length_mm")
+    capacity = P("screws.tray_insert_pullout_N")
     G = P("material.modulus_MPa") / (2.0 * (1.0 + P("material.poisson_ratio")))
-    shear_disp = t_max * P("screws.tray_pilot_shear_layer_mm") / (G * math.pi * d * engaged)
+    area = math.pi * d * engaged
+    shear_disp = t_max * P("screws.tray_insert_shear_layer_mm") / (G * area)
+    shear_disp_off = t_off * P("screws.tray_insert_shear_layer_mm") / (G * area)
     rotation = shear_disp / max(levers)
+    rotation_off = shear_disp_off / max(levers_off)
     root_motion = rotation * x
+    root_motion_off = rotation_off * x
     total = flex_triac + root_motion
-    return {"pivot_z_mm": pivot, "screw_z_mm": zs, "levers_mm": levers, "screws_per_pilaster": n_pil, "pilasters": sides, "moment_Nmm": moment,
-            "tension_per_screw_N": tension, "tension_max_N": t_max, "engaged_length_mm": engaged, "pullout_allowance_MPa": allowance,
-            "pullout_capacity_N": capacity, "utilisation": t_max / capacity, "pilot_shear_displacement_mm": shear_disp,
-            "root_rotation_rad": rotation, "root_motion_at_triac_end_mm": root_motion, "tray_flexure_at_triac_end_mm": flex_triac,
-            "triac_end_motion_mm": total, "span_mm": span, "x_mm": x, "insertion_force_N": force}
+    total_off = flex_triac + root_motion_off
+    proof = P("screws.tray_proof_factor")
+    return {"pivot_z_mm": pivot, "pull_off_pivot_z_mm": top, "screw_z_mm": zs, "levers_mm": levers, "pull_off_levers_mm": levers_off, "screws_per_pilaster": n_pil, "pilasters": sides,
+            "moment_Nmm": moment, "tension_per_screw_N": tension, "tension_max_N": t_max, "pull_off_tension_per_screw_N": tension_off, "pull_off_tension_max_N": t_off,
+            "engaged_length_mm": engaged, "insert_hole_dia_mm": d, "pullout_allowance_N": capacity, "pullout_capacity_N": capacity,
+            "utilisation": t_max / capacity, "pull_off_utilisation": t_off / capacity, "proof_factor": proof, "proof_load_N": proof * force,
+            "proof_tension_max_N": proof * max(t_max, t_off), "pilot_shear_displacement_mm": shear_disp,
+            "root_rotation_rad": rotation, "root_motion_at_triac_end_mm": root_motion, "pull_off_root_motion_at_triac_end_mm": root_motion_off,
+            "tray_flexure_at_triac_end_mm": flex_triac, "triac_end_motion_mm": total, "pull_off_triac_end_motion_mm": total_off, "span_mm": span, "x_mm": x, "insertion_force_N": force}
 
 
 def root_result(m: case.Model, force: float, span: float, x: float, flex_triac: float, allowed: float) -> Dict[str, Any]:
     f = root_figures(m, force, span, x, flex_triac)
-    ok = f["tension_max_N"] <= f["pullout_capacity_N"] and f["triac_end_motion_mm"] <= allowed and min(f["levers_mm"]) > 0.0
+    ok = (f["tension_max_N"] <= f["pullout_capacity_N"] and f["pull_off_tension_max_N"] <= f["pullout_capacity_N"]
+          and max(f["triac_end_motion_mm"], f["pull_off_triac_end_motion_mm"]) <= allowed and min(f["levers_mm"]) > 0.0 and min(f["pull_off_levers_mm"]) > 0.0)
     return result("c9.tray_root_tension_and_triac_end_motion", "C9", ok,
-                  f"at the tray screws' stance (z {', '.join(f'{z:g}' for z in f['screw_z_mm'])}, pivot at the plate's lower edge z {f['pivot_z_mm']:.1f}) the {force:.1f} N push-on load pulls the top screw with {f['tension_max_N']:.0f} N against "
-                  f"{f['pullout_capacity_N']:.0f} N of printed pull-out ({f['pullout_allowance_MPa']:.1f} MPa over {f['engaged_length_mm']:.1f} mm), and the triac end moves {f['triac_end_motion_mm']:.4f} mm against {allowed:.2f} mm allowed",
-                  dict(f, allowed_motion_mm=allowed, basis="moment of the push-on force about the plate's lower edge shared among the tray screws in proportion to their height over it; pull-out as shear on the major-diameter cylinder"))
+                  f"at the inserts' stance (z {', '.join(f'{z:g}' for z in f['screw_z_mm'])}, push-on pivot at the plate's lower edge z {f['pivot_z_mm']:.1f}, pull-off pivot at the pilaster's top z {f['pull_off_pivot_z_mm']:.1f}) the {force:.1f} N load loads each insert with {f['tension_max_N']:.0f} N pushing on and {f['pull_off_tension_max_N']:.0f} N pulling off "
+                  f"against {f['pullout_capacity_N']:.0f} N of assumed pull-out, and the triac end moves {f['triac_end_motion_mm']:.4f} mm pushing on and {f['pull_off_triac_end_motion_mm']:.4f} mm pulling off against {allowed:.2f} mm allowed",
+                  dict(f, allowed_motion_mm=allowed, basis="moment of the load about the pivot shared among the inserts in proportion to their distance from it; pull-out is the stated allowance for one insert; the shear displacement is on the insert's hole cylinder"))
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -1010,6 +1090,8 @@ def check_c7(m: case.Model) -> List[Dict[str, Any]]:
             need = sep["creepage_lv_mm"]
         elif s["kind"] == "tray_plate":
             need = max(3.0, basis_dist)
+        elif s["kind"] == "insert":
+            need = basis_dist
         elif s["kind"] == "h1":
             need = basis_dist
         else:
@@ -1128,11 +1210,11 @@ def critical_regions(m: case.Model, name: str) -> Dict[str, List[Tuple[float, fl
     if name == "tray":
         e = case_extent(m)
         regions["plate-end faces"] = [(e["u0"] - 0.1, e["u1"] + 0.1, m.v_end - 0.05, m.v_end + 0.05, -7.0, 21.0)]
-        depth = P("screws.tray_plate_length_mm") - P("plate.thickness_mm") + 0.5
+        depth = P("case.insert_hole_depth_mm")
         seats = []
         for u in m.info["tray_pilaster_u"]:
             for z in P("screws.tray_plate_z_mm"):
-                seats.append((u - 1.6, u + 1.6, m.v_end - 0.1, m.v_plate + depth + 0.1, z - 1.6, z + 1.6))
+                seats.append((u - 2.1, u + 2.1, m.v_end - 0.1, m.v_plate + depth + 0.1, z - 2.1, z + 3.0))
         hu, hv, _ = m.board.h1
         seats.append((hu - 1.6, hu + 1.6, hv - 1.6, hv + 1.6, -9.0, 1.0))
         seats.append((P("screws.lid_u_mm") - 1.6, P("screws.lid_u_mm") + 1.6, P("screws.lid_v_mm") - 1.6, P("screws.lid_v_mm") + 1.6, 10.0, 20.0))

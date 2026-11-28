@@ -56,6 +56,12 @@ def tear_v(u: float, z: float, v0: float, v1: float, radius: float) -> Part:
     return cyl_v(u, z, v0, v1, radius) + prism_uz(pts, v0, v1)
 
 
+def tear_point_v(u: float, z: float, v0: float, v1: float, radius: float) -> Part:
+    """A hole along v whose roof is the true tear-drop: two 45 degree tangents to the circle meeting at a point radius x sqrt(2) above its axis."""
+    k = radius * math.sqrt(0.5)
+    return cyl_v(u, z, v0, v1, radius) + prism_uz([(u - k, z), (u + k, z), (u + k, z + k), (u, z + radius * math.sqrt(2.0)), (u - k, z + k)], v0, v1)
+
+
 def cyl_z(u: float, v: float, z0: float, z1: float, radius: float) -> Part:
     return Pos(u, v, (z0 + z1) / 2) * Cylinder(radius, z1 - z0)
 

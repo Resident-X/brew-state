@@ -442,10 +442,10 @@ def test_c11_the_case_lies_within_the_former_outline_the_opening_covers_the_plat
     wall = nominal["c2.only_plate_touches_wall"]["figures"]
     assert wall["nearest_mm"]["tray"] == pytest.approx(0.5) and wall["required_mm"] == 0.5
     outline = nominal["c2.case_within_former_outline"]["figures"]["former_outline_mm"]
-    assert (outline["u0"], outline["u1"], outline["z0"], outline["z1"]) == pytest.approx((-16.25, 63.75, -7.025, 22.975)), "the former outline is its own figure and does not follow the bar's height"
-    # the opening covers the plate (z 6.0 to 26.0) and the end wall (z -6.6 to 6.0) together plus 1.5 mm each side: z -8.1 to 27.5, 83.0 x 35.6
+    assert (outline["u0"], outline["u1"], outline["z0"], outline["z1"]) == pytest.approx((-18.75, 66.25, -7.025, 22.975)), "the former outline is its own figure and does not follow the bar's height"
+    # the opening covers the plate (z 6.0 to 26.0) and the end wall (z -6.6 to 6.0) together plus 1.5 mm each side: z -8.1 to 27.5; its width follows the bar, 85 mm plus 3.0
     opening = nominal["c2.wall_opening_stated"]["figures"]
-    assert opening["opening_width_mm"] == pytest.approx(83.0) and opening["opening_height_mm"] == pytest.approx(35.6)
+    assert opening["opening_width_mm"] == pytest.approx(params("plate.length_mm") + 2 * params("plate.wall_opening_clearance_mm")) == pytest.approx(88.0) and opening["opening_height_mm"] == pytest.approx(35.6)
     assert (opening["opening_mm"]["z0"], opening["opening_mm"]["z1"]) == pytest.approx((-6.6 - 1.5, 26.0 + 1.5))
     assert min(min(v.values()) for v in opening["outside_each_solid_mm"].values()) == pytest.approx(1.5) == params("plate.wall_opening_clearance_mm")
     unit = nominal["c2.wall_opening_within_unit_opening"]["figures"]
@@ -467,20 +467,21 @@ def test_c12_the_tray_root_and_the_triac_end_are_re_judged_at_the_new_stance_wit
     # SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C12: The case record re-judges the tray root's tension under the push-on load and the triac end's motion at the tray screws' stance after the plate narrows, states the pull-out allowance it uses for the printed pilots, and the re-judged figures hold the limits the record already states for them. Out of scope: the printed plastic's measured strength.
     root = named(results, "c9.tray_root_tension_and_triac_end_motion")
     f = root["figures"]
-    assert root["passed"] and f["screw_z_mm"] == [9.5, 14.0] and f["pivot_z_mm"] == pytest.approx(6.0)
+    zs = [float(z) for z in params("screws.tray_plate_z_mm")]
+    assert root["passed"] and f["screw_z_mm"] == zs and f["pivot_z_mm"] == pytest.approx(6.0)
     # recomputed by hand from the figures of the params
     force, span = params("blade.insertion_force_N"), f["span_mm"]
     moment = force * span
-    levers = [9.5 - 6.0, 14.0 - 6.0]
+    levers = [z - 6.0 for z in zs]
     k = moment / (2 * sum(a * a for a in levers))
-    assert f["tension_max_N"] == pytest.approx(k * levers[1], rel=1e-9) and f["tension_per_screw_N"]["z 9.5"] == pytest.approx(k * levers[0], rel=1e-9)
-    assert f["pullout_allowance_MPa"] == params("screws.tray_pilot_pullout_MPa") == 5.0
-    capacity = 5.0 * math.pi * 3.0 * (params("screws.tray_plate_length_mm") - params("plate.thickness_mm"))
-    assert f["pullout_capacity_N"] == pytest.approx(capacity) and f["tension_max_N"] < capacity
+    assert f["tension_max_N"] == pytest.approx(k * max(levers), rel=1e-9) and f["tension_per_screw_N"]["z %g" % zs[0]] == pytest.approx(k * levers[0], rel=1e-9)
+    allowance = params("screws.tray_insert_pullout_N")
+    assert f["pullout_allowance_N"] == allowance == 680.0
+    assert f["pullout_capacity_N"] == pytest.approx(allowance) and f["tension_max_N"] < allowance
     assert f["triac_end_motion_mm"] == pytest.approx(f["tray_flexure_at_triac_end_mm"] + f["root_motion_at_triac_end_mm"]) and f["triac_end_motion_mm"] < f["allowed_motion_mm"] == 0.05
     body = sec(record, "C9")
-    assert "The pull-out allowance used" in body and "5.0 MPa" in body and "%.0f N" % f["tension_max_N"] in body and "%.4f mm" % f["triac_end_motion_mm"] in body
-    assert "assumed" in params.entry("screws.tray_pilot_pullout_MPa")["source"]
+    assert "The pull-out allowance used" in body and "680 N" in body and "%.0f N" % f["tension_max_N"] in body and "%.4f mm" % f["triac_end_motion_mm"] in body
+    assert "assum" in params.entry("screws.tray_insert_pullout_N")["source"]
 
 
 @pytest.mark.controls("c9_weak_pilot")
@@ -512,20 +513,22 @@ def test_c13_the_triac_screw_tip_stops_short_of_the_back_face_and_engages_enough
 # ---------------------------------------------------------------- C14: the tray screws and wall bolts
 
 @pytest.mark.controls("c3_screw_in_pocket", "c3_one_edge_screw")
-def test_c14_the_tray_screws_and_wall_bolts_fit_the_narrower_plate(results, controls):
+def test_c14_the_tray_screws_and_wall_bolts_fit_the_narrower_plate(results, controls, params):
     # SOL-HW-HEATER-WALL-BOARD-PLATE-CLEARANCE-HOLDS-OVER-OUTLINE-AND-LEAD-PLAY-TOLERANCE.C14: The case model's checks require each tray screw's pilot and head to stand clear of the lid-toe pocket and to keep the record's edge distance from the plate's edges, and each wall bolt's washer to fit within the plate. Out of scope: the owner's wall cut and the toothed-washer hedge.
     nominal = named(results, "c3.tray_screws_fit_plate")
-    assert nominal["passed"] and len(nominal["figures"]["screws"]) == 4
+    zs = [float(z) for z in params("screws.tray_plate_z_mm")]
+    assert nominal["passed"] and len(nominal["figures"]["screws"]) == 2 * len(zs)
+    wall = params("case.insert_wall_min_mm")
     for row in nominal["figures"]["screws"]:
-        assert row["least_edge_mm"] >= 0.5 - 1e-9 and min(row["to_pocket_mm"].values()) >= 0.4 and row["pilot_top_z_mm"] <= 20.5 - 1.6
-    assert {r["screw"].split(" z ")[1] for r in nominal["figures"]["screws"]} == {"9.5", "14"}
+        assert row["least_edge_mm"] >= params("plate.screw_edge_distance_mm") - 1e-9 and min(row["to_pocket_mm"].values()) >= params("plate.min_pilot_to_pocket_mm") and row["insert_hole_top_z_mm"] <= 20.5 - wall
+    assert {float(r["screw"].split(" z ")[1]) for r in nominal["figures"]["screws"]} == set(zs)
     bolts = named(results, "c3.wall_bolts_outside_case")
     assert bolts["passed"] and len(bolts["figures"]["bolts"]) == 2 and all(b["washer_inside_plate_in_z_mm"] == pytest.approx(5.5) and b["bolt_z_mm"] == pytest.approx(16.0) for b in bolts["figures"]["bolts"])
     pocket = controls.get("c3_screw_in_pocket")
-    assert not pocket["passed"] and min(min(r["to_pocket_mm"].values()) for r in pocket["figures"]["screws"]) < 0.4
-    assert any(r["pilot_top_z_mm"] > 20.5 - 1.6 for r in pocket["figures"]["screws"]), "a pilot at 19.5 mm breaks out of the pilaster's top"
+    assert not pocket["passed"] and min(min(r["to_pocket_mm"].values()) for r in pocket["figures"]["screws"]) < params("plate.min_pilot_to_pocket_mm")
+    assert any(r["insert_hole_top_z_mm"] > 20.5 - wall for r in pocket["figures"]["screws"]), "an insert hole at 19.5 mm breaks out of the pilaster's top"
     edge = by_name(controls.get("c3_one_edge_screw"))["c3.tray_screws_fit_plate"]
-    assert not edge["passed"] and min(r["least_edge_mm"] for r in edge["figures"]["screws"]) < 0.5
+    assert not edge["passed"] and min(r["least_edge_mm"] for r in edge["figures"]["screws"]) < params("plate.screw_edge_distance_mm")
 
 
 # ---------------------------------------------------------------- C15: both ends of the plate-height range
@@ -619,7 +622,7 @@ def test_c16_the_record_and_the_plate_drawing_name_the_standard_bar_with_its_sec
     assert bar_problems(record.replace("A standard flat aluminium bar,", "A flat aluminium plate,"), drawing, params)
     assert bar_problems(record.replace("**The stock's width tolerance is an assumption", "**The stock's width is exact"), drawing, params)
     assert bar_problems(record, drawing.replace("a standard flat aluminium bar", "an aluminium plate"), params)
-    assert bar_problems(record, drawing.replace("cut to 80 mm long", "cut to length"), params)
+    assert bar_problems(record, drawing.replace("cut to %.0f mm long" % params("plate.length_mm"), "cut to length"), params)
     assert bar_problems(record, drawing.replace("is an assumption, to be read from the supplier's standard", "is 0.5 mm"), params)
 
 
@@ -647,9 +650,9 @@ def install_problems(text):
     for n in (3, 4, 5, 6, 7, 8, 9):
         if "Access" not in by[n]:
             problems.append("step %d states no access" % n)
-    if not ("marks the four tray-screw holes" in by[3] and "ledge" in by[3] and "tapped" not in by[3]) or "taps M3 through" not in by[4]:
+    if not ("marks the two tray-screw holes" in by[3] and "ledge" in by[3] and "tapped" not in by[3]) or "taps M3 through" not in by[4]:
         problems.append("the tray holes are not marked before the tab holes are tapped")
-    if "tray is fixed to the bar" not in by[5] or "M3 x 12" not in by[5]:
+    if "tray is fixed to the bar" not in by[5] or "M3 x 10" not in by[5]:
         problems.append("the bench step of fixing the tray to the bar is missing")
     if "bolted to the bar" not in by[7] or "M4" not in by[9] or "hex" not in by[9]:
         problems.append("the tab screws or the wall bolts are not stated")
@@ -670,7 +673,7 @@ def test_c17_the_record_states_the_installation_order_with_tools_access_and_the_
     tab = named(results, "c11.tab_screw_driver_reached")["figures"]["drivers"]
     assert all("rising" in d["line"] for d in tab.values()) and "0.39 mm" in body and "5.0 to 9.0 degrees" in body
     wall = named(results, "c3.wall_bolts_outside_case")["figures"]["bolts"]
-    assert [round(b["bolt_u_mm"], 2) for b in wall] == [-11.25, 58.75] and "u -11.25 and 58.75" in body and "5.05 mm" in body and "0.55 mm clear" in body
+    assert [round(b["bolt_u_mm"], 2) for b in wall] == [-13.75, 61.25] and "u -13.75 and 61.25" in body and "5.05 mm" in body and "0.55 mm clear" in body
     assert named(results, "c5.lid_screw_reached")["passed"] and "81.5 mm from the wall plane" in body
     # a missing owner mark, tool, access, step or silent failure is found
     for old, new, expect in (("3. **Owner**: buys", "3. Buys", "step 3 does not mark"), ("Tools: a drill, a 2.5 mm bit, an M3 tap and wrench, calipers.", "", "step 4 states no tool"),

@@ -99,10 +99,37 @@ def tray_against_the_wall():
 
 
 def tray_screw_into_the_pocket():
-    """The tray screws moved up to 19.5 mm, where the pilot cuts the lid toe's pocket and breaks out of the pilaster's top."""
-    m = case.build({"screws.tray_plate_z_mm": [9.5, 19.5]}, ("single",))
+    """The tray's inserts moved up to 19.5 mm, where the hole cuts the lid toe's pocket and breaks out of the pilaster's top."""
+    m = case.build({"screws.tray_plate_z_mm": [19.5]}, ("single",))
     check._SCENES.clear()
     return check.tray_screws_fit_plate(m)
+
+
+def insert_seat_with(overrides):
+    """The insert seat check on a model rebuilt with the overrides."""
+    m = case.build(overrides, ("single",))
+    check._SCENES.clear()
+    return check.tray_insert_seat(m)
+
+
+def insert_at_mains_copper():
+    """The nominal model with one more insert hole whose wall reaches within 1.5 mm of mains copper: the signed clearance, below the creepage."""
+    m = case.build(forms=("single",))
+    base = next(s for s in m.screws if s["kind"] == "insert")
+    per = check.copper_distance(m, check.axis_points(base))
+    least = min(d for d, _ in per.values())
+    near = dict(base, id="insert near mains", radius=base["radius"] + least - 1.5, head_radius=base["radius"] + least - 1.5)
+    m.screws.append(near)
+    check._SCENES.clear()
+    rows = {r["screw"]: r for r in check.check_c7(m)[0]["figures"]["screws"]}
+    return {"passed": check.check_c7(m)[0]["passed"], "row": rows["insert near mains"], "base": rows[base["id"]]}
+
+
+def two_screws_in_a_pilaster():
+    """The earlier fixing: two tray screws in each pilaster at z 9.5 and 14.0, 4.5 mm apart, on the model's own countersunk heads."""
+    m = case.build({"screws.tray_plate_z_mm": [9.5, 14.0]}, ("single",))
+    check._SCENES.clear()
+    return {"heads": check.tray_screw_heads_apart(m), "seat": check.tray_insert_seat(m)}
 
 
 def loose_film_part():
@@ -252,11 +279,20 @@ JOBS = {
     "c2_tray_at_the_wall": (tray_against_the_wall, 25),
     "c2_short_former": (lambda: broken({"plate.former_height_mm": 25.0}, "check_c2_c3"), 22),
     "c3_screw_in_pocket": (tray_screw_into_the_pocket, 25),
-    "c3_one_edge_screw": (lambda: broken({"screws.tray_plate_z_mm": [6.5, 14.0]}, "check_c2_c3"), 22),
+    "c3_one_edge_screw": (lambda: broken({"screws.tray_plate_z_mm": [6.5]}, "check_c2_c3"), 22),
+    "c1_heads_4_5_apart": (two_screws_in_a_pilaster, 30),
+    "c4_insert_near_mains": (insert_at_mains_copper, 40),
+    "c5_wide_pilasters_short_bar": (lambda: {"refused": refused({"case.pilaster_out_mm": 8.0})}, 22),
+    "c5_wide_pilasters_long_bar": (lambda: broken({"case.pilaster_out_mm": 8.0, "plate.length_mm": 95.0}, "check_c2_c3"), 25),
+    "c5_washer_too_close": (lambda: broken({"plate.washer_to_case_clearance_mm": 2.0}, "check_c2_c3"), 22),
+    "c2_thin_wall": (lambda: insert_seat_with({"screws.tray_plate_z_mm": [13.0]}), 25),
+    "c2_long_screw": (lambda: insert_seat_with({"screws.tray_plate_length_mm": 14.0}), 25),
+    "c2_short_screw": (lambda: insert_seat_with({"screws.tray_plate_length_mm": 7.0}), 25),
+    "c2_shallow_hole": (lambda: insert_seat_with({"case.insert_hole_depth_mm": 5.9}), 25),
     "c1_gap_narrowest": (lambda: gap_extreme("narrowest"), 30),
     "c1_gap_widest": (lambda: gap_extreme("widest"), 30),
     "c1_loose_part": (loose_film_part, 22),
-    "c9_weak_pilot": (lambda: broken({"screws.tray_pilot_pullout_MPa": 1.0}, "check_c6_c9"), 22),
+    "c9_weak_pilot": (lambda: broken({"screws.tray_insert_pullout_N": 100.0}, "check_c6_c9"), 22),
     "c16_long_screw": (lambda: tab_screw_of_length(6.0), 25),
     "c16_short_screw": (lambda: tab_screw_of_length(4.0), 25),
     "cli_json": (lambda: cli(["--format", "json", "--only", "c1.,c15."]), 30),

@@ -95,13 +95,17 @@ case:
   z_lid_top_mm: {value: 22.55, source: "height budget: lid underside + 1.6"}
   seam_mm: {value: 0.2, source: "print clearance between tray and lid faces that meet"}
   lid_end_gap_mm: {value: 0.4, source: "design figure: the lid's plate-end face stands this far past the tray's end face, which leaves the lid room to tilt about its toes without touching the plate"}
-  pilaster_out_mm: {value: 3.5, source: "design figure: each pilaster stands this far outside the main body at the plate end"}
+  pilaster_out_mm: {value: 6.0, source: "design figure: each pilaster stands this far outside the main body at the plate end: with the 2.0 mm wall it is 8.0 mm wide, which holds the 4.0 mm insert hole and 2.0 mm of wall either side of it (case.insert_wall_min_mm)"}
   pilaster_len_mm: {value: 9.0, source: "design figure: pilaster length along v from the plate end face (nominal)"}
-  pilot_dia_mm: {value: 2.6, source: "pilot hole for an M3 thread-forming screw in ASA"}
+  pilot_dia_mm: {value: 2.6, source: "pilot hole for an M3 thread-forming screw in ASA (the board's mounting screw H1 and the lid screw)"}
+  insert_hole_dia_mm: {value: 4.0, source: "the hole the maker states for an M3 heat-set insert 5.7 mm long, printed as a tear-drop because it lies in the layer plane"}
+  insert_length_mm: {value: 5.7, source: "the M3 heat-set insert's length, the maker's standard short size"}
+  insert_hole_depth_mm: {value: 6.7, source: "design figure: the insert's length plus 1.0 mm below it for the plastic the iron displaces, measured from the plate's front face along v"}
+  insert_wall_min_mm: {value: 2.0, source: "design figure, settled by the readiness pass: the least wall of printed plastic round an insert hole, the figure the 85 mm bar and the 88.0 mm opening assume"}
   v_far_wall_inner_mm: {value: 77.0, source: "board far edge (v 75) + interior_far"}
 
 plate:
-  length_mm: {value: 80.0, source: "provisional until the owner cuts and measures the machine wall"}
+  length_mm: {value: 85.0, source: "the case's outer width at the pilasters (64.50 mm) plus two bolt zones (20.0 mm) is 84.50 mm, cut to 85 mm; provisional until the owner cuts and measures the machine wall"}
   height_mm: {value: 20.0, source: "the plate is a standard flat aluminium bar 20 mm wide (its height installed), 5 mm thick and cut to 80 mm: 20 mm is a common stock width; its upper edge stands at the lower edge plus this, 26.0 mm above the component face. The stock's width tolerance is not stated here: read it from the supplier's standard when the bar is sourced"}
   height_min_mm: {value: 16.8, source: "derived, the least plate height that keeps the case inside the plate's footprint: the lid top (case.z_lid_top_mm 22.55) plus plate.min_margin_mm (0.25) less the lower edge (6.0) = 16.8"}
   height_max_mm: {value: 27.5, source: "derived, the greatest plate height the unit's opening in the plastic wall admits: the opening's top (plate.unit_opening_top_z_mm 35.0) less the wall opening's clearance (1.5) less the lower edge (6.0) = 27.5"}
@@ -113,7 +117,9 @@ plate:
   end_wall_board_recess_mm: {value: 0.2, source: "design figure: the end wall's board-side face stands this far behind the plate plane (the seam of case.seam_mm), so the wall keeps the board's side of the plate plane clear; its top is the ledge itself, at the plate's lower edge"}
   end_wall_wall_clear_mm: {value: 0.5, source: "design figure: the end wall's back face stands this far in front of the machine wall's plane, so only the plate touches the wall"}
   screw_edge_distance_mm: {value: 0.5, source: "design figure: a tray screw's countersunk head keeps this far inside each edge of the plate"}
-  min_pilot_to_pocket_mm: {value: 0.4, source: "design figure: a tray screw's pilot keeps this far from the lid toe's pocket in the pilaster"}
+  min_pilot_to_pocket_mm: {value: 0.4, source: "design figure: a tray screw's head keeps this far from the lid toe's pocket in the pilaster"}
+  min_head_to_head_mm: {value: 6.8, source: "design figure: the least distance between the axes of two tray screws, the countersink's 6.3 mm across (screws.tray_plate_countersink_dia_mm) plus a 0.5 mm web of bar between two countersinks"}
+  washer_to_case_clearance_mm: {value: 0.5, source: "design figure: a wall bolt's washer stands at least this far outside the case's outer width at the pilasters"}
   thickness_mm: {value: 5.0, source: "provisional until the owner cuts and measures the machine wall"}
   min_margin_mm: {value: 0.25, source: "design figure: the case lies inside the plate outline by at least this on every side"}
   wall_opening_clearance_mm: {value: 1.5, source: "design figure: the opening in the machine's plastic wall covers the plate and the tray's end wall together plus this per side"}
@@ -124,14 +130,16 @@ plate:
   wall_frame_rim_mm: {value: 6.0, source: "width of the modelled wall frame around the aperture"}
 
 screws:
-  tray_plate_count_per_pilaster: {value: 2, source: "two heights per pilaster for the push-on moment"}
-  tray_plate_z_mm: {value: [9.5, 14.0], source: "stance 4.5 mm apart in z, both inside the plate raised to 6.0 mm: the lower sits 3.5 mm and its countersink 0.5 mm above the plate's lower edge; a pilot at 19.5 mm would cut the lid toe's pocket (z 16.5 to 21.0) and break out of the 20.5 mm pilaster top, so the upper stands at 14.0, 1.2 mm under the pocket floor at the circle"}
-  tray_pilot_pullout_MPa: {value: 5.0, source: "assumed pull-out allowance of a thread-forming M3 screw in a printed ASA pilot, as shear stress on the cylinder of the screw's major diameter over its engaged length: about an eighth of a typical ASA tensile strength of 40 MPa, to cover the weak layer bonds of a printed part and the pilot's tear-drop form; no maker figure for printed pilots was found and the printed plastic's measured strength is out of scope"}
-  tray_pilot_shear_layer_mm: {value: 0.5, source: "the thread pitch of M3, the thickness of plastic that shears about a screw thread, for the pilot's shear displacement under load"}
-  tray_plate_dia_mm: {value: 3.0, source: "M3 x 12 countersunk machine screw entered from the plate's back face"}
-  tray_plate_length_mm: {value: 12.0, source: "M3 x 12"}
-  tray_plate_head_dia_mm: {value: 6.0, source: "ISO 7046 M3 countersunk head, 6.0 maximum"}
+  tray_plate_count_per_pilaster: {value: 1, source: "one heat-set insert and one screw in each pilaster"}
+  tray_plate_z_mm: {value: [11.65], source: "the insert's height above the board's component face: inside the window the pocket floor, the countersink and the allowance leave, 9.9 to 11.67 mm for a tear-drop hole. Upper bound: the lid toe's pocket floor stands at z 16.5, less 2.0 mm of wall, less the tear-drop peak 2.0 x sqrt(2) = 2.83 above the hole's axis, is 11.67; lower bound from the plate's lower edge 6.0: the countersink (6.0 + 0.5 + 3.15 = 9.65) and the insert's pull-out allowance (6.0 + 2646 N mm / 680 N = 9.89). 11.65 keeps 0.02 mm of the wall's margin"}
+  tray_plate_dia_mm: {value: 3.0, source: "M3 countersunk machine screw entered from the plate's back face"}
+  tray_plate_length_mm: {value: 10.0, source: "M3 x 10: 5.0 mm through the bar and 5.0 mm in the insert, which is 5.7 mm long in a hole 6.7 mm deep"}
+  tray_plate_head_dia_mm: {value: 5.5, source: "ISO 7046 M3 countersunk head, 5.5 mm as made (6.0 mm is the maximum the standard allows)"}
+  tray_plate_countersink_dia_mm: {value: 6.3, source: "the countersink at the bar's back face for the ISO 7046 M3 head: 6.3 mm across at 90 degrees"}
   tray_plate_head_height_mm: {value: 1.7, source: "ISO 7046 M3 countersunk head height, 1.65 typ"}
+  tray_insert_pullout_N: {value: 680.0, source: "assumed pull-out allowance of one M3 heat-set insert: the maker's lower moulded-ABS figure (680 to 730 N); no maker publishes a figure for printed ASA, for a hole lying in the layer plane or for the 70 degC enclosure air, so for printed ASA in this layer direction it is an assumption that the owner's proof load closes; the printed plastic's measured strength is out of scope"}
+  tray_insert_shear_layer_mm: {value: 0.5, source: "the thickness of plastic that shears about an insert's knurl, taken as one M3 thread pitch, for the insert's displacement under load"}
+  tray_proof_factor: {value: 2.0, source: "the owner's proof load is this multiple of the design load, pulled at the blade end in both directions with the bar clamped and the tray fitted"}
   h1_dia_mm: {value: 3.0, source: "M3 pan-head thread-forming screw through the board's hole H1 into a 2.6 mm pilot"}
   h1_length_mm: {value: 5.0, source: "M3 x 5: the board face stands only 6.6 mm above the tray's underside, so a screw longer than 5.8 mm at the far-end lean of -1 degree would leave the tray; the pilot ends 0.6 mm above the floor's underside"}
   h1_pilot_bottom_z_mm: {value: -6.0, source: "design figure: the pilot ends here, 0.6 mm above the tray floor's underside (-6.6)"}
@@ -323,7 +331,7 @@ skins:
       screw_clear_mm: {value: 2.0, source: "design figure: a groove's edge keeps this far from the lid screw's countersink"}
       hug_mm: {value: 1.5, source: "design figure: a streamline that runs closer than this to the logo stone's offset is the stone's own level and is trimmed away, so no line hugs the stone"}
       grid_mm: {value: 0.5, source: "design figure: grid of the stream function"}
-      min_line_mm: {value: 10.0, source: "design figure: the shortest stretch of a streamline drawn"}
+      min_line_mm: {value: 10.5, source: "design figure: the shortest stretch of a streamline drawn; 10.5 keeps the eight streamlines the look was judged with, where the pilasters widened to 8.0 mm leave two 10.2 mm stubs by the logo's stone that no judged picture has"}
       min_land_mm: {value: 0.6, source: "design figure: the least lid left between two grooves, so no two merge into a pocket past the printer's bridge"}
       bridge_mm: {value: 0.9, source: "design figure: the structural bridge between two vent runs on one streamline: lid left standing between them"}
       bridge_pitch_mm: {value: 14.0, source: "design figure: pitch of the bridges along a vent run, centre to centre"}
