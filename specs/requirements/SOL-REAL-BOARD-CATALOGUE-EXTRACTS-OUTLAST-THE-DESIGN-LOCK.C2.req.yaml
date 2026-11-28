@@ -1,0 +1,12 @@
+id: SOL-REAL-BOARD-CATALOGUE-EXTRACTS-OUTLAST-THE-DESIGN-LOCK.C2
+type: criterion
+title: The hardware README states that the design task declares the extract's window and the order re-reads the extract
+status: active
+version: 1
+measurement_type: binary
+verification: inspection
+text: |-
+  The sentence in the hardware README that makes a board's design task keep the catalogue extract current states instead that the design task declares the extract's window and that the order re-reads and re-dates the extract before payment, naming the ordering leaf's criterion that requires it. Out of scope the rest of the README.
+links:
+  - target: SOL-REAL-BOARD-CATALOGUE-EXTRACTS-OUTLAST-THE-DESIGN-LOCK
+    type: criterion-of
