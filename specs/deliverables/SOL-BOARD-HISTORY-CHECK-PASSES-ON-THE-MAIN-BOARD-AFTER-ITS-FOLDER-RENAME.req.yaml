@@ -42,3 +42,7 @@ links:
     type: depends-on
   - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
     type: depends-on
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 blind brief reviewer
+  fingerprint: 9396df663fbbd9575b305361682e8ec8ee1a2bd09043bbcec8cdef6305658101
+  gating_profile: ""
