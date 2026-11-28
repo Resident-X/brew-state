@@ -31,3 +31,7 @@ links:
     type: targets
   - target: DEC-MAINTENANCE-CONTINUOUS-LANE
     type: justified-by
+brief_confirmation:
+  confirmer: claude-sonnet-5-5 independent brief reviewer
+  fingerprint: 5b8dada7f217a55a1ad57546efaa8f5120d1a6446c40156755926925f87d33b8
+  gating_profile: ""
