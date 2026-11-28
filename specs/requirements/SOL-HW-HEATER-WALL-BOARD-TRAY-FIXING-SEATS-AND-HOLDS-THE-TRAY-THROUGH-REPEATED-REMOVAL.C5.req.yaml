@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. Out of scope: the owner's wall cut and signing of the sign-off lines.
+  The plate's length, its wall-bolt positions and the opening in the machine's plastic wall follow the pilaster width with the bolt zones unchanged, the case lies between the bolt zones with the record's clearance to each washer, and the record, the drawings and the division record state the new figures. The lid's skin keeps the eight streamlines, sixteen vents and eight far-end bars the look was judged with, its parameters re-fitted to the wider lid, and the record restates the inlet free area at the new width. Out of scope: the owner's wall cut and signing of the sign-off lines.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
     type: criterion-of
