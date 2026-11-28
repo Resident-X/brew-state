@@ -1,0 +1,15 @@
+id: EVD-SOL-TRIAC-THERMAL-JUDGEMENT-STANDS-FOR-THE-BAR-THE-CASE-TAKES.C1-TEST
+type: evidence
+title: The case record's thermal test holds the plate length to at least the judged 80 mm and the taken bar's wall resistance to no more than the judged length's at h = 10 and h = 5; it passes
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T17:47:09Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/sunbeam-em7000/heater-wall-board/case/tests/test_case_record.py::test_c17_plate_temperatures_are_recomputed_from_the_thermal_figures_and_graded@5b07529729eb9ae37c0bbdf19c7ac285f4543df7
+links:
+  - target: SOL-TRIAC-THERMAL-JUDGEMENT-STANDS-FOR-THE-BAR-THE-CASE-TAKES.C1
+    type: satisfies

@@ -1,0 +1,12 @@
+id: SOL-TRIAC-THERMAL-JUDGEMENT-STANDS-FOR-THE-BAR-THE-CASE-TAKES.C1
+type: criterion
+title: The bar the case takes sinks the triacs' heat no worse than the length the thermal judgement was run on
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The case record's test holds the plate length the case takes to at least the length the triacs' thermal judgement was run on, and holds the wall resistance of the bar the case takes to no more than the judged length's at both heat-transfer coefficients the judgement uses, so a bar shorter than judged fails the test. Out of scope re-running the judgement at the longer bar.
+links:
+  - target: SOL-TRIAC-THERMAL-JUDGEMENT-STANDS-FOR-THE-BAR-THE-CASE-TAKES
+    type: criterion-of

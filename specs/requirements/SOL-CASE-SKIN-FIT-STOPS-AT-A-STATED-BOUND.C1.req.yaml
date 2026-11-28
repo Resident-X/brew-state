@@ -1,0 +1,12 @@
+id: SOL-CASE-SKIN-FIT-STOPS-AT-A-STATED-BOUND.C1
+type: criterion
+title: A lid skin fit that does not settle within its stated bound stops the build with a refusal naming the skin, the edge land and the bound
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |-
+  The case build refuses, rather than running on, a lid skin fit whose search reaches the bound the case's parameters state with a source, and the refusal names the skin, the edge land the fit derived and the bound. The nominal case builds within the bound, and a derived edge land of 4.17 mm, which ran for over eleven minutes before, is refused within it. Out of scope the choice of skin and the lid's flow area.
+links:
+  - target: SOL-CASE-SKIN-FIT-STOPS-AT-A-STATED-BOUND
+    type: criterion-of

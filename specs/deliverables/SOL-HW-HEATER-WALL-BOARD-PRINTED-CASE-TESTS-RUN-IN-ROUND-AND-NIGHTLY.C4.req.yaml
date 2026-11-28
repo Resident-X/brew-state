@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY.C4
+type: criterion
+title: The build round runs the printed case's routine tests and the nightly also runs its seeded-fault tests
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The printed case's tests are split as the board tooling's are: the build round runs the routine tests, which read the case model and its records, and the nightly run of main runs those and also the seeded-fault tests, which rebuild the whole model once for each dimension they break and so dominate the suite's run time. Each seeded-fault test is shown to run in the nightly and on demand, and a round that runs only the routine tests says in its closing lines that the seeded-fault tests were left out and why. Out of scope: the content of either set of tests, and the board tooling's own split.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-PRINTED-CASE-TESTS-RUN-IN-ROUND-AND-NIGHTLY
+    type: criterion-of

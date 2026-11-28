@@ -3,7 +3,7 @@ type: deliverable
 category: solution
 title: The printed case's tests run in the build round for case changes and nightly on main
 status: active
-version: 1
+version: 2
 text: |
   The printed case's tests run at the same two cadences as the rest of the project's verification. The build round's gate runs the case tests whenever the branch changes anything under the case folder, anything the case tests read (the board's STEP model's inputs, the slicer settings, the logo artwork and the record the tests check), the case tooling's task definitions, or the round gate's own code, measured from the branch's merge-base with main in the same way the round already decides whether to run the emulation and board tiers, and it runs the tier anyway when it cannot tell what changed. A round that changes none of those paths needs neither the CAD environment nor the slicer. The complete verification's single declaration lists the case tests, so the nightly run of main runs them unconditionally on a hosted runner that has the CAD environment and the slicer at the versions the case tooling pins. A selected tier that needs a tool the machine lacks, or has at too old a version, stops the round naming the tool; it is never skipped.
 rationale: |

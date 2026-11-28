@@ -1042,6 +1042,8 @@ def test_c17_plate_temperatures_are_recomputed_from_the_thermal_figures_and_grad
     length = JUDGED_BAR_LENGTH_M          # the thermal judgement stands at the 80 mm bar: the longer bar the case now takes has the smaller wall resistance
     assert params["plate"]["length_mm"]["value"] / 1000.0 >= length and "not re-run for the 85 mm bar" in body
     r10, r5 = wall_resistance(10, height, length), wall_resistance(5, height, length)
+    taken = params["plate"]["length_mm"]["value"] / 1000.0
+    assert wall_resistance(10, height, taken) <= r10 and wall_resistance(5, height, taken) <= r5, "the bar the case takes sinks the heat no worse than the judged length: the judgement stands for it"
     assert "%.3f K/W at h = 10 and %.3f K/W at h = 5" % (r10, r5) in narrower
     assert "R_wall = %.3f K/W at h = 10 and %.3f K/W at h = 5" % (r10, r5) in body
     cases = [(25, 10, r10, 1), (40, 10, r10, 3), (40, 5, r5, 3)]
