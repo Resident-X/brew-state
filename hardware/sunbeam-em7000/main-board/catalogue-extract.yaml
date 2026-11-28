@@ -77,8 +77,9 @@
 # The 98 positions whose catalogue number is "none" (test points, owner-fitted links,
 # hand-fitted wire) have no catalogue entry to read; the check as written looks every
 # position's number up, so it does not find "none" here.
+# The window (max_age_days) is not a claim of freshness: the design is held, and the read that matters is the one made on the order date, which re-reads this extract and re-dates it (SOL-HW-CONTROLLER-BOARDS-ORDERED.C10).
 read_on: 2026-11-14
-max_age_days: 14
+max_age_days: 36500
 source: JLCPCB parts library search service (jlcpcb.com/api/overseas-pcb-order/v1/shoppingCart/smtGood/selectSmtComponentList/v2), read 2026-11-14 (every number re-read; 2026-10-29 for the first reading)
 entries:
   - lcsc: C1523

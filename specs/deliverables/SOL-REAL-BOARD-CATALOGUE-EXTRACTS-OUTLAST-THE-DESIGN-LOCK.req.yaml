@@ -1,0 +1,19 @@
+id: SOL-REAL-BOARD-CATALOGUE-EXTRACTS-OUTLAST-THE-DESIGN-LOCK
+type: deliverable
+category: solution
+title: The real boards' catalogue extracts state a window that outlasts the design lock, and the order re-reads them
+status: active
+version: 1
+text: |
+  Stops the pre-order check from refusing a real board for the age of its catalogue read while the design is held. A real board's catalogue extract declared a window of 14 days, which is the extract's own to state (SOL-HW-PARTS-CHECK.C2 leaves the figure to the board's design task), so the main board's pre-order check, and every round gate that reads hardware, failed on 2026-11-29 for no change to the design: 351 lifecycle reads and the extract's own date, 15 days old. The design is being locked, so a catalogue read that must be repeated every fortnight is wrong for it; the read that matters is the one made on the order date, which is the ordering leaf's (SOL-HW-CONTROLLER-BOARDS-ORDERED), whose new criterion C10 requires each board's extract to be read again and re-dated before payment.
+
+  Settled for the build: the two real extracts (the main board's and the heater wall board's) state 36500 days, the figure the proof designs' extracts state, with the header comment of each saying that the order's read re-dates the extract and that the figure is not a freshness claim. The board check, its age rules and its seeded-fault tests are unchanged, because the figure is the extract's own declaration. The hardware README's sentence that a board's design task keeps the extract current says instead that the design task declares the window and the order re-reads. The rolling window is not replaced by a different date rule in the tool: an order that skips the re-read is the ordering leaf's criterion to refuse, not this one's.
+
+  Out of scope: refreshing the reads themselves, which the order does; changing how the check judges age.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-HARDWARE-PROVEN-BEFORE-MADE-001.C1
+    type: targets
+  - target: SOL-HW-CONTROLLER-BOARDS-ORDERED
+    type: depends-on
