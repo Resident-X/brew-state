@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C14-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C14
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:20:03Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion. Holes: pcbnew over hardware/sunbeam-em7000/main-board/main-board.kicad_pcb gives J630 and J635 five pads each of drill 0.85 mm on the project footprint main-board:JST_PH_B5B-PH-K_1x05_P2.00mm_Vertical_Drill0.85, pad centres 2.0 mm apart (J630 x 105.084, y 92.426 to 100.426; J635 x 103.791, y 110.324 to 118.324), so the hole edge to edge is 2.0 - 0.85 = 1.15 mm. Signed spacing: hardware/sunbeam-em7000/separation-basis.yaml accepted_exceptions[4] (J630, WT1_H) and accepted_exceptions[5] (J635, WT2_H) each carry accepted_mm 1.15, and the comment above them reads "J630 and J635 are at 1.15 mm (0.85 mm drill of their own project footprint)"; the entries are signed by the record''s accepted_by of 2026-11-18. The criterion''s "the header maker''s own figure" is the Kinghelm KH-PH-5P-Z sheet''s 0.80 +0.10/-0.00 mm hole, whose middle is 0.85 mm, as the record''s comment states; that sheet was not re-read here. Out of scope: the other connectors'' holes.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C14
+    type: satisfies

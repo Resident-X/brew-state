@@ -1,0 +1,18 @@
+id: EV-SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:19:38Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion. Clause "No via of the committed main board has its centre inside a surface-mount pad": a script run with KiCad 10.0.7''s pcbnew over hardware/sunbeam-em7000/main-board/main-board.kicad_pcb loaded the board and tested the centre of every via against every surface-mount and connector-attribute pad with the pad''s own hit test (pad shape and size, any layer); the board holds 541 vias and 1000 such pads and the count of vias with the centre inside one of those pads is 0. The vias are 466 at 0.6 mm pad on 0.3 mm drill, 69 at 0.75 mm on 0.3 mm and 6 at 0.7 mm on 0.3 mm, none the 0.5 mm pad on 0.2 mm drill the shrink would have made, which agrees with the item''s account that the layout moved the vias out of the pads rather than shrinking them. Clause "this item records that the owner accepted the six vias in pads the survey of 2026-11-07 listed (''Accept vias'') and agreed to shrink them (''Ok'') on that day": the item''s own text records both words, the date, the survey''s six places (C302 pad 2 twice, D523 pad 1, Q823 pad 2, Q824 pad 2 and the one beside D506 pad 1), the maker''s six-layer rule that leaves vias over 0.55 mm unfilled and the outcome that the later layout made both moot. Clause "writes no exception and moves no via": the item holds no workmanship-acceptance entry for it (hardware/sunbeam-em7000/main-board/workmanship-acceptance.yaml carries no via-in-pad entry) and its change set is graph-only. Out of scope: thermal vias of 0.6 mm and under in exposed pads (none lies in a pad on this board in any case). The check log of the full pre-order run on this tree reads RESULT | PASS for all 7 designs.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |
+  Inspection of the committed main board: a pcbnew hit-test script over main-board.kicad_pcb finds 0 of 541 vias with a centre inside a surface-mount or connector pad (1000 pads tested), and the item text records the owner's acceptance ("Accept vias") and agreement to shrink ("Ok") of 2026-11-07. The script is a one-off run, not a committed test.
+links:
+  - target: SOL-MAIN-BOARD-FIVE-GROUND-VIAS-IN-SMD-PADS-AWAIT-OWNER-DECISION.C1
+    type: satisfies

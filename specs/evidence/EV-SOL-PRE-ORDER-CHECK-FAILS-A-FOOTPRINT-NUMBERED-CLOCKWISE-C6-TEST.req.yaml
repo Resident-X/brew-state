@@ -1,0 +1,18 @@
+id: EV-SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE-C6-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C6
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T03:05:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_pad_numbering.py::TheHardwareNotesStateTheRule.test_the_notes_and_the_verify_task_state_the_rule_what_it_judges_and_what_it_leaves_unjudged
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |-
+  Test passes. It reads hardware/README.md and Taskfile.yml and asserts the pad_numbering paragraph states counter-clockwise from pin 1, the two-line and four-line shapes, at least four distinct numbers, the exposed centre pad, not judged, zig-zag, seen from the back and that no acceptance record waives it, plus the rule-name table row and the hw:prove mention.
+links:
+  - target: SOL-PRE-ORDER-CHECK-FAILS-A-FOOTPRINT-NUMBERED-CLOCKWISE.C6
+    type: satisfies

@@ -1,0 +1,16 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C13-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C13
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:20:02Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion with KiCad 10.0.7''s pcbnew over hardware/sunbeam-em7000/main-board/main-board.kicad_pcb. Edge.Cuts: the outer boundary runs x 1.0 to 132.0 (131.0 mm) and y 2.0 to 127.6 (125.6 mm); the south edge is the single segment (1.0, 127.6) to (132.0, 127.6) with no other Edge.Cuts item at y 127.6, so no step. The west edge is cut by one 1.2 mm milled slot from x 1.0 to 37.2 at y 101.5 to 102.7, and five internal slots lie between x 52.48 and 63.1, which the criterion does not mention and which are not outline steps. Mounting holes: H1 (6.5, 122.5), H2 (126.7, 122.5), H3 (6.5, 5.5) and H4 (127.0, 5.5) each have one 3.4 mm drill. The pours'' refill is part of the full pre-order check, reproducible by `python3 hardware/tools/board_check.py --root . --kicad-cli <path to KiCad 10.0.7 kicad-cli>` in a clean tree at this commit, whose last line is "RESULT | PASS | all 7 designs passed"; that check refills the zones with `pcb drc --refill-zones`.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C13
+    type: satisfies

@@ -1,0 +1,18 @@
+id: EV-SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM-C1-INSPECTION
+type: evidence
+title: inspection evidence for SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM.C1
+status: active
+version: 1
+result: pass
+method: inspection
+observed_at: "2026-11-28T03:19:37Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: 'At f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, read against each clause of the criterion. Clause "the board''s plated-hole spacing figure stays at 1.5 mm in design-rules.md and main-board.kicad_dru": hardware/sunbeam-em7000/main-board/main-board.kicad_dru lines 38 to 40 hold the rule "Plated hole spacing" with (constraint hole_to_hole (min 1.5mm)) on pairs of through-hole pads, and hardware/sunbeam-em7000/main-board/design-rules.md line 36 holds the row "Plated hole spacing | 1.5 mm"; neither file reads 1.60 mm anywhere. Clause "this item is not built": the item''s own text records the resolution of 2026-11-07 signed by Claude on the owner''s standing instruction (writer string ''david (signed by Claude on his standing instruction of 2026-11-07)''), the reason (about 55 pin pairs on 26 standard 2.54 mm headers at 1.54 to 1.55 mm hole edge to edge would fail a 1.60 mm rule and need a new same-connector exception class beside the signed one for the 2.0 mm pitch headers) and that no mains figure is involved; commit 203163cf delivered that record. Clause "what the 1.60 mm figure would need, kept on record": the item''s text lists the three needs (the rules row and rule stating 1.60 mm with the working of twice the widest annulus 2 x 0.375 = 0.75 mm, twice the ground zones'' thermal-relief gap 2 x 0.30 = 0.60 mm and the zone minimum thickness 0.25 mm, which sums to 1.60 mm; the signed exception class for the header pairs; a new layout review round on the changed design). The check log of the full pre-order run on this tree (RESULT | PASS, all 7 designs) judges the board against the 1.5 mm rule. Out of scope per the criterion: moving copper.'
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |
+  Inspection of the committed main board's rules records at f897c2f2: the plated-hole spacing figure reads 1.5 mm in both main-board.kicad_dru (rule "Plated hole spacing", hole_to_hole min 1.5mm) and design-rules.md, and the item carries the signed resolution and the list of what a 1.60 mm figure would need. The resolution is signed on the owner's standing instruction of 2026-11-07, not typed by the owner.
+links:
+  - target: SOL-MAIN-BOARD-PLATED-HOLE-SPACING-FIGURE-READS-1-60-MM.C1
+    type: satisfies

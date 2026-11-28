@@ -1,0 +1,27 @@
+id: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME
+type: deliverable
+category: solution
+title: The placement history check passes on the main board its folder rename left it failing, and is run where a regression is caught
+status: active
+version: 1
+text: |
+  Why this exists. The placement and critical routing history command exists so that the order the method requires of a board's placement and routing records is judged by running it. It is run by neither the build round's gate nor the nightly complete verification, so nothing noticed when it stopped passing on the main board. Run on the committed main board in plain and in routed mode it fails four of its checks, from three causes. The placement section check fails because the command takes an earlier design's commit, one that holds a board at the folder name the present board later reused, as this board's first copper; that earlier design's commits are on the branch's line of history (git shows its commits to be ancestors of the branch's last commit), but the present board's placement section was written later, under the folder name the board had while it was called v2. The first routing pass's board-judged check and its before-router check fail because the commits that pass cites hold the board under that earlier folder name, which a later commit renamed (DEC-BOARD-VERSION-NAMING-V2-WORKING-NAME), and the command reads each cited commit only at the board's present path. The fourth, the first routing pass's verdict check, fails because the command, when it cannot find the router commit, reads the pass's checklist from today's practice catalogue, which holds an item added after the pass was recorded. That fourth failure is expected to clear once the second and third are fixed, with no change to any record; that is a prediction to be confirmed by a run, not an established fact. Three criteria of the main board's finishing and correction solutions state that this command passes on the board: the finishing solution's history-check criterion and the pin-numbering correction's history-check criterion each also state a check count for each mode, a count that has since changed, and the low-voltage copper solution's routed-mode history-check criterion states no count. They are unmet while the command fails. Whoever builds this solution also amends those two stated counts, repeating no number here, by `author update` on each criterion with a version bump; none of the three solutions shows as sealed, so supersession is not needed, and if one is found sealed at build time supersession is the only route. The decision that records the folder rename says the earlier design never reached the main branch, which git does not bear out for the commits the check cites, so this solution states only what git shows about them.
+
+  What it does. Judges a board's history from the commit that first holds that board, including under an earlier folder name, so a rename is followed and an earlier design that reused the folder name is not that board's history. Reads a pass's checklist as the practice catalogue stood when the pass's router ran, so an item added later does not fail an earlier pass while an item missing at that time still does. Runs the command where a regression in it, or in the records it judges, is caught again. Nothing in the repository's history is rewritten.
+
+  Settled. A cited commit that is not in the repository's history still fails the command, as C6 of the placement checkpoints solution requires; only which commits belong to a board's own history, and where the board is read in each, changes. The nightly complete verification is the cadence, because the command refuses when the board or its plan differs from the last commit or the clone is shallow, and the build round's gate runs on a working tree that may differ from its last commit.
+
+  Out of scope: judging whether a recorded verdict is right.
+rationale: |
+  Defect in already-sealed work: the behaviour SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS.C6 requires, one command judging the order of the placement and critical routing records against the repository's history, holds on its throwaway repositories but not on the board it exists for, because the main board's folder was renamed and an earlier design had used the folder name now carried by this board. The spec was right; the behaviour needs correcting. Placed under the maintenance lane as the lane's rules require, tracing to the requirement criterion the behaviour restores. Verified by running the command in both modes on the committed main board.
+links:
+  - target: DEL-MAINTENANCE.C1
+    type: derives-from
+  - target: REQ-BOARD-LAYOUT-PRACTICE-001.C5
+    type: targets
+  - target: DEC-BOARD-TOOLCHAIN-KICAD-KONNECT
+    type: justified-by
+  - target: SOL-BOARD-LAYOUT-PLACEMENT-CHECKPOINTS
+    type: depends-on
+  - target: SOL-HW-GATE-IN-ROUND-AND-NIGHTLY
+    type: depends-on

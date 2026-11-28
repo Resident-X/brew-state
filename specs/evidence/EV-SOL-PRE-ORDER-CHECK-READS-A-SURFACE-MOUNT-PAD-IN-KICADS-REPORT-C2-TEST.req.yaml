@@ -1,0 +1,18 @@
+id: EV-SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT-C2-TEST
+type: evidence
+title: test evidence for SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT.C2
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T03:05:55Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: hardware/tools/tests/test_board_check_report_pad_text.py::ASignedExceptionForSurfaceMountPadsIsMatchedAndJudged
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |-
+  Four tests pass: a shortfall at or above the accepted distance is accepted on its entry; below it fails naming the entry; an entry for another pair of the same part excuses nothing and is reported unused; the through-hole wording is matched as before.
+links:
+  - target: SOL-PRE-ORDER-CHECK-READS-A-SURFACE-MOUNT-PAD-IN-KICADS-REPORT.C2
+    type: satisfies

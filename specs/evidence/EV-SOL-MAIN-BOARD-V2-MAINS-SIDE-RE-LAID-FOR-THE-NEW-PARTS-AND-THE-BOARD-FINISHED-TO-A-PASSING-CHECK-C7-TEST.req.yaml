@@ -1,0 +1,18 @@
+id: EV-SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK-C7-TEST
+type: evidence
+title: test evidence for SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C7
+status: active
+version: 1
+result: pass
+method: test
+observed_at: "2026-11-28T03:19:49Z"
+valid_until: until-superseded
+artifact:
+  kind: external
+  reference: Reproducible by `python3 hardware/tools/board_check.py --root . --kicad-cli <path to KiCad 10.0.7 kicad-cli>` run in a clean tree at commit f897c2f2b4e4b5df00395743ac8faf79e22c4ec6, whose last line is "RESULT | PASS | all 7 designs passed". The check runs KiCad's `pcb drc --severity-all --schematic-parity --refill-zones --save-board --all-track-errors` on the main board (hardware/tools/board_check.py, the run_report call at line 9237) and records every unconnected_items entry of the report as a violation (line 9340).
+  artifact_version: f897c2f2b4e4b5df00395743ac8faf79e22c4ec6
+text: |
+  The output lines the claim rests on: "DESIGN | hardware/sunbeam-em7000/main-board/main-board.kicad_pro | PASS | 265 warnings" and "RESULT | PASS | all 7 designs passed". The output holds no ERROR line and no unconnected-item line for the main board, and its 265 WARNING lines are all rules the severity policy or the workmanship acceptance records accept. A DRC run of the main board alone was not completed, so the evidence is the full check's DRC pass.
+links:
+  - target: SOL-MAIN-BOARD-V2-MAINS-SIDE-RE-LAID-FOR-THE-NEW-PARTS-AND-THE-BOARD-FINISHED-TO-A-PASSING-CHECK.C7
+    type: satisfies

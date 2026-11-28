@@ -1,0 +1,12 @@
+id: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C4
+type: criterion
+title: A routing pass is judged against the catalogue as it stood when its router ran
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  Tests on throwaway repositories, using generic item names, show that a routing pass is judged against the practice catalogue as it stood when that pass's router ran: an item added to the catalogue after the pass was recorded does not fail the pass, and an item that was in the catalogue at that time and has no verdict in the pass still fails, in plain and in routed mode and in its text and JSON output, whether or not the board was renamed. Out of scope: judging whether a recorded verdict is right.
+links:
+  - target: SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME
+    type: criterion-of
