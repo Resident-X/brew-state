@@ -470,7 +470,6 @@ tasks:
       # than passing quietly. The hosted nightly leaves it out here and runs it
       # sharded across runners instead.
       #
-      #
       # And after the sweep, the history gate, which reads the placement and
       # critical routing records of every board with a placement section
       # against the repository's history, a thing neither the round nor the

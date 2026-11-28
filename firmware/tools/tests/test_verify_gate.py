@@ -435,7 +435,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertIn(".github/workflows/", round_gate.HOST_READS)
 
     def test_the_complete_verification_runs_the_history_command_on_every_board_with_a_placement_section_and_the_round_does_not(self):
-        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The nightly complete verification runs the history command, and the build round's gate is stated not to run it
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
         taskfile = read("Taskfile.yml")
         self.assertIn("hw:history:all", declared_gates(taskfile))
         (command,) = task_commands(taskfile, "hw:history:all")
@@ -450,7 +450,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertIn("the nightly runs it (hw:history:all)", description)
 
     def test_the_gates_job_checks_out_the_whole_history_with_the_actions_commit_pin_kept(self):
-        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
         job = self.job_text("gates")
         (checkout,) = re.findall(r"(?ms)^      - uses: actions/checkout@(\S+)(.*?)(?=^      - name:|\Z)", job)
         self.assertRegex(checkout[0], r"^[0-9a-f]{40}$", "the checkout is pinned to a commit")
@@ -458,7 +458,7 @@ class TheNightlyRunsTheSameDeclaration(unittest.TestCase):
         self.assertRegex(checkout[1], r"(?m)^          persist-credentials: false\s*$")
 
     def test_the_project_instructions_and_the_hardware_notes_say_the_nightly_runs_the_history_command_and_the_round_does_not(self):
-        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The build round's gate is stated not to run it, in the places that state when the board check runs
+        # SOL-BOARD-HISTORY-CHECK-PASSES-ON-THE-MAIN-BOARD-AFTER-ITS-FOLDER-RENAME.C5: The complete verification that runs nightly against main runs the placement and critical routing history command in plain and in routed mode on every board whose tracked layout plan holds a placement section heading, today the main board, the heater wall board and the method proof, so a later commit that moves a board or breaks a record the command judges fails that run and is seen, and a board that adds such a plan joins without a further edit. The nightly job's checkout carries the repository's full history, so the command is not refused for a shallow clone there; when a run's clone is shallow the command refuses, naming the shallow clone, and the run does not read it as met. The build round's gate is stated not to run it, because the command refuses a board or plan that differs from the last commit and a working tree in a round may differ, in the places that state when the board check runs. Out of scope: the build round's gate.
         text = read("CLAUDE.md")
         gates = text[text.index("**Gates.**"): text.index("**Generated records pin their inputs.**")]
         round_part, nightly_part = gates.split("**Nightly.**")
