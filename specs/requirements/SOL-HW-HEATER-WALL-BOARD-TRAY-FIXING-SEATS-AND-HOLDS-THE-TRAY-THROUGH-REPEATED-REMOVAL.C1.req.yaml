@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: test
 text: |
-  The case model's checks require every pair of tray-screw heads, and of the countersinks they sit in at the bar's back face, to stand at least the record's head-to-head distance apart, and the case's seeded negatives include two countersunk heads 4.5 mm apart that the check must refuse. Out of scope: the owner's drilling accuracy.
+  The case model's checks require every pair of tray-screw heads, and of the countersinks they sit in at the bar's back face, to stand at least the record's head-to-head distance apart, with the head and countersink diameters taken from the screw's standard and stated in the record, and the case's seeded negatives include two countersunk heads 4.5 mm apart that the check must refuse. Out of scope: the owner's drilling accuracy.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
     type: criterion-of

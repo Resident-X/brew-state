@@ -6,7 +6,7 @@ version: 1
 measurement_type: binary
 verification: inspection
 text: |
-  The case record and the plate drawing state that each insert is set flush and square before the bar is fitted, that a proud insert holds the tray off the bar, that the bar's two tray-screw holes are marked from the printed tray with the bar seated on the ledge, and that each countersunk head sits flush or below the bar's back face; the record also states why no M4 screw or insert is used. Out of scope: the owner's drilling accuracy.
+  The case record and the plate drawing state that each insert is set flush and square before the bar is fitted, that a proud insert holds the tray off the bar, that the bar's two tray-screw holes are marked from the printed tray with the bar seated on the ledge, and that each countersunk head sits flush or below the bar's back face. Out of scope: the owner's drilling accuracy.
 links:
   - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
     type: criterion-of

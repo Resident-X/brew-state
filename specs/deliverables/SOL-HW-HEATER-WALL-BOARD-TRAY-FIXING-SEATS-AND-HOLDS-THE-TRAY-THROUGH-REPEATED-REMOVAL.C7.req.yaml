@@ -1,0 +1,12 @@
+id: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL.C7
+type: criterion
+title: The record states the tray's fixing once and no earlier count or stance remains
+status: active
+version: 1
+measurement_type: binary
+verification: test
+text: |
+  The case record and the plate drawing state the tray's fixing once, as this solution gives it: the number of screws and inserts, their stance, the bar's length and the wall opening, and no earlier count, stance or length of the fixing remains stated in them. Out of scope: the owner's sign-off lines, which the owner re-reads and signs.
+links:
+  - target: SOL-HW-HEATER-WALL-BOARD-TRAY-FIXING-SEATS-AND-HOLDS-THE-TRAY-THROUGH-REPEATED-REMOVAL
+    type: criterion-of
